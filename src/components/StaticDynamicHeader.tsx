@@ -42,7 +42,7 @@ export const StaticDynamicHeader = () => {
       className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? "left-0 md:left-16" : "left-0 md:left-64"} z-20 transition-all duration-300`}
       style={{ backgroundColor: "#f6f4ee" }}
     >
-      <div className="flex items-center h-full px-4 overflow-x-auto">
+      <div className="flex items-center h-full px-4 overflow-x-auto no-scrollbar">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
           <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">

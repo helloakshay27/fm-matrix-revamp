@@ -16,16 +16,16 @@ import posthog from "posthog-js";
 // registerServiceWorker();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
-// if (
-//   window.location.hostname === "fm-matrix.lockated.com" ||
-//   window.location.hostname === "lockated.gophygital.work" ||
-//   window.location.hostname === "localhost"
-// ) {
-import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
-// Initialise runtime color patcher — overrides MUI inline styles and any
-// legacy #C72030 / #C62828 colors injected via sx props or inline styles.
-initColorPatch();
-// }
+if (
+  window.location.hostname === "fm-matrix.lockated.com" ||
+  window.location.hostname === "pulse.lockated.com" ||
+  window.location.hostname === "localhost"
+) {
+  import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
+  // Initialise runtime color patcher — overrides MUI inline styles and any
+  // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
+  initColorPatch();
+}
 
 // Initialize posthog BEFORE React renders so posthog.capture() calls inside
 // useEffect hooks are never made on an uninitialized instance. When using
@@ -41,8 +41,8 @@ const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
 if (!posthogToken || posthogToken === "phc_replace_me") {
   console.error(
     "[PostHog] VITE_POSTHOG_PROJECT_TOKEN is not set — analytics is DISABLED " +
-    "and every event will be dropped. Copy .env.example to .env and restart " +
-    "the dev server (Vite inlines VITE_* at build time)."
+      "and every event will be dropped. Copy .env.example to .env and restart " +
+      "the dev server (Vite inlines VITE_* at build time)."
   );
 } else {
   posthog.init(posthogToken, {

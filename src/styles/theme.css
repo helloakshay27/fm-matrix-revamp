@@ -11,95 +11,153 @@
 :root {
   /* =====================
      PRIMARY COLORS
+     — updated to match the "asset-management" reference mockup's palette
      ===================== */
-  --color-primary: #da7756;
-  --color-primary-rgb: 218, 119, 86;
-  --color-primary-hover: rgba(218, 119, 86, 0.85);
-  --color-primary-light: rgba(218, 119, 86, 0.15);
-  --color-primary-selected: rgba(218, 119, 86, 0.08);
+  --color-primary: #1a1a18;
+  --color-primary-rgb: 26, 26, 24;
+  --color-primary-hover: #12100e; /* wireframe .btn.p:hover */
+  --color-primary-light: rgba(26, 26, 24, 0.08);
+  --color-primary-selected: rgba(26, 26, 24, 0.05);
+
+  /* Accent (coral) — links, count badges, highlights. Separate from the
+     primary ink so buttons and accents can be changed independently. */
+  /* Button corner radius — wireframe .btn { border-radius: 8px } */
+  --radius-button: 8px;
+  /* Form-field corner radius — wireframe .inp { border-radius: 12px } */
+  --radius-input: 12px;
+  /* Focus state of form fields: softened ink border + faint halo (one place to tune) */
+  --color-input-focus-border: var(--color-primary); /* 1px ink border */
+  --color-input-focus-ring: transparent; /* rounded halo removed; focus = 1px ink border only */
+
+  --color-accent: #d97757;
+  --color-accent-rgb: 217, 119, 87;
+
+  /* =====================
+     WIREFRAME SURFACE / INK TOKENS (asset-management.html)
+     The GLOBAL LEGACY-COLOUR MAP at the end of this file is written only in
+     terms of these, so retuning them here retunes every mapped page at once.
+     ===================== */
+  --color-surface: #f5f4f0; /* wireframe --surface: card header strips, table heads, chips */
+  --color-hover: #f7f6f2; /* wireframe --hover */
+  --color-line: rgba(26, 26, 24, 0.08); /* wireframe --line */
+  --color-line-card: rgba(26, 26, 24, 0.09); /* wireframe --line9 */
+  --color-ink-68: rgba(26, 26, 24, 0.68);
+  --color-ink-48: rgba(26, 26, 24, 0.48);
+  --color-ink-30: rgba(26, 26, 24, 0.3);
+  --color-numbered-badge-bg: var(--color-primary); /* "1 / 2 / 3" section number discs */
+  --color-numbered-badge-fg: #ffffff;
 
   /* Background & Text */
-  --color-bg: #f6f4ee;
-  --color-bg-rgb: 246, 244, 238;
-  --color-text: #2c2c2c;
-  --color-text-rgb: 44, 44, 44;
-  --color-text-light: #888780;
+  --color-bg: #fdfdfb;
+  --color-bg-rgb: 253, 253, 251;
+  --color-text: #1a1a18;
+  --color-text-rgb: 26, 26, 24;
+  --color-text-light: rgba(26, 26, 24, 0.68);
 
   /* =====================
      SECONDARY COLORS
      ===================== */
-  /* Green Olive */
-  --color-secondary-green: #798c5e;
-  --color-secondary-green-rgb: 121, 140, 94;
-  --color-secondary-green-light: rgba(121, 140, 94, 0.15);
-  --color-secondary-green-bg: rgba(121, 140, 94, 0.3);
+  /* Green (mapped to the mockup's solid "growth" green) */
+  --color-secondary-green: #12a150;
+  --color-secondary-green-rgb: 18, 161, 80;
+  --color-secondary-green-light: #e0f7ea;
+  --color-secondary-green-bg: #e0f7ea;
 
-  /* Purple/Lavender */
-  --color-secondary-purple: #cecbf6;
-  --color-secondary-purple-rgb: 206, 203, 246;
-  --color-secondary-purple-light: rgba(206, 203, 246, 0.3);
-  --color-secondary-purple-bg: rgba(206, 203, 246, 0.3);
+  /* Purple (mapped to the mockup's solid "purple" accent + its pale lavender tile tint) */
+  --color-secondary-purple: #5a4be0;
+  --color-secondary-purple-rgb: 90, 75, 224;
+  --color-secondary-purple-light: #eeebff;
+  --color-secondary-purple-bg: #eeebff;
 
-  /* Teal/Mint */
-  --color-secondary-teal: #9ec8ba;
-  --color-secondary-teal-rgb: 158, 200, 186;
-  --color-secondary-teal-light: rgba(158, 200, 186, 0.3);
-  --color-secondary-teal-bg: rgba(158, 200, 186, 0.3);
+  /* Teal — no direct teal in the mockup; mapped to its "info" blue solid + pale blue tile tint */
+  --color-secondary-teal: #2f6fe0;
+  --color-secondary-teal-rgb: 47, 111, 224;
+  --color-secondary-teal-light: #dbe7ff;
+  --color-secondary-teal-bg: #dbe7ff;
 
   /* =====================
      TERTIARY / SEMANTIC COLORS
      ===================== */
-  --color-info: #6b9bcc;
-  --color-info-rgb: 107, 155, 204;
-  --color-disabled: #d3d1c7;
-  --color-muted: #d3d1c7;
-  --color-tags: #cecbf6;
-  --color-danger: #e49191;
-  --color-danger-light: #f8dada;
-  --color-warning: #edc488;
-  --color-warning-light: #f8e4c7;
-  --color-growth: rgba(16, 140, 114, 0.3);
-  --color-growth-solid: #108c72;
+  --color-info: #2f6fe0;
+  --color-info-rgb: 47, 111, 224;
+  --color-disabled: rgba(26, 26, 24, 0.3);
+  --color-muted: rgba(26, 26, 24, 0.3);
+  --color-tags: #eeebff;
+  --color-danger: #e5484d;
+  --color-danger-light: #fbdcdc;
+  --color-warning: #f2a312;
+  --color-warning-light: #fff2d6;
+  --color-growth: rgba(18, 161, 80, 0.3);
+  --color-growth-solid: #12a150;
 
   /* =====================
      STATUS COLORS
      ===================== */
-  --color-success: #89f7e7;
-  --color-success-solid: #798c5e;
-  --color-success-bg: rgba(121, 140, 94, 0.15);
-  --color-error: #e7848e;
-  --color-error-bg: rgba(231, 132, 142, 0.15);
+  --color-success: #e0f7ea;
+  --color-success-solid: #12a150;
+  --color-success-bg: rgba(18, 161, 80, 0.15);
+  --color-error: #a32126;
+  --color-error-bg: rgba(229, 72, 77, 0.12);
   --color-exception: #aab9c5;
+
+  /* Ticket analytics chart colors and fixed series order */
+  --ticket-analytics-purple: #8e7be0;
+  --ticket-analytics-blue: #6b9bcc;
+  --ticket-analytics-growth: #108c72;
+  --ticket-analytics-olive: #798c5e;
+  --ticket-analytics-sage-mint: #9ec8ba;
+  --ticket-analytics-purple-mid: #cecbf6;
+  --ticket-analytics-warning: #edc488;
+  --ticket-analytics-danger: #e7848e;
+  --ticket-analytics-row-alt: #f6f4ee;
+  --ticket-analytics-series-1: var(--ticket-analytics-purple);
+  --ticket-analytics-series-2: var(--ticket-analytics-blue);
+  --ticket-analytics-series-3: var(--ticket-analytics-growth);
+  --ticket-analytics-series-4: var(--ticket-analytics-olive);
+  --ticket-analytics-series-5: var(--ticket-analytics-sage-mint);
+  --ticket-analytics-series-6: var(--ticket-analytics-purple-mid);
+  --ticket-analytics-series-7: var(--ticket-analytics-warning);
+  --ticket-analytics-series-8: var(--ticket-analytics-danger);
+  --ticket-status-success-bg: #e0f7ea;
+  --ticket-status-success-ink: #176b3a;
+  --ticket-status-warning-bg: #fff2d6;
+  --ticket-status-warning-ink: #8a6500;
+  --ticket-status-info-bg: #dbe7ff;
+  --ticket-status-info-ink: #315b96;
+  --ticket-status-danger-bg: #fbdcdc;
+  --ticket-status-danger-ink: #a32126;
+  --ticket-status-neutral-bg: var(--color-surface);
+  --ticket-status-neutral-ink: var(--color-text-light);
 
   /* =====================
      SURFACE & BORDER COLORS
      ===================== */
-  --color-card-border: #c4b89d;
-  --color-card-bg: #f6f4ee;
+  --color-card-border: rgba(26, 26, 24, 0.09);
+  --color-card-bg: #ffffff;
   --color-card-white: #ffffff;
-  --color-border-subtle: #d5dbdb;
-  --color-divider: #e5e5e5;
-  --pulse-card-border: #E5E3DB;
+  --color-border-subtle: rgba(26, 26, 24, 0.08);
+  --color-divider: #ebe9e2;
+  --pulse-card-border: #ebe9e2;
 
-  /* Sidebar */
+  /* Sidebar — no counterpart in the mockup (its sidebar uses plain canvas bg), left unchanged */
   --color-sidebar: #c4b89d;
   --color-sidebar-hover: rgba(196, 184, 157, 0.5);
 
   /* =====================
      GRADIENT TOKENS
      ===================== */
-  --gradient-highlight: radial-gradient(circle, #f6f4ee 0%, #2c2c2c 100%);
-  --gradient-primary: linear-gradient(135deg, #da7756 0%, #c4b89d 100%);
-  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f6f4ee 100%);
+  --gradient-highlight: radial-gradient(circle, #fdfdfb 0%, #1a1a18 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-accent) 0%, #efede6 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #fdfdfb 100%);
 
   /* =====================
      SHADOW TOKENS
      ===================== */
-  --shadow-sm: 0px 1px 2px 0px rgba(44, 44, 44, 0.06);
-  --shadow-md: 0px 4px 8px 0px rgba(44, 44, 44, 0.1);
-  --shadow-lg: 0px 4px 16px 0px rgba(44, 44, 44, 0.12);
-  --shadow-xl: 0px 8px 24px 0px rgba(44, 44, 44, 0.15);
-  --shadow-card: 0px 2px 8px rgba(196, 184, 157, 0.15);
+  --shadow-sm: 0px 1px 2px 0px rgba(26, 26, 24, 0.06);
+  --shadow-md: 0px 4px 8px 0px rgba(26, 26, 24, 0.1);
+  --shadow-lg: 0px 4px 16px 0px rgba(26, 26, 24, 0.12);
+  --shadow-xl: 0px 8px 24px 0px rgba(26, 26, 24, 0.15);
+  --shadow-card: 0px 2px 8px rgba(26, 26, 24, 0.08);
 
   /* =====================
      TYPOGRAPHY
@@ -218,6 +276,1079 @@
 }
 
 /* ===========================================
+   TICKET / TASK ANALYTICS STYLES
+   Restored from the local custom styling block
+   =========================================== */
+
+.ticket-analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .ticket-analytics-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ticket-analytics-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+  text-align: center;
+}
+
+.ticket-analytics-kpi-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--color-card-white);
+}
+
+.ticket-analytics-kpi-icon-svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-text);
+  stroke: currentColor;
+}
+
+.ticket-analytics-kpi-value {
+  color: var(--color-text);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.ticket-analytics-kpi-label {
+  color: var(--color-text-light);
+  font-size: 12px;
+}
+
+.ticket-analytics-table-clip {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card);
+  border-radius: 16px;
+}
+
+.ticket-analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ticket-analytics-table thead th {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-surface) !important;
+  color: var(--color-text-light) !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ticket-aging-matrix-table thead tr:first-child th:first-child,
+.ticket-issue-breakdown-table thead th:first-child,
+.ticket-site-summary-table thead tr:first-child th:first-child {
+  text-align: left;
+}
+
+.ticket-analytics-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.ticket-aging-matrix-table tbody td {
+  font-size: 14px;
+}
+
+.ticket-analytics-table tbody tr:nth-child(odd) {
+  background: var(--color-card-white) !important;
+}
+
+.ticket-analytics-table tbody tr:nth-child(even) {
+  background: var(--ticket-analytics-row-alt) !important;
+}
+
+.ticket-analytics-table .ticket-analytics-total-row,
+.ticket-analytics-table .ticket-analytics-total-row td {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-weight: 600;
+}
+
+.ticket-analytics-table .ticket-analytics-total-row td {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.ticket-aging-average {
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.ticket-aging-average-value {
+  margin-bottom: 8px;
+  color: var(--color-text);
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.ticket-aging-average-label {
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ticket-create-form .MuiFormControl-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-create-form .MuiInputLabel-root,
+.ticket-create-form .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.ticket-create-form .MuiOutlinedInput-root {
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-form .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.ticket-create-form .MuiOutlinedInput-notchedOutline legend {
+  display: none;
+}
+
+.ticket-create-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.ticket-create-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-text-light) !important;
+}
+
+.ticket-create-form .MuiInputBase-input,
+.ticket-create-form .MuiSelect-select {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-description-field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-create-description-label {
+  color: var(--color-text-light);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.ticket-create-description {
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 14px;
+  resize: vertical;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  background: var(--color-card-white);
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-description:focus {
+  border-color: var(--color-text-light);
+  outline: none;
+}
+
+html body main .ticket-details-page .shadow-sm.border {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--color-line-card) !important;
+}
+
+.ticket-details-header {
+  border: 0 !important;
+  border-radius: 14px 14px 0 0 !important;
+  background-color: var(--color-card-white) !important;
+}
+
+.ticket-details-page .w-full.bg-white.rounded-lg.shadow-sm.border > div[class*="bg-[#F6F4EE]"][class*="py-3"][class*="px-4"][class*="border-[#D9D9D9]"] {
+  background-color: var(--color-card-white) !important;
+  border: 0 !important;
+}
+
+.ticket-details-page .w-full.bg-white.rounded-lg.shadow-sm.border > [class*="border-t-0"] {
+  background-color: var(--color-card-white) !important;
+  border: 0 !important;
+  border-bottom-left-radius: 15px !important;
+  border-bottom-right-radius: 15px !important;
+}
+
+.ticket-comments-section-body,
+.ticket-logs-section-body {
+  border-bottom-left-radius: 15px !important;
+  border-bottom-right-radius: 15px !important;
+}
+
+.my-pdf-card {
+  overflow: hidden;
+  border-width: 1px !important;
+  border-color: var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+[data-sonner-toast].ticket-created-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.ticket-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .ticket-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ticket-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ticket-summary-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.ticket-summary-card-clickable {
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.ticket-summary-card-clickable:hover {
+  background: var(--color-hover);
+  box-shadow: none;
+}
+
+.ticket-summary-icon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--color-card-white);
+}
+
+.ticket-summary-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text);
+  stroke: currentColor;
+}
+
+.ticket-summary-copy {
+  min-width: 0;
+}
+
+.ticket-summary-value {
+  color: var(--color-text);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.ticket-summary-label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ticket-status-pill,
+.task-calendar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.ticket-status-pill[data-status="pending"],
+.ticket-status-pill[data-status="in-progress"],
+.task-calendar-status-pill[data-status="pending"],
+.task-calendar-status-pill[data-status="scheduled"],
+.task-calendar-status-pill[data-status="in-progress"] {
+  background: var(--ticket-status-warning-bg);
+  color: var(--ticket-status-warning-ink);
+}
+
+.ticket-status-pill[data-status="open"],
+.ticket-status-pill[data-status="completed"],
+.ticket-status-pill[data-status="closed"],
+.task-calendar-status-pill[data-status="open"],
+.task-calendar-status-pill[data-status="completed"],
+.task-calendar-status-pill[data-status="closed"] {
+  background: var(--ticket-status-success-bg);
+  color: var(--ticket-status-success-ink);
+}
+
+.ticket-status-pill[data-status="overdue"],
+.ticket-status-pill[data-status="rejected"],
+.task-calendar-status-pill[data-status="overdue"],
+.task-calendar-status-pill[data-status="rejected"] {
+  background: var(--ticket-status-danger-bg);
+  color: var(--ticket-status-danger-ink);
+}
+
+.ticket-status-pill[data-status="unknown"],
+.task-calendar-status-pill[data-status="unknown"] {
+  background: var(--ticket-status-neutral-bg);
+  color: var(--ticket-status-neutral-ink);
+}
+
+.task-calendar-view-tabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.task-calendar-view-tab {
+  height: auto !important;
+  padding: 8px 16px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--color-text-light) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.task-calendar-view-tab[data-active="true"] {
+  background: var(--color-card-white) !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 3px rgba(26, 26, 24, 0.14) !important;
+}
+
+.task-calendar-date-range,
+.task-analytics-date-range-button,
+.task-calendar-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.task-calendar-date-range-text,
+.task-calendar-date-range-icon,
+.task-analytics-date-range-text,
+.task-analytics-date-range-icon {
+  color: var(--color-text);
+}
+
+.task-calendar-date-range-icon,
+.task-analytics-date-range-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.task-calendar-filter-button:hover,
+.task-analytics-date-range-button:hover {
+  background: var(--color-hover) !important;
+}
+
+.fc-event.task-calendar-event,
+.fc-event.task-calendar-event .fc-event-main {
+  border: 0 !important;
+  border-radius: 999px !important;
+}
+
+.fc-event.task-calendar-event {
+  padding: 3px 10px !important;
+  border-color: transparent !important;
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.fc-event.task-calendar-event .fc-event-main {
+  color: inherit !important;
+}
+
+.task-calendar-event-content {
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fc-event.task-calendar-event--pending,
+.fc-event.task-calendar-event--scheduled,
+.fc-event.task-calendar-event--in-progress {
+  border-color: transparent !important;
+  background: var(--ticket-status-warning-bg) !important;
+  color: var(--ticket-status-warning-ink) !important;
+}
+
+.fc-event.task-calendar-event--open,
+.fc-event.task-calendar-event--completed,
+.fc-event.task-calendar-event--closed {
+  border-color: transparent !important;
+  background: var(--ticket-status-success-bg) !important;
+  color: var(--ticket-status-success-ink) !important;
+}
+
+.fc-event.task-calendar-event--overdue,
+.fc-event.task-calendar-event--rejected,
+.fc-event.task-calendar-event--cancelled,
+.fc-event.task-calendar-event--canceled,
+.fc-event.task-calendar-event--failed {
+  border-color: transparent !important;
+  background: var(--ticket-status-danger-bg) !important;
+  color: var(--ticket-status-danger-ink) !important;
+}
+
+.fc-event.task-calendar-event--unknown {
+  border-color: transparent !important;
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.task-analytics-table-clip {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card);
+  border-radius: 16px;
+}
+
+.task-analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.task-analytics-table-header {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-surface) !important;
+  color: var(--color-text-light) !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.task-analytics-table-cell {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.task-analytics-table tbody tr:nth-child(odd) {
+  background: var(--color-card-white) !important;
+}
+
+.task-analytics-table tbody tr:nth-child(even) {
+  background: var(--ticket-analytics-row-alt) !important;
+}
+
+.task-analytics-total-row,
+.task-analytics-total-row td {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-weight: 600;
+}
+
+.task-overview-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 1024px) {
+  .task-overview-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.task-overview-kpi-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.task-overview-kpi-card:hover {
+  background: var(--color-hover);
+  box-shadow: none;
+}
+
+.task-overview-kpi-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-card-white);
+}
+
+.task-overview-kpi-icon-svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-light);
+  stroke: currentColor;
+}
+
+.task-overview-kpi-copy {
+  min-width: 0;
+}
+
+.task-overview-kpi-value {
+  color: var(--color-text);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.task-overview-kpi-label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.entity-status-pill {
+  display: inline-flex !important;
+  align-items: center;
+  padding: 3px 10px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.35;
+}
+
+.entity-status-pill[data-status="open"],
+.entity-status-pill[data-status="closed"],
+.entity-status-pill[data-status="completed"],
+.entity-status-pill[data-status="partially-closed"] {
+  background: var(--ticket-status-success-bg) !important;
+  color: var(--ticket-status-success-ink) !important;
+}
+
+.entity-status-pill[data-status="pending"],
+.entity-status-pill[data-status="scheduled"],
+.entity-status-pill[data-status="in-progress"],
+.entity-status-pill[data-status="work-in-progress"] {
+  background: var(--ticket-status-warning-bg) !important;
+  color: var(--ticket-status-warning-ink) !important;
+}
+
+.entity-status-pill[data-status="overdue"],
+.entity-status-pill[data-status="rejected"] {
+  background: var(--ticket-status-danger-bg) !important;
+  color: var(--ticket-status-danger-ink) !important;
+}
+
+.entity-status-pill[data-status="unknown"] {
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.task-detail-action-secondary {
+  padding: 8px 16px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+.task-detail-action-secondary:hover {
+  background: var(--color-surface) !important;
+}
+
+.task-detail-section-card {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.task-detail-section-card .task-detail-section-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-detail-section-card .figma-card-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-detail-section-card .figma-card-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--color-text-light) !important;
+}
+
+.task-detail-section-card .task-detail-section-title {
+  margin: 0 !important;
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.task-detail-section-card .task-detail-section-content {
+  padding: 0 20px 20px !important;
+  border: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-detail-activity-group-heading {
+  padding: 8px 12px;
+  border: 1px solid var(--color-line-card);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.task-reschedule-dialog {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 28px !important;
+  border-radius: 24px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-reschedule-body {
+  min-width: 0;
+}
+
+.task-reschedule-section-title {
+  margin: 0 0 12px;
+  color: var(--color-text-light);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-reschedule-cancel-button {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1.5px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-primary) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.task-reschedule-cancel-button:hover {
+  background: var(--color-surface) !important;
+}
+
+.task-reschedule-submit-button {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.task-reschedule-submit-button:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.task-submission-checklist-card {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.task-submission-checklist-card .task-submission-checklist-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-submission-checklist-card .figma-card-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-submission-checklist-card .figma-card-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--color-text-light) !important;
+}
+
+.task-submission-checklist-card .figma-card-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.task-submission-checklist-card .task-submission-checklist-content {
+  padding: 0 20px 20px !important;
+  border: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-submission-checklist-card .border-l-4 {
+  padding: 8px 12px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-left-width: 1px !important;
+  border-radius: 8px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-submission-checklist-card button[class*="text-[#C72030]"][class*="border-[#C72030]"] {
+  min-height: 40px !important;
+  gap: 7px;
+  padding: 0 18px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-primary) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+
+.task-submission-checklist-card button[class*="text-[#C72030]"][class*="border-[#C72030]"]:hover {
+  background: var(--color-surface) !important;
+}
+
+[data-sonner-toast].task-draft-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].task-draft-toast svg {
+  color: var(--color-card-white) !important;
+  stroke: currentColor;
+}
+
+@media (max-width: 639px) {
+  .ticket-aging-average {
+    padding: 16px;
+  }
+
+  .ticket-aging-average-value {
+    font-size: 24px;
+  }
+
+  .ticket-aging-average-label {
+    font-size: 14px;
+  }
+}
+
+.service-form .service-form-card {
+  margin-bottom: 20px !important;
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.service-form .service-form-card-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.service-form .service-form-card-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.service-form .service-form-card-title > span {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.service-form .service-form-card > .p-6:not(.service-form-card-header) {
+  padding: 0 20px 20px !important;
+  background: var(--color-card-white) !important;
+}
+
+.service-form .MuiFormControl-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-form .MuiInputLabel-root,
+.service-form .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text-light) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 16px;
+}
+
+.service-form .MuiOutlinedInput-root {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-form .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.service-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.service-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-text-light) !important;
+}
+
+.service-form .MuiInputBase-input,
+.service-form .MuiSelect-select {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-form .service-description-field .MuiOutlinedInput-root {
+  min-height: 88px !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+.service-form .service-description-field .MuiInputBase-inputMultiline {
+  min-height: 88px !important;
+  padding: 12px 14px !important;
+  resize: vertical !important;
+}
+
+.service-form-primary-action,
+.service-form-secondary-action {
+  display: inline-flex !important;
+  min-height: 42px !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px !important;
+  border-radius: var(--radius-button) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.service-form-primary-action {
+  border: 1px solid var(--color-primary) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+}
+
+.service-form-primary-action:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.service-form-secondary-action {
+  border: 1px solid var(--color-line-card) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.service-form-secondary-action:hover {
+  background: var(--color-hover) !important;
+}
+
+.service-association-dialog .MuiDialog-paper {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--color-card-white);
+}
+
+.service-association-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+}
+
+.service-association-dialog-title {
+  padding: 0 !important;
+  color: var(--color-text) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.service-association-dialog-content {
+  overflow-y: auto;
+  padding: 16px 0 0 !important;
+}
+
+.service-association-asset-field-wrap {
+  margin-bottom: 24px;
+}
+
+.service-association-asset-control {
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-association-asset-control .MuiInputLabel-root,
+.service-association-asset-control .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  margin: 0;
+  color: var(--color-text-light) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 16px;
+}
+
+.service-association-asset-control .MuiOutlinedInput-root {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-association-asset-control .MuiOutlinedInput-notchedOutline legend {
+  display: none;
+}
+
+.service-association-asset-control .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.service-association-submit {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].service-association-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].service-association-toast svg {
+  color: var(--color-card-white) !important;
+  stroke: currentColor;
+}
+
+/* ===========================================
    GLOBAL ELEMENT OVERRIDES
    =========================================== */
 
@@ -307,11 +1438,11 @@ header [class*="DropdownMenuItem"].text-\[\#C72030\],
    =========================================== */
 
 /* Override common bg-primary classes to use CSS variable */
-.bg-primary {
+.bg-primary:not([style*="background"]) {
   background-color: var(--color-primary) !important;
 }
 
-.bg-primary:hover {
+.bg-primary:not([style*="background"]):hover {
   background-color: var(--color-primary-hover) !important;
 }
 
@@ -485,6 +1616,19 @@ select:focus {
 [class*="MuiOutlinedInput-root"].Mui-focused
   [class*="MuiOutlinedInput-notchedOutline"] {
   border-color: var(--color-primary) !important;
+}
+
+/* MUI Loaders — CircularProgress/LinearProgress default to theme blue; force brand orange everywhere */
+[class*="MuiCircularProgress-root"] {
+  color: var(--color-primary) !important;
+}
+
+[class*="MuiLinearProgress-root"] {
+  background-color: var(--color-primary-light) !important;
+}
+
+[class*="MuiLinearProgress-bar"] {
+  background-color: var(--color-primary) !important;
 }
 
 [class*="MuiInputLabel-root"].Mui-focused {
@@ -825,6 +1969,15 @@ svg.text-red-500.fill-red-500 {
   border-color: var(--color-primary) !important;
 }
 
+/* Section-header accent bar border-[#C72030AD] (alpha red renders pink) -
+   force solid black instead */
+.border-\[\#C72030AD\],
+.border-\[\#c72030ad\],
+[class*="border-[#C72030AD]"],
+[class*="border-[#c72030ad]"] {
+  border-color: #000000 !important;
+}
+
 /* Hover states for legacy red */
 .hover\:bg-\[\#C72030\]:hover,
 .hover\:bg-\[\#c72030\]:hover,
@@ -837,7 +1990,7 @@ svg.text-red-500.fill-red-500 {
 /* Hover bg with opacity - rgba version */
 [class*="hover:bg-[#C72030]/10"]:hover,
 .hover\:bg-\[\#C72030\]\/10:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 .hover\:text-\[\#C72030\]:hover,
@@ -1319,7 +2472,7 @@ path[stroke="#c72030"] {
 }
 
 .location-stepper-line {
-  background: rgba(218, 119, 86, 0.68) !important;
+  background: rgba(var(--color-accent-rgb), 0.68) !important;
 }
 
 .location-step-dot {
@@ -1596,6 +2749,14 @@ header a[class*="text-[#C72030]"] {
 [class*="pagination"] button[class*="bg-[#C72030]"] {
   background-color: var(--color-primary) !important;
 }
+/* Selected page: 8px corners everywhere (shadcn PaginationLink already uses
+   rounded-[8px]; this covers custom pagers and MUI <Pagination>) */
+html body nav[aria-label="pagination"] [aria-current="page"],
+html body [class*="pagination"] button[class*="bg-[#C72030]"],
+html body [class*="pagination"] [aria-current="page"],
+html body .MuiPaginationItem-root.Mui-selected {
+  border-radius: 8px !important;
+}
 
 /* ===== LOADING/SPINNER COLOR OVERRIDES ===== */
 .animate-spin[class*="text-[#C72030]"],
@@ -1689,27 +2850,27 @@ header a[class*="text-[#C72030]"] {
 
 /* ===== CHART COLOR PALETTE VARIABLES ===== */
 :root {
-  /* Secondary Chart Colors */
-  --chart-green-olive: #798c5e;
-  --chart-green-olive-hover: rgba(121, 140, 94, 0.85);
-  --chart-purple: #cecbf6;
-  --chart-purple-hover: rgba(206, 203, 246, 0.7);
-  --chart-teal: #9ec8ba;
-  --chart-teal-hover: rgba(158, 200, 186, 0.7);
+  /* Secondary Chart Colors — kept in sync with the :root tokens above */
+  --chart-green-olive: #12a150;
+  --chart-green-olive-hover: rgba(18, 161, 80, 0.85);
+  --chart-purple: #5a4be0;
+  --chart-purple-hover: rgba(90, 75, 224, 0.7);
+  --chart-teal: #2f6fe0;
+  --chart-teal-hover: rgba(47, 111, 224, 0.7);
 
   /* Tertiary/Semantic Chart Colors */
-  --chart-info: #6b9bcc;
-  --chart-disabled: #d3d1c7;
-  --chart-tags: #cecbf6;
-  --chart-danger: #e49191;
-  --chart-warning: #edc488;
-  --chart-growth: rgba(16, 140, 114, 0.3);
-  --chart-growth-solid: #108c72;
+  --chart-info: #2f6fe0;
+  --chart-disabled: rgba(26, 26, 24, 0.3);
+  --chart-tags: #eeebff;
+  --chart-danger: #e5484d;
+  --chart-warning: #f2a312;
+  --chart-growth: rgba(18, 161, 80, 0.3);
+  --chart-growth-solid: #12a150;
 
   /* Surface Colors */
-  --chart-border: #c4b89d;
-  --chart-card-bg: #f6f4ee;
-  --chart-divider: #d5dbdb;
+  --chart-border: rgba(26, 26, 24, 0.09);
+  --chart-card-bg: #ffffff;
+  --chart-divider: #ebe9e2;
 }
 
 /* ===== RECHARTS / SVG CHART COLOR OVERRIDES ===== */
@@ -2559,8 +3720,8 @@ h4[class*="text-[#1A1A1A]"],
 
 }
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold:not(.analytics-header),
-.text-center.font-bold:not(.analytics-header) {
+.text-center.font-semibold:not(.analytics-header):not(button):not(a),
+.text-center.font-bold:not(.analytics-header):not(button):not(a) {
   color: var(--color-text) !important;
 }
 
@@ -2930,9 +4091,9 @@ table.item-table-no-hover tbody tr:hover {
   border-radius: 12px !important;
 }
 
-/* Card hover effect */
+/* Cards stay flat — the wireframe has no drop shadow on surfaces */
 [class*="Card"]:hover {
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: none !important;
 }
 
 /* ===========================================
@@ -3216,7 +4377,7 @@ button[class*="border-[#c62828]"],
 button[class*="border-[#C72030]"],
 button[class*="border-[#c72030]"] {
   border-color: var(--color-primary) !important;
-  color: var(--color-primary) !important;
+  color: var(--color-bg) !important;
 }
 
 button.hover\:bg-red-50:hover,
@@ -3317,13 +4478,13 @@ button.text-\[\#C72030\],
 button[class*="text-[#C72030]"],
 button[title="Filter"] {
   border-color: var(--color-primary) !important;
-  color: var(--color-primary) !important;
+  color: var(--color-bg) !important;
 }
 
 /* Filter hover */
 button[class*="hover:bg-[#C72030]/10"]:hover,
 button[title="Filter"]:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Columns visibility & Export / Download buttons — uniform brand styling */
@@ -3335,7 +4496,7 @@ button[title="Exporting..."] {
 }
 button[title="Columns"]:hover,
 button[title="Export"]:hover {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
 }
@@ -3367,12 +4528,10 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 }
 
 /* ColumnVisibilityMenu checkmark icon: text-red-500 → primary */
-[class*="data-[state=checked]"]:not([aria-label*="delete"])
-  [class*="text-red-500"],
+[class*="data-[state=checked]"]:not([aria-label*="delete"]) [class*="text-red-500"],
 [data-state="checked"] svg.text-red-500,
 [data-state="checked"] [class*="text-red-500"],
-.\\[\\&\\>\\*\\]\\:data-\\[state\\="checked\\"]\\:text-red-500[data-state="checked"]
-  > * {
+[data-state="checked"] .text-red-500 {
   color: var(--color-primary) !important;
 }
 
@@ -3407,7 +4566,7 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 /* IssueFilterModal calendar/search icon: text-red-400 → muted brand */
 .absolute.text-red-400,
 [class*="text-red-400"] {
-  color: var(--color-primary-light, rgba(218, 119, 86, 0.6)) !important;
+  color: var(--color-primary-light, rgba(var(--color-accent-rgb), 0.6)) !important;
 }
 
 /* Dashboard survey chart: hardcoded #C72030 array colour handled by JS patcher,
@@ -3433,22 +4592,22 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 
 /* Step indicator circles */
 .bg-\[\#C72030\] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* Hover border on org cards */
 .hover\:border-\[\#C72030\]:hover {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* Org card icon background tint */
 .bg-\[\#C72030\].bg-opacity-10 {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Org card Building2 icon + any text-[#C72030] not already overridden */
 .text-\[\#C72030\] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Inline style: border-color / color on email input focus */
@@ -3456,22 +4615,24 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 [style*="borderColor:#C72030"],
 [style*='color: "#C72030"'],
 [style*="color:#C72030"] {
-  border-color: #da7756 !important;
-  color: #da7756 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
-/* Primary action buttons on login page */
+/* Primary action buttons on login page — mockup's .btn.p uses ink (#1A1A18),
+   not the coral accent (that's reserved for links/badges — see asset-management
+   reference: a{color:var(--accent)} vs .btn.p{background:var(--ink)}) */
 button.bg-\[\#C72030\],
 button[class~="bg-[#C72030]"] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 button.hover\:bg-\[\#a81c29\]:hover,
 button[class*="hover:bg-[#a81c29]"]:hover {
-  background-color: #c45f40 !important;
+  background-color: var(--color-primary-hover) !important;
 }
 button.hover\:text-\[\#a81c29\]:hover,
 button[class*="hover:text-[#a81c29]"]:hover {
-  color: #c45f40 !important;
+  color: #1a1a18 !important;
 }
 
 /* ============================================================
@@ -3487,9 +4648,9 @@ button[class*="hover:text-[#a81c29]"]:hover {
 }
 
 [data-daily-report-tabs] [role="tab"][data-state="active"] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 4px rgba(218, 119, 86, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(var(--color-accent-rgb), 0.25) !important;
 }
 
 [data-daily-report-tabs] [role="tab"][data-state="inactive"] {
@@ -3509,7 +4670,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*='color: "#C72030"'],
 [style*="color: #C62828"],
 [style*="color:#C62828"] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Inline style: background-color */
@@ -3519,7 +4680,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*="background-color:#C62828"],
 [style*="backgroundColor: '#C72030'"],
 [style*='backgroundColor: "#C72030"'] {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* Inline style: border-color */
@@ -3528,7 +4689,7 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [style*="borderColor: '#C72030'"],
 [style*='borderColor: "#C72030"'],
 [style*="borderColor:#C72030"] {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* ============================================================
@@ -3540,15 +4701,15 @@ button[class*="hover:text-[#a81c29]"]:hover {
 [class*="checkbox"][data-state="checked"],
 input[type="checkbox"]:checked,
 .peer[data-state="checked"] {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* Radio group checked */
 [data-state="checked"].data-\[state\=checked\]\:border-\[\#C72030\],
 .border-\[\#C72030\],
 [class*="border-[#C72030]"] {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* accentColor inline style for native checkboxes */
@@ -3557,50 +4718,50 @@ input[type="checkbox"]:checked,
 [style*="accentColor:#C72030"],
 [style*="accent-color: #C72030"],
 [style*="accent-color:#C72030"] {
-  accent-color: #da7756 !important;
+  accent-color: var(--color-primary) !important;
 }
 
 /* Calendar selected day — solid brand only (exclude /10 tint circles) */
 .rdp-day_selected,
 [class*="day_selected"],
 .bg-\[\#C72030\].text-white.rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
   color: #ffffff !important;
 }
 
 /* Calendar today border */
 .border-\[\#C72030\].rounded-full,
 [class*="border-[#C72030]"].rounded-full {
-  border-color: #da7756 !important;
-  color: #da7756 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 /* Pagination active page */
 .bg-\[\#C72030\].text-white.font-semibold,
 [class*="bg-[#C72030]"].text-white {
-  background-color: #da7756 !important;
+  background-color: var(--color-primary) !important;
 }
 
 /* heading.tsx primary variant */
 .text-\[\#C72030\]:not([data-semantic-colors] *) {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* ============================================================
    MAINTENANCE TICKET ADD PAGE — buttons, icons, inputs
    ============================================================ */
 
-/* Submit button bg-red-600 */
+/* Submit button bg-red-600 — ink primary, per mockup's .btn.p */
 button.bg-red-600,
 button[class*="bg-red-600"] {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
 }
 button.bg-red-600:hover,
 button[class*="bg-red-600"]:hover,
 button.hover\:bg-red-700:hover,
 button[class*="hover:bg-red-700"]:hover {
-  background-color: #c45f40 !important;
+  background-color: #12100e !important;
 }
 
 /* SVG fill="C72030" — handled by JS patcher; add CSS fallback for path elements */
@@ -3608,13 +4769,13 @@ path[fill="#C72030"],
 path[fill="#C62828"],
 circle[fill="#C72030"],
 rect[fill="#C72030"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* SVG color attribute (Lucide icons passed color prop) */
 svg[color="#C72030"] *,
 [color="#C72030"] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* ============================================================
@@ -3623,42 +4784,42 @@ svg[color="#C72030"] *,
 
 /* Active state: bg-white text-[#C72030] → brand */
 .bg-white.text-\[\#C72030\] {
-  color: #da7756 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Notification / solid avatar dots — exact solid bg only, not /10 tints */
 .bg-\[\#C72030\].rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-accent) !important;
 }
 
 /* Avatar circle solid bg-[#C72030] only — not bg-[#C72030]/10 tints */
 .w-8.h-8.bg-\[\#C72030\].rounded-full,
 .w-10.h-10.bg-\[\#C72030\].rounded-full {
-  background-color: #da7756 !important;
+  background-color: var(--color-accent) !important;
 }
 
 /* Light brand tint for icon wells (page headers, section badges) */
 .bg-\[\#C72030\]\/10 {
-  background-color: rgba(218, 119, 86, 0.1) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
 }
 
 /* Hover bg-[#C72030] on list items */
 .hover\:bg-\[\#C72030\]:hover,
 [class*="hover:bg-[#C72030]"]:hover {
-  background-color: #da7756 !important;
-  border-color: #da7756 !important;
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
 /* hover:border-[#C72030] */
 .hover\:border-\[\#C72030\]:hover,
 [class*="hover:border-[#C72030]"]:hover {
-  border-color: #da7756 !important;
+  border-color: var(--color-primary) !important;
 }
 
 /* hover:text-[#A01020] */
 .hover\:text-\[\#A01020\]:hover,
 [class*="hover:text-[#A01020]"]:hover {
-  color: #c45f40 !important;
+  color: #c26040 !important;
 }
 
 /* ============================================================
@@ -3670,13 +4831,13 @@ svg[color="#C72030"] *,
 .recharts-bar-rectangle path[fill="#C62828"],
 .recharts-rectangle[fill="#C72030"],
 .recharts-rectangle[fill="#C62828"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* Recharts legend icon */
 .recharts-legend-icon[fill="#C72030"],
 svg .recharts-symbols [fill="#C72030"] {
-  fill: #da7756 !important;
+  fill: var(--color-primary) !important;
 }
 
 /* ===========================================
@@ -3710,7 +4871,7 @@ button[title="Filter"]:hover,
 button[title="Columns"]:hover,
 button[title="Export"]:hover,
 button[title="Exporting..."]:hover {
-  background-color: rgba(218, 119, 86, 0.08) !important;
+  background-color: rgba(var(--color-accent-rgb), 0.08) !important;
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
 }
@@ -3893,26 +5054,26 @@ circle[fill="#AF8260"],
 
 /* --- Card & Border old colors (background/border overrides) --- */
 
-/* #FBF6EE → #F6F4EE (brand bg) */
+/* #FBF6EE → #FDFDFB (brand bg) */
 [style*="background-color:#FBF6EE"],
 [style*="background-color: #FBF6EE"],
 [style*="background:#FBF6EE"],
 [style*="background: #FBF6EE"] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .bg-\[\#FBF6EE\] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 
-/* #E6DDCD → #F6F4EE (brand bg) */
+/* #E6DDCD → #FDFDFB (brand bg) */
 [style*="background-color:#E6DDCD"],
 [style*="background-color: #E6DDCD"],
 [style*="background:#E6DDCD"],
 [style*="background: #E6DDCD"] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .bg-\[\#E6DDCD\] {
-  background-color: #f6f4ee !important;
+  background-color: #fdfdfb !important;
 }
 .border-\[\#E6DDCD\],
 [class*="border-[#E6DDCD]"] {
@@ -3992,4 +5153,2508 @@ h2.text-brand-accent,
 h3.text-brand-accent,
 span.text-brand-accent {
   color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   TABLE HEADER SURFACE — design-team wireframe (asset-management)
+   Raw <thead> tables that hardcode a grey header class render the
+   same #F5F4F0 header as EnhancedTable / ui/table.
+   ============================================================ */
+thead.bg-gray-50, thead.bg-gray-100, thead[class*="bg-muted"],
+thead.bg-gray-50 > tr, thead.bg-gray-100 > tr, thead[class*="bg-muted"] > tr,
+thead.bg-gray-50 th, thead.bg-gray-100 th, thead[class*="bg-muted"] th {
+  background-color: #F5F4F0 !important;
+}
+
+
+/* ============================================================
+   DESIGN-TEAM WIREFRAME SKIN — asset-management reference
+   Global header / module bar / sidebar / stat cards / tables.
+   Colors only (plus sidebar/tab pill shape) — no component edits.
+   Kept LAST so it wins over the legacy override layers above.
+   Wireframe tokens: ink #1A1A18, canvas #FDFDFB, surface #F5F4F0,
+   hover #F7F6F2, line rgba(26,26,24,.08), accent #D97757.
+   ============================================================ */
+
+/* ---------- Shared hairline border (header, sidebar, tables, cards) ---------- */
+html body .border-\[\#D5DbDB\],
+html body .border-\[\#d5dbdb\] {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+
+/* ---------- Top header ---------- */
+html body header.fixed.top-0 {
+  background-color: #fdfdfb !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard / Executive Dashboard links: grey → ink on hover, no red */
+html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"] {
+  color: rgba(26, 26, 24, 0.62) !important;
+  transition: all 0.16s;
+}
+html body header.fixed.top-0 button[class*="hover:bg-[#f6f4ee]"]:hover {
+  background-color: #f7f6f2 !important;
+  color: #1a1a18 !important;
+}
+
+/* Project / site selectors → rounded pill (≥768px) */
+@media (min-width: 768px) {
+  html body header.fixed.top-0 button[aria-label="Select project"],
+  html body header.fixed.top-0 button[aria-label="Select site"] {
+    height: 36px !important;
+    padding: 0 12px 0 10px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(26, 26, 24, 0.08) !important;
+    background-color: #ffffff !important;
+    color: #1a1a18 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+  }
+  html body header.fixed.top-0 button[aria-label="Select project"]:hover,
+  html body header.fixed.top-0 button[aria-label="Select site"]:hover {
+    border-color: rgba(26, 26, 24, 0.28) !important;
+  }
+}
+
+/* Notification bell → borderless icon button, thin grey line bell */
+html body header.fixed.top-0 button[aria-label="Notifications"] {
+  border: 1px solid rgba(26, 26, 24, 0.08) !important;
+  background-color: transparent !important;
+  border-radius: 8px !important;
+  overflow: visible !important;
+}
+html body header.fixed.top-0 button[aria-label="Notifications"]:hover {
+  background-color: var(--color-surface) !important;
+}
+html body header.fixed.top-0 button[aria-label="Notifications"] > svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  stroke-width: 1.8 !important;
+}
+/* Unread count → coral pill (accentOrange #E8916F), white bold count,
+   2px page-coloured ring so it reads cleanly over the bell */
+html body header.fixed.top-0 button[aria-label="Notifications"] [class*="bg-[#DA7756]"] {
+  top: -6px !important;
+  right: -8px !important;
+  min-width: 20px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background-color: #e8916f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--color-bg) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
+}
+html body header.fixed.top-0 [class*="bg-[#DA7756]"] {
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+}
+
+/* Profile avatar → surface grey */
+html body header.fixed.top-0 [class*="bg-[#C4b89D]"] {
+  background-color: #f5f4f0 !important;
+}
+
+/* ---------- Module bar (Transitioning / Maintenance / Safety …) ---------- */
+html body div.fixed.top-16.h-12[style*="246, 244, 238"] {
+  background-color: #fdfdfb !important;
+  border-bottom-color: rgba(26, 26, 24, 0.08) !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0 {
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  border-bottom: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  /* Animate fill/colour only — animating borders made the previously
+     active tab flash an outline while switching modules. */
+  transition: background-color 0.16s, color 0.16s !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0:hover {
+  background-color: #f7f6f2 !important;
+  color: #1a1a18 !important;
+}
+/* Active module: soft grey filled pill, bold ink label — no outline or shadow.
+   (The generic "red text + red border button → white outlined" rule further
+   down also matches this tab's legacy classes, so border/shadow are cleared here.) */
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:hover,
+html body div.fixed.top-16.h-12 button.flex-shrink-0.border-b-2:focus-visible {
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  /* zero-width (not `none`, which resets width to `medium`) so switching
+     tabs never animates a border in or out */
+  border: 0 solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #1a1a18 !important;
+  font-weight: 600 !important;
+}
+
+/* ---------- Sidebar ---------- */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] {
+  background-color: #fdfdfb !important;
+  border-right-color: rgba(26, 26, 24, 0.06) !important;
+}
+/* Section label ("MAINTENANCE") */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] h3.uppercase {
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.07em !important;
+  color: rgba(26, 26, 24, 0.38) !important;
+  opacity: 1 !important;
+}
+/* Items: 13.5px, 10px radius, grey text */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button.rounded-lg {
+  border-radius: 10px !important;
+  font-size: 13.5px !important;
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button .text-\[\#1a1a1a\],
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] nav button {
+  font-weight: 500;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] .hover\:bg-\[\#DBC2A9\]:hover {
+  background-color: #f7f6f2 !important;
+}
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] .bg-\[\#f0e8dc\] {
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  box-shadow: none !important;
+}
+/* Active item: the red left bar becomes a soft full-row pill */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] div.absolute.left-0.top-0.bottom-0[class*="bg-[#C72030]"] {
+  inset: 0 !important;
+  width: auto !important;
+  border-radius: 10px !important;
+  background-color: rgba(26, 26, 24, 0.07) !important;
+  z-index: -1;
+  pointer-events: none;
+}
+/* Count badge on menu items → accent */
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"] span.rounded-full[class*="bg-[#C72030]"] {
+  background-color: var(--color-accent) !important;
+}
+
+/* ---------- Stat cards (AssetStats / StatsCard / any bg-[#F6F4EE] tile) ---------- */
+html body .bg-\[\#F6F4EE\],
+html body .bg-\[\#f6f4ee\],
+html body [class*="bg-[#F6F4EE]"],
+html body [class*="bg-[#f6f4ee]"] {
+  background-color: #f5f4f0 !important;
+}
+/* …but the fixed chrome keeps the canvas colour set above */
+html body header.fixed.top-0,
+html body div.fixed.left-0.top-0[class*="bg-[#f6f4ee]"],
+html body div.fixed.top-16.h-12[style*="246, 244, 238"] {
+  background-color: #fdfdfb !important;
+}
+/* Icon tile → white, soft-ink icon */
+html body .bg-\[\#C4B89D54\],
+html body [class*="bg-[#C4B89D54]"] {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body .bg-\[\#C4B89D54\] svg,
+html body .bg-\[\#C4B89D54\] span,
+html body [class*="bg-[#C4B89D54]"] svg,
+html body [class*="bg-[#C4B89D54]"] span {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+/* Value stays ink, label softens */
+html body [class*="bg-[#F6F4EE]"] .text-sm.font-medium,
+html body [class*="bg-[#f6f4ee]"] .text-xs.font-medium,
+html body [class*="bg-[#F6F4EE]"] .text-xs.font-medium {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* ---------- Tables ---------- */
+html body table th:not(.analytics-header),
+html body thead th:not(.analytics-header),
+html body [class*="table"] th:not(.analytics-header) {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+  font-weight: 600 !important;
+}
+html body table td:not(:first-child),
+html body tbody td:not(:first-child) {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body table td,
+html body tbody td {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:hover,
+html body [class*="table"] tbody tr:hover {
+  background-color: #f7f6f2 !important;
+}
+html body table.item-table-no-hover tbody tr:hover {
+  background-color: transparent !important;
+}
+
+
+/* ============================================================
+   PRIMARY ACTION BUTTONS (Add / Action / Submit …) — ONE SOURCE
+   Every filled primary button, whichever legacy class it still
+   carries (bg-brand, bg-[#C72030], bg-[#DA7756]…), resolves to
+   --color-primary, and every hover variant to --color-primary-hover.
+   Change those two tokens in :root and all buttons follow.
+   ============================================================ */
+html body button.bg-brand,
+html body button[class*="bg-[#C72030]"],
+html body button[class*="bg-[#DA7756]"],
+html body button[class*="bg-[#da7756]"],
+html body a.bg-brand[class*="text-white"],
+html body [role="button"].bg-brand {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body button.bg-brand svg,
+html body button[class*="bg-[#C72030]"] svg,
+html body button[class*="bg-[#DA7756]"] svg,
+html body button[class*="bg-[#da7756]"] svg {
+  color: #ffffff !important;
+}
+html body button.bg-brand:hover,
+html body button.hover\:bg-brand-hover:hover,
+html body button[class*="hover:bg-[#C72030]"]:hover,
+html body button[class*="hover:bg-[#A01020]"]:hover,
+html body button[class*="hover:bg-[#A01828]"]:hover,
+html body button[class*="hover:bg-[#DA7756]"]:hover,
+html body button[class*="hover:bg-[#C45F40]"]:hover,
+html body button[class*="bg-[#C72030]"]:hover,
+html body button[class*="bg-[#DA7756]"]:hover,
+html body button[class*="bg-[#da7756]"]:hover,
+html body a.bg-brand:hover,
+html body [role="button"].bg-brand:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+/* ---------- Button corner radius (wireframe .btn = 8px) ---------- */
+html body button.bg-brand,
+html body button[class*="bg-[#C72030]"],
+html body button[class*="bg-[#DA7756]"],
+html body button[class*="bg-[#da7756]"],
+html body button.fm-button-fix,
+html body a.fm-button-fix,
+html body [role="button"].fm-button-fix,
+html body a.bg-brand[class*="text-white"],
+html body [role="button"].bg-brand {
+  border-radius: var(--radius-button) !important;
+}
+
+/* ============================================================
+   SEGMENTED TABS (e.g. "Asset List | Analytics") — wireframe .seg
+   Every Tabs list that uses the white bordered "grid w-full" look
+   becomes the design-team pill switcher: tinted track, white
+   raised active segment, grey inactive. No component edits.
+   ============================================================ */
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  height: auto !important;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"] {
+  flex: none;
+  gap: 7px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"]:hover {
+  color: #1a1a18 !important;
+}
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1a1a18 !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+
+/* ============================================================
+   DATA TABLE STRUCTURE — wireframe .tw / .tr
+   Rounded 16px shell, tinted uppercase header (10.5px / 700 /
+   .09em tracking), airy 12.5px rows with hairline separators,
+   rounded-square checkboxes and soft tinted status pills.
+   Applies to EnhancedTable and every plain <table>.
+   ============================================================ */
+
+/* Shell around EnhancedTable */
+html body div.bg-white.rounded-lg:has(> .table-container) {
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+/* Header cells */
+html body table thead th:not(.analytics-header),
+html body table th:not(.analytics-header) {
+  height: auto !important;
+  padding: 12px 16px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  background-color: #f5f4f0 !important;
+  border-bottom: none !important;
+}
+
+/* Body cells */
+html body table tbody td {
+  padding: 13px 16px !important;
+  font-size: 12.5px !important;
+  line-height: 1.4;
+  color: rgba(26, 26, 24, 0.68) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+html body table tbody tr.bg-blue-50,
+html body table tbody tr.bg-blue-50 > td {
+  background-color: rgba(26, 26, 24, 0.04) !important;
+}
+
+/* Checkboxes: 18px rounded square, ink when checked */
+html body button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(26, 26, 24, 0.22) !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+html body button[role="checkbox"][data-state="checked"],
+html body button[role="checkbox"][data-state="indeterminate"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Status pills (StatusBadge / status-badge variants), keyed by their legacy fill */
+html body [class*="bg-[#C7EDDA]"][class*="border-[#C7EDDA]"],
+html body [class*="bg-[#F2EBC9]"][class*="border-[#F2EBC9]"],
+html body [class*="bg-[#F2C8C4]"][class*="border-[#F2C8C4]"],
+html body [class*="bg-[#DBE7FF]"][class*="border-[#DBE7FF]"],
+html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 4px 10px !important;
+  justify-content: center !important;
+  text-align: center !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  gap: 5px;
+}
+html body [class*="bg-[#C7EDDA]"][class*="border-[#C7EDDA]"] {
+  background-color: rgba(18, 161, 80, 0.12) !important;
+  color: #0e7f3f !important;
+}
+html body [class*="bg-[#F2EBC9]"][class*="border-[#F2EBC9]"] {
+  background-color: rgba(242, 163, 18, 0.3) !important;
+  color: #8a5b00 !important;
+}
+html body [class*="bg-[#F2C8C4]"][class*="border-[#F2C8C4]"] {
+  background-color: rgba(229, 72, 77, 0.12) !important;
+  color: #a32126 !important;
+}
+html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body [class*="bg-[#DBE7FF]"][class*="border-[#DBE7FF]"] {
+  background-color: rgba(47, 111, 224, 0.12) !important;
+  color: #2556b0 !important;
+}
+
+/* ============================================================
+   TABLE HEADER — specificity boost
+   Older layers above use `[class*="table"] th:not(.analytics-header)`
+   (0,2,1), which beat the header rules written earlier and kept the
+   old 48px / sentence-case header. Doubling the :not() lifts this
+   one above all of them. Wireframe .tr.h: 11px 20px, 10.5px / 700 /
+   .09em uppercase, surface #F5F4F0, no divider under the header.
+   ============================================================ */
+html body table thead th:not(.analytics-header):not(.analytics-header),
+html body table th:not(.analytics-header):not(.analytics-header),
+html body [class*="table"] th:not(.analytics-header):not(.analytics-header) {
+  height: auto !important;
+  padding: 11px 16px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.48) !important;
+  background-color: #f5f4f0 !important;
+  border-bottom: none !important;
+}
+/* Header label / sort-arrow wrappers must follow the th, not their own sizes */
+html body table thead th:not(.analytics-header) > *,
+html body table thead th:not(.analytics-header) span,
+html body table thead th:not(.analytics-header) div {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: inherit !important;
+  color: inherit !important;
+}
+
+/* Row separators + cell rhythm (wireframe .tr: 13px 20px, 1px rgba(26,26,24,.08)) */
+html body table tbody tr td:not([colspan]),
+html body [class*="table"] tbody tr td:not([colspan]) {
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.08) !important;
+}
+html body table tbody tr:last-child td:not([colspan]) {
+  border-bottom: none !important;
+}
+
+/* ============================================================
+   ADD / CREATE FORM PAGES — wireframe card sections
+   "ASSET CATEGORY", "ATTACHMENTS" … section cards used a coral left
+   bar, coral heading and coral icon chip. Now: hairline-bordered
+   16px card, ink heading, grey icon chip, soft upload dropzone.
+   Keyed on the legacy section classes so every Add* page follows.
+   ============================================================ */
+
+/* Card shell */
+html body div:has(> [class*="border-l-4"][class*="border-l-[#DA7756]"]),
+html body div:has(> [class*="border-l-4"][class*="border-l-[#C72030]"]) {
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+/* Coral left bar → none */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] {
+  border-left-width: 0 !important;
+}
+/* Section title: ink, 14px semibold */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"] [class*="text-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] [class*="text-[#C72030]"] {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+/* Icon chip: coral disc → soft grey */
+html body [class*="border-l-4"][class*="border-l-[#DA7756]"] span[class*="bg-[#DA7756]"],
+html body [class*="border-l-4"][class*="border-l-[#C72030]"] span[class*="bg-[#C72030]"] {
+  background-color: #f5f4f0 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Remaining coral text on forms (labels, links, "Choose File") → primary ink */
+html body .text-\[\#DA7756\],
+html body [class*="text-[#DA7756]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Upload dropzones — wireframe .dropzone */
+html body .border-dashed.border-gray-300,
+html body .border-dashed.border-gray-200 {
+  border-width: 2px !important;
+  border-color: #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent;
+  transition: all 0.16s;
+}
+html body .border-dashed.border-gray-300:hover,
+html body .border-dashed.border-gray-200:hover {
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  background-color: #fdfdfb;
+}
+html body .border-dashed button[class*="bg-[#f6f4ee]"],
+html body .border-dashed button[class*="bg-[#F6F4EE]"] {
+  background-color: #f5f4f0 !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+}
+html body .border-dashed button svg {
+  color: currentColor !important;
+}
+
+/* Coral focus rings → ink ring */
+html body [class*="focus:ring-[#DA7756]"]:focus {
+  --tw-ring-color: rgba(var(--color-primary-rgb), 0.25) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   SEGMENTED TABS — extended to every plain / grey tab list
+   (Asset details: "Asset Info | AMC Details | …" and the inner
+   "Analytics | Asset Details" switcher). Excludes lists that opt out
+   of a track (transparent underline tabs, rounded-full pills).
+   ============================================================ */
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  height: auto !important;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"] {
+  flex: none !important;
+  min-width: 0;
+  gap: 7px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"]:hover {
+  color: #1a1a18 !important;
+}
+html body [role="tablist"]:is(
+    [class*="bg-gray-50"],
+    :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
+  ) [role="tab"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1a1a18 !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+
+/* ============================================================
+   LEGACY BEIGE / GREY SURFACES → wireframe surface + hairline
+   (detail-page section bars, panels, dividers)
+   ============================================================ */
+html body .bg-\[\#E5E0D3\],
+html body .bg-\[\#F6F7F7\] {
+  background-color: #f5f4f0 !important;
+}
+html body .bg-\[\#EDEAE3\] {
+  background-color: #efede6 !important;
+}
+html body .border-\[\#D9D9D9\],
+html body .border-\[\#EDEAE3\] {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — stat tiles, icon chips, selected rings, switchers
+   ============================================================ */
+/* Selected-state rings that were hard red */
+html body .ring-red-600,
+html body .ring-red-500,
+html body [class*="ring-[#C72030]"] {
+  --tw-ring-color: var(--color-primary) !important;
+}
+html body .border-red-600,
+html body .border-red-500 {
+  border-color: var(--color-primary) !important;
+}
+/* Icon chips with inline beige fill → white chip, soft-ink icon (wireframe .pic) */
+html body [style*="237, 234, 227"] {
+  background: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body [style*="237, 234, 227"] svg,
+html body [style*="237, 234, 227"] svg path,
+html body [style*="237, 234, 227"] svg circle {
+  stroke: rgba(26, 26, 24, 0.68) !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+html body [style*="237, 234, 227"] svg [fill="#C72030"] {
+  fill: rgba(26, 26, 24, 0.68) !important;
+}
+html body .bg-white\/20 svg,
+html body .bg-white\/20 {
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+/* Switcher triggers must not stretch full width / stack */
+html body [role="tablist"] [role="tab"].w-full {
+  width: auto !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — drop the outer white card around the tab set
+   The wireframe lays tabs and content straight on the canvas.
+   Targets any white bordered card whose direct child is a Tabs root
+   holding a tablist (Asset details, and every detail page built alike).
+   ============================================================ */
+html body div.bg-white.rounded-lg.border:has(> [data-orientation="horizontal"] > [role="tablist"]) {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* ============================================================
+   DETAIL PAGES — alignment & card surfaces (wireframe asset details)
+   Tab panels no longer inset their content, so the inner switcher,
+   config card and tiles share the left edge of the tab bar.
+   ============================================================ */
+html body [role="tabpanel"][class*="p-4"][class*="sm:p-6"] {
+  padding: 20px 0 0 !important;
+}
+/* Big shadowed content cards → white hairline card, 16px radius */
+html body div.rounded-xl.border.shadow-lg {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(26, 26, 24, 0.09) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+html body div.rounded-xl.border.shadow-lg .border-gray-300 {
+  border-color: rgba(26, 26, 24, 0.08) !important;
+}
+/* Stat tiles on detail pages: hairline instead of heavy border, 16px corners */
+html body div.border.bg-\[\#F6F4EE\] {
+  border: none !important;
+  border-radius: 16px !important;
+}
+
+/* ============================================================
+   MODULE BAR (Transitioning … Accounting) — wireframe .modrow
+   Tabs sit left-aligned in a tight row (2px gap, 7px 12px pills)
+   instead of being spread edge-to-edge; bar is 48px with a hairline.
+   Also clears the grey spacer strip above the sidebar section label.
+   ============================================================ */
+html body div.fixed.top-16.h-12 > div {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+html body div.fixed.top-16.h-12 div.flex[class*="justify-"] {
+  justify-content: flex-start !important;
+  width: max-content !important;
+  max-width: none !important;
+  gap: 2px !important;
+}
+html body div.fixed.top-16.h-12 div.flex[class*="justify-"] > button {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+html body div.fixed.top-16.h-12 button.flex-shrink-0 {
+  height: auto !important;
+  line-height: 1.4;
+}
+/* Sidebar: empty spacer above the section label was picking up the grey surface */
+html body div.fixed.left-0.top-0 > div > div.w-full.h-4,
+html body div.fixed.left-0.top-0 div.w-full.h-4[class*="bg-[#f6f4ee]"] {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* ============================================================
+   PRIMARY BUTTONS — disabled state (e.g. login "Continue")
+   A disabled primary button stays the primary ink colour at reduced
+   opacity with a clearly readable white label, and does not lift.
+   ============================================================ */
+html body button[class*="bg-[#C72030]"]:disabled,
+html body button.bg-brand:disabled,
+html body button[class*="bg-[#DA7756]"]:disabled {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+html body button[class*="bg-[#C72030]"]:disabled:hover,
+html body button.bg-brand:disabled:hover {
+  background-color: var(--color-primary) !important;
+}
+/* Login-page primary buttons: full-width, 12px radius, 600 label */
+html body button[class*="bg-[#C72030]"][class*="w-full"][class*="h-12"] {
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  color: #ffffff !important;
+}
+
+
+/* ============================================================
+   FORM FIELD RADIUS — consistent with the 16px cards
+   MUI outlined fields (TextField / Select / Autocomplete / pickers),
+   shadcn inputs, textareas and select triggers all share one token.
+   ============================================================ */
+html body .MuiOutlinedInput-root,
+html body .MuiOutlinedInput-notchedOutline,
+html body .MuiInputBase-root.MuiOutlinedInput-root,
+html body .MuiAutocomplete-inputRoot {
+  border-radius: var(--radius-input) !important;
+}
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput),
+html body textarea:not(.MuiInputBase-input),
+html body select,
+html body button[role="combobox"] {
+  border-radius: var(--radius-input) !important;
+}
+/* Label placement / notch: see "MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL"
+   at the end of this file (labels sit above the box, so the notch stays closed). */
+
+
+/* ============================================================
+   FORM FIELD FOCUS — softer than full ink
+   Previously focus used the solid primary ink + 2px ring, which read
+   as a heavy black box. Now a mid-grey border with a faint halo.
+   ============================================================ */
+html body input:not([type="checkbox"]):not([type="radio"]):focus,
+html body input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+html body textarea:focus,
+html body textarea:focus-visible,
+html body select:focus,
+html body button[role="combobox"]:focus,
+html body button[role="combobox"][data-state="open"] {
+  border-color: var(--color-input-focus-border) !important;
+  box-shadow: 0 0 0 4px var(--color-input-focus-ring) !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-width: 0px !important;
+  outline: none !important;
+}
+html body .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+html body .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-input-focus-border) !important;
+  border-width: 1px !important;
+}
+html body .MuiOutlinedInput-root.Mui-focused {
+  box-shadow: 0 0 0 4px var(--color-input-focus-ring) !important;
+  border-radius: var(--radius-input);
+}
+
+/* Dashboard/stat card glyphs use neutral ink, not legacy orange accents. */
+html body [class*="bg-[#C4B89D54]"] svg,
+html body [class*="bg-[#CDCAF5]"] svg,
+html body [class*="bg-[#76CDC180]"] svg,
+html body [class*="bg-[#E3909060]"] svg,
+html body [class*="bg-[#85BDF660]"] svg,
+html body [class*="bg-[#FFDD9480]"] svg,
+html body [class*="bg-[#E6DDCF]"] svg,
+html body .figma-card-icon {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+  fill: #ffffff !important;
+}
+
+/* Normalize legacy orange icon glyphs across create/edit pages and FM. */
+html body #root svg[class~="text-[#DA7756]" i]:not(.recharts-surface),
+html body #root [class~="text-[#DA7756]" i] svg:not(.recharts-surface),
+html body #root svg[color="#DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color: #DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color:#DA7756" i]:not(.recharts-surface),
+html body #root svg[style*="color: rgb(217, 119, 87)" i]:not(.recharts-surface),
+html body #root svg[style*="color:rgb(217, 119, 87)" i]:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+  fill: #ffffff !important;
+}
+
+html body #root svg:not(.recharts-surface):not([class*="recharts"]) [stroke="#DA7756" i],
+html body #root svg:not(.recharts-surface):not([class*="recharts"]) [fill="#DA7756" i],
+html body #root svg[stroke="#DA7756" i]:not(.recharts-surface),
+html body #root svg[fill="#DA7756" i]:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: var(--color-text) !important;
+  fill: #ffffff !important;
+}
+
+/* Primary action icons stay white even when legacy SVG paths hardcode red. */
+html body button.bg-brand svg,
+html body button[class~="bg-brand"] svg {
+  color: #ffffff !important;
+}
+html body button.bg-brand svg [fill="#C72030" i],
+html body button[class~="bg-brand"] svg [fill="#C72030" i],
+html body button.bg-brand svg [fill="#C62828" i],
+html body button[class~="bg-brand"] svg [fill="#C62828" i] {
+  fill: #ffffff !important;
+}
+
+/* Asset details View QR uses a custom SVG with this unique viewBox. */
+html body #root button svg[viewBox="0 0 14 15"],
+html body #root button svg[viewBox="0 0 14 15"] path {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* QR dialog Download uses the shared outline Button but renders as a CTA. */
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download) {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download):hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(img[alt$="QR Code"]) button:has(svg.lucide-download) svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* ============================================================
+   GLOBAL LEGACY-COLOUR MAP  (single place to retune the app)
+   Pages hardcode the old coral / red / beige as Tailwind arbitrary
+   classes (bg-[#DA7756], bg-[#fef6f4], …). Every one of them is
+   mapped here to a token from :root, so editing the tokens above
+   (--color-primary, --color-surface, --color-line, …) restyles all
+   modules — no per-page edits needed.
+   ============================================================ */
+
+/* Coral solids (numbered section discs "1 2 3", step chips, CTAs) → primary */
+html body .bg-\[\#DA7756\],
+html body .bg-\[\#da7756\] {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body .hover\:bg-\[\#DA7756\]:hover,
+html body .hover\:bg-\[\#da7756\]:hover,
+html body [class*="hover:bg-[#DA7756]"]:hover,
+html body [class*="hover:bg-[#C4623C]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+html body .border-\[\#DA7756\],
+html body .border-\[\#da7756\],
+html body [class*="border-[#DA7756]"] {
+  border-color: var(--color-primary) !important;
+}
+html body [class*="ring-[#DA7756]"],
+html body [class*="focus:ring-[#DA7756]"]:focus {
+  --tw-ring-color: rgba(var(--color-primary-rgb), 0.25) !important;
+}
+html body [class*="hover:text-[#DA7756]"]:hover {
+  color: var(--color-primary) !important;
+}
+
+/* Coral / peach tints → neutral surface */
+html body .bg-\[\#fef6f4\],
+html body .bg-\[\#fffaf6\],
+html body .bg-\[\#fdf0ea\],
+html body .bg-\[\#FEF6F4\],
+html body .bg-\[\#FFFAF6\],
+html body .bg-\[\#FDF0EA\],
+html body .bg-red-50,
+html body .bg-orange-50 {
+  background-color: var(--color-surface) !important;
+}
+
+/* Card header strips & grey panels: wireframe surface + hairline divider */
+html body .bg-\[\#F6F7F7\],
+html body .bg-gray-50,
+html body .bg-gray-100 {
+  background-color: var(--color-surface);
+}
+html body [class*="border-[#D9D9D9]"],
+html body [class*="border-[#D5DbDB]"],
+html body [class*="border-[#d5dbdb]"],
+html body .border-gray-200,
+html body .border-gray-300 {
+  border-color: var(--color-line) !important;
+}
+
+/* Number discs written as a circle with a coral/red fill, however it's spelled */
+html body [class*="rounded-full"][class*="bg-[#C72030]"],
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body [class*="rounded-full"][class*="bg-[#C72030]"] > span,
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] > span,
+html body [class*="rounded-full"][class*="bg-[#C72030]"] svg,
+html body [class*="rounded-full"][class*="bg-[#DA7756]"] svg {
+  color: var(--color-numbered-badge-fg) !important;
+}
+
+/* Section headings that were coral → ink (h1 titles, card titles) */
+html body h1[class*="text-[#DA7756]"],
+html body h2[class*="text-[#DA7756]"],
+html body h3[class*="text-[#DA7756]"],
+html body h2[class*="text-[#C72030]"],
+html body h1[class*="text-[#C72030]"] {
+  color: var(--color-text) !important;
+}
+
+/* Icon-only ghost buttons in table rows (eye / edit / delete) → wireframe .gbtn */
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]),
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]) {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--color-ink-48) !important;
+  box-shadow: none !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]) svg,
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]) svg {
+  color: var(--color-ink-48) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]):hover,
+html body td button[class*="h-7"][class*="w-7"][class*="p-0"]:not([class*=" bg-"]):hover {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+html body td button[class*="h-8"][class*="w-8"][class*="p-0"]:not([class*=" bg-"]):hover svg {
+  color: var(--color-text) !important;
+}
+
+/* Disabled form fields: surface fill, soft-ink text (edit pages) */
+html body .MuiOutlinedInput-root.Mui-disabled,
+html body input:disabled:not([type="checkbox"]):not([type="radio"]),
+html body textarea:disabled,
+html body button[role="combobox"]:disabled {
+  background-color: var(--color-surface) !important;
+  -webkit-text-fill-color: var(--color-ink-48) !important;
+}
+html body .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-line) !important;
+}
+html body .ticket-create-form .MuiOutlinedInput-root.Mui-disabled {
+  background-color: var(--color-surface) !important;
+}
+html body .ticket-create-form .MuiOutlinedInput-root.Mui-disabled .MuiInputBase-input {
+  background-color: transparent !important;
+}
+
+/* ============================================================
+   TABLES — horizontal hairlines only (wireframe .tr)
+   Rows are separated by a bottom hairline; cells never draw
+   vertical dividers, whatever border classes a page's cells carry.
+   ============================================================ */
+html body .table-container table th,
+html body .table-container table td,
+html body table.enhancedTable th,
+html body table.enhancedTable td {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+
+/* Header only: a crisp 1px white divider between column heads on the
+   surface-grey header row (body rows stay divider-free). */
+html body .table-container table thead th:not(:last-child),
+html body table.enhancedTable thead th:not(:last-child) {
+  border-right: 1px solid #ffffff !important;
+}
+
+/* Same table rules for EnhancedTaskTable (wrapper is div.enhancedTable,
+   not .table-container) — body: no vertical dividers, header: white divider. */
+html body div.enhancedTable table th,
+html body div.enhancedTable table td {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+html body div.enhancedTable table thead th:not(:last-child) {
+  border-right: 1px solid #ffffff !important;
+}
+
+/* Row-action icon buttons (eye / edit / delete in table rows): no filled
+   background at rest, soft-ink icon, grey chip on hover. Matches wireframe .gbtn.
+   Beats the legacy bg-[#C72030] primary-button rules, which also matched
+   "hover:bg-[#C72030]/10" in these buttons' class strings. */
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand),
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand),
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-ink-68) !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand) svg,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand) svg,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand) svg {
+  color: var(--color-ink-68) !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand):hover,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand):hover,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand):hover {
+  background-color: var(--color-surface) !important;
+}
+html body table td button[class*="h-8"][class*="w-8"][class*="p-0"]:not(.bg-brand):hover svg,
+html body table td button[class*="h-7"][class*="w-7"][class*="p-0"]:not(.bg-brand):hover svg,
+html body table td button[class*="h-9"][class*="w-9"][class*="p-0"]:not(.bg-brand):hover svg {
+  color: var(--color-text) !important;
+}
+
+/* ============================================================
+   PAGE CANVAS — every module page sits on the same canvas colour
+   Pages hardcode a beige/grey root (bg-[#F6F4EE], bg-gray-50, bg-[#fafafa]).
+   The stat-card rule above maps those to the grey *surface*, which turned
+   whole pages grey. A page root (full-height wrapper, or the direct child
+   of <main>) is canvas, not surface.
+   ============================================================ */
+html body [class*="min-h-screen"]:is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"],
+    [class*="bg-[#F6F7F7]"], .bg-gray-50, .bg-gray-100, .bg-slate-50),
+html body main > :is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"], .bg-gray-50),
+html body main > div > :is(
+    [class*="bg-[#F6F4EE]"], [class*="bg-[#f6f4ee]"],
+    [class*="bg-[#fafafa]"], [class*="bg-[#FAFAFA]"], .bg-gray-50) {
+  background-color: var(--color-bg) !important;
+}
+
+/* ============================================================
+   BUTTONS — text must always be readable on the fill
+   1. fm-button-brand (ghost/outline variants forced to the primary fill)
+      carries white text.
+   2. Legacy outline buttons ("Cancel": border-[#C72030] text-[#C72030]
+      hover:bg-[#C72030]/10) were caught by the substring rule for
+      bg-[#C72030] and turned into dark-on-dark. Restore them to a white
+      outline button.
+   ============================================================ */
+html body button[class*="fm-button-brand"],
+html body a[class*="fm-button-brand"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body button[class*="fm-button-brand"] svg,
+html body a[class*="fm-button-brand"] svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+html body button[class*="fm-button-brand"]:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  color: #ffffff !important;
+}
+/* Re-assert the white label: the stat-card ink rule above
+   (html body [class*="bg-[#F6F4EE]"] .text-sm.font-medium, 0-3-2) outranks the
+   fm-button-brand rules (0-1-3 / 0-2-1) and repaints brand-button text with
+   rgba(26,26,24,0.68) — ink-on-ink, so the label is invisible at rest and only
+   appears on hover (when the index.css hover rule, 0-4-1, finally wins).
+   Covers every fm-button-brand control carrying shadcn's text-sm/text-xs
+   font-medium label, in any container (e.g. CRM Wallet Point Expiry Edit). */
+html body button[class*="fm-button-brand"].text-sm.font-medium,
+html body button[class*="fm-button-brand"].text-xs.font-medium,
+html body a[class*="fm-button-brand"].text-sm.font-medium,
+html body a[class*="fm-button-brand"].text-xs.font-medium {
+  color: #ffffff !important;
+}
+
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) {
+  background-color: #ffffff !important;
+  border: 1px solid var(--color-line) !important;
+  color: var(--color-text) !important;
+}
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]):hover {
+  background-color: var(--color-surface) !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  color: var(--color-text) !important;
+}
+html body button:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-[#da7756]"]):is([class*="text-[#C72030]"], [class*="text-[#DA7756]"], [class*="text-[#da7756]"]) svg {
+  color: var(--color-text) !important;
+}
+
+/* Inline-styled coral/red fills (style={{ backgroundColor: "#C72030" }}) → primary + white label */
+html body button[style*="rgb(199, 32, 48)"],
+html body button[style*="rgb(218, 119, 86)"],
+html body button[style*="#C72030"],
+html body button[style*="#DA7756"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Section letter / number discs (beige disc + coral glyph) → soft grey disc, ink glyph */
+html body [class*="rounded-full"][class*="bg-[#E5E0D3]"] {
+  background-color: var(--color-surface) !important;
+  color: var(--color-ink-68) !important;
+}
+html body [class*="rounded-full"][class*="bg-[#E5E0D3]"] svg {
+  color: var(--color-ink-68) !important;
+}
+
+/* ============================================================
+   INLINE CORAL (#DA7756) + TAILWIND ORANGE → theme tokens
+   style={{ color: '#da7756' }} / bg-orange-500 etc. were still the old
+   coral. Text/borders/fills now follow --color-primary; the tier/"reward"
+   oranges follow --color-accent so they stay on-palette.
+   ============================================================ */
+html body [style*="color: rgb(218, 119, 86)"],
+html body [style*="color:rgb(218, 119, 86)"],
+html body [style*="color: #da7756" i],
+html body [style*="color:#da7756" i] {
+  color: var(--color-primary) !important;
+}
+html body [style*="background-color: rgb(218, 119, 86)"],
+html body [style*="background: rgb(218, 119, 86)"],
+html body [style*="background-color: #da7756" i],
+html body [style*="background:#da7756" i],
+html body [style*="background: #da7756" i] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff;
+}
+html body [style*="border"][style*="rgb(218, 119, 86)"],
+html body [style*="border"][style*="#da7756" i] {
+  border-color: var(--color-line) !important;
+}
+html body .text-orange-400, html body .text-orange-500,
+html body .text-orange-600, html body .text-orange-700 {
+  color: var(--color-accent) !important;
+}
+html body .bg-orange-400, html body .bg-orange-500, html body .bg-orange-600 {
+  background-color: var(--color-accent) !important;
+  color: #ffffff;
+}
+html body .hover\:bg-orange-600:hover, html body .hover\:bg-orange-500:hover {
+  background-color: var(--color-accent) !important;
+  filter: brightness(0.94);
+}
+html body .border-orange-400, html body .border-orange-500, html body .border-orange-600 {
+  border-color: var(--color-accent) !important;
+}
+
+/* Drawer / dialog title bars: hairline divider, never a coloured rule */
+html body [role="dialog"] [class*="border-b-2"],
+html body [role="dialog"] [class*="border-b-[#"],
+html body [role="dialog"] [class*="border-b-[#"][class*="border-b"],
+html body [class*="fixed"][class*="right-0"] [class*="border-b-2"] {
+  border-bottom: 1px solid var(--color-line) !important;
+}
+
+/* Sprint details page icons use the page-specific FolderKanban icon as scope. */
+html body main:has(svg.lucide-folder-kanban) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] {
+  color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#E95420]"] > span.absolute {
+  background-color: var(--color-text) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"] {
+  color: var(--color-ink-48) !important;
+}
+html body main:has(svg.lucide-folder-kanban) button[class*="text-[#323232]"]:hover {
+  color: var(--color-ink-48) !important;
+}
+
+html body [role="dialog"]:has(hr[class*="border-[#E95420]"])
+  hr[class*="border-[#E95420]"] {
+  border-color: var(--color-text) !important;
+}
+
+/* Project task details: keep page icons on the ink palette. */
+html body main:has(svg.lucide-copy) svg:not(.recharts-surface) {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Workflow Status: black primary trigger with a readable white label/icon. */
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body main:has(svg.lucide-copy)
+  button[role="combobox"][class*="bg-[#C72030]"] svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+/* Legacy orange section icons resolve to black ink. */
+html body #root main svg[color="#E95420" i],
+html body #root main svg[stroke="#E95420" i] {
+  color: var(--color-text) !important;
+  stroke: currentColor !important;
+}
+
+/* Red-outline Cancel buttons use black text on their light background. */
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]),
+html body #root main button[class*="border-[#C72030]" i]:not([class*="bg-[#C72030]" i]) * {
+  color: var(--color-text) !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+}
+
+/* Issue detail tabs: active tab in ink, inactive tabs in muted grey. */
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"][class*="border-[#E95420]"] {
+  color: var(--color-text) !important;
+  border-color: var(--color-text) !important;
+}
+html body #root main div[class*="gap-10"][class*="overflow-x-auto"]
+  > div[class*="text-[14px]"]:not([class*="border-[#E95420]"]) {
+  color: var(--color-ink-48) !important;
+}
+
+/* Notification count badge: styled once, in the "Top header" section
+   (coral #E8916F pill, white count). */
+
+/* Location Account company logo dropzone outer border. */
+html body #root main [role="tabpanel"][id$="-content-company"]
+  > div [class~="border-orange-300"] {
+  border-color: var(--color-text) !important;
+}
+
+/* User profile fallback avatar: replace amber tones with black and grey. */
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"] {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--color-primary) 0%,
+    var(--color-ink-48) 100%
+  ) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 {
+  background-color: var(--color-surface) !important;
+}
+html body #root main div[class*="bg-gradient-to-br"][class*="from-amber-200"][class*="to-amber-300"]
+  > div.bg-amber-100 > div.bg-amber-50 {
+  background-color: var(--color-hover) !important;
+}
+
+/* VI user profile initials circle: replace coral gradient with black. */
+html body #root main
+  div[class*="bg-gradient-to-br"][class*="from-[#DA7756]"][class*="to-[#b85a3d]"] {
+  background-color: var(--color-primary) !important;
+  background-image: none !important;
+}
+
+/* Add Gate number badge in the TAB CONFIGURATION header. */
+html body #root main form.space-y-6
+  > div.bg-white.rounded-lg.border.border-gray-200.overflow-hidden
+  > div.px-6.py-4[class*="bg-[#F2EEE9]"]
+  > div[class*="bg-[#C72030]"][class*="rounded-full"] {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Payments Made create form: red section icons use black ink. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  svg[class*="text-[#db4a4a]" i] {
+  color: var(--color-primary) !important;
+  stroke: currentColor !important;
+}
+
+/* Vendor Name select outline and dropdown arrow. */
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root:hover
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline,
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiOutlinedInput-root.Mui-error
+  .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+}
+html body #root main:has([role="tab"][class*="data-[state=active]:text-red-700"])
+  div[class~="bg-[#f9f9fa]"] > div.mt-2 .MuiSelect-icon {
+  color: var(--color-primary) !important;
+}
+
+/* Selected Bill Payment tab: black label and underline. */
+html body #root main
+  [role="tab"][data-state="active"][class*="data-[state=active]:text-red-700"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ============================================================
+   BATCH — outline-button radius, primary-button icons, section cards,
+   number discs, plain-button tab bars, stat icon wells, dropzones
+   (all keyed on legacy markup; tune via the :root tokens)
+   ============================================================ */
+
+/* 1. Every text/outline button shares the primary button radius
+   (Reset / Back / Cancel / "Save And Create New Audit" were square). */
+html body button:not([role="tab"]):not([role="combobox"]):not([role="switch"]):not([role="checkbox"]):not([role="radio"]):not([role="option"]):not([class*="rounded-full"]):not([class*="Mui"]):not([data-radix-collection-item]),
+html body a[class*="fm-button-fix"],
+html body [role="button"].fm-button-fix {
+  border-radius: var(--radius-button) !important;
+}
+
+/* 2. Icons inside filled primary buttons (the "+" before Action) must show.
+   Some legacy rules recoloured the glyph to the fill colour. */
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg,
+html body button:is(.bg-brand, .bg-primary, [class*="bg-[#C72030]"], [class*="bg-[#DA7756]"], [class*="bg-[#da7756]"], [class*="fm-button-brand"]) svg * {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 3. Section cards: the card is white; only the header strip is the grey surface */
+html body [class*="bg-[#F6F7F7]"][class*="border-[#D9D9D9]"],
+html body [class*="bg-[#F6F7F7]"][class*="mb-6"] {
+  background-color: #ffffff !important;
+}
+
+/* 4. Numbered section discs: always the numbered-badge tokens
+   (the avatar/dot rules for w-8/w-10 discs were winning with coral) */
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full,
+html body .w-8.h-8.bg-\[\#DA7756\].rounded-full,
+html body .w-6.h-6.bg-\[\#DA7756\].rounded-full {
+  background-color: var(--color-numbered-badge-bg) !important;
+  color: var(--color-numbered-badge-fg) !important;
+}
+html body .w-8.h-8.bg-\[\#C72030\].rounded-full > *,
+html body .w-10.h-10.bg-\[\#C72030\].rounded-full > *,
+html body .w-6.h-6.bg-\[\#C72030\].rounded-full > * {
+  color: var(--color-numbered-badge-fg) !important;
+}
+
+/* 5. Plain-button tab bars (flex-1 buttons in a bordered strip) → segmented switcher
+   (Survey mapping details: "Survey Information | Questions | Location Details") */
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) {
+  display: inline-flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100%;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button {
+  flex: none !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button:hover {
+  color: var(--color-text) !important;
+}
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-[#C72030]"],
+html body div.flex.w-full.border.overflow-hidden:has(> button.flex-1) > button[class*="bg-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+/* A hidden Radix TabsList (kept only to sync state) must stay hidden — the
+   segmented rules above forced it to display as an empty pill. */
+html body [role="tablist"].hidden,
+html body [role="tablist"][class*="hidden"]:not([class*="overflow-hidden"]) {
+  display: none !important;
+}
+
+/* 6. Stat-tile icon wells with a coral tint → white tile, ink glyph (wireframe .pic) */
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"],
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+html body [class*="bg-[#F6F4EE]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg,
+html body [class*="bg-[#f6f4ee]"] :is(.w-14.h-14, .w-12.h-12, .w-10.h-10)[class*="bg-[#C72030"] svg {
+  color: var(--color-ink-68) !important;
+  stroke: currentColor !important;
+}
+
+/* 7. Coral/red dashed dropzones → the soft wireframe dropzone */
+html body .border-dashed:is([class*="border-[#C72030]"], [class*="border-[#DA7756]"], [class*="border-red-"]) {
+  border-width: 2px !important;
+  border-color: #ebe9e2 !important;
+  border-radius: 12px !important;
+  background-color: transparent !important;
+}
+
+/* MUI text/outlined/contained buttons (dialog actions) share the same radius */
+html body .MuiButton-root {
+  border-radius: var(--radius-button) !important;
+}
+
+/* ============================================================
+   PINK/RED SHADOWS (shadow-red-*, shadow-rose-*, shadow-pink-*)
+   Legacy cards/buttons tint their shadow with shadow-red-200 etc.,
+   which renders as a pink glow. Remove that shadow effect globally.
+   ============================================================ */
+[class*="shadow-red-"],
+[class*="shadow-rose-"],
+[class*="shadow-pink-"] {
+  box-shadow: none !important;
+}
+
+/* ============================================================
+   ADD-STYLE PILL BUTTONS ("Add Question", "Add Section", …)
+   Buttons carrying gap-1 + bg-[#f6f4ee] + hover:bg-[#f0ebe0] become a
+   solid black fill with white label and white "+" icon.
+   (gap-1 keeps this scoped to the Add Question/Add Section style and
+   the 3-attribute selector out-specifies the generic
+   [class*="bg-[#f6f4ee]"] .text-sm.font-medium ink rule above; placed
+   last so it also beats the equal-specificity .border-dashed rule.)
+   ============================================================ */
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"],
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"]:hover,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+html body button[class*="gap-1"][class*="bg-[#f6f4ee]"][class*="hover:bg-[#f0ebe0]"] svg,
+html body button[class*="gap-1"][class*="bg-[#F6F4EE]"][class*="hover:bg-[#f0ebe0]"] svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Permit closure approval actions: both buttons use the same green utility classes. */
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600 {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.gap-4.justify-center.mt-4:has(> button.bg-green-600) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+}
+
+/* Pending-approvals count pill. */
+html body #root span[class*="min-w-[20px]"][class*="rounded-full"][class*="bg-[#C72030]"] {
+  background-color: #000000 !important;
+}
+
+/* Customer Bills filter dialog Apply button. */
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[class~="bg-[#F2EEE9]"]:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+
+/* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {
+  border: 1px solid #000000 !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  flex-shrink: 0 !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Visitor table Details action: force the eye icon to render in black. */
+html body #root main button[title="View visitor details"] {
+  color: #000000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg {
+  display: block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button[title="View visitor details"] svg * {
+  display: initial !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Work Order attachment dropzone: replace the yellow dashed border with black. */
+html body #root main .border-dashed.border-yellow-400,
+html body #root main .border-dashed.border-yellow-400:hover {
+  border-color: #000000 !important;
+}
+
+/* Material PR details: black Approve action next to the Reject button. */
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600 {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+html body #root main .flex.items-center.justify-center.gap-4:has(> button.bg-green-600 + button[class*="bg-[#C72030]"]) > button.bg-green-600:hover {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* QR Fields Setup: style Existing/Custom Fields like the top-level setup tabs. */
+html body #root main .flex.gap-0.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.gap-0.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* CRM Point Expiry rule Edit action: keep its existing text label visible. */
+html body #root main button.fm-button-brand:has(svg.lucide-pen) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body #root main button.fm-button-brand:has(svg.lucide-pen) svg {
+  flex-shrink: 0 !important;
+}
+
+/* Waste Generation Setup: match the Category/Subcategory/Landlord tabs to the setup pill tabs. */
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button {
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .flex.border-b.border-gray-200.bg-white.rounded-t-lg > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Visitor Management setup: match the four tabs to the compact setup-tab style. */
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background-color: var(--color-surface) !important;
+  overflow-x: auto !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button {
+  flex: 0 0 auto !important;
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button[class~="border-brand"] {
+  background-color: #ffffff !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body #root main .bg-white.rounded-lg.border.border-gray-200:has(> .flex.border-b.border-gray-200 > button:nth-child(4)) > .flex.border-b.border-gray-200 > button:not([class~="border-brand"]):hover {
+  color: var(--color-text) !important;
+}
+
+/* Purchase Order details: keep filled black actions black on hover and focus. */
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"],
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"]:is(:hover, :focus, :focus-visible),
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"]:is(:hover, :focus, :focus-visible) {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+}
+html body #root main:has(svg.lucide-shopping-cart) button[style*="rgb(218, 119, 86)"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#DA7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[style*="#da7756"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#DA7756]"] svg,
+html body #root main:has(svg.lucide-shopping-cart) button[class*="bg-[#da7756]"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Invoice Details report heading icon: override its inline red color. */
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+html body #root main:has(svg.lucide-notepad-text) svg.lucide-notepad-text * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* ============================================================
+   MUI OUTLINED FIELDS — LABEL ABOVE THE CONTROL
+   Every MUI outlined TextField / Select / Autocomplete / date or
+   time picker shows its label above the box instead of inside the
+   border notch (Business Genie form control):
+     label   12px / 600 Poppins, ink-soft, 6px gap to the control
+     control 44px min height, 12px radius, 1px hairline, 13.5px / 500
+     textarea 88px min height, 12px 14px padding
+   Pure CSS — value, validation, focus and disabled behaviour are
+   untouched. Opt a single field out with className="mui-floating-label"
+   on the TextField / FormControl.
+   ============================================================ */
+
+/* Label: out of the border, into the flow above the control */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  max-width: 100% !important;
+  width: auto !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--color-ink-68) !important;
+  z-index: auto !important;
+  transition: none !important;
+}
+/* Label keeps its colour on focus (no brand flash); error / disabled stay readable */
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-focused {
+  color: var(--color-ink-68) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-error {
+  color: var(--color-danger) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined.Mui-disabled {
+  color: var(--color-ink-48) !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outlined .MuiFormLabel-asterisk {
+  color: var(--color-danger) !important;
+}
+
+/* The field wrapper must grow to hold label + control. Many forms pin the
+   whole TextField/FormControl to the old box height (sx height: 28/36/45),
+   which made the control spill out below — overlapping the next row and the
+   card border. The control's own height rules (below) are unaffected. */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  height: auto !important;
+  min-height: 0 !important;
+}
+/* Inside grid layouts the grid gap spaces the rows; the old `mt` that made
+   room for the notched label only mis-aligned fields that had it vs. not. */
+html body .grid > .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  margin-top: 0 !important;
+}
+
+/* Notch: always closed, the border is drawn as one continuous line */
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiOutlinedInput-notchedOutline > legend,
+html body .MuiFormControl-root:not(.mui-floating-label) .MuiPickersOutlinedInput-notchedOutline > legend {
+  max-width: 0.01px !important;
+  padding: 0 !important;
+  transition: none !important;
+}
+
+/* MUI hides the placeholder while an un-shrunk label sits inside the box;
+   the label is outside now, so the placeholder stays visible */
+html body .MuiFormControl-root:not(.mui-floating-label) > label[data-shrink="false"] + .MuiInputBase-formControl .MuiInputBase-input::placeholder {
+  opacity: 1 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiInputBase-input::placeholder {
+  color: var(--color-ink-30);
+  opacity: 1;
+  font-style: normal;
+}
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersInputBase-root .MuiPickersInputBase-sectionsContainer,
+html body .MuiFormControl-root:not(.mui-floating-label) > .MuiPickersOutlinedInput-root .MuiPickersSectionList-root {
+  opacity: 1 !important;
+}
+/* Select placeholders written as <em>Select …</em> render upright and muted */
+html body .MuiSelect-select em {
+  font-style: normal;
+  color: var(--color-ink-30);
+}
+
+/* Control shell (labelled fields only — label-less toolbar/search fields keep their size) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.MuiInputBase-multiline),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root {
+  min-height: 44px !important;
+  height: auto !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiOutlinedInput-input:not(.MuiAutocomplete-input):not(textarea),
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root > .MuiSelect-select {
+  padding-top: 10.5px !important;
+  padding-bottom: 10.5px !important;
+  height: auto !important;
+  min-height: 1.4375em !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: var(--color-text);
+  box-sizing: content-box;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiAutocomplete-input,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) .MuiPickersSectionList-root {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiOutlinedInput-notchedOutline,
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiPickersOutlinedInput-root:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) > .MuiPickersOutlinedInput-notchedOutline {
+  border-width: 1px;
+  border-color: rgba(26, 26, 24, 0.12);
+}
+
+/* Textareas (multiline TextField) */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline {
+  min-height: 88px !important;
+  height: auto !important;
+  padding: 12px 14px !important;
+  align-items: flex-start !important;
+  border-radius: var(--radius-input) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) > .MuiOutlinedInput-root.MuiInputBase-multiline > textarea {
+  padding: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+/* ============================================================
+   GLOBAL CONTROL SIZE + FLAT SURFACES
+   Matches the asset-management wireframe used on New Inbound /
+   New Outbound / Parking Details:
+     action button  42px tall, 22px side padding, 8px radius
+     text field     44px tall, 12px radius
+     card           16px radius, hairline border, no drop shadow
+   Overlays portaled outside <main> (menus, dialogs) keep their lift.
+   ============================================================ */
+
+/* Page content: no drop shadows on cards, panels, or hover lifts */
+html body main .shadow-sm,
+html body main .shadow,
+html body main .shadow-md,
+html body main .shadow-lg,
+html body main .shadow-xl,
+html body main .shadow-2xl,
+html body main .shadow-inner,
+html body main .shadow-brand-sm,
+html body main .shadow-brand-md,
+html body main .shadow-brand-lg,
+html body main .shadow-brand-xl,
+html body main .shadow-brand-card,
+html body main [class*="shadow-sm"],
+html body main [class*="shadow-md"],
+html body main [class*="shadow-lg"],
+html body main [class*="shadow-xl"],
+html body main [class*="shadow-["],
+html body main [class*="Card"]:hover,
+html body main .stat-card,
+html body main .MuiPaper-root:not([class*="MuiMenu"]):not([class*="MuiPopover"]):not([class*="MuiAutocomplete"]):not([class*="MuiPickers"]):not([class*="MuiDrawer"]) {
+  box-shadow: none !important;
+}
+
+/* Shared cards: 16px corners, hairline, white, flat */
+html body main .shadow-sm.border,
+html body main [class*="shadow-sm"].border,
+html body main .stat-card {
+  border-radius: 16px !important;
+  border-color: var(--color-line-card) !important;
+}
+
+/* Text fields in page content match the 44px wireframe control */
+html body main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput):not(.seat-count-input),
+html body main button[role="combobox"] {
+  min-height: 44px !important;
+  border-radius: var(--radius-input) !important;
+}
+
+/* Compact counters inside the seat-type table */
+html body main input.seat-count-input {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--color-line) !important;
+  background: #fff !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+/* Action buttons: wireframe .btn — 42× padding 22px, no shadow.
+   Square icon buttons (h-8/w-8, p-0) are left alone. */
+html body main button.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button.bg-brand:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]) {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: var(--radius-button) !important;
+  box-shadow: none !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* Filled buttons keep a white label. A global rule paints
+   .text-center.font-semibold as ink, which hides the label on the
+   ink fill (Close OSR, Schedule, Edit, and every other brand button). */
+html body button.text-center.font-semibold[class*="fm-button-brand"],
+html body button.text-center.font-bold[class*="fm-button-brand"],
+html body a.text-center.font-semibold[class*="fm-button-brand"],
+html body a.text-center.font-bold[class*="fm-button-brand"],
+html body button.text-center.font-semibold.bg-brand,
+html body button.text-center.font-bold.bg-brand,
+html body button.text-center.font-semibold[class*="bg-[#C72030]"],
+html body button.text-center.font-semibold[class*="bg-[#DA7756]"],
+html body button.text-center.font-semibold[class*="bg-[#da7756]"],
+html body button.fm-button-fix.fm-button-brand,
+html body a.fm-button-fix.fm-button-brand,
+html body button.fm-button-fix.fm-button-brand *,
+html body a.fm-button-fix.fm-button-brand * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body button.fm-button-fix.fm-button-brand svg,
+html body button.text-center.font-semibold[class*="fm-button-brand"] svg,
+html body button.text-center.font-semibold.bg-brand svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* ============================================================
+   REQUIRED-FIELD ASTERISKS → danger red
+   Labels hand-write the marker as <span style={{ color: '#DA7756' | '#C72030' | 'red' }}>*</span>
+   or <span className="text-red-500">*</span>. The inline-coral remap above turns
+   those black (coral → --color-primary), so inside labels they are pinned to red.
+   ============================================================ */
+html body label [style*="color: rgb(218, 119, 86)"],
+html body label [style*="color:rgb(218, 119, 86)"],
+html body label [style*="color: #da7756" i],
+html body label [style*="color:#da7756" i],
+html body label [style*="color: rgb(199, 32, 48)"],
+html body label [style*="color:rgb(199, 32, 48)"],
+html body label [style*="color: #c72030" i],
+html body label [style*="color:#c72030" i],
+html body label [style*="color: red"],
+html body label [style*="color:red"],
+html body label [style*="color: rgb(255, 0, 0)"],
+html body label .text-red-500,
+html body label .text-red-600,
+html body label [class*="text-[#C72030]"],
+html body label [class*="text-[#DA7756]"],
+html body label [class*="text-[#da7756]"],
+html body .MuiFormLabel-asterisk {
+  color: var(--color-danger) !important;
+}
+
+/* ============================================================
+   FORM ACTION BAR — bottom-right, secondary (white) then primary (ink)
+   <div className="fm-action-bar">
+     <button className="fm-action-secondary">Cancel</button>
+     <button className="fm-action-primary">Save</button>
+   </div>
+   42px high, 0 22px padding, 13px/600, 8px radius, 8px icon gap.
+   ============================================================ */
+html body .fm-action-bar {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-end !important;
+  align-items: center;
+  gap: 12px;
+}
+html body .fm-action-primary,
+html body .fm-action-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+html body .fm-action-primary {
+  background-color: #1a1a18 !important;
+  border: 1px solid #1a1a18 !important;
+  color: #ffffff !important;
+}
+html body .fm-action-primary:hover:not(:disabled) {
+  background-color: #12100e !important;
+  border-color: #12100e !important;
+}
+html body .fm-action-primary svg {
+  color: #ffffff !important;
+}
+html body .fm-action-secondary {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+  color: #1a1a18 !important;
+}
+html body .fm-action-secondary:hover:not(:disabled) {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body .fm-action-secondary svg {
+  color: #1a1a18 !important;
+}
+html body .fm-action-primary:focus-visible,
+html body .fm-action-secondary:focus-visible {
+  outline: 2px solid #1a1a18 !important;
+  outline-offset: 2px;
+}
+html body .fm-action-primary:disabled,
+html body .fm-action-secondary:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed;
+}
+
+/* Section "+ Custom Field" toggle — plain ink text, no fill (sits beside the
+   section chevron). Overrides the inline-coral button remap above. */
+html body button.fm-custom-field-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1a1a18 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+}
+html body button.fm-custom-field-btn:hover {
+  background: rgba(26, 26, 24, 0.04) !important;
+}
+html body button.fm-custom-field-btn svg {
+  color: #1a1a18 !important;
+  width: 16px;
+  height: 16px;
+}
+
+/* Required-field marker: <span className="fm-required-mark">*</span> — red anywhere
+   (inside MUI labels, plain labels or headings), independent of the inline-colour remaps. */
+html body .fm-required-mark,
+html body label .fm-required-mark,
+html body .MuiFormControl-root .MuiInputLabel-root .fm-required-mark {
+  color: var(--color-danger) !important;
+  margin-left: 2px;
+}
+
+/* ============================================================
+   STAT / KPI CARDS — Business Genie summary tile
+   Label on top, large ink value below, white 36px icon tile in the
+   top-right corner; grey #F5F4F0 surface, 16px radius, 18px 20px
+   padding, no border and no shadow (hover included).
+   Applies to <StatsCard> and every inline tile built the same way:
+   beige tile > icon well (bg-[#C4B89D54]) + value/title block.
+   CSS only — values, click/filter handlers and selection untouched.
+   ============================================================ */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  position: relative;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 18px 20px !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  background-color: #f5f4f0 !important;
+  transition: background-color 0.16s !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  box-shadow: none !important;
+}
+html body div[class*="cursor-pointer"]:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #efede7 !important;
+}
+/* Selected filter card (StatsCard selected) */
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])),
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #e9e7e0 !important;
+}
+
+/* Icon tile: white 36×36, 10px corners, neutral 18px line icon */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  flex: 0 0 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  background-color: #ffffff !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) span {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Text block: label above the value */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  gap: 0 !important;
+}
+/* most tiles write value first, title second → show title first */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]):first-child) {
+  flex-direction: column-reverse !important;
+  justify-content: flex-end !important;
+}
+/* value: large full-ink number */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
+  margin: 0 !important;
+  font-size: 26px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em !important;
+  color: #1a1a18 !important;
+  font-variant-numeric: tabular-nums;
+}
+/* label (and any sub-line): soft ink */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > :not([class*="text-xl"]):not([class*="text-2xl"]):not([class*="text-3xl"]) {
+  margin: 0 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Asset stats "swap" control: move out of the icon's corner to bottom-right */
+html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > button.absolute {
+  top: auto !important;
+  bottom: 12px !important;
+  right: 14px !important;
+}
+
+/* ============================================================
+   BUSINESS GENIE DESIGN SYSTEM — AUDIT REMEDIATION (ST01 - ST60)
+   Global CSS overrides targeting standard Business Genie visual tokens:
+   - 24px radius and 28px padding for modal shells
+   - 8px radius on standard, cancel, and outline buttons
+   - 999px radius and low-saturation tints on status pills
+   - 16px table wrappers and right-aligned tabular numerics
+   - Neutral 2px dashed border for file upload drop zones
+   - Neutral chips for selected users and tags
+   - Scoped bottom-centre ink feedback toasts with 8px corners
+   ============================================================ */
+
+/* 1. Modal and Dialog Shells (ST03, ST06, ST08-ST11, ST15, ST17, ST19, ST22, ST25, ST31, ST32, ST35, ST37, ST40, ST42, ST44, ST45, ST53, ST54) */
+html body:has([data-settings-scope="true"]) div[role="dialog"][data-state],
+html body:has([data-settings-scope="true"]) div[role="alertdialog"],
+html body:has([data-settings-scope="true"]) .MuiDialog-paper,
+html body [data-settings-modal],
+html body .settings-dialog {
+  border-radius: 24px !important;
+  padding: 28px !important;
+  border: 1px solid rgba(26, 26, 24, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+}
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-6"]:first-child,
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-8"]:first-child,
+html body [data-settings-modal] > div[class*="p-6"]:first-child,
+html body [data-settings-modal] > div[class*="p-8"]:first-child {
+  padding: 0 !important;
+}
+
+/* 2. Button Hierarchy & Corner Radii: 8px corners across buttons */
+html body button.rounded-none,
+html body [role="button"].rounded-none,
+html body .btn-brand,
+html body .MuiButton-root {
+  border-radius: var(--radius-button, 8px) !important;
+}
+html body button.border-gray-300:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:not(.fm-action-primary),
+html body button.border-brand:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:not(.fm-action-primary),
+html body .fm-action-secondary,
+html body .fm-action-outline,
+html body .MuiButton-outlinedSecondary {
+  border: 1px solid rgba(26, 26, 24, 0.15) !important;
+  color: #1a1a18 !important;
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+}
+html body button.border-gray-300:hover:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:hover:not(.fm-action-primary),
+html body button.border-brand:hover:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:hover:not(.fm-action-primary),
+html body .fm-action-secondary:hover,
+html body .fm-action-outline:hover {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body button[class*="h-8"][class*="w-8"] {
+  border-radius: 8px !important;
+}
+
+/* 3. Entity Status Pills: 999px radius, low-saturation tint & text, 3px 10px, 11px/500 */
+html body span.rounded-full:is([class*="bg-green-"], [class*="bg-emerald-"], [class*="text-green-"], [class*="text-emerald-"]) {
+  background-color: #e0f7ea !important;
+  color: #12a150 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-red-"], [class*="text-red-"]) {
+  background-color: #fbdcdc !important;
+  color: #a32126 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-amber-"], [class*="bg-yellow-"], [class*="text-amber-"], [class*="text-yellow-"]) {
+  background-color: #fff2d6 !important;
+  color: #b37400 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+
+/* 4. Table Wrappers and Numeric Alignment (ST04, ST20, ST28) */
+html body .asset-management-table-wrapper,
+html body .task-status-table-wrapper,
+html body div:has(> table.asset-management-table),
+html body div:has(> table.task-status-table) {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+}
+html body table.asset-management-table td:not(:first-child),
+html body table.task-status-table td:not(:first-child) {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* 5. Neutral 2px Dashed Drop Zones (ST37, ST42, ST44) */
+html body div.border-dashed[class*="border-yellow"],
+html body div.border-dashed[class*="border-amber"],
+html body div.border-dashed:not([class*="border-gray"]):not([class*="border-neutral"]) {
+  border: 2px dashed rgba(26, 26, 24, 0.2) !important;
+  border-radius: 12px !important;
+  background-color: #faf9f6 !important;
+}
+
+/* 6. Selection Chips (ST26.3): Neutral surface and readable ink text */
+html body .MuiChip-root.MuiChip-outlinedPrimary,
+html body .MuiChip-root[class*="MuiChip-colorPrimary"] {
+  background-color: #f5f4f0 !important;
+  color: #1a1a18 !important;
+  border-color: rgba(26, 26, 24, 0.15) !important;
+  border-radius: 6px !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon {
+  color: rgba(26, 26, 24, 0.48) !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon:hover {
+  color: #1a1a18 !important;
+}
+
+/* 7. Scoped Settings Feedback Toasts (ST60.1) */
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast,
+html body [data-sonner-toast].settings-toast,
+html body .settings-toast {
+  background-color: #1a1a18 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-icon],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-icon],
+html body [data-sonner-toast].settings-toast [data-icon],
+html body .settings-toast [data-icon] {
+  color: #3dd68c !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-close-button],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-close-button],
+html body [data-sonner-toast].settings-toast [data-close-button],
+html body .settings-toast [data-close-button] {
+  color: #ffffff !important;
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+   CHECKBOX — wireframe .cb (asset-management.html): 18px, 5px radius,
+   1.5px soft-ink border; ink fill + white tick when checked/indeterminate.
+   Placed last so it beats the legacy primary-colour and td-button padding rules.
+   ============================================================ */
+html body button[role="checkbox"],
+html body table td button[role="checkbox"],
+html body table th button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(26, 26, 24, 0.22) !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body button[role="checkbox"][data-state="unchecked"] {
+  background-color: #ffffff !important;
+  border-color: rgba(26, 26, 24, 0.22) !important;
+}
+html body button[role="checkbox"][data-state="checked"],
+html body table td button[role="checkbox"][data-state="checked"],
+html body table th button[role="checkbox"][data-state="checked"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+}
+/* Partial selection (header): white box, ink border, ink dash */
+html body button[role="checkbox"][data-state="indeterminate"],
+html body table th button[role="checkbox"][data-state="indeterminate"] {
+  background-color: #ffffff !important;
+  border-color: #1a1a18 !important;
+}
+html body button[role="checkbox"][data-state="indeterminate"] span,
+html body button[role="checkbox"][data-state="indeterminate"] svg {
+  color: #1a1a18 !important;
+  stroke: #1a1a18 !important;
+}
+html body button[role="checkbox"] span {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+}
+html body button[role="checkbox"] svg {
+  width: 12px !important;
+  height: 12px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Toolbar icon buttons sit next to the table search box: same hairline
+   border as the search input (.border-gray-300 → --color-line), ink icon,
+   soft grey hover. Wins over the ink-border rules above. */
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) {
+  background-color: #ffffff !important;
+  border: 1px solid var(--color-line) !important;
+  color: var(--color-primary) !important;
+}
+/* Icon-only toolbar buttons: same 44px height as the table search input, square.
+   (Labelled "Refresh"/"Filters" buttons elsewhere keep their own width.) */
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):is([class*="w-8"], [class*="w-9"], [class*="w-[28px]"], [class*="w-[36px]"]) {
+  height: 44px !important;
+  min-height: 44px !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+}
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]):hover {
+  background-color: var(--color-hover) !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+  color: var(--color-primary) !important;
+}
+html body button:is([title="Filter"], [title="Columns"], [title="Refresh"], [title="Export"], [title="Exporting..."]) :is(svg, .lucide) {
+  color: var(--color-primary) !important;
+  stroke: currentColor !important;
+}
+
+/* ============================================================
+   MODALS & CARDS — 16px corners everywhere
+   Centred shadcn dialogs / alert dialogs (side sheets & popovers are
+   excluded by the centring classes), MUI dialog papers and MUI cards.
+   Buttons inside keep their own 8px radius.
+   ============================================================ */
+html body [role="dialog"][class*="translate-x-[-50%]"],
+html body [role="alertdialog"][class*="translate-x-[-50%]"],
+html body .MuiDialog-paper,
+html body .MuiCard-root {
+  border-radius: 16px !important;
 }
