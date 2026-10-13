@@ -4732,7 +4732,7 @@ function App() {
                             element={<OnlyOfficePublicEditorPage />}
                           />
                           <Route
-                            path="/posthog-dashboard"
+                            path="/fm-usage-analytics"
                             element={<PosthogDashboardPage />}
                           />
                           <Route
