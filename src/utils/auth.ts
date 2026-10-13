@@ -299,8 +299,6 @@ const isViUatSite = hostname === "vi-uat.gophygital.work";
 export const getViOtpApiBase = () =>
   isViUatSite ? "https://vi-uat-api.gophygital.work" : "https://live-api.gophygital.work";
 
-const isViUatSite = hostname === "vi-uat.gophygital.work"
-
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
