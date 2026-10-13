@@ -47,7 +47,7 @@ export function TrafficSection() {
               aiKey="chart.usage"
               head={
                 <>
-                  <div className="cr">Last {state.date} days{state.prev ? ' · vs previous period' : ''}</div>
+                  <div className="cr">{vm.dateLabel}{state.prev ? ' · vs previous period' : ''}</div>
                   <div className="charthead">
                     <CardHead ct="Usage over time" />
                     <div className="charttabs">

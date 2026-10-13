@@ -1,5 +1,9 @@
 export type Device = 'all' | 'desktop' | 'mobile';
 export type DateRange = 7 | 30 | 90;
+export interface CustomDateRange {
+  from: string;
+  to: string;
+}
 
 /**
  * Viewing tier. The events carry no region dimension, so the middle tier groups by the one

@@ -15,6 +15,7 @@ import {
   RETENTION_WEEKS,
   ROLE_COLORS,
   TREND_WEEKS,
+  type CustomDateRange,
   type DateRange,
   type Device,
   type Site,
@@ -31,6 +32,7 @@ export interface DashboardState {
    */
   scope: string;
   date: DateRange;
+  customDateRange: CustomDateRange | null;
   dev: Device;
   /** Layer-3 module / sub-module, both derived from real `$pathname` segments. */
   module: string | null;
@@ -48,6 +50,7 @@ export const DEFAULT_STATE: DashboardState = {
   tier: 't3',
   scope: 'org',
   date: 30,
+  customDateRange: null,
   dev: 'all',
   module: null,
   subModule: null,
@@ -394,20 +397,6 @@ export function buildAdopt(
 
   const tiles: TileSpec[] = [
     {
-      id: 'A1',
-      label: 'Seat Utilisation (A1)',
-      disp: pctVal(seat?.value),
-      delta: deltaOf(seat?.delta_pct),
-      goodUp: true,
-      sub: seat
-        ? seat.licensed_seats
-          ? `${fmtC(seat.used_seats)} / ${fmtC(seat.licensed_seats)} seats`
-          : `${fmtC(seat.used_seats)} active · set licensed seats`
-        : 'no data',
-      raw: round1(seat?.value ?? 0),
-      unit: '%',
-    },
-    {
       id: 'A2',
       label: 'Stickiness (A2)',
       disp: pctVal(stick?.value),
@@ -446,7 +435,7 @@ export function buildAdopt(
       sub: 'modules in use',
       raw: breadth?.in_use ?? 0,
     },
-  ];
+  ].filter((tile) => tile.id !== 'A1');
 
   // The API omits weeks with no activity — rebuild the full window so the line stays evenly spaced.
   const curWeeks = weekRange(to, TREND_WEEKS);
@@ -536,6 +525,42 @@ export function buildSiteHealth(
     // Busiest first. Most allowed sites have no events at all, so sorting worst-first
     // would bury every site that actually has data under a wall of zeros.
     .sort((a, b) => b.users - a.users || b.sessions - a.sessions);
+  return rows.length ? { rows } : null;
+}
+
+/**
+ * Panchshil Pulse's adoption "site-wise breakdown", sourced from the module tree
+ * instead of the per-site `traffic_session` fan-out (which Connect does NOT do on
+ * its adoption layer). The tree only carries name/users/events/sessions, so the
+ * columns it cannot supply (duration, bounce, trend, status) come back null and
+ * render "–".
+ */
+export interface ModuleHealthRow {
+  name: string;
+  users: number;
+  events: number;
+  sessions: number;
+  durSec: number | null;
+  bounce: number | null;
+  trend: number | null;
+}
+
+export interface ModuleHealthData {
+  rows: ModuleHealthRow[];
+}
+
+export function buildModuleHealth(
+  modules: ModuleOption[]
+): ModuleHealthData | null {
+  const rows: ModuleHealthRow[] = modules.map((m) => ({
+    name: m.name,
+    users: m.users,
+    events: m.events,
+    sessions: m.sessions,
+    durSec: null,
+    bounce: null,
+    trend: null,
+  }));
   return rows.length ? { rows } : null;
 }
 

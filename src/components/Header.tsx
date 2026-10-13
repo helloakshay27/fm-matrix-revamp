@@ -149,6 +149,13 @@ export const Header = () => {
   // identical "Usage Analytics" rows in the same profile menu is what the previous
   // localhost condition produced.
   const showPulseUsageAnalytics = isPulseSite;
+
+  // FM Matrix Usage Analytics (/posthog-dashboard), as on the api-integration-ui branch,
+  // but restricted to an explicit allowlist of users.
+  const fmUsageAnalyticsUsers = ["psipl@gophygital.work"];
+  const showFmUsageAnalytics = fmUsageAnalyticsUsers.includes(
+    (getUser()?.email ?? "").toLowerCase()
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1078,6 +1085,15 @@ export const Header = () => {
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
 
+                {showFmUsageAnalytics && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/posthog-dashboard")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
                 {showUsageAnalytics && (
                   <DropdownMenuItem
                     onClick={() =>

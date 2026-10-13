@@ -5,6 +5,7 @@ import {
   fetchGrowth,
   fetchModules,
   fetchRetention,
+  fetchRecentActiveUsers,
   fetchRoles,
   fetchTrafficSession,
   fetchUsageAndDistribution,
@@ -40,6 +41,8 @@ export interface QueryFilters {
   to: string;
   siteIds: string[];
   devices: DeviceType[];
+  /** Raw platform/device selection ("all" | "ios" | "android") — Pulse only. */
+  dev?: string;
   licensedSeats: number | null;
   module: string | null;
   subModule: string | null;
@@ -47,6 +50,8 @@ export interface QueryFilters {
   requestId?: number;
   /** Auth token for FM API calls */
   token: string;
+  /** Some tenants, such as Pulse, intentionally scope by project instead of site_id. */
+  allowEmptySites?: boolean;
 }
 
 function ymd(d: Date): string {
@@ -68,6 +73,7 @@ const range = (f: QueryFilters): RangeFilters => ({
   to: f.to,
   siteIds: f.siteIds,
   devices: f.devices,
+  dev: f.dev,
 });
 
 /** Analytics is read-mostly and each call is a multi-second ClickHouse scan — cache generously. */
@@ -171,6 +177,7 @@ export function useAdoptionTrend(f: QueryFilters) {
         weeks: TREND_WEEKS,
         siteIds: f.siteIds,
         devices: f.devices,
+        dev: f.dev,
       }),
     enabled: f.enabled,
     ...CACHE,
@@ -181,7 +188,7 @@ export function useGrowth(f: QueryFilters) {
   return useQuery({
     queryKey: ['fm-adoption', 'growth', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
-      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices }),
+      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -191,7 +198,7 @@ export function useRetention(f: QueryFilters) {
   return useQuery({
     queryKey: ['fm-adoption', 'retention', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
-      fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices }),
+      fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -202,6 +209,15 @@ export function useRoles(f: QueryFilters) {
     queryKey: ['fm-adoption', 'roles', ...keyBase(f)],
     queryFn: () => fetchRoles(range(f)),
     enabled: f.enabled,
+    ...CACHE,
+  });
+}
+
+export function useRecentActiveUsers(f: QueryFilters) {
+  return useQuery({
+    queryKey: ['fm-adoption', 'recent_active_users', ...keyBase(f)],
+    queryFn: () => fetchRecentActiveUsers(range(f)),
+    enabled: f.enabled && (f.allowEmptySites === true || f.siteIds.length > 0),
     ...CACHE,
   });
 }
@@ -226,7 +242,11 @@ export function useSubModuleTree(f: QueryFilters) {
   });
 }
 
-export function useWorkflowUsage(f: QueryFilters) {
+export function useWorkflowUsage(
+  f: QueryFilters,
+  opts: { requireModule?: boolean } = {}
+) {
+  const requireModule = opts.requireModule ?? true;
   return useQuery({
     queryKey: [
       'fm-adoption',
@@ -241,7 +261,7 @@ export function useWorkflowUsage(f: QueryFilters) {
         module: f.module ?? undefined,
         subModule: f.subModule ?? undefined,
       }),
-    enabled: f.enabled && !!f.module,
+    enabled: f.enabled && (!requireModule || !!f.module),
     ...CACHE,
   });
 }
@@ -281,7 +301,7 @@ export function useSiteLeague(f: QueryFilters, siteIds: string[], enabled: boole
     queries: siteIds.map((siteId) => ({
       queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteId, f.devices.join(','), f.requestId ?? 0],
       queryFn: () =>
-        fetchTrafficSession({ from: f.from, to: f.to, siteIds: [siteId], devices: f.devices }),
+        fetchTrafficSession({ from: f.from, to: f.to, siteIds: [siteId], devices: f.devices, dev: f.dev }),
       enabled: enabled && f.enabled,
       ...CACHE,
     })),
