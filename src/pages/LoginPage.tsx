@@ -78,7 +78,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("vi-uat.gophygital.work");
   const isWebSite = hostname.includes("web.gophygital.work");
   const isClubSite =
     hostname === "club.lockated.com" ||
