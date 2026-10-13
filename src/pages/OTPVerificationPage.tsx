@@ -124,9 +124,11 @@ export const OTPVerificationPage = () => {
 
         // Check the hostname to determine redirect
         const hostname = window.location.hostname;
-        const isViSite = hostname.includes("vi-web.gophygital.work");
+        const isViSite =
+          hostname.includes("vi-web.gophygital.work") ||
+          hostname.includes("vi-uat.gophygital.work");
 
-        // Redirect to appropriate dashboard
+        // Redirect to appropriate dashboard (Vi prod + Vi UAT -> M-Safe)
         setTimeout(() => {
           navigate(isViSite ? "/safety/m-safe/internal" : "/maintenance/asset");
         }, 1000);
