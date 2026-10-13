@@ -4422,7 +4422,7 @@ export const TicketDetailsPage = () => {
   };
 
   return (
-    <div className="ticket-details-page p-4 sm:p-6 min-h-screen">
+    <div className="ticket-details-page p-4 sm:p-6 min-h-screen bg-white">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -4518,7 +4518,7 @@ export const TicketDetailsPage = () => {
             }
           }}
         >
-          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+          <TabsList className="w-full flex flex-wrap bg-white rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="analytics"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
@@ -4647,7 +4647,7 @@ export const TicketDetailsPage = () => {
                   {/* Ticket Detail Table */}
                   <div
                     className="rounded-xl p-3 sm:p-6 border shadow-lg"
-                    style={{ backgroundColor: "#F6F4EE" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     <div className="overflow-x-auto">
                       <table className="min-w-full border border-gray-300 rounded-lg">
@@ -4674,7 +4674,7 @@ export const TicketDetailsPage = () => {
                               <th
                                 key={idx}
                                 className="p-4 border border-gray-300"
-                                style={{ backgroundColor: "#EDEAE3" }}
+                                style={{ backgroundColor: "#FFFFFF" }}
                               >
                                 <div className="flex items-center justify-center text-black font-semibold text-lg">
                                   {header}
@@ -5187,8 +5187,8 @@ export const TicketDetailsPage = () => {
                           Ticket Details
                         </h3>
                       </div>
-                      <div className="px-6 bg-[#dfd9cb]">
-                        <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
+                      <div className="px-6 bg-white">
+                        <div className="flex justify-between py-4 border-b border-gray-200">
                           <div className='w-full '>
                             <div className="">
                               <div className="flex items-start mb-4">
@@ -8686,8 +8686,8 @@ export const TicketDetailsPage = () => {
                       Ticket Details
                     </h3>
                   </div>
-                  <div className="px-6 bg-[#dfd9cb]">
-                    <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
+                  <div className="px-6 bg-white">
+                    <div className="flex justify-between py-4 border-b border-gray-200">
                       <div className='w-full '>
                         <div className="">
                           <div className="flex items-start mb-4">
