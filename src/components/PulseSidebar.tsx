@@ -499,7 +499,10 @@ export const PulseSidebar = () => {
     } else if (path.startsWith("/pulse") || !currentSection) {
       setCurrentSection("Pulse Privilege");
     }
-  }, [location.pathname, setCurrentSection, showPulseUsageAnalytics, currentSection]);
+    // Only re-sync on route change - with currentSection as a dep, a header tab
+    // click would re-run this and snap the section back to the route's section.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, setCurrentSection, showPulseUsageAnalytics]);
 
   const currentModules = dynamicModulesByPackage[currentSection as keyof typeof dynamicModulesByPackage] || [];
 
