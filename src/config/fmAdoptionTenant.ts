@@ -38,3 +38,41 @@ function resolveTenantUrl(): string {
 
 /** Tenant host sent as the `url` query param on every FM adoption request. */
 export const FM_ADOPTION_TENANT_URL = resolveTenantUrl();
+
+/**
+ * Panchshil Pulse analytics project code.
+ *
+ * This is the single source of truth for the Pulse/TEP project code, because
+ * the value is needed on BOTH sides of the analytics pipeline:
+ *
+ *   - the WRITE side stamps `project_code` on every Pulse event
+ *     (src/utils/posthogHelpers.ts — capturePulseEvent and the $pageview
+ *     project context for /pulse/* routes);
+ *   - the READ side sends `project_code` as the scoping query param on every
+ *     /fm/adoption/* request (src/features/posthog-dashboard/api/adoptionApi.ts).
+ *
+ * If those two ever disagree, the Pulse dashboard queries a project code that
+ * no Pulse event carries, and every TEP-01-scoped metric comes back empty
+ * (or, worse, silently reports another tenant's data). Keeping one constant
+ * here makes that divergence impossible.
+ *
+ * Resolution order (first match wins):
+ *   1. VITE_FM_ADOPTION_PROJECT_CODE — explicit per-deployment override set at
+ *      build time.
+ *   2. The Panchshil Pulse default, TEP-01.
+ *
+ * Note this is deliberately NOT hostname-resolved: the event write side and
+ * the read side must always agree, and the read side already branches on the
+ * resolved tenant. FM Matrix (FM-01) and Club Management (CM-01) are unaffected.
+ */
+function resolveProjectCode(): string {
+  const fromEnv = (
+    import.meta.env.VITE_FM_ADOPTION_PROJECT_CODE as string | undefined
+  )?.trim();
+  if (fromEnv) return fromEnv;
+
+  return "TEP-01";
+}
+
+/** Project code sent as the `project_code` query param, and stamped on Pulse events. */
+export const FM_ADOPTION_PROJECT_CODE = resolveProjectCode();
