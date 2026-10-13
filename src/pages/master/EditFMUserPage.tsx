@@ -338,7 +338,11 @@ export const EditFMUserPage = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentSection("Master");
+    // Under Club Management the sidebar owns this route; forcing "Master" here
+    // makes ClubSidebar bounce to Master's default page (Amenities Setup).
+    if (!location.pathname.includes("/club-management/")) {
+      setCurrentSection("Master");
+    }
   }, [setCurrentSection]);
 
   useEffect(() => {
