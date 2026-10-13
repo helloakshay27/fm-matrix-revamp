@@ -1,6 +1,7 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { InfoButton } from './InfoButton';
-import { AiButton } from './AiButton';
+// Insight (AI) button temporarily hidden on all cards — re-enable with the render below.
+// import { AiButton } from './AiButton';
 
 interface CardHeadProps {
   cr?: ReactNode;
@@ -36,7 +37,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(({ infoKey, aiKe
       <div className="card-head">{head}</div>
       <div className={`card-body${bodyClassName ? ` ${bodyClassName}` : ''}`}>{children}</div>
       {infoKey && <InfoButton infoKey={infoKey} />}
-      {aiKey && <AiButton chartKey={aiKey} />}
+      {/* {aiKey && <AiButton chartKey={aiKey} />} */}
     </div>
   );
 });
