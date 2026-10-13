@@ -803,7 +803,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
                 size="sm"
                 className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
               >
-                <XCircle className="w-6 h-6 text-black" aria-hidden="true" />
+                <X className="w-6 h-6 text-black" aria-hidden="true" />
                 <span className="text-xs text-gray-600">Cancel</span>
               </Button>
             )}
