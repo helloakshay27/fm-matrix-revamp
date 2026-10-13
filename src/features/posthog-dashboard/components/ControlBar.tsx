@@ -47,13 +47,14 @@ function SiteMultiSelect({
 
   const selectAll = () => onChange([]);
 
-  // Label shown on the trigger button — shows IDs comma-separated when multiple selected
-  const label =
-    all
-      ? `All sites (${sites.length})`
-      : selectedIds.length === 1
-        ? sites.find((s) => s.id === selectedIds[0])?.name ?? selectedIds[0]
-        : selectedIds.join(',');
+  // Label shown on the trigger button — site names, not IDs. Beyond two selections the
+  // rest collapse into "+N", matching the scope subtitle ("Dadar, Dombiwali +1").
+  const selectedNames = selectedIds.map((id) => sites.find((s) => s.id === id)?.name ?? id);
+  const label = all
+    ? `All sites (${sites.length})`
+    : selectedNames.length > 2
+      ? `${selectedNames.slice(0, 2).join(', ')} +${selectedNames.length - 2}`
+      : selectedNames.join(', ');
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
@@ -63,7 +64,7 @@ function SiteMultiSelect({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        title={all ? 'All sites' : selectedIds.join(', ')}
+        title={all ? 'All sites' : selectedNames.join(', ')}
       >
         <span className="ic">◎</span>
         <span style={{ maxWidth: 190, overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
