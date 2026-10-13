@@ -10689,11 +10689,8 @@ const AddAssetPage = () => {
                         {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
                         {meterType === "SubMeter" && (
                           <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Parent Meter <span className="fm-required-mark">*</span>
-                            </label>
                             <FormControl fullWidth>
-                              <InputLabel>Parent Meter</InputLabel>
+                              <InputLabel shrink>Parent Meter <span className="fm-required-mark">*</span></InputLabel>
                               <MuiSelect
                                 label="Parent Meter"
                                 value={selectedParentMeterId}
@@ -11573,7 +11570,7 @@ const AddAssetPage = () => {
                       {/* Similar Product Sub Options */}
                       {formData.depreciation_applicable_for ===
                         "similar_product" && (
-                          <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-l-gray-300">
+                          <div className="rounded-[12px] border border-[rgba(26,26,24,0.09)] bg-white p-4">
                             <div className="mb-4">
                               <label className="text-sm font-medium text-gray-700 mb-3 block">
                                 Choose Configuration Type
@@ -11637,12 +11634,8 @@ const AddAssetPage = () => {
                             {/* Individual Asset Dropdown */}
                             {formData.similar_product_type === "individual" && (
                               <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Select Assets{" "}
-                                  <span className="fm-required-mark">*</span>
-                                </label>
                                 <FormControl fullWidth>
-                                  <InputLabel>Select Assets</InputLabel>
+                                  <InputLabel shrink>Select Assets <span className="fm-required-mark">*</span></InputLabel>
                                   <MuiSelect
                                     label="Select Assets"
                                     value=""
@@ -11716,12 +11709,8 @@ const AddAssetPage = () => {
                               <div className="mt-6 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Select Group{" "}
-                                      <span className="fm-required-mark">*</span>
-                                    </label>
                                     <FormControl fullWidth>
-                                      <InputLabel>Select Group</InputLabel>
+                                      <InputLabel shrink>Select Group <span className="fm-required-mark">*</span></InputLabel>
                                       <MuiSelect
                                         label="Select Group"
                                         value={formData.selected_group_id || ""}
@@ -11763,11 +11752,8 @@ const AddAssetPage = () => {
                                     </FormControl>
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Select Sub Group
-                                    </label>
                                     <FormControl fullWidth>
-                                      <InputLabel>Select Sub Group</InputLabel>
+                                      <InputLabel shrink>Select Sub Group</InputLabel>
                                       <MuiSelect
                                         label="Select Sub Group"
                                         value={formData.selected_sub_group_id || ""}
