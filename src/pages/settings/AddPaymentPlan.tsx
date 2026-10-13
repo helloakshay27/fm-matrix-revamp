@@ -33,7 +33,6 @@ export const AddPaymentPlan = () => {
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const isEdit = !!idInterpreted;
   const cmEvents = useClubManagementEvents();
 
   // Fetch existing plan data if in edit mode
@@ -338,24 +337,26 @@ export const AddPaymentPlan = () => {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 justify-center pt-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/settings/payment-plan/setup')}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={handleSubmit}
-            disabled={loading || totalPercentage !== 100}
-          >
-            {isEditMode ? 'Update Plan' : 'Create Plan'}
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="fm-action-bar mt-6">
+        <button
+          type="button"
+          onClick={() => navigate('/settings/payment-plan/setup')}
+          disabled={loading}
+          className="fm-action-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="fm-action-primary"
+          onClick={handleSubmit}
+          disabled={loading || totalPercentage !== 100}
+        >
+          {isEditMode ? 'Update Plan' : 'Create Plan'}
+        </button>
       </div>
     </div>
   );

@@ -100,6 +100,35 @@
   --color-error-bg: rgba(229, 72, 77, 0.12);
   --color-exception: #aab9c5;
 
+  /* Ticket analytics chart colors and fixed series order */
+  --ticket-analytics-purple: #8e7be0;
+  --ticket-analytics-blue: #6b9bcc;
+  --ticket-analytics-growth: #108c72;
+  --ticket-analytics-olive: #798c5e;
+  --ticket-analytics-sage-mint: #9ec8ba;
+  --ticket-analytics-purple-mid: #cecbf6;
+  --ticket-analytics-warning: #edc488;
+  --ticket-analytics-danger: #e7848e;
+  --ticket-analytics-row-alt: #f6f4ee;
+  --ticket-analytics-series-1: var(--ticket-analytics-purple);
+  --ticket-analytics-series-2: var(--ticket-analytics-blue);
+  --ticket-analytics-series-3: var(--ticket-analytics-growth);
+  --ticket-analytics-series-4: var(--ticket-analytics-olive);
+  --ticket-analytics-series-5: var(--ticket-analytics-sage-mint);
+  --ticket-analytics-series-6: var(--ticket-analytics-purple-mid);
+  --ticket-analytics-series-7: var(--ticket-analytics-warning);
+  --ticket-analytics-series-8: var(--ticket-analytics-danger);
+  --ticket-status-success-bg: #e0f7ea;
+  --ticket-status-success-ink: #176b3a;
+  --ticket-status-warning-bg: #fff2d6;
+  --ticket-status-warning-ink: #8a6500;
+  --ticket-status-info-bg: #dbe7ff;
+  --ticket-status-info-ink: #315b96;
+  --ticket-status-danger-bg: #fbdcdc;
+  --ticket-status-danger-ink: #a32126;
+  --ticket-status-neutral-bg: var(--color-surface);
+  --ticket-status-neutral-ink: var(--color-text-light);
+
   /* =====================
      SURFACE & BORDER COLORS
      ===================== */
@@ -244,6 +273,1079 @@
   --color-card-white: #363636;
   --color-border-subtle: #404040;
   --color-divider: #404040;
+}
+
+/* ===========================================
+   TICKET / TASK ANALYTICS STYLES
+   Restored from the local custom styling block
+   =========================================== */
+
+.ticket-analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .ticket-analytics-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ticket-analytics-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+  text-align: center;
+}
+
+.ticket-analytics-kpi-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--color-card-white);
+}
+
+.ticket-analytics-kpi-icon-svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-text);
+  stroke: currentColor;
+}
+
+.ticket-analytics-kpi-value {
+  color: var(--color-text);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.ticket-analytics-kpi-label {
+  color: var(--color-text-light);
+  font-size: 12px;
+}
+
+.ticket-analytics-table-clip {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card);
+  border-radius: 16px;
+}
+
+.ticket-analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ticket-analytics-table thead th {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-surface) !important;
+  color: var(--color-text-light) !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ticket-aging-matrix-table thead tr:first-child th:first-child,
+.ticket-issue-breakdown-table thead th:first-child,
+.ticket-site-summary-table thead tr:first-child th:first-child {
+  text-align: left;
+}
+
+.ticket-analytics-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.ticket-aging-matrix-table tbody td {
+  font-size: 14px;
+}
+
+.ticket-analytics-table tbody tr:nth-child(odd) {
+  background: var(--color-card-white) !important;
+}
+
+.ticket-analytics-table tbody tr:nth-child(even) {
+  background: var(--ticket-analytics-row-alt) !important;
+}
+
+.ticket-analytics-table .ticket-analytics-total-row,
+.ticket-analytics-table .ticket-analytics-total-row td {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-weight: 600;
+}
+
+.ticket-analytics-table .ticket-analytics-total-row td {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.ticket-aging-average {
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.ticket-aging-average-value {
+  margin-bottom: 8px;
+  color: var(--color-text);
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.ticket-aging-average-label {
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ticket-create-form .MuiFormControl-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-create-form .MuiInputLabel-root,
+.ticket-create-form .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.ticket-create-form .MuiOutlinedInput-root {
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-form .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.ticket-create-form .MuiOutlinedInput-notchedOutline legend {
+  display: none;
+}
+
+.ticket-create-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.ticket-create-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-text-light) !important;
+}
+
+.ticket-create-form .MuiInputBase-input,
+.ticket-create-form .MuiSelect-select {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-description-field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-create-description-label {
+  color: var(--color-text-light);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.ticket-create-description {
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 14px;
+  resize: vertical;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  background: var(--color-card-white);
+  color: var(--color-text);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.ticket-create-description:focus {
+  border-color: var(--color-text-light);
+  outline: none;
+}
+
+html body main .ticket-details-page .shadow-sm.border {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--color-line-card) !important;
+}
+
+.ticket-details-header {
+  border: 0 !important;
+  border-radius: 14px 14px 0 0 !important;
+  background-color: var(--color-card-white) !important;
+}
+
+.ticket-details-page .w-full.bg-white.rounded-lg.shadow-sm.border > div[class*="bg-[#F6F4EE]"][class*="py-3"][class*="px-4"][class*="border-[#D9D9D9]"] {
+  background-color: var(--color-card-white) !important;
+  border: 0 !important;
+}
+
+.ticket-details-page .w-full.bg-white.rounded-lg.shadow-sm.border > [class*="border-t-0"] {
+  background-color: var(--color-card-white) !important;
+  border: 0 !important;
+  border-bottom-left-radius: 15px !important;
+  border-bottom-right-radius: 15px !important;
+}
+
+.ticket-comments-section-body,
+.ticket-logs-section-body {
+  border-bottom-left-radius: 15px !important;
+  border-bottom-right-radius: 15px !important;
+}
+
+.my-pdf-card {
+  overflow: hidden;
+  border-width: 1px !important;
+  border-color: var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+[data-sonner-toast].ticket-created-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.ticket-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .ticket-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ticket-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ticket-summary-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.ticket-summary-card-clickable {
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.ticket-summary-card-clickable:hover {
+  background: var(--color-hover);
+  box-shadow: none;
+}
+
+.ticket-summary-icon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--color-card-white);
+}
+
+.ticket-summary-icon-svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-text);
+  stroke: currentColor;
+}
+
+.ticket-summary-copy {
+  min-width: 0;
+}
+
+.ticket-summary-value {
+  color: var(--color-text);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.ticket-summary-label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ticket-status-pill,
+.task-calendar-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.ticket-status-pill[data-status="pending"],
+.ticket-status-pill[data-status="in-progress"],
+.task-calendar-status-pill[data-status="pending"],
+.task-calendar-status-pill[data-status="scheduled"],
+.task-calendar-status-pill[data-status="in-progress"] {
+  background: var(--ticket-status-warning-bg);
+  color: var(--ticket-status-warning-ink);
+}
+
+.ticket-status-pill[data-status="open"],
+.ticket-status-pill[data-status="completed"],
+.ticket-status-pill[data-status="closed"],
+.task-calendar-status-pill[data-status="open"],
+.task-calendar-status-pill[data-status="completed"],
+.task-calendar-status-pill[data-status="closed"] {
+  background: var(--ticket-status-success-bg);
+  color: var(--ticket-status-success-ink);
+}
+
+.ticket-status-pill[data-status="overdue"],
+.ticket-status-pill[data-status="rejected"],
+.task-calendar-status-pill[data-status="overdue"],
+.task-calendar-status-pill[data-status="rejected"] {
+  background: var(--ticket-status-danger-bg);
+  color: var(--ticket-status-danger-ink);
+}
+
+.ticket-status-pill[data-status="unknown"],
+.task-calendar-status-pill[data-status="unknown"] {
+  background: var(--ticket-status-neutral-bg);
+  color: var(--ticket-status-neutral-ink);
+}
+
+.task-calendar-view-tabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.task-calendar-view-tab {
+  height: auto !important;
+  padding: 8px 16px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--color-text-light) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.task-calendar-view-tab[data-active="true"] {
+  background: var(--color-card-white) !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 1px 3px rgba(26, 26, 24, 0.14) !important;
+}
+
+.task-calendar-date-range,
+.task-analytics-date-range-button,
+.task-calendar-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.task-calendar-date-range-text,
+.task-calendar-date-range-icon,
+.task-analytics-date-range-text,
+.task-analytics-date-range-icon {
+  color: var(--color-text);
+}
+
+.task-calendar-date-range-icon,
+.task-analytics-date-range-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.task-calendar-filter-button:hover,
+.task-analytics-date-range-button:hover {
+  background: var(--color-hover) !important;
+}
+
+.fc-event.task-calendar-event,
+.fc-event.task-calendar-event .fc-event-main {
+  border: 0 !important;
+  border-radius: 999px !important;
+}
+
+.fc-event.task-calendar-event {
+  padding: 3px 10px !important;
+  border-color: transparent !important;
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.fc-event.task-calendar-event .fc-event-main {
+  color: inherit !important;
+}
+
+.task-calendar-event-content {
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.fc-event.task-calendar-event--pending,
+.fc-event.task-calendar-event--scheduled,
+.fc-event.task-calendar-event--in-progress {
+  border-color: transparent !important;
+  background: var(--ticket-status-warning-bg) !important;
+  color: var(--ticket-status-warning-ink) !important;
+}
+
+.fc-event.task-calendar-event--open,
+.fc-event.task-calendar-event--completed,
+.fc-event.task-calendar-event--closed {
+  border-color: transparent !important;
+  background: var(--ticket-status-success-bg) !important;
+  color: var(--ticket-status-success-ink) !important;
+}
+
+.fc-event.task-calendar-event--overdue,
+.fc-event.task-calendar-event--rejected,
+.fc-event.task-calendar-event--cancelled,
+.fc-event.task-calendar-event--canceled,
+.fc-event.task-calendar-event--failed {
+  border-color: transparent !important;
+  background: var(--ticket-status-danger-bg) !important;
+  color: var(--ticket-status-danger-ink) !important;
+}
+
+.fc-event.task-calendar-event--unknown {
+  border-color: transparent !important;
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.task-analytics-table-clip {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card);
+  border-radius: 16px;
+}
+
+.task-analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.task-analytics-table-header {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-surface) !important;
+  color: var(--color-text-light) !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.task-analytics-table-cell {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.task-analytics-table tbody tr:nth-child(odd) {
+  background: var(--color-card-white) !important;
+}
+
+.task-analytics-table tbody tr:nth-child(even) {
+  background: var(--ticket-analytics-row-alt) !important;
+}
+
+.task-analytics-total-row,
+.task-analytics-total-row td {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  font-weight: 600;
+}
+
+.task-overview-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 1024px) {
+  .task-overview-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.task-overview-kpi-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.task-overview-kpi-card:hover {
+  background: var(--color-hover);
+  box-shadow: none;
+}
+
+.task-overview-kpi-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--color-card-white);
+}
+
+.task-overview-kpi-icon-svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-light);
+  stroke: currentColor;
+}
+
+.task-overview-kpi-copy {
+  min-width: 0;
+}
+
+.task-overview-kpi-value {
+  color: var(--color-text);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.task-overview-kpi-label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.entity-status-pill {
+  display: inline-flex !important;
+  align-items: center;
+  padding: 3px 10px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.35;
+}
+
+.entity-status-pill[data-status="open"],
+.entity-status-pill[data-status="closed"],
+.entity-status-pill[data-status="completed"],
+.entity-status-pill[data-status="partially-closed"] {
+  background: var(--ticket-status-success-bg) !important;
+  color: var(--ticket-status-success-ink) !important;
+}
+
+.entity-status-pill[data-status="pending"],
+.entity-status-pill[data-status="scheduled"],
+.entity-status-pill[data-status="in-progress"],
+.entity-status-pill[data-status="work-in-progress"] {
+  background: var(--ticket-status-warning-bg) !important;
+  color: var(--ticket-status-warning-ink) !important;
+}
+
+.entity-status-pill[data-status="overdue"],
+.entity-status-pill[data-status="rejected"] {
+  background: var(--ticket-status-danger-bg) !important;
+  color: var(--ticket-status-danger-ink) !important;
+}
+
+.entity-status-pill[data-status="unknown"] {
+  background: var(--ticket-status-neutral-bg) !important;
+  color: var(--ticket-status-neutral-ink) !important;
+}
+
+.task-detail-action-secondary {
+  padding: 8px 16px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+.task-detail-action-secondary:hover {
+  background: var(--color-surface) !important;
+}
+
+.task-detail-section-card {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.task-detail-section-card .task-detail-section-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-detail-section-card .figma-card-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-detail-section-card .figma-card-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--color-text-light) !important;
+}
+
+.task-detail-section-card .task-detail-section-title {
+  margin: 0 !important;
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.task-detail-section-card .task-detail-section-content {
+  padding: 0 20px 20px !important;
+  border: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-detail-activity-group-heading {
+  padding: 8px 12px;
+  border: 1px solid var(--color-line-card);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.task-reschedule-dialog {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 28px !important;
+  border-radius: 24px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-reschedule-body {
+  min-width: 0;
+}
+
+.task-reschedule-section-title {
+  margin: 0 0 12px;
+  color: var(--color-text-light);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-reschedule-cancel-button {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1.5px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-primary) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.task-reschedule-cancel-button:hover {
+  background: var(--color-surface) !important;
+}
+
+.task-reschedule-submit-button {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.task-reschedule-submit-button:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.task-submission-checklist-card {
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.task-submission-checklist-card .task-submission-checklist-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-submission-checklist-card .figma-card-icon-wrapper {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-submission-checklist-card .figma-card-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--color-text-light) !important;
+}
+
+.task-submission-checklist-card .figma-card-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.task-submission-checklist-card .task-submission-checklist-content {
+  padding: 0 20px 20px !important;
+  border: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+  background: var(--color-card-white) !important;
+}
+
+.task-submission-checklist-card .border-l-4 {
+  padding: 8px 12px !important;
+  border: 1px solid var(--color-line-card) !important;
+  border-left-width: 1px !important;
+  border-radius: 8px !important;
+  background: var(--color-surface) !important;
+}
+
+.task-submission-checklist-card button[class*="text-[#C72030]"][class*="border-[#C72030]"] {
+  min-height: 40px !important;
+  gap: 7px;
+  padding: 0 18px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-card-white) !important;
+  color: var(--color-primary) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+}
+
+.task-submission-checklist-card button[class*="text-[#C72030]"][class*="border-[#C72030]"]:hover {
+  background: var(--color-surface) !important;
+}
+
+[data-sonner-toast].task-draft-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].task-draft-toast svg {
+  color: var(--color-card-white) !important;
+  stroke: currentColor;
+}
+
+@media (max-width: 639px) {
+  .ticket-aging-average {
+    padding: 16px;
+  }
+
+  .ticket-aging-average-value {
+    font-size: 24px;
+  }
+
+  .ticket-aging-average-label {
+    font-size: 14px;
+  }
+}
+
+.service-form .service-form-card {
+  margin-bottom: 20px !important;
+  overflow: hidden;
+  border: 1px solid var(--color-line-card) !important;
+  border-radius: 16px !important;
+  background: var(--color-card-white) !important;
+  box-shadow: none !important;
+}
+
+.service-form .service-form-card-header {
+  margin: 0 !important;
+  padding: 20px 20px 12px !important;
+  border: 0 !important;
+  background: var(--color-card-white) !important;
+}
+
+.service-form .service-form-card-title {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.service-form .service-form-card-title > span {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.service-form .service-form-card > .p-6:not(.service-form-card-header) {
+  padding: 0 20px 20px !important;
+  background: var(--color-card-white) !important;
+}
+
+.service-form .MuiFormControl-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-form .MuiInputLabel-root,
+.service-form .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  max-width: 100%;
+  margin: 0;
+  color: var(--color-text-light) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 16px;
+}
+
+.service-form .MuiOutlinedInput-root {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-form .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.service-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.service-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-text-light) !important;
+}
+
+.service-form .MuiInputBase-input,
+.service-form .MuiSelect-select {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-form .service-description-field .MuiOutlinedInput-root {
+  min-height: 88px !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+.service-form .service-description-field .MuiInputBase-inputMultiline {
+  min-height: 88px !important;
+  padding: 12px 14px !important;
+  resize: vertical !important;
+}
+
+.service-form-primary-action,
+.service-form-secondary-action {
+  display: inline-flex !important;
+  min-height: 42px !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px !important;
+  border-radius: var(--radius-button) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.service-form-primary-action {
+  border: 1px solid var(--color-primary) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+}
+
+.service-form-primary-action:hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.service-form-secondary-action {
+  border: 1px solid var(--color-line-card) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.service-form-secondary-action:hover {
+  background: var(--color-hover) !important;
+}
+
+.service-association-dialog .MuiDialog-paper {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--color-card-white);
+}
+
+.service-association-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+}
+
+.service-association-dialog-title {
+  padding: 0 !important;
+  color: var(--color-text) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.service-association-dialog-content {
+  overflow-y: auto;
+  padding: 16px 0 0 !important;
+}
+
+.service-association-asset-field-wrap {
+  margin-bottom: 24px;
+}
+
+.service-association-asset-control {
+  display: flex !important;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-association-asset-control .MuiInputLabel-root,
+.service-association-asset-control .MuiInputLabel-root.MuiInputLabel-shrink {
+  position: static !important;
+  transform: none !important;
+  margin: 0;
+  color: var(--color-text-light) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 16px;
+}
+
+.service-association-asset-control .MuiOutlinedInput-root {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--color-card-white) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.service-association-asset-control .MuiOutlinedInput-notchedOutline legend {
+  display: none;
+}
+
+.service-association-asset-control .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-border-subtle) !important;
+}
+
+.service-association-submit {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border: 1px solid var(--color-primary) !important;
+  border-radius: var(--radius-button) !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].service-association-toast {
+  padding: 10px 20px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--color-primary) !important;
+  color: var(--color-card-white) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+[data-sonner-toast].service-association-toast svg {
+  color: var(--color-card-white) !important;
+  stroke: currentColor;
 }
 
 /* ===========================================
@@ -1647,6 +2749,14 @@ header a[class*="text-[#C72030]"] {
 [class*="pagination"] button[class*="bg-[#C72030]"] {
   background-color: var(--color-primary) !important;
 }
+/* Selected page: 8px corners everywhere (shadcn PaginationLink already uses
+   rounded-[8px]; this covers custom pagers and MUI <Pagination>) */
+html body nav[aria-label="pagination"] [aria-current="page"],
+html body [class*="pagination"] button[class*="bg-[#C72030]"],
+html body [class*="pagination"] [aria-current="page"],
+html body .MuiPaginationItem-root.Mui-selected {
+  border-radius: 8px !important;
+}
 
 /* ===== LOADING/SPINNER COLOR OVERRIDES ===== */
 .animate-spin[class*="text-[#C72030]"],
@@ -2610,8 +3720,8 @@ h4[class*="text-[#1A1A1A]"],
 
 }
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold:not(.analytics-header),
-.text-center.font-bold:not(.analytics-header) {
+.text-center.font-semibold:not(.analytics-header):not(button):not(a),
+.text-center.font-bold:not(.analytics-header):not(button):not(a) {
   color: var(--color-text) !important;
 }
 
@@ -2981,9 +4091,9 @@ table.item-table-no-hover tbody tr:hover {
   border-radius: 12px !important;
 }
 
-/* Card hover effect */
+/* Cards stay flat — the wireframe has no drop shadow on surfaces */
 [class*="Card"]:hover {
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: none !important;
 }
 
 /* ===========================================
@@ -3418,12 +4528,10 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 }
 
 /* ColumnVisibilityMenu checkmark icon: text-red-500 → primary */
-[class*="data-[state=checked]"]:not([aria-label*="delete"])
-  [class*="text-red-500"],
+[class*="data-[state=checked]"]:not([aria-label*="delete"]) [class*="text-red-500"],
 [data-state="checked"] svg.text-red-500,
 [data-state="checked"] [class*="text-red-500"],
-.\\[\\&\\>\\*\\]\\:data-\\[state\\="checked\\"]\\:text-red-500[data-state="checked"]
-  > * {
+[data-state="checked"] .text-red-500 {
   color: var(--color-primary) !important;
 }
 
@@ -4459,7 +5567,9 @@ html body [class*="bg-[#D5DbDB]"][class*="border-[#D5DbDB]"] {
   width: auto !important;
   min-width: 0 !important;
   height: auto !important;
-  padding: 4px 8px 4px 11px !important;
+  padding: 4px 10px !important;
+  justify-content: center !important;
+  text-align: center !important;
   border: none !important;
   border-radius: 999px !important;
   font-size: 11px !important;
@@ -5048,6 +6158,12 @@ html body button[role="combobox"]:disabled {
 html body .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline {
   border-color: var(--color-line) !important;
 }
+html body .ticket-create-form .MuiOutlinedInput-root.Mui-disabled {
+  background-color: var(--color-surface) !important;
+}
+html body .ticket-create-form .MuiOutlinedInput-root.Mui-disabled .MuiInputBase-input {
+  background-color: transparent !important;
+}
 
 /* ============================================================
    TABLES — horizontal hairlines only (wireframe .tr)
@@ -5576,10 +6692,6 @@ html body [role="dialog"]:has(input[placeholder="Bill Number Search"]) button[cl
   color: #ffffff !important;
 }
 
-/* CRM Events: keep unchecked status switches visibly inactive in grey. */
-html body button[role="switch"][class*="data-[state=checked]:bg-green-500"][data-state="unchecked"] {
-  background-color: #9ca3af !important;
-}
 
 /* R Vehicles toolbar Import action: preserve a visible black outline and icon. */
 html body #root main:has(input[placeholder="Search by vehicle number"]) button[title="Import"] {
@@ -5864,6 +6976,20 @@ html body .MuiFormControl-root:not(.mui-floating-label) > .MuiInputLabel-outline
   color: var(--color-danger) !important;
 }
 
+/* The field wrapper must grow to hold label + control. Many forms pin the
+   whole TextField/FormControl to the old box height (sx height: 28/36/45),
+   which made the control spill out below — overlapping the next row and the
+   card border. The control's own height rules (below) are unaffected. */
+html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  height: auto !important;
+  min-height: 0 !important;
+}
+/* Inside grid layouts the grid gap spaces the rows; the old `mt` that made
+   room for the notched label only mis-aligned fields that had it vs. not. */
+html body .grid > .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-outlined) {
+  margin-top: 0 !important;
+}
+
 /* Notch: always closed, the border is drawn as one continuous line */
 html body .MuiFormControl-root:not(.mui-floating-label) .MuiOutlinedInput-notchedOutline > legend,
 html body .MuiFormControl-root:not(.mui-floating-label) .MuiPickersOutlinedInput-notchedOutline > legend {
@@ -5937,6 +7063,118 @@ html body .MuiFormControl-root:not(.mui-floating-label):has(> .MuiInputLabel-out
   padding: 0 !important;
   font-size: 13.5px !important;
   font-weight: 500 !important;
+}
+
+/* ============================================================
+   GLOBAL CONTROL SIZE + FLAT SURFACES
+   Matches the asset-management wireframe used on New Inbound /
+   New Outbound / Parking Details:
+     action button  42px tall, 22px side padding, 8px radius
+     text field     44px tall, 12px radius
+     card           16px radius, hairline border, no drop shadow
+   Overlays portaled outside <main> (menus, dialogs) keep their lift.
+   ============================================================ */
+
+/* Page content: no drop shadows on cards, panels, or hover lifts */
+html body main .shadow-sm,
+html body main .shadow,
+html body main .shadow-md,
+html body main .shadow-lg,
+html body main .shadow-xl,
+html body main .shadow-2xl,
+html body main .shadow-inner,
+html body main .shadow-brand-sm,
+html body main .shadow-brand-md,
+html body main .shadow-brand-lg,
+html body main .shadow-brand-xl,
+html body main .shadow-brand-card,
+html body main [class*="shadow-sm"],
+html body main [class*="shadow-md"],
+html body main [class*="shadow-lg"],
+html body main [class*="shadow-xl"],
+html body main [class*="shadow-["],
+html body main [class*="Card"]:hover,
+html body main .stat-card,
+html body main .MuiPaper-root:not([class*="MuiMenu"]):not([class*="MuiPopover"]):not([class*="MuiAutocomplete"]):not([class*="MuiPickers"]):not([class*="MuiDrawer"]) {
+  box-shadow: none !important;
+}
+
+/* Shared cards: 16px corners, hairline, white, flat */
+html body main .shadow-sm.border,
+html body main [class*="shadow-sm"].border,
+html body main .stat-card {
+  border-radius: 16px !important;
+  border-color: var(--color-line-card) !important;
+}
+
+/* Text fields in page content match the 44px wireframe control */
+html body main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput):not(.seat-count-input),
+html body main button[role="combobox"] {
+  min-height: 44px !important;
+  border-radius: var(--radius-input) !important;
+}
+
+/* Compact counters inside the seat-type table */
+html body main input.seat-count-input {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--color-line) !important;
+  background: #fff !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+/* Action buttons: wireframe .btn — 42× padding 22px, no shadow.
+   Square icon buttons (h-8/w-8, p-0) are left alone. */
+html body main button.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a.fm-button-fix:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button.bg-brand:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main button[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]),
+html body main a[class*="fm-button-brand"]:not([class*="w-8"]):not([class*="w-9"]):not([class*="h-8"]):not([class*="h-9"]):not([class*="p-0"]) {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: var(--radius-button) !important;
+  box-shadow: none !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* Filled buttons keep a white label. A global rule paints
+   .text-center.font-semibold as ink, which hides the label on the
+   ink fill (Close OSR, Schedule, Edit, and every other brand button). */
+html body button.text-center.font-semibold[class*="fm-button-brand"],
+html body button.text-center.font-bold[class*="fm-button-brand"],
+html body a.text-center.font-semibold[class*="fm-button-brand"],
+html body a.text-center.font-bold[class*="fm-button-brand"],
+html body button.text-center.font-semibold.bg-brand,
+html body button.text-center.font-bold.bg-brand,
+html body button.text-center.font-semibold[class*="bg-[#C72030]"],
+html body button.text-center.font-semibold[class*="bg-[#DA7756]"],
+html body button.text-center.font-semibold[class*="bg-[#da7756]"],
+html body button.fm-button-fix.fm-button-brand,
+html body a.fm-button-fix.fm-button-brand,
+html body button.fm-button-fix.fm-button-brand *,
+html body a.fm-button-fix.fm-button-brand * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body button.fm-button-fix.fm-button-brand svg,
+html body button.text-center.font-semibold[class*="fm-button-brand"] svg,
+html body button.text-center.font-semibold.bg-brand svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 /* ============================================================
@@ -6062,4 +7300,321 @@ html body label .fm-required-mark,
 html body .MuiFormControl-root .MuiInputLabel-root .fm-required-mark {
   color: var(--color-danger) !important;
   margin-left: 2px;
+}
+
+/* ============================================================
+   STAT / KPI CARDS — Business Genie summary tile
+   Label on top, large ink value below, white 36px icon tile in the
+   top-right corner; grey #F5F4F0 surface, 16px radius, 18px 20px
+   padding, no border and no shadow (hover included).
+   Applies to <StatsCard> and every inline tile built the same way:
+   beige tile > icon well (bg-[#C4B89D54]) + value/title block.
+   CSS only — values, click/filter handlers and selection untouched.
+   ============================================================ */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  position: relative;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 18px 20px !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  background-color: #f5f4f0 !important;
+  transition: background-color 0.16s !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  box-shadow: none !important;
+}
+html body div[class*="cursor-pointer"]:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #efede7 !important;
+}
+/* Selected filter card (StatsCard selected) */
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])),
+html body div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #e9e7e0 !important;
+}
+
+/* Icon tile: white 36×36, 10px corners, neutral 18px line icon */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  flex: 0 0 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  background-color: #ffffff !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+}
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i]:has(+ div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) span {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Text block: label above the value */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  gap: 0 !important;
+}
+/* most tiles write value first, title second → show title first */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]):first-child) {
+  flex-direction: column-reverse !important;
+  justify-content: flex-end !important;
+}
+/* value: large full-ink number */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
+  margin: 0 !important;
+  font-size: 26px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em !important;
+  color: #1a1a18 !important;
+  font-variant-numeric: tabular-nums;
+}
+/* label (and any sub-line): soft ink */
+html body div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > :not([class*="text-xl"]):not([class*="text-2xl"]):not([class*="text-3xl"]) {
+  margin: 0 0 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: rgba(26, 26, 24, 0.68) !important;
+}
+
+/* Asset stats "swap" control: move out of the icon's corner to bottom-right */
+html body div[class*="bg-[#F6F4EE]" i]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > button.absolute {
+  top: auto !important;
+  bottom: 12px !important;
+  right: 14px !important;
+}
+
+/* ============================================================
+   BUSINESS GENIE DESIGN SYSTEM — AUDIT REMEDIATION (ST01 - ST60)
+   Global CSS overrides targeting standard Business Genie visual tokens:
+   - 24px radius and 28px padding for modal shells
+   - 8px radius on standard, cancel, and outline buttons
+   - 999px radius and low-saturation tints on status pills
+   - 16px table wrappers and right-aligned tabular numerics
+   - Neutral 2px dashed border for file upload drop zones
+   - Neutral chips for selected users and tags
+   - Scoped bottom-centre ink feedback toasts with 8px corners
+   ============================================================ */
+
+/* 1. Modal and Dialog Shells (ST03, ST06, ST08-ST11, ST15, ST17, ST19, ST22, ST25, ST31, ST32, ST35, ST37, ST40, ST42, ST44, ST45, ST53, ST54) */
+html body:has([data-settings-scope="true"]) div[role="dialog"][data-state],
+html body:has([data-settings-scope="true"]) div[role="alertdialog"],
+html body:has([data-settings-scope="true"]) .MuiDialog-paper,
+html body [data-settings-modal],
+html body .settings-dialog {
+  border-radius: 24px !important;
+  padding: 28px !important;
+  border: 1px solid rgba(26, 26, 24, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+}
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-6"]:first-child,
+html body:has([data-settings-scope="true"]) div[role="dialog"] > div[class*="p-8"]:first-child,
+html body [data-settings-modal] > div[class*="p-6"]:first-child,
+html body [data-settings-modal] > div[class*="p-8"]:first-child {
+  padding: 0 !important;
+}
+
+/* 2. Button Hierarchy & Corner Radii: 8px corners across buttons */
+html body button.rounded-none,
+html body [role="button"].rounded-none,
+html body .btn-brand,
+html body .MuiButton-root {
+  border-radius: var(--radius-button, 8px) !important;
+}
+html body button.border-gray-300:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:not(.fm-action-primary),
+html body button.border-brand:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:not(.fm-action-primary),
+html body .fm-action-secondary,
+html body .fm-action-outline,
+html body .MuiButton-outlinedSecondary {
+  border: 1px solid rgba(26, 26, 24, 0.15) !important;
+  color: #1a1a18 !important;
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+}
+html body button.border-gray-300:hover:not(.fm-action-primary),
+html body button[class*="border-gray-300"]:hover:not(.fm-action-primary),
+html body button.border-brand:hover:not(.fm-action-primary):not(.bg-brand),
+html body button.border-input:hover:not(.fm-action-primary),
+html body .fm-action-secondary:hover,
+html body .fm-action-outline:hover {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+html body button[class*="h-8"][class*="w-8"] {
+  border-radius: 8px !important;
+}
+
+/* 3. Entity Status Pills: 999px radius, low-saturation tint & text, 3px 10px, 11px/500 */
+html body span.rounded-full:is([class*="bg-green-"], [class*="bg-emerald-"], [class*="text-green-"], [class*="text-emerald-"]) {
+  background-color: #e0f7ea !important;
+  color: #12a150 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-red-"], [class*="text-red-"]) {
+  background-color: #fbdcdc !important;
+  color: #a32126 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+html body span.rounded-full:is([class*="bg-amber-"], [class*="bg-yellow-"], [class*="text-amber-"], [class*="text-yellow-"]) {
+  background-color: #fff2d6 !important;
+  color: #b37400 !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+}
+
+/* 4. Table Wrappers and Numeric Alignment (ST04, ST20, ST28) */
+html body .asset-management-table-wrapper,
+html body .task-status-table-wrapper,
+html body div:has(> table.asset-management-table),
+html body div:has(> table.task-status-table) {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+}
+html body table.asset-management-table td:not(:first-child),
+html body table.task-status-table td:not(:first-child) {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* 5. Neutral 2px Dashed Drop Zones (ST37, ST42, ST44) */
+html body div.border-dashed[class*="border-yellow"],
+html body div.border-dashed[class*="border-amber"],
+html body div.border-dashed:not([class*="border-gray"]):not([class*="border-neutral"]) {
+  border: 2px dashed rgba(26, 26, 24, 0.2) !important;
+  border-radius: 12px !important;
+  background-color: #faf9f6 !important;
+}
+
+/* 6. Selection Chips (ST26.3): Neutral surface and readable ink text */
+html body .MuiChip-root.MuiChip-outlinedPrimary,
+html body .MuiChip-root[class*="MuiChip-colorPrimary"] {
+  background-color: #f5f4f0 !important;
+  color: #1a1a18 !important;
+  border-color: rgba(26, 26, 24, 0.15) !important;
+  border-radius: 6px !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon {
+  color: rgba(26, 26, 24, 0.48) !important;
+}
+html body .MuiChip-root .MuiChip-deleteIcon:hover {
+  color: #1a1a18 !important;
+}
+
+/* 7. Scoped Settings Feedback Toasts (ST60.1) */
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast,
+html body [data-sonner-toast].settings-toast,
+html body .settings-toast {
+  background-color: #1a1a18 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-icon],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-icon],
+html body [data-sonner-toast].settings-toast [data-icon],
+html body .settings-toast [data-icon] {
+  color: #3dd68c !important;
+}
+html body [data-sonner-toaster].settings-toaster [data-sonner-toast] [data-close-button],
+html body [data-sonner-toaster] [data-sonner-toast].settings-toast [data-close-button],
+html body [data-sonner-toast].settings-toast [data-close-button],
+html body .settings-toast [data-close-button] {
+  color: #ffffff !important;
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+   CHECKBOX — wireframe .cb (asset-management.html): 18px, 5px radius,
+   1.5px soft-ink border; ink fill + white tick when checked/indeterminate.
+   Placed last so it beats the legacy primary-colour and td-button padding rules.
+   ============================================================ */
+html body button[role="checkbox"],
+html body table td button[role="checkbox"],
+html body table th button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(26, 26, 24, 0.22) !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body button[role="checkbox"][data-state="unchecked"] {
+  background-color: #ffffff !important;
+  border-color: rgba(26, 26, 24, 0.22) !important;
+}
+html body button[role="checkbox"][data-state="checked"],
+html body table td button[role="checkbox"][data-state="checked"],
+html body table th button[role="checkbox"][data-state="checked"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+}
+/* Partial selection (header): white box, ink border, ink dash */
+html body button[role="checkbox"][data-state="indeterminate"],
+html body table th button[role="checkbox"][data-state="indeterminate"] {
+  background-color: #ffffff !important;
+  border-color: #1a1a18 !important;
+}
+html body button[role="checkbox"][data-state="indeterminate"] span,
+html body button[role="checkbox"][data-state="indeterminate"] svg {
+  color: #1a1a18 !important;
+  stroke: #1a1a18 !important;
+}
+html body button[role="checkbox"] span {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+}
+html body button[role="checkbox"] svg {
+  width: 12px !important;
+  height: 12px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }

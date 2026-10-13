@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Package, Plus, Upload, Settings } from 'lucide-react';
+import { ArrowLeft, Package, Upload, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   FormControl,
@@ -12,8 +10,6 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 
 interface FormData {
@@ -61,19 +57,11 @@ interface PackageErrors {
 }
 
 const fieldStyles = {
-  height: '40px',
   backgroundColor: '#fff',
-  borderRadius: '4px',
   '& .MuiOutlinedInput-root': {
-    height: '40px',
-    fontSize: '14px',
-    '& fieldset': { borderColor: '#ddd' },
-    '&:hover fieldset': { borderColor: '#C72030' },
-    '&.Mui-focused fieldset': { borderColor: '#C72030' },
-  },
-  '& .MuiInputLabel-root': {
-    fontSize: '14px',
-    '&.Mui-focused': { color: '#C72030' },
+    minHeight: '44px',
+    fontSize: '13.5px',
+    fontWeight: 500,
   },
 };
 const MOBILE_NUMBER_REGEX = /^\d{10}$/;
@@ -286,27 +274,6 @@ export const NewOutboundPage = () => {
     updatePackageErrors(packageId, 'attachments', 'file');
   };
 
-  const handleAddPackage = () => {
-    setPackages((prev) => [
-      ...prev,
-      {
-        id: Math.max(...prev.map((p) => p.id)) + 1,
-        senderId: '',
-        recipientName: '',
-        recipientEmail: '',
-        recipientMobile: '',
-        awbNumber: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        pincode: '',
-        type: '',
-        attachments: [],
-      },
-    ]);
-  };
-
   const handleRemovePackage = (packageId: number) => {
     if (packages.length === 1) {
       toast({
@@ -502,60 +469,49 @@ export const NewOutboundPage = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
-      <div className="p-6">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/vas/mailroom/outbound')}
-            className="mb-4 flex items-center gap-1 hover:text-gray-800"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Outbound List
-          </Button>
-          <h1
-            className="text-2xl font-bold text-[#1a1a1a] uppercase"
-            style={{ fontFamily: 'Work Sans, sans-serif' }}
-          >
-            NEW OUTBOUND
-          </h1>
-        </div>
+  const footerBtnClass =
+    'inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50';
 
-        <form onSubmit={handleSubmit}>
-          <Card
-            className="mb-6 border-[#D9D9D9] bg-white shadow-sm"
-            style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)',
-            }}
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div style={{ padding: '24px 32px 48px' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/vas/mailroom/outbound')}
+          className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[var(--color-ink-48)] hover:text-[var(--color-text)]"
+          style={{ marginBottom: 12 }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Outbound List
+        </button>
+        <h1
+          className="uppercase text-[var(--color-text)]"
+          style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.2, margin: '0 0 22px' }}
+        >
+          NEW OUTBOUND
+        </h1>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <section
+            className="bg-white"
+            style={{ border: '1px solid var(--color-line-card)', borderRadius: 16, padding: '22px 24px' }}
           >
-            <CardHeader className="bg-[#F6F4EE]">
-              <CardTitle className="text-lg text-black flex items-center">
-                <div
-                  className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-2"
-                  style={{ fontFamily: 'Work Sans, sans-serif' }}
-                >
-                  <Settings className="w-5 h-5" />
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'Work Sans, sans-serif',
-                    fontWeight: 600,
-                    color: '#C72030',
-                  }}
-                >
-                  BASIC DETAILS
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]"
+                style={{ marginRight: 8 }}
+              >
+                <Settings className="h-4 w-4" />
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)' }}>
+                BASIC DETAILS
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 14 }}>
                 <div>
                   <FormControl fullWidth variant="outlined" error={!!formErrors.vendor}>
                     <InputLabel shrink>
-                      Vendor <span style={{ color: '#C72030' }}>*</span>
+                      Vendor <span style={{ color: 'var(--color-danger)' }}>*</span>
                     </InputLabel>
                     <MuiSelect
                       label="Vendor"
@@ -583,65 +539,49 @@ export const NewOutboundPage = () => {
                     type="date"
                     label={
                       <span>
-                        Date of Sending <span style={{ color: '#C72030' }}>*</span>
+                        Date of Sending <span style={{ color: 'var(--color-danger)' }}>*</span>
                       </span>
                     }
                     value={formData.dateOfSending}
                     onChange={(e) => handleInputChange('dateOfSending', e.target.value)}
                     InputLabelProps={{ shrink: true }}
-                    inputProps={{ style: { height: 40 } }}
-                    sx={{ '& .MuiInputBase-root': { height: 40 } }}
+                    sx={fieldStyles}
                     error={!!formErrors.dateOfSending}
                     helperText={formErrors.dateOfSending}
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </section>
 
           {packages.map((pkg, index) => (
-            <Card
+            <section
               key={pkg.id}
-              className="mb-6 border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)',
-              }}
+              className="bg-white"
+              style={{ border: '1px solid var(--color-line-card)', borderRadius: 16, padding: '22px 24px' }}
             >
-              <CardHeader className="bg-[#F6F4EE]">
-                <CardTitle className="text-lg text-black flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div
-                      className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-2"
-                      style={{ fontFamily: 'Work Sans, sans-serif' }}
-                    >
-                      <Package className="w-5 h-5" />
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: 'Work Sans, sans-serif',
-                        fontWeight: 600,
-                        color: '#C72030',
-                      }}
-                    >
-                      PACKAGE DETAILS {packages.length > 1 && `(${index + 1})`}
-                    </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 16 }}>
+                <div className="flex items-center">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]"
+                    style={{ marginRight: 8 }}
+                  >
+                    <Package className="h-4 w-4" />
                   </div>
-                  {packages.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => handleRemovePackage(pkg.id)}
-                      className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)' }}>
+                    PACKAGE DETAILS {packages.length > 1 && `(${index + 1})`}
+                  </span>
+                </div>
+                {packages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePackage(pkg.id)}
+                    className="inline-flex h-8 items-center justify-center rounded-lg border border-[var(--color-line)] bg-white px-3 text-xs font-semibold text-[var(--color-danger)] hover:bg-[var(--color-surface)]"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: 14 }}>
                   <div>
                     <FormControl
                       fullWidth
@@ -649,7 +589,7 @@ export const NewOutboundPage = () => {
                       error={!!packageErrors[pkg.id]?.senderId}
                     >
                       <InputLabel shrink>
-                        Sender <span style={{ color: '#C72030' }}>*</span>
+                        Sender <span style={{ color: 'var(--color-danger)' }}>*</span>
                       </InputLabel>
                       <MuiSelect
                         label="Sender"
@@ -681,7 +621,7 @@ export const NewOutboundPage = () => {
                       fullWidth
                       label={
                         <span>
-                          Recipient Name <span style={{ color: '#C72030' }}>*</span>
+                          Recipient Name <span style={{ color: 'var(--color-danger)' }}>*</span>
                         </span>
                       }
                       placeholder="Enter Recipient's Name"
@@ -749,7 +689,7 @@ export const NewOutboundPage = () => {
                       fullWidth
                       label={
                         <span>
-                          Recipient's Address Line 1 <span style={{ color: '#C72030' }}>*</span>
+                          Recipient's Address Line 1 <span style={{ color: 'var(--color-danger)' }}>*</span>
                         </span>
                       }
                       placeholder="Enter Address Line 1"
@@ -783,7 +723,7 @@ export const NewOutboundPage = () => {
                       fullWidth
                       label={
                         <span>
-                          City <span style={{ color: '#C72030' }}>*</span>
+                          City <span style={{ color: 'var(--color-danger)' }}>*</span>
                         </span>
                       }
                       placeholder="Enter City"
@@ -803,7 +743,7 @@ export const NewOutboundPage = () => {
                       error={!!packageErrors[pkg.id]?.state}
                     >
                       <InputLabel shrink>
-                        State <span style={{ color: '#C72030' }}>*</span>
+                        State <span style={{ color: 'var(--color-danger)' }}>*</span>
                       </InputLabel>
                       <MuiSelect
                         label="State"
@@ -835,7 +775,7 @@ export const NewOutboundPage = () => {
                       fullWidth
                       label={
                         <span>
-                          Pincode <span style={{ color: '#C72030' }}>*</span>
+                          Pincode <span style={{ color: 'var(--color-danger)' }}>*</span>
                         </span>
                       }
                       placeholder="Enter Pincode"
@@ -857,7 +797,7 @@ export const NewOutboundPage = () => {
                       error={!!packageErrors[pkg.id]?.type}
                     >
                       <InputLabel shrink>
-                        Type <span style={{ color: '#C72030' }}>*</span>
+                        Type <span style={{ color: 'var(--color-danger)' }}>*</span>
                       </InputLabel>
                       <MuiSelect
                         label="Type"
@@ -880,11 +820,21 @@ export const NewOutboundPage = () => {
                     </FormControl>
                   </div>
 
-                  <div className="lg:col-span-3">
-                    <label className="block text-sm font-medium mb-2 text-[#1a1a1a]">
+                  <div className="lg:col-span-3" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-68)' }}>
                       Attachments
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-white">
+                    <div
+                      style={{
+                        border: '2px dashed #EBE9E2',
+                        borderRadius: 12,
+                        padding: 18,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        background: '#fff',
+                      }}
+                    >
                       <input
                         type="file"
                         multiple
@@ -892,62 +842,43 @@ export const NewOutboundPage = () => {
                         id={`attachments-upload-${pkg.id}`}
                         onChange={(e) => handleFileUpload(pkg.id, e.target.files)}
                       />
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          type="button"
-                          onClick={() =>
-                            document.getElementById(`attachments-upload-${pkg.id}`)?.click()
-                          }
-                          className="!bg-[#C72030] !text-white text-sm"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Choose file
-                        </Button>
-                        <span className="text-sm text-gray-500">
-                          {pkg.attachments.length
-                            ? `${pkg.attachments.length} file(s) selected`
-                            : 'No file chosen'}
-                        </span>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById(`attachments-upload-${pkg.id}`)?.click()
+                        }
+                        className="inline-flex h-[42px] shrink-0 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Choose file
+                      </button>
+                      <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--color-ink-48)' }}>
+                        {pkg.attachments.length
+                          ? `${pkg.attachments.length} file(s) selected`
+                          : 'No file chosen'}
+                      </span>
                       {packageErrors[pkg.id]?.attachments && (
-                        <p className="text-sm text-red-500 mt-2 text-left">
+                        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-danger)' }}>
                           {packageErrors[pkg.id]?.attachments}
-                        </p>
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </section>
           ))}
 
-          <div className="mb-6 flex justify-start">
-            <Button
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+            <button
               type="button"
-              onClick={handleAddPackage}
-             className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+              onClick={() => navigate('/vas/mailroom/outbound')}
+              className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
             >
-              <Plus className="w-4 h-4" />
-              Package
-            </Button>
-          </div>
-
-          <div className="flex gap-4 justify-center">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-              style={{
-                backgroundColor: '#C72030',
-                color: '#FFF',
-                border: 'none',
-                borderRadius: '4px',
-              }}
-            >
+              Cancel
+            </button>
+            <button type="submit" disabled={isSubmitting} className={footerBtnClass}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

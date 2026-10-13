@@ -112,13 +112,13 @@ const AccountTypeSummaryDetailReport: React.FC = () => {
                   <tr key={`${row.account}-${index}`} className="hover:bg-[#fafafa]">
                     <td className="border-b border-[#ececec] px-4 py-3 text-sm text-[#111827] sm:px-5">{row.account}</td>
                     <td className="border-b border-[#ececec] px-4 py-3 text-sm text-[#111827] sm:px-5">{row.accountCode}</td>
-                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1463df] sm:px-5">
+                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1a1a18] tabular-nums sm:px-5">
                       {formatValue(row.debit)}
                     </td>
-                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1463df] sm:px-5">
+                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1a1a18] tabular-nums sm:px-5">
                       {formatValue(row.credit)}
                     </td>
-                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-semibold text-[#1463df] sm:px-5">
+                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-semibold text-[#1a1a18] tabular-nums sm:px-5">
                       {formatValue(balance)}
                     </td>
                   </tr>

@@ -188,12 +188,12 @@ export const CustomerBillDetailsPage = () => {
       </div>
 
       {/* Bill Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-brand-light text-brand">
-            <Receipt className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Receipt className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-brand-text">{bill.entity_name}</h3>
+          <h3 className="text-sm font-semibold uppercase text-brand-text">{bill.entity_name}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -245,12 +245,12 @@ export const CustomerBillDetailsPage = () => {
       </div>
 
       {/* Payments Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-brand-light text-brand">
-            <Receipt className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Receipt className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-brand-text">Payments</h3>
+          <h3 className="text-sm font-semibold uppercase text-brand-text">Payments</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable

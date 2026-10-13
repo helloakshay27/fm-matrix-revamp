@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 export interface ColumnConfig {
   key: string;
@@ -57,6 +57,11 @@ export function useEnhancedTable<T>({
     direction: null
   });
 
+  // Pages that reuse one table across tabs swap both `storageKey` and
+  // `columns` together. Treat that as a fresh table so the new tab gets its
+  // own declared column order instead of inheriting the previous tab's.
+  const lastStorageKeyRef = useRef(storageKey);
+
   // `columns` can grow after mount (e.g. category sub-columns that only exist
   // once an async-fetched category list resolves). Without this, a column
   // added later would exist in `columns` but never in `columnOrder`/
@@ -65,6 +70,8 @@ export function useEnhancedTable<T>({
   useEffect(() => {
     const currentKeys = columns.map(column => column.key);
     const currentKeySet = new Set(currentKeys);
+    const storageKeyChanged = lastStorageKeyRef.current !== storageKey;
+    lastStorageKeyRef.current = storageKey;
 
     setColumnVisibility(prev => {
       let changed = false;
@@ -82,6 +89,7 @@ export function useEnhancedTable<T>({
     });
 
     setColumnOrder(prev => {
+      if (storageKeyChanged) return currentKeys;
       const kept = prev.filter(key => currentKeySet.has(key));
       const added = currentKeys.filter(key => !kept.includes(key));
       const next = [...kept, ...added];
@@ -89,7 +97,7 @@ export function useEnhancedTable<T>({
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns]);
+  }, [columns, storageKey]);
 
   // Save column visibility state to localStorage whenever it changes
   useEffect(() => {
@@ -158,9 +166,11 @@ export function useEnhancedTable<T>({
 
   // Sort the data based on current sort state
   const sortedData = useMemo(() => {
-    if (!sortState.column || !sortState.direction) return data;
+    // Callers occasionally pass an unwrapped API object; treat it as no rows.
+    const rows: T[] = Array.isArray(data) ? data : [];
+    if (!sortState.column || !sortState.direction) return rows;
 
-    return [...data].sort((a, b) => {
+    return [...rows].sort((a, b) => {
       const aValue = a[sortState.column as keyof T];
       const bValue = b[sortState.column as keyof T];
 

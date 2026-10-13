@@ -224,17 +224,18 @@ export default function EditMeasurementPage() {
           </Button>
         </div>
       ) : (
+        <>
         <Card className="mx-auto ">
-          <CardHeader className="bg-[#f6f4ee] border-b">
-            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <span className="inline-flex items-center">
-                <FileChartColumnIncreasing className="w-5 h-5" color='#C72030' />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-900 sm:text-base">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <FileChartColumnIncreasing className="h-4 w-4 text-gray-700" />
               </span>
-              <span className="text-[#C72030]">Edit Utilizations</span>
+              <span>Edit Utilizations</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="px-8 pb-8 pt-2">
+            <form id="edit-measurement-form" onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
@@ -302,28 +303,32 @@ export default function EditMeasurementPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 mt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-8 py-2 h-10 rounded-none font-medium"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
-                >
-                  {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                  <span className="!text-white font-medium">{saving ? 'Updating...' : 'Update'}</span>
-                </Button>
-              </div>
             </form>
           </CardContent>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 mt-8">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={saving}
+            className="px-8 py-2 h-10 rounded-none font-medium"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="edit-measurement-form"
+            disabled={saving}
+            className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
+          >
+            {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+            <span className="!text-white font-medium">{saving ? 'Updating...' : 'Update'}</span>
+          </Button>
+        </div>
+        </>
       )}
     </div>
   );

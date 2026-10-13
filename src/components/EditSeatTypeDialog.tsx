@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TextField } from '@mui/material';
-import { X } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import { toast } from 'sonner';
 
 interface SeatType {
@@ -121,14 +121,13 @@ export const EditSeatTypeDialog: React.FC<EditSeatTypeDialogProps> = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-900">Upload Category Icon</label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-3">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="border-brand text-brand hover:bg-brand-selected"
                 onClick={() => document.getElementById('file-upload-edit-seat-type')?.click()}
               >
+                <Upload className="w-4 h-4 mr-2" />
                 Choose File
               </Button>
               <span className="text-sm text-gray-500 truncate">

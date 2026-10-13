@@ -49,8 +49,8 @@ import {
 
 // Section component - matching SalesOrderCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+    <section className="acc-section bg-card">
+        <div className="acc-section-head px-6 py-4 flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 {icon}
             </div>
@@ -1942,7 +1942,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                                     InputLabelProps={{ shrink: true }}
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField
                                                     type="number"
                                                     size="small"
@@ -1960,7 +1960,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField
                                                     type="number"
                                                     size="small"
@@ -2380,7 +2380,17 @@ export const EditSalesOrderPage: React.FC = () => {
                 </Section>
             </div>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
+            <div className="acc-actions pt-2">
+                <Button
+                    variant="outlined"
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    onClick={() => navigate(`/accounting/sales-order/${id}`)}
+                    disabled={isSubmitting}
+                    sx={{ textTransform: 'none' }}
+                >
+                    Cancel
+                </Button>
+
                 <Button
                     variant="text"
                     className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
@@ -2390,6 +2400,7 @@ export const EditSalesOrderPage: React.FC = () => {
                 >
                     Save as Draft
                 </Button>
+
                 <Button
                     variant="text"
                     className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
@@ -2398,15 +2409,6 @@ export const EditSalesOrderPage: React.FC = () => {
                     sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     {isSubmitting ? 'Updating...' : 'Update Sales Order'}
-                </Button>
-                <Button
-                    variant="outlined"
-                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
-                    onClick={() => navigate(`/accounting/sales-order/${id}`)}
-                    disabled={isSubmitting}
-                    sx={{ textTransform: 'none' }}
-                >
-                    Cancel
                 </Button>
             </div>
 

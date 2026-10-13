@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
-import { Edit, Square, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2, QrCode } from 'lucide-react';
+import { Edit, Square, Plus, X, Upload, Download, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import {
   fetchBuildings,
@@ -70,7 +71,6 @@ export const RoomPage = () => {
   const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -205,7 +205,7 @@ export const RoomPage = () => {
     }
   }, [dispatch, editRoom.building, editRoom.wing, editRoom.area, editRoom.floor, editingRoom]);
 
-  // Pagination calculations
+  // Filter rooms based on search
   const filteredRooms = rooms.data.filter(room => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -216,28 +216,6 @@ export const RoomPage = () => {
       room.floor?.name?.toLowerCase().includes(searchLower)
     );
   });
-
-  const totalItems = filteredRooms.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRooms = filteredRooms.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const goToPrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
 
   const handleAddRoom = async () => {
     if (!newRoom.building) {
@@ -373,9 +351,6 @@ export const RoomPage = () => {
       toast.success(`Rooms imported successfully! ${result.imported_count || ''} records processed.`);
       setShowImportDialog(false);
       setImportFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
       dispatch(fetchAllRooms());
     } catch (error: any) {
       console.error('Import error:', error);
@@ -385,8 +360,8 @@ export const RoomPage = () => {
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFilesSelected = (files: File[]) => {
+    const file = files[0];
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
@@ -398,7 +373,6 @@ export const RoomPage = () => {
         setImportFile(file);
       } else {
         toast.error('Please select a valid Excel or CSV file');
-        event.target.value = '';
       }
     }
   };
@@ -503,21 +477,23 @@ export const RoomPage = () => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">ROOM</h1>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-selected [&_svg]:text-brand"
               >
-                <Download className="h-4 w-4" />
-                {/* Download Template */}
+                <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-selected [&_svg]:text-brand"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
                     Import Rooms
                   </Button>
                 </DialogTrigger>
@@ -532,32 +508,22 @@ export const RoomPage = () => {
                     </button>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Select Excel or CSV file
-                      </label>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        onChange={handleFileSelect}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      {importFile && (
-                        <p className="mt-2 text-sm text-gray-600">
-                          Selected: {importFile.name}
-                        </p>
-                      )}
-                    </div>
+                    <AttachmentUpload
+                      label="Select Excel or CSV file"
+                      chooseText="Choose File"
+                      uploadText="Upload File"
+                      accept=".xlsx,.xls,.csv"
+                      files={importFile ? [importFile] : []}
+                      onFilesSelected={handleFilesSelected}
+                      onRemove={() => setImportFile(null)}
+                      disabled={isImporting}
+                    />
                     <div className="flex justify-end space-x-2">
                       <Button
                         variant="outline"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
                         }}
                       >
                         Cancel
@@ -565,6 +531,7 @@ export const RoomPage = () => {
                       <Button
                         onClick={handleImportRooms}
                         disabled={!importFile || isImporting}
+                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
@@ -577,7 +544,7 @@ export const RoomPage = () => {
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 {shouldShow("Room", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
+                    <Button className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Room
                     </Button>
@@ -804,7 +771,7 @@ export const RoomPage = () => {
                     </Button>
                     <Button
                       onClick={handleAddRoom}
-                      className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                      className="bg-brand hover:bg-brand-hover text-white"
                       disabled={!newRoom.building || !newRoom.roomName.trim()}
                     >
                       Submit
@@ -815,7 +782,7 @@ export const RoomPage = () => {
 
               <Button
                 onClick={handlePrintAllQR}
-                className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 Print All QR
               </Button>
@@ -823,184 +790,102 @@ export const RoomPage = () => {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64"
-                placeholder="Search rooms..."
-              />
-            </div>
-          </div>
-
-          {/* Debug info - remove this later */}
-
+          <div className="mb-4" />
 
           {/* Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Building</TableHead>
-                  <TableHead>Wing</TableHead>
-                  <TableHead>Area</TableHead>
-                  <TableHead>Floor</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Room</TableHead>
-                  <TableHead>QR Code</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rooms.loading ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8">
-                      <div className="flex items-center justify-center gap-2 text-black">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Loading ...
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : rooms.error ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4 text-red-500">
-                      Error: {rooms.error}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredRooms.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4">
-                      {rooms.data.length === 0 ? 'No rooms available' : 'No rooms match your search'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentRooms.map((room) => (
-                    <TableRow key={room.id}>
-                      <TableCell>
-                        {shouldShow("Room", "update") && (
-                          <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
-                            <Edit className="w-4 h-4 text-gray-900" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell>{room.building?.name || 'N/A'}</TableCell>
-                      <TableCell>{room.wing?.name || 'N/A'}</TableCell>
-                      <TableCell>{room.area?.name || 'N/A'}</TableCell>
-                      <TableCell>{room.floor?.name || 'N/A'}</TableCell>
-                      <TableCell>
-                        {room.unit?.unit_name || (room.unit_id ? `Unit ${room.unit_id}` : '-')}
-                      </TableCell>
-                      <TableCell>{room.name}</TableCell>
-                      <TableCell>
-                        {room.room_qr_code ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQrCode(room.room_qr_code);
-                              setIsQrModalOpen(true);
-                            }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={room.active}
-                          onCheckedChange={() => toggleRoomStatus(room.id)}
-                          className="data-[state=checked]:bg-brand"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full min-w-0 max-w-full">
+            <EnhancedTable
+              data={filteredRooms}
+              columns={[
+                { key: 'building', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'wing', label: 'Wing', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'area', label: 'Area', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'floor', label: 'Floor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'unit', label: 'Unit', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'name', label: 'Room', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'qr_code', label: 'QR Code', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'status', label: 'Status', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+              ] as ColumnConfig[]}
+              renderCell={(room: any, columnKey: string) => {
+                switch (columnKey) {
+                  case 'building':
+                    return room.building?.name || 'N/A';
+                  case 'wing':
+                    return room.wing?.name || 'N/A';
+                  case 'area':
+                    return room.area?.name || 'N/A';
+                  case 'floor':
+                    return room.floor?.name || 'N/A';
+                  case 'unit':
+                    return room.unit?.unit_name || (room.unit_id ? `Unit ${room.unit_id}` : '-');
+                  case 'name':
+                    return <span className="font-medium text-gray-900">{room.name}</span>;
+                  case 'qr_code':
+                    return room.room_qr_code ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQrCode(room.room_qr_code);
+                          setIsQrModalOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                        title="QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    );
+                  case 'status':
+                    return (
+                      <Switch
+                        checked={room.active}
+                        onCheckedChange={() => toggleRoomStatus(room.id)}
+                        className="data-[state=checked]:bg-brand"
+                      />
+                    );
+                  default:
+                    return room[columnKey] ?? '--';
+                }
+              }}
+              renderActions={(room: any) =>
+                shouldShow("Room", "update") ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditRoom(room)}
+                    className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                ) : null
+              }
+              storageKey="room-master-table"
+              enableSearch
+              searchTerm={searchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1);
+              }}
+              disableClientSearch
+              searchPlaceholder="Search rooms..."
+              hideTableExport
+              loading={rooms.loading}
+              emptyMessage={
+                rooms.error
+                  ? `Error: ${rooms.error}`
+                  : rooms.data.length === 0
+                    ? 'No rooms available'
+                    : 'No rooms match your search'
+              }
+              pagination
+              pageSize={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
-
-          {/* Pagination Controls */}
-          {rooms.data.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} rooms
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPrevious}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center space-x-1">
-                  {/* Show first page */}
-                  {currentPage > 3 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        1
-                      </Button>
-                      {currentPage > 4 && <span className="px-2">...</span>}
-                    </>
-                  )}
-
-                  {/* Show pages around current page */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
-                    .map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-
-                  {/* Show last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNext}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Edit Room Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>

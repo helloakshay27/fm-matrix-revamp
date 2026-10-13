@@ -429,7 +429,7 @@ export default function MsafeCircleEmailConfig() {
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="submit"
-                variant="outline"
+                variant="ghost"
                 className="fm-button-fix fm-button-brand w-full"
                 disabled={saving}
               >

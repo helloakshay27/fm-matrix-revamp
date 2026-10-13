@@ -5,7 +5,7 @@ import { Edit, Eye, Upload, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 
@@ -130,8 +130,6 @@ export const ChecklistMasterDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Sonner Toaster for notifications */}
-      <Toaster position="top-right" richColors closeButton />
 
       {/* Action Panel */}
       {showActionPanel && (

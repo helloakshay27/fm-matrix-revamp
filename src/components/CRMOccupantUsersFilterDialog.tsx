@@ -25,7 +25,7 @@ export const CRMOccupantUsersFilterDialog = ({ open, onOpenChange }: CRMOccupant
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0">
+      <DialogContent className="sm:max-w-[500px] p-0 rounded-2xl sm:rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-medium text-gray-900">FILTER BY</DialogTitle>
@@ -57,17 +57,17 @@ export const CRMOccupantUsersFilterDialog = ({ open, onOpenChange }: CRMOccupant
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+        <div className="flex gap-3 px-6 pb-6 pt-4 items-center justify-end">
           <Button
-            variant="outline"
             onClick={handleReset}
-            className="px-6"
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Reset
           </Button>
           <Button
             onClick={handleApply}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-6"
+            className="fm-action-primary"
           >
             Apply
           </Button>

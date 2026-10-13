@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Switch } from "@/components/ui/switch";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
-import { Switch } from '@mui/material';
+
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { isCMContextActive } from '@/utils/posthogHelpers';
@@ -301,15 +302,15 @@ export const BroadcastDetailsPage = () => {
       </div>
 
       {/* Main Content Card */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
         {/* Header with Title, Star, and Active Badge */}
-        <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
+        <div className="px-6 pt-6 pb-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                <FileText size={22} />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <FileText className="w-[18px] h-[18px]" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                 {broadcastDetails.notice_heading || "Fire Safety Drill Report"}
               </h2>
             </div>
@@ -318,21 +319,7 @@ export const BroadcastDetailsPage = () => {
               <div>
                 <Switch
                   checked={isActive}
-                  onChange={(e) => handleStatusToggle('active', e.target.checked)}
-                  sx={{
-                    '& .MuiSwitch-switchBase': {
-                      color: '#ef4444',
-                      '&.Mui-checked': {
-                        color: '#22c55e',
-                      },
-                      '&.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#22c55e',
-                      },
-                    },
-                    '& .MuiSwitch-track': {
-                      backgroundColor: '#ef4444',
-                    },
-                  }}
+                  onCheckedChange={(checked) => handleStatusToggle('active', checked)}
                 />
                 <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
               </div>
@@ -361,22 +348,7 @@ export const BroadcastDetailsPage = () => {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={showOnHomeScreen}
-                  onChange={(e) => handleStatusToggle('show_on_home_screen', e.target.checked)}
-                  size="small"
-                  sx={{
-                    '& .MuiSwitch-switchBase': {
-                      color: '#ef4444',
-                      '&.Mui-checked': {
-                        color: '#22c55e',
-                      },
-                      '&.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#22c55e',
-                      },
-                    },
-                    '& .MuiSwitch-track': {
-                      backgroundColor: '#ef4444',
-                    },
-                  }}
+                  onCheckedChange={(checked) => handleStatusToggle('show_on_home_screen', checked)}
                 />
                 <span className="text-sm font-medium text-gray-700">{showOnHomeScreen ? 'Active' : 'Inactive'}</span>
               </div>
@@ -401,22 +373,7 @@ export const BroadcastDetailsPage = () => {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={visibleAfterExpire}
-                  onChange={(e) => handleStatusToggle('visible_after_expire', e.target.checked)}
-                  size="small"
-                  sx={{
-                    '& .MuiSwitch-switchBase': {
-                      color: '#ef4444',
-                      '&.Mui-checked': {
-                        color: '#22c55e',
-                      },
-                      '&.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#22c55e',
-                      },
-                    },
-                    '& .MuiSwitch-track': {
-                      backgroundColor: '#ef4444',
-                    },
-                  }}
+                  onCheckedChange={(checked) => handleStatusToggle('visible_after_expire', checked)}
                 />
                 <span className="text-sm font-medium text-gray-700">{visibleAfterExpire ? 'Active' : 'Inactive'}</span>
               </div>
@@ -426,14 +383,14 @@ export const BroadcastDetailsPage = () => {
       </div>
 
       {/* Share Section */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <Share2 size={16} />
+      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
+        <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Share2 className="w-[18px] h-[18px]" />
           </div>
-          <span className="font-semibold text-lg text-gray-800">Share</span>
+          <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Share</span>
         </div>
-        <div className="p-6 bg-white">
+        <div className="px-6 pb-6 pt-3 bg-white">
           <div className="grid grid-cols-2 gap-8">
             <div className="flex items-center gap-8">
               <span className="text-sm text-gray-500 min-w-[160px]">Share With</span>
@@ -452,14 +409,14 @@ export const BroadcastDetailsPage = () => {
       </div>
 
       {/* Attachment Section */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <File size={16} />
+      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
+        <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <File className="w-[18px] h-[18px]" />
           </div>
-          <span className="font-semibold text-lg text-gray-800">Attachment</span>
+          <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachment</span>
         </div>
-        <div className="p-6 bg-white">
+        <div className="px-6 pb-6 pt-3 bg-white">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             {/* Attachments */}
             {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
@@ -468,7 +425,7 @@ export const BroadcastDetailsPage = () => {
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">
                     {index === 0 ? 'Attachments' : ''}
                   </h4>
-                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-full p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
                     onClick={() => attachment.url && window.open(attachment.url, '_blank')}
                   >
                     <button
@@ -476,7 +433,7 @@ export const BroadcastDetailsPage = () => {
                         e.stopPropagation();
                         handleDownloadAttachment(attachment);
                       }}
-                      className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                      className="absolute top-2 left-1/2 -translate-x-1/2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
                       title="Download"
                     >
                       <Download className="w-4 h-4" />
@@ -491,7 +448,7 @@ export const BroadcastDetailsPage = () => {
             ) : (
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-4">Attachments</h4>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 rounded-full p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
                   <span className="text-sm text-gray-400">No attachments</span>
                 </div>
               </div>
@@ -503,7 +460,7 @@ export const BroadcastDetailsPage = () => {
               {broadcastDetails?.cover_image ? (
                 <div
                   onClick={() => broadcastDetails.cover_image?.url && window.open(broadcastDetails.cover_image.url, '_blank')}
-                  className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                  className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-full p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
                 >
                   <button
                     onClick={(e) => {
@@ -514,7 +471,7 @@ export const BroadcastDetailsPage = () => {
                         url: broadcastDetails.cover_image?.url
                       });
                     }}
-                    className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                    className="absolute top-2 left-1/2 -translate-x-1/2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
                     title="Download"
                   >
                     <Download className="w-4 h-4" />
@@ -529,7 +486,7 @@ export const BroadcastDetailsPage = () => {
                   />
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 rounded-full p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
                   <span className="text-sm text-gray-400">No cover image</span>
                 </div>
               )}

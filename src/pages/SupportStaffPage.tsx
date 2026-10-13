@@ -83,7 +83,7 @@ export const SupportStaffPage = () => {
   const fieldStyles = {
     height: '45px',
     backgroundColor: '#fff',
-    borderRadius: '4px',
+    borderRadius: '12px',
     '& .MuiOutlinedInput-root': {
       height: '45px',
       '& fieldset': {
@@ -567,7 +567,7 @@ export const SupportStaffPage = () => {
 
       {/* Add Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl rounded-[24px] p-7">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Create Support Staff Category</DialogTitle>
             <Button
@@ -583,87 +583,67 @@ export const SupportStaffPage = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               {/* Category Name Input */}
-              <TextField
-                label="Category Name"
-                placeholder="Enter Category Name"
-                value={formData.categoryName}
-                onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
-                fullWidth
-                variant="outlined"
-                required
-                // slotProps={{
-                //   inputLabel: {
-                //     shrink: true,
-                //   },
-                // }}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
-                sx={fieldStyles}
-              />
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Category Name <span className="text-red-500">*</span>
+                </label>
+                <TextField
+                  placeholder="Enter Category Name"
+                  value={formData.categoryName}
+                  onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+              </div>
             </div>
 
             {/* Days Input */}
             <div>Estimated Time <span className='text-red-500'>*</span>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <TextField
-                  label="Days"
-                  placeholder="0"
-                  type="number"
-                  value={formData.days}
-                  onChange={(e) => setFormData({ ...formData, days: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 365 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Days</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={formData.days}
+                    onChange={(e) => setFormData({ ...formData, days: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 365 }}
+                    sx={fieldStyles}
+                  />
+                </div>
 
                 {/* Hours Input */}
-                <TextField
-                  label="Hours"
-                  placeholder="0"
-                  type="number"
-                  value={formData.hours}
-                  onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 23 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Hours</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={formData.hours}
+                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 23 }}
+                    sx={fieldStyles}
+                  />
+                </div>
 
                 {/* Minutes Input */}
-                <TextField
-                  label="Minutes"
-                  placeholder="0"
-                  type="number"
-                  value={formData.minutes}
-                  onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 59 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Minutes</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={formData.minutes}
+                    onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 59 }}
+                    sx={fieldStyles}
+                  />
+                </div>
               </div>
             </div>
 
@@ -749,22 +729,22 @@ export const SupportStaffPage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center gap-3">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
                 onClick={handleModalClose}
-                className="px-6"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="outline"
+              </button>
+              <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="fm-button-fix fm-button-brand px-6"
+                className="fm-action-primary"
               >
                 {isSubmitting ? 'Creating...' : 'Submit'}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -772,7 +752,7 @@ export const SupportStaffPage = () => {
 
       {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl rounded-[24px] p-7">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Edit Support Staff Category</DialogTitle>
             <Button
@@ -788,87 +768,67 @@ export const SupportStaffPage = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               {/* Category Name Input */}
-              <TextField
-                label="Category Name"
-                placeholder="Enter Category Name"
-                value={editFormData.categoryName}
-                onChange={(e) => setEditFormData({ ...editFormData, categoryName: e.target.value })}
-                fullWidth
-                variant="outlined"
-                required
-                // slotProps={{
-                //   inputLabel: {
-                //     shrink: true,
-                //   },
-                // }}
-                // InputProps={{
-                //   sx: fieldStyles,
-                // }}
-                sx={fieldStyles}
-              />
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Category Name <span className="text-red-500">*</span>
+                </label>
+                <TextField
+                  placeholder="Enter Category Name"
+                  value={editFormData.categoryName}
+                  onChange={(e) => setEditFormData({ ...editFormData, categoryName: e.target.value })}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+              </div>
             </div>
 
             {/* Days Input */}
             <div>Estimated Time <span className='text-red-500'>*</span>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <TextField
-                  label="Days"
-                  placeholder="0"
-                  type="number"
-                  value={editFormData.days}
-                  onChange={(e) => setEditFormData({ ...editFormData, days: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 365 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Days</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={editFormData.days}
+                    onChange={(e) => setEditFormData({ ...editFormData, days: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 365 }}
+                    sx={fieldStyles}
+                  />
+                </div>
 
                 {/* Hours Input */}
-                <TextField
-                  label="Hours"
-                  placeholder="0"
-                  type="number"
-                  value={editFormData.hours}
-                  onChange={(e) => setEditFormData({ ...editFormData, hours: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 23 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Hours</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={editFormData.hours}
+                    onChange={(e) => setEditFormData({ ...editFormData, hours: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 23 }}
+                    sx={fieldStyles}
+                  />
+                </div>
 
                 {/* Minutes Input */}
-                <TextField
-                  label="Minutes"
-                  placeholder="0"
-                  type="number"
-                  value={editFormData.minutes}
-                  onChange={(e) => setEditFormData({ ...editFormData, minutes: e.target.value })}
-                  fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, max: 59 }}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Minutes</label>
+                  <TextField
+                    placeholder="0"
+                    type="number"
+                    value={editFormData.minutes}
+                    onChange={(e) => setEditFormData({ ...editFormData, minutes: e.target.value })}
+                    fullWidth
+                    variant="outlined"
+                    inputProps={{ min: 0, max: 59 }}
+                    sx={fieldStyles}
+                  />
+                </div>
               </div>
             </div>
 
@@ -954,22 +914,22 @@ export const SupportStaffPage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center gap-3">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
                 onClick={handleEditModalClose}
-                className="px-6"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="outline"
+              </button>
+              <button
+                type="button"
                 onClick={handleEditSubmit}
                 disabled={isSubmitting}
-                className="fm-button-fix fm-button-brand px-6"
+                className="fm-action-primary"
               >
                 {isSubmitting ? 'Updating...' : 'Update'}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

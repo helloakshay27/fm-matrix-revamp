@@ -51,7 +51,7 @@ import {
     AttachFile,
     ArrowBack
 } from '@mui/icons-material';
-import { Cog, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText, CalendarClock, ListChecks, Link2, type LucideIcon } from 'lucide-react';
 import { validateActivityName, validateActivityNameDebounced } from '@/utils/scheduleValidation';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -72,10 +72,10 @@ const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
 
 const CustomStep = styled(Step)(({ theme }) => ({
     '& .MuiStepLabel-root .Mui-completed': {
-        color: '#da7756',
+        color: 'var(--color-primary)',
     },
     '& .MuiStepLabel-root .Mui-active': {
-        color: '#da7756',
+        color: 'var(--color-primary)',
     },
     '& .MuiStepLabel-label': {
         fontSize: '14px',
@@ -85,24 +85,24 @@ const CustomStep = styled(Step)(({ theme }) => ({
 }));
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-    backgroundColor: '#da7756',
+    backgroundColor: 'var(--color-primary)',
     color: 'white !important',
     borderRadius: 0,
     textTransform: 'none',
     padding: '8px 16px',
     fontFamily: 'Work Sans, sans-serif',
     fontWeight: 500,
-    boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+    boxShadow: '0 2px 4px rgba(var(--color-primary-rgb), 0.2)',
     '&:hover': {
-        backgroundColor: '#C4623C',
-        boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
+        backgroundColor: 'var(--color-primary-hover)',
+        boxShadow: '0 4px 8px rgba(var(--color-primary-rgb), 0.3)',
     },
 }));
 RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
     backgroundColor: '#e7e3d9',
-    color: '#da7756',
+    color: 'var(--color-primary)',
     borderRadius: 0,
     textTransform: 'none',
     padding: '8px 16px',
@@ -113,24 +113,84 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
     },
 }));
 
+// Standard form section (matches Add Asset): white card, hairline border, 16px radius,
+// heading directly on the surface, 12px to body, 20px between sections.
 const SectionCard = styled(Paper)(({ theme }) => ({
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-    borderRadius: 0,
-    overflow: 'hidden',
-    marginBottom: '24px',
+  backgroundColor: 'white',
+  border: '1px solid rgba(26, 26, 24, 0.09)',
+  boxShadow: 'none',
+  borderRadius: '16px',
+  overflow: 'hidden',
+  marginBottom: '20px',
 }));
 
 const SectionHeader = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  marginBottom: '12px',
 }));
 
+// Neutral icon tile: soft grey 36px square, 10px radius, muted 18px line icon.
+const SectionIcon: React.FC<{ icon: LucideIcon }> = ({ icon: Icon }) => (
+  <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0">
+    <Icon className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" />
+  </span>
+);
+
+const sectionTitleSx = {
+  fontFamily: 'inherit',
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#1A1A18',
+  textTransform: 'uppercase',
+  letterSpacing: '0.02em',
+} as const;
+
+// Supporting actions use the neutral outlined shell; the footer keeps the one ink primary.
+const secondaryActionSx = {
+  height: 40,
+  padding: '0 18px',
+  gap: '7px',
+  borderRadius: '8px',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(26, 26, 24, 0.12)',
+  color: '#1A1A18',
+  fontFamily: 'inherit',
+  fontSize: '12.5px',
+  fontWeight: 600,
+  textTransform: 'none',
+  boxShadow: 'none',
+  '& .MuiButton-startIcon': { marginRight: 0, marginLeft: 0 },
+  '& .MuiSvgIcon-root': { fontSize: 16, color: '#1A1A18' },
+  '&:hover': { backgroundColor: '#F7F6F2', borderColor: 'rgba(26, 26, 24, 0.28)', boxShadow: 'none' },
+} as const;
+
+// Small inline actions (Edit, + Add Option, Add File): outline/edit variant (30px, 1.5px ink border).
+const outlineActionSx = {
+  height: 30,
+  minWidth: 'auto',
+  padding: '0 12px',
+  gap: '6px',
+  borderRadius: '8px',
+  backgroundColor: '#FFFFFF',
+  border: '1.5px solid #1A1A18',
+  color: '#1A1A18',
+  fontFamily: 'inherit',
+  fontSize: '11.5px',
+  fontWeight: 600,
+  textTransform: 'none',
+  '& .MuiButton-startIcon': { marginRight: 0, marginLeft: 0 },
+  '& .MuiSvgIcon-root': { fontSize: 14, color: '#1A1A18' },
+  '&:hover': { backgroundColor: '#F7F6F2', border: '1.5px solid #1A1A18' },
+} as const;
+
+const secondaryActionClass =
+  'inline-flex items-center justify-center gap-[7px] h-10 px-[18px] rounded-[8px] bg-white border border-[rgba(26,26,24,0.12)] text-[#1A1A18] text-[12.5px] font-semibold hover:bg-[#F7F6F2] hover:border-[rgba(26,26,24,0.28)] transition-colors';
+
 const RedIcon = styled(Settings)(({ theme }) => ({
-    color: '#D42F2F',
-    backgroundColor: '#D42F2F',
+    color: 'var(--color-primary)',
+    backgroundColor: 'var(--color-primary)',
     borderRadius: '50%',
     padding: '8px',
     fontSize: '32px',
@@ -147,16 +207,16 @@ const fieldStyles = {
             borderColor: '#ddd',
         },
         '&:hover fieldset': {
-            borderColor: '#da7756',
+            borderColor: 'var(--color-primary)',
         },
         '&.Mui-focused fieldset': {
-            borderColor: '#da7756',
+            borderColor: 'var(--color-primary)',
         },
     },
     '& .MuiInputLabel-root': {
         fontSize: '14px',
         '&.Mui-focused': {
-            color: '#da7756',
+            color: 'var(--color-primary)',
         },
     },
 };
@@ -3128,27 +3188,16 @@ export const AddTrainingSchedulePage = () => {
         switch (stepIndex) {
             case 0: // Basic Configuration
                 return (
-                    <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }} >
+                    <SectionCard style={{ padding: '24px', margin: 0 }}>
                         {/* Header with icon and title */}
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
                         }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Box sx={{
-                                    backgroundColor: '#da7756',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginBottom: '2'
-                                }}>
-                                    <Cog size={16} color="white" />
-                                </Box>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', textTransform: 'uppercase' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <SectionIcon icon={FileText} />
+                                <Typography variant="h6" sx={sectionTitleSx}>
                                     Basic Configuration
                                 </Typography>
                             </Box>
@@ -3162,17 +3211,7 @@ export const AddTrainingSchedulePage = () => {
                                         size="small"
                                         startIcon={<Edit />}
                                         onClick={() => handleStepClick(stepIndex)}
-                                        sx={{
-                                            color: '#da7756',
-                                            borderColor: '#da7756',
-                                            fontSize: '12px',
-                                            padding: '4px 12px',
-                                            minWidth: 'auto',
-                                            '&:hover': {
-                                                borderColor: '#da7756',
-                                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                            }
-                                        }}
+                                        sx={outlineActionSx}
                                     >
                                         Edit
                                     </MuiButton>
@@ -3214,7 +3253,7 @@ export const AddTrainingSchedulePage = () => {
                   value="Hoto"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3225,7 +3264,7 @@ export const AddTrainingSchedulePage = () => {
                   value="Audit"
                   control={
                     <Radio
-                      sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                      sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
                     />
                   }
@@ -3237,7 +3276,7 @@ export const AddTrainingSchedulePage = () => {
                         <TextField
                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                            label={<span>Activity Name <span style={{ color: 'red' }}>*</span></span>}
+                            label={<span>Activity Name <span className="fm-required-mark">*</span></span>}
                             placeholder="Enter Activity Name"
                             fullWidth
                             value={formData.activityName}
@@ -3410,19 +3449,7 @@ export const AddTrainingSchedulePage = () => {
                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                     // startIcon={<AttachFile />}
                                     onClick={addAttachment}
-                                    sx={{
-                                        borderColor: '#da7756',
-                                        color: '#da7756',
-                                        textTransform: 'none',
-                                        fontFamily: 'Work Sans, sans-serif',
-                                        fontWeight: 500,
-                                        borderRadius: '0',
-                                        padding: '8px 16px',
-                                        '&:hover': {
-                                            borderColor: '#C4623C',
-                                            backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                                        },
-                                    }}
+                                    sx={secondaryActionSx}
                                 >
                                     Add Attachment
                                 </MuiButton>
@@ -3450,26 +3477,16 @@ export const AddTrainingSchedulePage = () => {
                 }
 
                 return (
-                    <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                    <SectionCard style={{ padding: '24px', margin: 0 }}>
                         {/* Header with icon and title */}
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 2,
-                            mb: 3
+                            gap: 1.5,
+                            mb: 1.5
                         }}>
-                            <Box sx={{
-                                backgroundColor: '#da7756',
-                                borderRadius: '50%',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Cog size={16} color="white" />
-                            </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#da7756', textTransform: 'uppercase' }}>
+                            <SectionIcon icon={CalendarClock} />
+                            <Typography variant="h6" sx={sectionTitleSx}>
                                 Schedule Setup
                             </Typography>
                         </Box>
@@ -3489,7 +3506,7 @@ export const AddTrainingSchedulePage = () => {
                                         value="active"
                                         control={
                                             <Radio
-                                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                 disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                             />
                                         }
@@ -3499,7 +3516,7 @@ export const AddTrainingSchedulePage = () => {
                                         value="inactive"
                                         control={
                                             <Radio
-                                                sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                 disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                             />
                                         }
@@ -3512,17 +3529,7 @@ export const AddTrainingSchedulePage = () => {
                                         size="small"
                                         startIcon={<Edit />}
                                         onClick={() => handleStepClick(stepIndex)}
-                                        sx={{
-                                            color: '#da7756',
-                                            borderColor: '#da7756',
-                                            fontSize: '12px',
-                                            padding: '4px 12px',
-                                            minWidth: 'auto',
-                                            '&:hover': {
-                                                borderColor: '#da7756',
-                                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                            }
-                                        }}
+                                        sx={outlineActionSx}
                                     >
                                         Edit
                                     </MuiButton>
@@ -3544,7 +3551,7 @@ export const AddTrainingSchedulePage = () => {
                                             },
                                         }}
                                     >
-                                        <InputLabel shrink>Select Training Subject <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Select Training Subject <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Select Training Subject"
                                             notched
@@ -3575,7 +3582,7 @@ export const AddTrainingSchedulePage = () => {
                                 {/* Assign To Type Selection */}
                                 <Box>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Assign To <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Assign To"
                                             notched
@@ -3604,7 +3611,7 @@ export const AddTrainingSchedulePage = () => {
                                             }}
                                         >
                                             <InputLabel shrink>
-                                                Select Users <span style={{ color: 'red' }}>*</span>
+                                                Select Users <span className="fm-required-mark">*</span>
                                             </InputLabel>
                                             <Select
                                                 multiple
@@ -3666,7 +3673,7 @@ export const AddTrainingSchedulePage = () => {
                                 {/* Multi-select Groups - Show when assignToType is 'group' */}
                                 {formData.assignToType === 'group' && (
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Select Groups <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             multiple
                                             label="Select Groups"
@@ -3702,7 +3709,7 @@ export const AddTrainingSchedulePage = () => {
 
                                 <Box>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Backup Assignee <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Backup Assignee"
                                             notched
@@ -3727,7 +3734,7 @@ export const AddTrainingSchedulePage = () => {
                                 {/* Plan Duration with conditional input */}
                                 <Box>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Plan Duration <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Plan Duration"
                                             notched
@@ -3751,7 +3758,7 @@ export const AddTrainingSchedulePage = () => {
                                     <TextField
                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                                        label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
+                                        label={<span>Plan Duration ({formData.planDuration}) <span className="fm-required-mark">*</span></span>}
                                         type="number"
                                         fullWidth
                                         value={formData.planDurationValue}
@@ -3814,7 +3821,7 @@ export const AddTrainingSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Scan Type <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Scan Type <span className="fm-required-mark">*</span></span>}
                       placeholder="Select Scan Type"
                       fullWidth
                     />
@@ -3825,7 +3832,7 @@ export const AddTrainingSchedulePage = () => {
 
                                 <Box>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Category <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Category"
                                             notched
@@ -3870,7 +3877,7 @@ export const AddTrainingSchedulePage = () => {
 
                                 <Box>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Lock Overdue Task <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Lock Overdue Task"
                                             notched
@@ -3918,7 +3925,7 @@ export const AddTrainingSchedulePage = () => {
                       {...params}
                       label={
                         <span>
-                          Frequency <span style={{ color: 'currentColor' }}>*</span>
+                          Frequency <span className="fm-required-mark">*</span>
                         </span>
                       }
                       placeholder="Select Frequency"
@@ -3957,7 +3964,7 @@ export const AddTrainingSchedulePage = () => {
                                     <TextField
                                         label={
                                             <span>
-                                                Start Date <span style={{ color: 'red' }}>*</span>
+                                                Start Date <span className="fm-required-mark">*</span>
                                             </span>
                                         }
                                         id="startFrom"
@@ -3983,7 +3990,7 @@ export const AddTrainingSchedulePage = () => {
                                     <TextField
                                         label={
                                             <span>
-                                                End Date <span style={{ color: 'red' }}>*</span>
+                                                End Date <span className="fm-required-mark">*</span>
                                             </span>
                                         }
                                         id="endAt"
@@ -4338,16 +4345,14 @@ export const AddTrainingSchedulePage = () => {
                     <div>
                         {/* Header Outside the Box */}
                         <div className="flex justify-between items-center p-6">
-                            <div className="flex items-center gap-2 text-[#da7756] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
-                                <span className="bg-[#da7756] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
-                                    <Cog className="w-6 h-6" />
-                                </span>
+                            <div className="flex items-center gap-3 text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
+                                <SectionIcon icon={ListChecks} />
                                 QUESTION SETUP
                             </div>
 
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1">
-                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-brand' : 'bg-gray-300'}`}>
                                         <input
                                             type="checkbox"
                                             checked={createNew}
@@ -4366,7 +4371,7 @@ export const AddTrainingSchedulePage = () => {
                                     <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-brand' : 'bg-gray-300'}`}>
                                         <input
                                             type="checkbox"
                                             checked={weightage}
@@ -4378,7 +4383,7 @@ export const AddTrainingSchedulePage = () => {
                                     <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#da7756]' : 'bg-gray-300'}`}>
+                                    <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-brand' : 'bg-gray-300'}`}>
                                         <input
                                             type="checkbox"
                                             checked={autoTicket}
@@ -4397,17 +4402,7 @@ export const AddTrainingSchedulePage = () => {
                                         size="small"
                                         startIcon={<Edit />}
                                         onClick={() => handleStepClick(stepIndex)}
-                                        sx={{
-                                            color: '#da7756',
-                                            borderColor: '#da7756',
-                                            fontSize: '12px',
-                                            padding: '4px 12px',
-                                            minWidth: 'auto',
-                                            '&:hover': {
-                                                borderColor: '#da7756',
-                                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                            }
-                                        }}
+                                        sx={outlineActionSx}
                                     >
                                         Edit
                                     </MuiButton>
@@ -4419,13 +4414,13 @@ export const AddTrainingSchedulePage = () => {
 
                         {/* Create New Template Section */}
                         {createNew && (
-                            <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                            <SectionCard style={{ padding: '24px', margin: 0 }}>
                                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                                     Select Template
                                 </Typography>
 
                                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                    <InputLabel shrink>Template <span style={{ color: 'red' }}>*</span></InputLabel>
+                                    <InputLabel shrink>Template <span className="fm-required-mark">*</span></InputLabel>
                                     <Select
                                         label="Template"
                                         notched
@@ -4450,7 +4445,7 @@ export const AddTrainingSchedulePage = () => {
                         )}
                         {/* Auto Ticket Configuration Section */}
                         {autoTicket && (
-                            <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                            <SectionCard style={{ padding: '24px', margin: 0 }}>
                                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                                     Auto Ticket Configuration
                                 </Typography>
@@ -4466,7 +4461,7 @@ export const AddTrainingSchedulePage = () => {
                                                 value="checklist"
                                                 control={
                                                     <Radio
-                                                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                     />
                                                 }
@@ -4476,7 +4471,7 @@ export const AddTrainingSchedulePage = () => {
                                                 value="question"
                                                 control={
                                                     <Radio
-                                                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                     />
                                                 }
@@ -4486,7 +4481,7 @@ export const AddTrainingSchedulePage = () => {
                                     </Box>
 
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Assigned To <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Assigned To <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Assigned To"
                                             notched
@@ -4503,7 +4498,7 @@ export const AddTrainingSchedulePage = () => {
                                     </FormControl>
 
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                                        <InputLabel shrink>Category <span className="fm-required-mark">*</span></InputLabel>
                                         <Select
                                             label="Category"
                                             notched
@@ -4538,7 +4533,7 @@ export const AddTrainingSchedulePage = () => {
                                         {questionSections.length > 1 && (
                                             <IconButton
                                                 onClick={() => removeQuestionSection(section.id)}
-                                                sx={{ color: '#da7756' }}
+                                                sx={{ color: 'var(--color-primary)' }}
                                             >
                                                 <Close />
                                             </IconButton>
@@ -4568,7 +4563,7 @@ export const AddTrainingSchedulePage = () => {
                                                             value="checklist"
                                                             control={
                                                                 <Radio
-                                                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                                 />
                                                             }
@@ -4578,7 +4573,7 @@ export const AddTrainingSchedulePage = () => {
                                                             value="question"
                                                             control={
                                                                 <Radio
-                                                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                                 />
                                                             }
@@ -4613,7 +4608,7 @@ export const AddTrainingSchedulePage = () => {
                                                     renderInput={(params) => (
                                                         <TextField
                                                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                                            {...params} label={<span>Assigned To <span style={{ color: 'red' }}>*</span></span>} fullWidth />
+                                                            {...params} label={<span>Assigned To <span className="fm-required-mark">*</span></span>} fullWidth />
                                                     )}
                                                 />
 
@@ -4643,7 +4638,7 @@ export const AddTrainingSchedulePage = () => {
                                                     renderInput={(params) => (
                                                         <TextField
                                                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                                            {...params} label={<span>Category <span style={{ color: 'red' }}>*</span></span>} fullWidth />
+                                                            {...params} label={<span>Category <span className="fm-required-mark">*</span></span>} fullWidth />
                                                     )}
                                                 />
                                                 {loading.helpdeskCategories && (
@@ -4745,7 +4740,7 @@ export const AddTrainingSchedulePage = () => {
                                                             backgroundColor: 'rgba(255, 255, 255, 0.8)',
                                                             '&:hover': {
                                                                 backgroundColor: 'rgba(255, 255, 255, 1)',
-                                                                color: '#da7756'
+                                                                color: 'var(--color-primary)'
                                                             }
                                                         }}
                                                         size="small"
@@ -4761,7 +4756,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                                     checked={task.mandatory}
                                                                     onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                                                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                 />
                                                             }
                                                             label="Mandatory"
@@ -4772,7 +4767,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                                     checked={task.helpText}
                                                                     onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                                                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                 />
                                                             }
                                                             label="Help Text"
@@ -4790,7 +4785,7 @@ export const AddTrainingSchedulePage = () => {
                                                                         }
                                                                     }}
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                                                    sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                 />
                                                             }
                                                             label="Reading"
@@ -4802,7 +4797,7 @@ export const AddTrainingSchedulePage = () => {
                                                                         checked={task.rating}
                                                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                                                         onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
-                                                                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                     />
                                                                 }
                                                                 label="Rating"
@@ -4918,17 +4913,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     startIcon={<AttachFile />}
                                                                     onClick={() => addHelpTextAttachment(section.id, task.id)}
                                                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                                                    sx={{
-                                                                        color: '#da7756',
-                                                                        borderColor: '#da7756',
-                                                                        fontSize: '12px',
-                                                                        padding: '4px 8px',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            borderColor: '#da7756',
-                                                                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                                                        }
-                                                                    }}
+                                                                    sx={outlineActionSx}
                                                                 >
                                                                     Add File
                                                                 </MuiButton>
@@ -5027,7 +5012,7 @@ export const AddTrainingSchedulePage = () => {
                                                                         <IconButton
                                                                             size="small"
                                                                             onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
-                                                                            sx={{ color: '#da7756' }}
+                                                                            sx={{ color: 'var(--color-primary)' }}
                                                                         >
                                                                             <Close />
                                                                         </IconButton>
@@ -5041,16 +5026,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     size="small"
                                                                     startIcon={<Add />}
                                                                     onClick={() => addDropdownValue(section.id, task.id)}
-                                                                    sx={{
-                                                                        color: '#da7756',
-                                                                        borderColor: '#da7756',
-                                                                        fontSize: '12px',
-                                                                        padding: '4px 12px',
-                                                                        '&:hover': {
-                                                                            borderColor: '#da7756',
-                                                                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                                                        }
-                                                                    }}
+                                                                    sx={outlineActionSx}
                                                                 >
                                                                     Add Option
                                                                 </MuiButton>
@@ -5082,7 +5058,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     <Radio
                                                                         checked={valueIndex === 0} // First option selected by default
                                                                         name={`radio-${section.id}-${task.id}`}
-                                                                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                     />
 
                                                                     <TextField
@@ -5120,7 +5096,7 @@ export const AddTrainingSchedulePage = () => {
                                                                         <IconButton
                                                                             size="small"
                                                                             onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
-                                                                            sx={{ color: '#da7756' }}
+                                                                            sx={{ color: 'var(--color-primary)' }}
                                                                         >
                                                                             <Close />
                                                                         </IconButton>
@@ -5134,16 +5110,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     size="small"
                                                                     startIcon={<Add />}
                                                                     onClick={() => addRadioValue(section.id, task.id)}
-                                                                    sx={{
-                                                                        color: '#da7756',
-                                                                        borderColor: '#da7756',
-                                                                        fontSize: '12px',
-                                                                        padding: '4px 12px',
-                                                                        '&:hover': {
-                                                                            borderColor: '#da7756',
-                                                                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                                                        }
-                                                                    }}
+                                                                    sx={outlineActionSx}
                                                                 >
                                                                     Add Option
                                                                 </MuiButton>
@@ -5175,7 +5142,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     <Checkbox
                                                                         checked={task.checkboxSelectedStates?.[valueIndex] || false}
                                                                         onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-                                                                        sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' } }}
+                                                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                                                     />
 
                                                                     <TextField
@@ -5197,7 +5164,7 @@ export const AddTrainingSchedulePage = () => {
                                                                         <IconButton
                                                                             size="small"
                                                                             onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
-                                                                            sx={{ color: '#da7756' }}
+                                                                            sx={{ color: 'var(--color-primary)' }}
                                                                         >
                                                                             <Close />
                                                                         </IconButton>
@@ -5211,16 +5178,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     size="small"
                                                                     startIcon={<Add />}
                                                                     onClick={() => addCheckboxValue(section.id, task.id)}
-                                                                    sx={{
-                                                                        color: '#da7756',
-                                                                        borderColor: '#da7756',
-                                                                        fontSize: '12px',
-                                                                        padding: '4px 12px',
-                                                                        '&:hover': {
-                                                                            borderColor: '#da7756',
-                                                                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                                                        }
-                                                                    }}
+                                                                    sx={outlineActionSx}
                                                                 >
                                                                     Add Option
                                                                 </MuiButton>
@@ -5263,7 +5221,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     <Typography
                                                                         variant="body2"
                                                                         sx={{
-                                                                            color: '#da7756',
+                                                                            color: 'var(--color-primary)',
                                                                             cursor: 'pointer',
                                                                             fontSize: '12px',
                                                                             minWidth: 'auto'
@@ -5281,16 +5239,7 @@ export const AddTrainingSchedulePage = () => {
                                                                     size="small"
                                                                     startIcon={<Add />}
                                                                     onClick={() => addOptionsInputsValue(section.id, task.id)}
-                                                                    sx={{
-                                                                        color: '#da7756',
-                                                                        borderColor: '#da7756',
-                                                                        fontSize: '12px',
-                                                                        padding: '4px 12px',
-                                                                        '&:hover': {
-                                                                            borderColor: '#da7756',
-                                                                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                                                        }
-                                                                    }}
+                                                                    sx={outlineActionSx}
                                                                 >
                                                                     + Add Option
                                                                 </MuiButton>
@@ -5303,7 +5252,7 @@ export const AddTrainingSchedulePage = () => {
                                                     <Box sx={{ mt: 2 }}>
                                                         {/* <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                              label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
+                              label={<span>Multiline Text <span className="fm-required-mark">*</span></span>}
                               placeholder="Enter multiline text"
                               fullWidth
                               multiline
@@ -5314,7 +5263,7 @@ export const AddTrainingSchedulePage = () => {
                             /> */}
                                                         <TextField
                                                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                                            label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
+                                                            label={<span>Multiline Text <span className="fm-required-mark">*</span></span>}
                                                             placeholder="Enter multiline text"
                                                             fullWidth
                                                             multiline
@@ -5346,8 +5295,8 @@ export const AddTrainingSchedulePage = () => {
                                     <div className="flex justify-end mt-4 gap-4">
                                         <button
                                             onClick={() => addTaskToSection(section.id)}
-                                            className="flex items-center gap-1 text-[#da7756] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                                            style={{ fontFamily: 'Work Sans, sans-serif' }}
+                                            type="button"
+                      className={secondaryActionClass}
                                         >
                                             <Add className="w-4 h-4" />
                                             Add Question
@@ -5355,8 +5304,8 @@ export const AddTrainingSchedulePage = () => {
                                         {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
                                             <button
                                                 onClick={addQuestionSection}
-                                                className="flex items-center gap-1 text-[#da7756] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                                                style={{ fontFamily: 'Work Sans, sans-serif' }}
+                                                type="button"
+                      className={secondaryActionClass}
                                             >
                                                 <Add className="w-4 h-4" />
                                                 Add Section
@@ -5393,12 +5342,10 @@ export const AddTrainingSchedulePage = () => {
 
             case 4: // Mapping
                 return (
-                    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-                        <div className="border-l-4 border-l-[#da7756] p-4 sm:p-6 bg-white">
-                            <div className="flex items-center gap-2 text-[#da7756] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
-                                <span className="bg-[#da7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                                    <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </span>
+                    <div className="bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl overflow-hidden">
+                        <div className="p-4 sm:p-6 bg-white">
+                            <div className="flex items-center gap-3 text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] mb-3">
+                                <SectionIcon icon={Link2} />
                                 MAPPING
                             </div>
 
@@ -5425,7 +5372,7 @@ export const AddTrainingSchedulePage = () => {
             {activeStep > 0 && (
                 <button
                     onClick={handleBack}
-                    className="border border-[#da7756] text-[#da7756] px-6 py-2 rounded-md hover:bg-[#da7756] hover:text-white transition-colors text-sm sm:text-base"
+                    className="border border-brand text-brand px-6 py-2 rounded-md hover:bg-brand-hover hover:text-white transition-colors text-sm sm:text-base"
                     style={{ fontFamily: 'Work Sans, sans-serif' }}
                 >
                     Back
@@ -5621,8 +5568,8 @@ export const AddTrainingSchedulePage = () => {
                                 sx={{
                                     cursor: 'pointer',
                                     backgroundColor: 'white',
-                                    color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
-                                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                                    color: (index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D',
+                                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? 'var(--color-primary)' : '#C4B89D'}`,
                                     padding: '12px 20px',
                                     fontSize: '13px',
                                     fontWeight: (index === activeStep) ? 600 : 500,
@@ -5672,51 +5619,54 @@ export const AddTrainingSchedulePage = () => {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
+            <div className="fm-action-bar mt-6 pt-4 sm:pt-6">
                 {activeStep < steps.length - 1 ? (
                     <>
                         {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
-                            <div className="flex justify-center gap-4">
-                                <RedButton
+                            <>
+                                <button type="button"
                                     onClick={handleSaveToDraft}
                                     disabled={isSubmitting}
+                                    className="fm-action-secondary"
                                 >
                                     Save to Draft
-                                </RedButton>
-                                <RedButton
+                                </button>
+                                <button type="button"
                                     onClick={handleSave}
                                     disabled={isSubmitting}
+                                    className="fm-action-primary"
                                 >
                                     {isSubmitting ? 'Submitting...' : 'Submit'}
-                                </RedButton>
-                            </div>
+                                </button>
+                            </>
                         ) : (
-                            <div className="flex justify-center gap-4">
-                                <RedButton
-                                    onClick={handleProceedToSave}
-                                    disabled={isSubmitting}
-                                >
-                                    Proceed to Save
-                                </RedButton>
-                                <RedButton
+                            <>
+                                <button type="button"
                                     onClick={handleSaveToDraft}
                                     disabled={isSubmitting}
+                                    className="fm-action-secondary"
                                 >
                                     Save to Draft
-                                </RedButton>
-                            </div>
+                                </button>
+                                <button type="button"
+                                    onClick={handleProceedToSave}
+                                    disabled={isSubmitting}
+                                    className="fm-action-primary"
+                                >
+                                    Proceed to Save
+                                </button>
+                            </>
                         )}
                     </>
                 ) : (
                     // Mapping section (last step) - has Submit button only
-                    <div className="flex justify-center gap-4">
-                        <RedButton
-                            onClick={handleSave}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Submit'}
-                        </RedButton>
-                    </div>
+                    <button type="button"
+                        onClick={handleSave}
+                        disabled={isSubmitting}
+                        className="fm-action-primary"
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </button>
                 )}
             </div>
 
@@ -5731,15 +5681,14 @@ export const AddTrainingSchedulePage = () => {
                 fullWidth
                 PaperProps={{
                     style: {
-                        borderRadius: 0,
+                        borderRadius: '16px',
                         fontFamily: 'Work Sans, sans-serif',
                     }
                 }}
             >
                 <DialogTitle
                     style={{
-                        backgroundColor: '#da7756',
-                        color: 'white',
+                        color: '#1A1A18',
                         fontFamily: 'Work Sans, sans-serif',
                         fontWeight: 600,
                         fontSize: '18px',
@@ -5761,23 +5710,15 @@ export const AddTrainingSchedulePage = () => {
                     </Typography>
                 </DialogContent>
                 <DialogActions style={{ padding: '16px 24px', gap: '12px' }}>
-                    <DraftButton
-                        onClick={handleStartFresh}
-                        style={{
-                            backgroundColor: '#f5f5f5',
-                            color: '#666',
-                        }}
-                    >
+                    <button type="button" onClick={handleStartFresh} className="fm-action-secondary">
                         Start Fresh
-                    </DraftButton>
-                    <RedButton
-                        onClick={handleContinueWithDraft}
-                    >
+                    </button>
+                    <button type="button" onClick={handleContinueWithDraft} className="fm-action-primary">
                         Continue with Draft
-                    </RedButton>
+                    </button>
                 </DialogActions>
             </Dialog>
         </div>
     );
 
-};
+};

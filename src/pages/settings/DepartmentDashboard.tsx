@@ -217,7 +217,7 @@ export const DepartmentDashboard = () => {
 
   const leftActions = shouldShow("Department", "create") ? (
     <Button
-      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+      className="bg-[#1a1a18] hover:bg-[#12100e] text-white h-9 px-4 text-sm font-medium"
       onClick={() => setIsDialogOpen(true)}
     >
       <Plus className="w-4 h-4 mr-2" />
@@ -276,7 +276,7 @@ export const DepartmentDashboard = () => {
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0 rounded-[24px] p-7">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg font-semibold">
               Add Department
@@ -299,13 +299,13 @@ export const DepartmentDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="bg-brand text-white hover:bg-brand-hover"
+                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
               >
                 Submit
               </Button>
@@ -315,7 +315,7 @@ export const DepartmentDashboard = () => {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0 rounded-[24px] p-7">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg font-semibold">
               Edit Details
@@ -337,13 +337,13 @@ export const DepartmentDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                className="rounded-lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleEditSubmit}
-                className="bg-brand text-white hover:bg-brand-hover"
+                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
               >
                 Submit
               </Button>

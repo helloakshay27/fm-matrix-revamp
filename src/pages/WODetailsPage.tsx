@@ -670,7 +670,7 @@ const renderBoqCell = (item: any, columnKey: string) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(
                         approval.status
                       )}`}
                     >
@@ -686,7 +686,7 @@ const renderBoqCell = (item: any, columnKey: string) => {
                 </Tooltip>
               ) : (
                 <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                  className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(
                     approval.status
                   )}`}
                 >
@@ -706,12 +706,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </TooltipProvider>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
@@ -759,12 +759,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -875,12 +875,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ClipboardList className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ClipboardList className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
@@ -933,12 +933,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
         </div>
         <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
@@ -960,12 +960,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
-        <div className="flex items-center gap-3 p-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Images className="w-4 h-4" />
+      <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Images className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
         </div>
         <CardContent>
           {Array.isArray(workOrder.attachments) &&
@@ -983,12 +983,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
                 return (
                   <div
                     key={attachment.id}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedAttachment(attachment);
@@ -1065,12 +1065,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
         </div>
 
 
@@ -1118,12 +1118,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
@@ -1148,12 +1148,12 @@ const renderBoqCell = (item: any, columnKey: string) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
@@ -1196,6 +1196,7 @@ const renderBoqCell = (item: any, columnKey: string) => {
       )}
 
       <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }}
         open={openRejectDialog}
         onClose={handleRejectCancel}
         maxWidth="sm"
@@ -1223,13 +1224,17 @@ const renderBoqCell = (item: any, columnKey: string) => {
             }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRejectCancel} variant="outline">
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
+          <Button
+            onClick={handleRejectCancel}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleRejectConfirm}
-            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+            className="fm-action-primary"
           >
             Reject
           </Button>

@@ -44,13 +44,13 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
         </h3>
       </div>
       <div className="p-5">
-        <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="ticket-analytics-table-clip">
             <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="ticket-analytics-table ticket-issue-breakdown-table">
               <thead>
                 <tr>
                   {['Category', 'Total Issues', ...statusKeys, 'Critical P1', 'Avg TAT Days'].map((h, i) => (
-                    <th key={i} className={`px-3 py-2.5 text-xs sm:text-sm font-semibold text-white analytics-header ${i === 0 ? 'text-left' : 'text-center'}`} style={{ backgroundColor: '#D97655' }}>
+                    <th key={i} className={`ticket-analytics-table-header ${i === 0 ? 'text-left' : 'text-center'}`}>
                       {h}
                     </th>
                   ))}
@@ -58,25 +58,25 @@ export const IssueBreakdownCategoryWiseCard: React.FC<IssueBreakdownCategoryWise
               </thead>
               <tbody>
                 {categories.map((cat, index) => (
-                  <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                    <td className="px-3 py-2.5 font-medium text-gray-800 text-xs sm:text-sm border-b border-gray-100">{cat.category}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.total_issues}</td>
+                  <tr key={index} className="ticket-analytics-table-row">
+                    <td className="ticket-analytics-table-cell font-medium">{cat.category}</td>
+                    <td className="ticket-analytics-table-cell text-center">{cat.total_issues}</td>
                     {statusKeys.map(key => (
-                      <td key={key} className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.statuses?.[key] ?? 0}</td>
+                      <td key={key} className="ticket-analytics-table-cell text-center">{cat.statuses?.[key] ?? 0}</td>
                     ))}
-                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.critical_p1}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-700 text-xs sm:text-sm border-b border-gray-100">{cat.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
+                    <td className="ticket-analytics-table-cell text-center">{cat.critical_p1}</td>
+                    <td className="ticket-analytics-table-cell text-center">{cat.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
                   </tr>
                 ))}
                 {totals && (
-                  <tr style={{ backgroundColor: '#EFEFFB' }}>
-                    <td className="px-3 py-2.5 font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">Total</td>
-                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.total_issues}</td>
+                  <tr className="ticket-analytics-total-row">
+                    <td className="ticket-analytics-total-cell">Total</td>
+                    <td className="ticket-analytics-total-cell text-center">{totals.total_issues}</td>
                     {statusKeys.map(key => (
-                      <td key={key} className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.statuses?.[key] ?? 0}</td>
+                      <td key={key} className="ticket-analytics-total-cell text-center">{totals.statuses?.[key] ?? 0}</td>
                     ))}
-                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.critical_p1}</td>
-                    <td className="px-3 py-2.5 text-center font-bold text-gray-900 text-xs sm:text-sm border-b border-gray-100">{totals.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
+                    <td className="ticket-analytics-total-cell text-center">{totals.critical_p1}</td>
+                    <td className="ticket-analytics-total-cell text-center">{totals.avg_tat_days?.toFixed(2) ?? '0.00'}</td>
                   </tr>
                 )}
               </tbody>

@@ -371,14 +371,14 @@ export const AddBroadcastPage = () => {
       </Button>
       <div className="space-y-6">
         {/* Notice Details Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <FileText size={16} />
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <FileText className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Notice Details</span>
+            <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Notice Details</span>
           </div>
-          <div className="p-6 bg-white">
+          <div className="px-6 pb-6 pt-3 bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
@@ -534,14 +534,14 @@ export const AddBroadcastPage = () => {
         </div>
 
         {/* Share Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <Share2 size={16} />
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Share2 className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Share</span>
+            <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Share</span>
           </div>
-          <div className="p-6 bg-white">
+          <div className="px-6 pb-6 pt-3 bg-white">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               <div className="flex items-center gap-4">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
@@ -643,14 +643,14 @@ export const AddBroadcastPage = () => {
         </div>
 
         {/* Attachment Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <File size={16} />
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <File className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Attachment</span>
+            <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachment</span>
           </div>
-          <div className="p-6 bg-white">
+          <div className="px-6 pb-6 pt-3 bg-white">
             <div className={`grid ${formData.showOnHomeScreen === "yes" ? "grid-cols-1 md:grid-cols-5" : "grid-cols-1"} gap-6`}>
               {/* Upload Document */}
               <div>
@@ -659,13 +659,13 @@ export const AddBroadcastPage = () => {
                 </Label>
 
                 {formData.attachment ? (
-                  <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
-                    <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                  <div className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                    <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                       {formData.attachment.name}
                     </span>
                     <button
                       onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                      className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-600 hover:text-red-500 transition-colors"
                     >
                       <XCircle size={20} />
                     </button>
@@ -682,9 +682,9 @@ export const AddBroadcastPage = () => {
                 ) : (
                   <div
                     onClick={triggerFileInput}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    <div className="absolute top-2 right-2 text-gray-400">
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -725,13 +725,13 @@ export const AddBroadcastPage = () => {
                   </Label>
 
                   {formData.coverImage ? (
-                    <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
-                      <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                    <div className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {formData.coverImage.name}
                       </span>
                       <button
                         onClick={handleRemoveCoverImage}
-                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                        className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-600 hover:text-red-500 transition-colors"
                       >
                         <XCircle size={20} />
                       </button>
@@ -748,9 +748,9 @@ export const AddBroadcastPage = () => {
                   ) : (
                     <div
                       onClick={triggerCoverImageInput}
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                     >
-                      <div className="absolute top-2 right-2 text-gray-400">
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -788,24 +788,24 @@ export const AddBroadcastPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 mt-8 pb-8">
+        <div className="fm-action-bar mt-8 pb-8">
+          <Button
+            type="button"
+            onClick={() => navigate(-1)}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
+            Cancel
+          </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
+            className="fm-action-primary"
           >
             <span className="font-medium">
-              {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? "Submitting..." : "Submit"}
             </span>
-          </Button>
-          <Button
-            type="button"
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            className="min-w-[150px] h-10 bg-white border border-brand !text-brand hover:!bg-[rgba(218,119,86,0.08)] hover:!text-brand hover:!border-brand active:!bg-[rgba(218,119,86,0.08)] active:!text-brand"
-          >
-            Cancel
           </Button>
         </div>
       </div>
@@ -816,7 +816,7 @@ export const AddBroadcastPage = () => {
           setFormData(prev => ({ ...prev, shareWith: "all" }));
         }
       }}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md bg-white rounded-2xl sm:rounded-2xl">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-bold">Select Tech Park</DialogTitle>
           </DialogHeader>

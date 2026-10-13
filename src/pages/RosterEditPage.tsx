@@ -39,12 +39,12 @@ const Section: React.FC<{
   icon: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+  <section className="bg-white rounded-2xl border-none shadow-[0_1px_2px_rgba(0,0,0,0.05),0_4px_16px_rgba(0,0,0,0.04)] overflow-hidden">
+    <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-transparent">
+      <div className="w-6 h-6 text-[#1a1a18] flex items-center justify-center">
         {icon}
       </div>
-      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+      <h2 className="text-sm font-semibold tracking-wide uppercase text-[#1a1a18]">{title}</h2>
     </div>
     <div className="p-6">{children}</div>
   </section>
@@ -146,6 +146,7 @@ export const RosterEditPage: React.FC = () => {
   // MUI select styles
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
+    borderRadius: "12px",
     "& .MuiInputBase-input, & .MuiSelect-select": {
       padding: { xs: "8px", sm: "10px", md: "12px" },
     },
@@ -153,13 +154,14 @@ export const RosterEditPage: React.FC = () => {
     "& .MuiOutlinedInput-notchedOutline": {
       borderColor: "#e1e5e9",
       borderWidth: "1px",
+      borderRadius: "12px",
     },
     "&:hover .MuiOutlinedInput-notchedOutline": {
       borderColor: "#9ca3af",
     },
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#C72030",
-      borderWidth: "2px",
+      borderColor: "#1a1a18",
+      borderWidth: "1px",
     },
   };
 
@@ -1779,10 +1781,18 @@ export const RosterEditPage: React.FC = () => {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          variant="ghost"
-          className="fm-button-fix fm-button-brand px-4 py-2"
+      <div className="fm-action-bar pt-4">
+        <button
+          type="button"
+          className="fm-action-secondary"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="fm-action-primary"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1797,15 +1807,7 @@ export const RosterEditPage: React.FC = () => {
               Update Template
             </>
           )}
-        </Button>
-        <Button
-          variant="ghost"
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          onClick={handleCancel}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
+        </button>
       </div>
     </div>
   );

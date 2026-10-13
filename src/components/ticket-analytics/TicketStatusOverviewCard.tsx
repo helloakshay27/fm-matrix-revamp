@@ -14,34 +14,28 @@ interface TicketStatusOverviewCardProps {
   className?: string;
 }
 
-const getCardColors = (key: string) => {
-  if (['total_open', 'Open', 'Reopen 1', 'Reopen', 'critical_issues_p1'].includes(key))
-    return { bg: 'rgba(227,144,144,0.15)', num: '#D97655' };
-  if (['Closed', 'Completed'].includes(key))
-    return { bg: 'rgba(183,220,212,0.30)', num: '#2E7D6B' };
-  return { bg: '#EFEFFB', num: '#6B5EA8' };
-};
-
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  total_issues: <ListTodo className="w-5 h-5 text-[#6B5EA8]" />,
-  total_open: <AlertCircle className="w-5 h-5 text-[#D97655]" />,
-  Pending: <Clock className="w-5 h-5 text-[#6B5EA8]" />,
-  Closed: <CheckCircle className="w-5 h-5 text-[#2E7D6B]" />,
-  Open: <AlertCircle className="w-5 h-5 text-[#D97655]" />,
-  'On Hold': <CircleDot className="w-5 h-5 text-[#6B5EA8]" />,
-  'Reopen 1': <RotateCcw className="w-5 h-5 text-[#D97655]" />,
-  Received: <FileText className="w-5 h-5 text-[#6B5EA8]" />,
-  Reopen: <RotateCcw className="w-5 h-5 text-[#D97655]" />,
-  Completed: <CheckCircle className="w-5 h-5 text-[#2E7D6B]" />,
-  critical_issues_p1: <AlertTriangle className="w-5 h-5 text-[#D97655]" />,
+  total_issues: <ListTodo className="ticket-analytics-kpi-icon-svg" />,
+  total_open: <AlertCircle className="ticket-analytics-kpi-icon-svg" />,
+  Pending: <Clock className="ticket-analytics-kpi-icon-svg" />,
+  Closed: <CheckCircle className="ticket-analytics-kpi-icon-svg" />,
+  Open: <AlertCircle className="ticket-analytics-kpi-icon-svg" />,
+  'On Hold': <CircleDot className="ticket-analytics-kpi-icon-svg" />,
+  'Reopen 1': <RotateCcw className="ticket-analytics-kpi-icon-svg" />,
+  Received: <FileText className="ticket-analytics-kpi-icon-svg" />,
+  Reopen: <RotateCcw className="ticket-analytics-kpi-icon-svg" />,
+  Completed: <CheckCircle className="ticket-analytics-kpi-icon-svg" />,
+  critical_issues_p1: <AlertTriangle className="ticket-analytics-kpi-icon-svg" />,
 };
 
 const StatusCard: React.FC<{ label: string; value: number; cardKey: string }> = ({ label, value, cardKey }) => {
-  const { bg, num } = getCardColors(cardKey);
   return (
-    <div className="rounded-2xl px-4 py-5 flex flex-col items-center text-center gap-1" style={{ backgroundColor: bg }}>
-      <div className="text-2xl font-bold" style={{ color: num, fontFamily: 'Work Sans, sans-serif' }}>{value.toLocaleString()}</div>
-      <div className="text-xs text-gray-500">{label}</div>
+    <div className="ticket-analytics-kpi">
+      <div className="ticket-analytics-kpi-icon">
+        {STATUS_ICONS[cardKey] ?? <CircleDot className="ticket-analytics-kpi-icon-svg" />}
+      </div>
+      <div className="ticket-analytics-kpi-value">{value.toLocaleString()}</div>
+      <div className="ticket-analytics-kpi-label">{label}</div>
     </div>
   );
 };
@@ -57,7 +51,7 @@ export const TicketStatusOverviewCard: React.FC<TicketStatusOverviewCardProps> =
       return (
         <div className={`bg-white rounded-xl shadow-sm p-5 ${className}`}>
           <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>Ticket Status</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="ticket-analytics-kpi-grid">
             <StatusCard cardKey="Open" label="Open" value={openTickets} />
             <StatusCard cardKey="Closed" label="Closed" value={closedTickets} />
           </div>
@@ -78,7 +72,7 @@ export const TicketStatusOverviewCard: React.FC<TicketStatusOverviewCardProps> =
   return (
     <div className={`bg-white rounded-xl shadow-sm p-5 ${className}`}>
       <h3 className="text-base font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>Ticket Status Overview</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="ticket-analytics-kpi-grid">
         {cards.map(c => <StatusCard key={c.key} cardKey={c.key} label={c.label} value={c.value} />)}
       </div>
     </div>

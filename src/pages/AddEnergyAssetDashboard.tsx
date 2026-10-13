@@ -97,6 +97,10 @@ export const AddEnergyAssetDashboard = () => {
     navigate('/utility/energy');
   };
 
+  const handleCancel = () => {
+    navigate('/utility/energy');
+  };
+
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new asset:', formData);
   };
@@ -680,6 +684,13 @@ export const AddEnergyAssetDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-4">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="border-gray-400 bg-white text-gray-900 hover:bg-gray-50"
+          >
+            Cancel
+          </Button>
           <Button
             variant="outline"
             onClick={handleSave}

@@ -6,6 +6,15 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface ScheduleItem {
   id: number;
@@ -222,31 +231,101 @@ export const OperationalAuditScheduledDashboard = () => {
         }
       />
 
-      {pagination.total_pages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-6">
-          <Button
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1 || loading}
-            variant="outline"
-            className="h-9"
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {pagination.total_pages} ({pagination.total_entries} total)
-          </span>
-          <Button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(pagination.total_pages, prev + 1))
-            }
-            disabled={currentPage === pagination.total_pages || loading}
-            variant="outline"
-            className="h-9"
-          >
-            Next
-          </Button>
+      <div className="mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => {
+                  if (currentPage > 1 && !loading) {
+                    setCurrentPage(currentPage - 1);
+                  }
+                }}
+                className={
+                  currentPage === 1 || loading
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+
+            <PaginationItem>
+              <PaginationLink
+                onClick={() => !loading && setCurrentPage(1)}
+                isActive={currentPage === 1}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+
+            {currentPage > 4 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+
+            {Array.from(
+              { length: 3 },
+              (_, index) => currentPage - 1 + index
+            )
+              .filter(
+                (page) => page > 1 && page < pagination.total_pages
+              )
+              .map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => !loading && setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className={loading ? "pointer-events-none opacity-50" : ""}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+            {currentPage < pagination.total_pages - 3 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
+
+            {pagination.total_pages > 1 && (
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() =>
+                    !loading && setCurrentPage(pagination.total_pages)
+                  }
+                  isActive={currentPage === pagination.total_pages}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {pagination.total_pages}
+                </PaginationLink>
+              </PaginationItem>
+            )}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => {
+                  if (currentPage < pagination.total_pages && !loading) {
+                    setCurrentPage(currentPage + 1);
+                  }
+                }}
+                className={
+                  currentPage === pagination.total_pages || loading
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+        <div className="mt-2 text-center text-sm text-gray-600">
+          Showing page {currentPage} of {pagination.total_pages} (
+          {pagination.total_entries} total schedules)
         </div>
-      )}
+      </div>
     </div>
   );
 };

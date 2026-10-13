@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Calendar, Clock, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, Plus, ArrowLeft, ListChecks, Share2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -11,7 +11,6 @@ import {
   FormControlLabel,
   Radio,
   Card,
-  IconButton,
   Stack,
   Alert,
   Checkbox,
@@ -193,7 +192,7 @@ const AddPollPage = () => {
         Back
       </Button>
       <h1 className="text-2xl font-bold mb-6">NEW POLL</h1>
-      <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
+      <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={4}>
               <TextField
@@ -278,13 +277,16 @@ const AddPollPage = () => {
                   }}
                 />
               </Box>
-              <Card variant="outlined" sx={{ p: 3 }}>
-                <Typography variant="h6" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
-                  Poll Options
-                </Typography>
+              <Card variant="outlined" sx={{ p: 3, borderRadius: "16px", overflow: "visible" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                    <ListChecks className="w-[18px] h-[18px]" />
+                  </div>
+                  <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Poll Options</h3>
+                </div>
                 <Stack spacing={2}>
                   {formData.options.map((option, index) => (
-                    <Stack key={index} direction="row" alignItems="center" spacing={2}>
+                    <Stack key={index} direction="row" alignItems="center" spacing={2} className="relative p-4 border rounded-lg">
                       <TextField
                         type="text"
                         value={option}
@@ -295,46 +297,44 @@ const AddPollPage = () => {
                         size="small"
                       />
                       {formData.options.length > 2 && (
-                        <IconButton
+                        <Button
+                          type="button"
                           onClick={() => removeOption(index)}
-                          sx={{ color: 'error.main' }}
-                          size="small"
+                          size="sm"
+                          className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                         >
-                          <Trash2 size={18} />
-                        </IconButton>
+                          <X className="w-4 h-4" />
+                        </Button>
                       )}
                     </Stack>
                   ))}
                 </Stack>
-                <Button
-                  type='button'
-                  size="lg"
-                  className="bg-brand hover:bg-brand-hover text-white mt-4"
-                  onClick={addOption}
-                >
-                  Add Option
-                </Button>
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type='button'
+                    size="sm"
+                    className="bg-[#C72030] hover:bg-[#C72030]/90"
+                    onClick={addOption}
+                  >
+                    Add Option
+                  </Button>
+                </div>
               </Card>
               <Card
                 variant="outlined"
                 sx={{
                   p: 3,
-                  bgcolor: 'rgba(218, 119, 86, 0.04)',
-                  borderColor: 'rgba(218, 119, 86, 0.12)'
+                  borderRadius: "16px",
+                  bgcolor: '#ffffff',
+                  borderColor: '#e5e7eb'
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: 1,
-                    color: 'text.secondary'
-                  }}
-                >
-                  Share With
-                </Typography>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                    <Share2 className="w-[18px] h-[18px]" />
+                  </div>
+                  <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Share With</h3>
+                </div>
                 <RadioGroup
                   row
                   value={selectedShareWith}
@@ -525,11 +525,18 @@ const AddPollPage = () => {
                   </Alert>
                 )}
               </Card>
-              <div className='flex items-center justify-center'>
+              <div className="fm-action-bar mt-6">
+                <Button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  variant="outline"
+                  className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                >
+                  Cancel
+                </Button>
                 <Button
                   type="submit"
-                  size="lg"
-                  className="bg-brand hover:bg-brand-hover text-white"
+                  className="fm-action-primary"
                 >
                   Submit Poll
                 </Button>

@@ -86,7 +86,8 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onOpenChange}>
+    <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <div className="flex items-center justify-between mb-3">
           <h5 className="text-lg font-semibold">FILTER BY</h5>
@@ -160,19 +161,19 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
           </FormControl>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleApply}
-            className="flex-1 !bg-[#DA7756] !text-white hover:!bg-[#DA7756]/85 [&_svg]:!text-white"
-          >
-            Apply
-          </Button>
+        <div className="flex gap-3 pt-4 items-center justify-end">
           <Button
             onClick={handleReset}
             variant="outline"
-            className="flex-1"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Reset
+          </Button>
+          <Button
+            onClick={handleApply}
+            className="fm-action-primary"
+          >
+            Apply
           </Button>
         </div>
       </DialogContent>

@@ -139,7 +139,9 @@ const Index = () => {
       hostname.includes("pulse.panchshil.com") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
-    const isClubSite = hostname.includes("club.lockated.com");
+    const isClubSite =
+      hostname.includes("club.lockated.com") ||
+      hostname === "recess-club.panchshil.com";
 
     if (currentUser?.is_vendor && currentUser?.supplier_id) {
       navigate(`/vendor/dashboard`, { replace: true });

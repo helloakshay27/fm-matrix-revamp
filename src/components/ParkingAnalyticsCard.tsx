@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
 // Format large numbers for display (e.g., 1000 -> 1K, 1000000 -> 1M)
@@ -350,8 +351,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('current')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'current'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {seriesLabels.current}
@@ -360,8 +361,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('yoy')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'yoy'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {seriesLabels.compare}
@@ -390,9 +391,9 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                       type="monotone" 
                       dataKey="thisYear" 
                       name={seriesLabels.current} 
-                      stroke="#C4B99D" 
+                      stroke={ANALYTICS_PALETTE[0]} 
                       strokeWidth={2}
-                      dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
+                      dot={{ r: 5, fill: ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 2 }}
                       activeDot={{ r: 7 }}
                     />
                   ) : (
@@ -401,18 +402,18 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         type="monotone" 
                         dataKey="lastYear" 
                         name={seriesLabels.compare} 
-                        stroke="#DAD6CA" 
+                        stroke={ANALYTICS_PALETTE[1]} 
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={{ r: 4, fill: '#DAD6CA' }}
+                        dot={{ r: 4, fill: ANALYTICS_PALETTE[1] }}
                       />
                       <Line 
                         type="monotone" 
                         dataKey="thisYear" 
                         name={seriesLabels.current} 
-                        stroke="#C4B99D" 
+                        stroke={ANALYTICS_PALETTE[0]} 
                         strokeWidth={2}
-                        dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
+                        dot={{ r: 5, fill: ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -469,8 +470,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('current')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'current'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {compareLabel === 'Year Comparison' ? 'Current Year' : 'Current Period'}
@@ -479,8 +480,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('yoy')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'yoy'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {compareLabel}
@@ -507,8 +508,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     iconType="square"
                     wrapperStyle={{ paddingTop: '20px' }}
                   />
-                  <Bar dataKey="occupied" name="Occupied" fill="#8b7355" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="vacant" name="Vacant" fill="#c4b99d" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="occupied" name="Occupied" fill={ANALYTICS_PALETTE[0]} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="vacant" name="Vacant" fill={ANALYTICS_PALETTE[2]} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -658,8 +659,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('current')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'current'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {seriesLabels.current}
@@ -668,8 +669,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('yoy')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'yoy'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 {seriesLabels.compare}
@@ -698,9 +699,9 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         type="monotone" 
                         dataKey="thisYearCancelled" 
                         name="Cancelled Bookings" 
-                        stroke="#c4b99d" 
+                        stroke={ANALYTICS_PALETTE[0]} 
                         strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
+                        dot={{ r: 5, fill: ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -710,19 +711,19 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         type="monotone" 
                         dataKey="lastYearCancelled" 
                         name="Last Year Cancelled" 
-                        stroke="#DAD6CA" 
+                        stroke={ANALYTICS_PALETTE[1]} 
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={{ r: 4, fill: '#DAD6CA' }}
+                        dot={{ r: 4, fill: ANALYTICS_PALETTE[1] }}
                         activeDot={{ r: 6 }}
                       />
                       <Line 
                         type="monotone" 
                         dataKey="thisYearCancelled" 
                         name="This Year Cancelled" 
-                        stroke="#c4b99d" 
+                        stroke={ANALYTICS_PALETTE[0]} 
                         strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
+                        dot={{ r: 5, fill: ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -751,8 +752,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('current')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'current'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 Current Year
@@ -761,8 +762,8 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('yoy')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'yoy'
-                    ? 'bg-[#f2eee9] text-[#bf213e]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-brand-light text-brand border border-brand'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-brand-selected'
                 }`}
               >
                 Compare
@@ -800,7 +801,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     <Bar 
                       dataKey="thisYear" 
                       name="This Year" 
-                      fill="#c4b99d" 
+                      fill={ANALYTICS_PALETTE[0]} 
                       radius={[0, 4, 4, 0]} 
                     />
                   ) : (
@@ -808,13 +809,13 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                       <Bar 
                         dataKey="lastYear" 
                         name="Last Year" 
-                        fill="#DAD6CA" 
+                        fill={ANALYTICS_PALETTE[1]} 
                         radius={[0, 4, 4, 0]} 
                       />
                       <Bar 
                         dataKey="thisYear" 
                         name="This Year" 
-                        fill="#c4b99d" 
+                        fill={ANALYTICS_PALETTE[0]} 
                         radius={[0, 4, 4, 0]} 
                       />
                     </>

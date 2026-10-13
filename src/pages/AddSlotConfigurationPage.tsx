@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
@@ -27,6 +27,7 @@ const fieldStyles = {
   },
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#ffffff !important',
+    borderRadius: '12px',
   },
 };
 
@@ -477,62 +478,68 @@ export const AddSlotConfigurationPage = () => {
         <h1 className="text-xl sm:text-2xl font-semibold">Parking Group Configuration</h1>
       </div>
 
-      <div className="bg-white rounded-lg p-6 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
         {/* Location and Floor Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <FormControl fullWidth variant="outlined">
-            <InputLabel id="location-label">Location *</InputLabel>
-            <MuiSelect
-              labelId="location-label"
-              label="Location *"
-              value={formData.building_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, building_id: e.target.value as string }))
-              }
-              disabled={loading}
-              sx={fieldStyles}
-              MenuProps={selectMenuProps}
-            >
-              <MenuItem value="">
-                <em>{loading ? 'Loading buildings...' : 'Select Location'}</em>
-              </MenuItem>
-              {buildings.map((building) => (
-                <MenuItem key={building.id} value={building.id.toString()}>
-                  {building.name}
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Location <span className="text-red-500">*</span>
+            </label>
+            <FormControl fullWidth variant="outlined">
+              <MuiSelect
+                value={formData.building_id}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, building_id: e.target.value as string }))
+                }
+                displayEmpty
+                disabled={loading}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>{loading ? 'Loading buildings...' : 'Select Location'}</em>
                 </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+                {buildings.map((building) => (
+                  <MenuItem key={building.id} value={building.id.toString()}>
+                    {building.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
 
-          <FormControl fullWidth variant="outlined">
-            <InputLabel id="floor-label">Floor *</InputLabel>
-            <MuiSelect
-              labelId="floor-label"
-              label="Floor *"
-              value={formData.floor_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, floor_id: e.target.value as string }))
-              }
-              disabled={loading || !formData.building_id}
-              sx={fieldStyles}
-              MenuProps={selectMenuProps}
-            >
-              <MenuItem value="">
-                <em>
-                  {!formData.building_id
-                    ? 'Select Location first'
-                    : loading
-                      ? 'Loading floors...'
-                      : 'Select Floor'}
-                </em>
-              </MenuItem>
-              {floors.map((floor) => (
-                <MenuItem key={floor.id} value={floor.id.toString()}>
-                  {floor.name}
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+              Floor <span className="text-red-500">*</span>
+            </label>
+            <FormControl fullWidth variant="outlined">
+              <MuiSelect
+                value={formData.floor_id}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, floor_id: e.target.value as string }))
+                }
+                displayEmpty
+                disabled={loading || !formData.building_id}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>
+                    {!formData.building_id
+                      ? 'Select Location first'
+                      : loading
+                        ? 'Loading floors...'
+                        : 'Select Floor'}
+                  </em>
                 </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+                {floors.map((floor) => (
+                  <MenuItem key={floor.id} value={floor.id.toString()}>
+                    {floor.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
         </div>
 
         {/* QR Code Configuration */}
@@ -558,9 +565,9 @@ export const AddSlotConfigurationPage = () => {
           <div className="text-sm font-semibold text-brand mb-6 border-b pb-2">Parking Configuration</div>
           
           {/* Dynamic Parking Categories */}
-          {parkingCategories.map((category, index) => (
-            <div key={category.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
-              <h3 className="text-lg font-semibold mb-6">
+          {parkingCategories.map((category) => (
+            <div key={category.id} className="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-800 mb-6">
                 {category.name}
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -609,7 +616,7 @@ export const AddSlotConfigurationPage = () => {
         {/* Floor Map */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Floor Map</h3>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
             <input
               type="file"
               id="floorMap"
@@ -642,26 +649,26 @@ export const AddSlotConfigurationPage = () => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || !formData.building_id || !formData.floor_id}
-            variant="ghost"
-            className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
-          >
-            {submitting ? 'Creating...' : 'SUBMIT'}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={submitting}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
-          >
-            CANCEL
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="fm-action-bar mt-6">
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={submitting}
+          className="fm-action-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !formData.building_id || !formData.floor_id}
+          className="fm-action-primary"
+        >
+          {submitting ? 'Creating...' : 'Submit'}
+        </button>
       </div>
     </div>
   );

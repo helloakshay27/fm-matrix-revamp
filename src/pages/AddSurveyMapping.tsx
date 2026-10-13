@@ -96,7 +96,7 @@ const Section: React.FC<{
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
   <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+    <div className="px-6 py-4 flex items-center gap-3">
       <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
         {icon}
       </div>
@@ -1282,7 +1282,7 @@ export const AddSurveyMapping = () => {
         </Section>
       )}
 
-      <div className="flex items-center gap-3 justify-center pt-2">
+      <div className="flex items-center justify-end gap-3 pt-2">
         <Button
           variant="ghost"
           className="fm-button-fix fm-button-brand px-8"

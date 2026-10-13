@@ -80,17 +80,22 @@ export const VisitorFormPage = () => {
   const selectedSite = useSelector((state: any) => state.site.selectedSite);
 
   const fieldStyles = {
-    height: "45px",
-    backgroundColor: "#fff",
-    borderRadius: "4px",
-    "& .MuiOutlinedInput-root": {
-      height: "45px",
-      "& fieldset": { borderColor: "#ddd" },
-      "&:hover fieldset": { borderColor: "#4d494aff" },
-      "&.Mui-focused fieldset": { borderColor: "#C72030" },
+    "& .MuiInputBase-root": {
+      height: "40px",
+      backgroundColor: "#fff",
+      borderRadius: "4px",
+      fontSize: "14px",
+      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ddd" },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#C72030",
+      },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#C72030",
+      },
     },
     "& .MuiInputLabel-root": {
-      "&.Mui-focused": { color: "#201f20ff" },
+      fontSize: "14px",
+      "&.Mui-focused": { color: "#C72030" },
       "& .MuiInputLabel-asterisk": {
         color: "#C72030 !important",
       },
@@ -973,8 +978,8 @@ export const VisitorFormPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex items-center gap-4 mb-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <button
           onClick={() => navigate(-1)}
           className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -1225,19 +1230,18 @@ export const VisitorFormPage = () => {
         )}
 
         {/* Visitor Details Section */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center">
               <span
-                className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                style={{ backgroundColor: "#E5E0D3" }}
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-3 bg-[#DA7756]"
               >
-                <User size={16} color="#C72030" />
+                <User size={14} className="text-white" />
               </span>
-              Visitor Details
+              VISITOR DETAILS
             </h2>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="px-2 pb-4 sm:px-6 sm:pb-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -1297,7 +1301,7 @@ export const VisitorFormPage = () => {
                 </RadioGroup>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -1713,19 +1717,18 @@ export const VisitorFormPage = () => {
         </div>
 
         {formData.goodsInwards && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+              <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center">
                 <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                  style={{ backgroundColor: "#E5E0D3" }}
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-3 bg-[#DA7756]"
                 >
-                  <Truck size={16} color="#C72030" />
+                  <Truck size={14} className="text-white" />
                 </span>
-                Goods Inwards Details
+                GOODS INWARDS DETAILS
               </h2>
             </div>
-            <div className="p-6">
+            <div className="px-2 pb-4 sm:px-6 sm:pb-6">
               {!showGoodsForm ? (
                 <Button type="button" onClick={() => setShowGoodsForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -1733,7 +1736,7 @@ export const VisitorFormPage = () => {
                 </Button>
               ) : (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
                     <FormControl
                       fullWidth
                       variant="outlined"
@@ -1921,19 +1924,18 @@ export const VisitorFormPage = () => {
         )}
 
         {formData.frequency === "frequently" && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+              <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center">
                 <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                  style={{ backgroundColor: "#E5E0D3" }}
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-3 bg-[#DA7756]"
                 >
-                  <CalendarDays size={16} color="#C72030" />
+                  <CalendarDays size={14} className="text-white" />
                 </span>
-                Visit Schedule
+                VISIT SCHEDULE
               </h2>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="px-2 pb-4 sm:px-6 sm:pb-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <TextField
                   label="Pass Valid From"
@@ -2017,19 +2019,18 @@ export const VisitorFormPage = () => {
         )}
 
         {showAdditionalVisitors && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+              <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center">
                 <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                  style={{ backgroundColor: "#E5E0D3" }}
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-3 bg-[#DA7756]"
                 >
-                  <Users size={16} color="#C72030" />
+                  <Users size={14} className="text-white" />
                 </span>
-                Additional Visitors
+                ADDITIONAL VISITORS
               </h2>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="px-2 pb-4 sm:px-6 sm:pb-6 space-y-4">
               {additionalVisitors.map((visitor) => (
                 <div
                   key={visitor.id}
@@ -2130,21 +2131,21 @@ export const VisitorFormPage = () => {
           </div>
         )}
 
-        <div className="flex justify-center gap-4 pt-6">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-10"
-          >
-            {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
-          </Button>
+        <div className="flex justify-end gap-3 pt-6">
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate("/security/visitor")}
-            className="px-10"
+            className="border-gray-300 bg-white px-8 text-gray-900 hover:bg-gray-50"
           >
             CANCEL
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-gray-900 px-8 text-white hover:bg-black"
+          >
+            {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
           </Button>
         </div>
       </form>

@@ -47,6 +47,7 @@ export const ClassSetupEdit = () => {
             id: String(attachment.id),
             name: attachment.file_name ?? attachment.name ?? "Attachment",
             url: attachment.url ?? "",
+            downloadUrl: attachment.download_url ?? "",
           })),
         });
       } catch (err) {

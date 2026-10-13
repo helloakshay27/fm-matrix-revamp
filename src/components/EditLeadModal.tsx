@@ -31,7 +31,7 @@ export const EditLeadModal = ({ isOpen, onClose, onSave, leadData }: EditLeadMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg">
+      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between p-4 border-b border-gray-200">
           <DialogTitle className="text-lg font-semibold text-gray-900">Edit</DialogTitle>
           <Button
@@ -87,10 +87,18 @@ export const EditLeadModal = ({ isOpen, onClose, onSave, leadData }: EditLeadMod
             />
           </div>
 
-          <div className="flex justify-center pt-4">
-            <Button 
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            >
+              Cancel
+            </Button>
+            <Button
               onClick={handleSave}
-              className="!bg-[#DA7756] hover:!bg-[#C45F40] text-white px-8 py-2 h-10 text-sm font-medium rounded-sm"
+              className="fm-action-primary"
             >
               Save
             </Button>

@@ -37,7 +37,8 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import { toast } from 'sonner';
+import { accountingToast as toast } from '@/lib/accountingToast';
+import '@/styles/accounting.css';
 import {
   BankRecord,
   bankMasterListUrl,
@@ -1445,7 +1446,7 @@ if (!profileName || profileName.trim() === "") {
   }, [afterDiscount, totalTax, taxAmount2, adjustment]);
   console.log('Tax Options:', taxOptions);
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="accounting-ui p-6 space-y-6 relative">
       {isSubmitting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <CircularProgress size={60} />
@@ -2842,13 +2843,12 @@ if (!profileName || profileName.trim() === "") {
         </Section> */}
       </div>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-       
-        <ShadButton className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Save '}
-        </ShadButton>
-         <ShadButton variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
+      <div className="acc-actions pt-2">
+        <ShadButton variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
           Cancel
+        </ShadButton>
+        <ShadButton className="acc-btn fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save'}
         </ShadButton>
         {/* <ShadButton className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save as Open'}

@@ -13,11 +13,11 @@ type StatCardProps = { value: number | string; label: string; percent?: string; 
 const StatCard: React.FC<StatCardProps> = ({ value, label, percent, subLabel }) => {
     const formatted = typeof value === 'number' ? value.toLocaleString() : value;
     return (
-        <div className="bg-[#F6F4EE] rounded-sm p-8 sm:p-10 text-center print:p-6">
-            <div className="text-[#C72030] font-extrabold leading-none text-4xl sm:text-5xl print:text-3xl">{formatted}</div>
-            {percent && <div className="mt-2 text-black font-semibold text-base sm:text-lg print:text-sm">{percent}</div>}
-            <div className="mt-2 text-black font-semibold text-base sm:text-lg print:text-sm">{label}</div>
-            {subLabel && <div className="mt-1 text-black font-medium text-sm sm:text-base print:text-xs">{subLabel}</div>}
+        <div className="bg-[#F5F4F0] rounded-2xl p-6 text-center print:p-6 shadow-none border-none">
+            <div className="text-[#1a1a18] font-bold leading-none text-4xl sm:text-5xl print:text-3xl tabular-nums">{formatted}</div>
+            {percent && <div className="mt-2 text-neutral-600 font-semibold text-base sm:text-lg print:text-sm">{percent}</div>}
+            <div className="mt-2 text-neutral-600 font-semibold text-base sm:text-lg print:text-sm">{label}</div>
+            {subLabel && <div className="mt-1 text-neutral-500 font-medium text-sm sm:text-base print:text-xs">{subLabel}</div>}
         </div>
     );
 };
@@ -31,8 +31,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
     const baseData = React.useMemo(
         () => [
-            { name: 'Achieved', value: achieved, color: '#DBC2A9' },
-            { name: 'Breached', value: breached, color: '#8B7355' }
+            { name: 'Achieved', value: achieved, color: '#3DD68C' },
+            { name: 'Breached', value: breached, color: '#FF6369' }
         ],
         [achieved, breached]
     );
@@ -2216,7 +2216,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 <div className="px-1 sm:px-2 asset-management-container">
                     <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg asset-management-header">4. Asset Management</h2>
                     <div className="border-t border-dashed border-gray-300 my-3 asset-management-border" />
-                    <div className="overflow-x-auto asset-management-table-wrapper">
+                    <div className="overflow-x-auto asset-management-table-wrapper rounded-2xl border border-gray-300">
                         {assetMgmtLoading && (
                             <div className="p-6 text-center text-gray-500 text-sm">Loading asset management data...</div>
                         )}
@@ -2227,31 +2227,31 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <div className="p-6 text-center text-gray-500 text-sm">No data</div>
                         )}
                         {!assetMgmtLoading && !assetMgmtError && assetMgmtData && (
-                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 asset-management-table">
+                            <table className="w-full text-sm sm:text-base print:text-sm border-separate border-spacing-0 asset-management-table">
                                 <thead>
                                     <tr>
-                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w>[16%]">Metric</th>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[16%]">Metric</th>
                                         <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[42%]">Critical</th>
                                         <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[42%]">Non-Critical</th>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breakdown</th>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-right">Breakdown</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="border-b border-gray-200">
                                         <td className="p-4 print:p-2 text-black font-medium">Count</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.critical_assets.total}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.critical_assets.in_use.count}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.critical_assets.breakdown.count}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.non_critical_assets.total}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.non_critical_assets.in_use.count}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.non_critical_assets.breakdown.count}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.critical_assets.total}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.critical_assets.in_use.count}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.critical_assets.breakdown.count}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.non_critical_assets.total}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.non_critical_assets.in_use.count}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{assetMgmtData.non_critical_assets.breakdown.count}</td>
                                     </tr>
                                     <tr className="border-b border-gray-200">
                                         <td className="p-4 print:p-2 text-black font-medium">%</td>
@@ -2264,12 +2264,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                             const nonCritTotal = (nonCritInUse + nonCritBreakdown).toFixed(2);
                                             return (
                                                 <>
-                                                    <td className="p-4 print:p-2 text-center text-black">{critTotal}%</td>
-                                                    <td className="p-4 print:p-2 text-center text-black">{critInUse.toFixed(2)}%</td>
-                                                    <td className="p-4 print:p-2 text-center text-black">{critBreakdown.toFixed(2)}%</td>
-                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritTotal}%</td>
-                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritInUse.toFixed(2)}%</td>
-                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritBreakdown.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{critTotal}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{critInUse.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{critBreakdown.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{nonCritTotal}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{nonCritInUse.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-right text-black tabular-nums">{nonCritBreakdown.toFixed(2)}%</td>
                                                 </>
                                             );
                                         })()}
@@ -2288,17 +2288,17 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 <div className="px-1 sm:px-2 task-status-container">
                     <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg task-status-header">5. Task Status</h2>
                     <div className="border-t border-dashed border-gray-300 my-3 task-status-border" />
-                    <div className="overflow-x-auto task-status-table-wrapper">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 task-status-table">
+                    <div className="overflow-x-auto task-status-table-wrapper rounded-2xl border border-gray-300">
+                        <table className="w-full text-sm sm:text-base print:text-sm border-separate border-spacing-0 task-status-table">
                             <thead>
                                 <tr>
                                     <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
                                     <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Non-Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-right">Non-Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2314,9 +2314,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                 {!checklistStatusLoading && !checklistStatusError && checklistStatusRows.map((row, i) => (
                                     <tr key={row.status} className={i !== checklistStatusRows.length - 1 ? 'border-b border-gray-200' : ''}>
                                         <td className="p-4 print:p-2 text-black">{row.status}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{row.technical}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{row.nonTechnical}</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{row.total}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{row.technical}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{row.nonTechnical}</td>
+                                        <td className="p-4 print:p-2 text-right text-black tabular-nums">{row.total}</td>
                                     </tr>
                                 ))}
                                 {/* Total Row */}
@@ -2330,9 +2330,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                     return (
                                         <tr className="border-t border-gray-300 font-semibold">
                                             <td className="p-4 print:p-2 text-black">Total</td>
-                                            <td className="p-4 print:p-2 text-center text-black">{totals.technical}</td>
-                                            <td className="p-4 print:p-2 text-center text-black">{totals.nonTechnical}</td>
-                                            <td className="p-4 print:p-2 text-center text-black">{totals.total}</td>
+                                            <td className="p-4 print:p-2 text-right text-black tabular-nums">{totals.technical}</td>
+                                            <td className="p-4 print:p-2 text-right text-black tabular-nums">{totals.nonTechnical}</td>
+                                            <td className="p-4 print:p-2 text-right text-black tabular-nums">{totals.total}</td>
                                         </tr>
                                     );
                                 })()}

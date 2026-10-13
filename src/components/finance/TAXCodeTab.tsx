@@ -2,16 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormControl as MuiFormControl, TextField } from "@mui/material";
-import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/utils/apiClient";
+import { FinanceMasterTable } from "./FinanceMasterTable";
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 45 },
@@ -39,8 +32,6 @@ export const TACCodeTab = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTacCode, setSelectedTacCode] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   // Form states
   const [formData, setFormData] = useState({
@@ -163,119 +154,21 @@ export const TACCodeTab = () => {
     setIsCreateModalOpen(true);
   };
 
-  const filteredTacCodes = tacCodes.filter(tac =>
-    tac.content?.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tac.content?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-
-  const paginatedTacCodes = filteredTacCodes.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredTacCodes.length / itemsPerPage);
-
   return (
     <div className="space-y-4">
-      {/* Search and Add Button */}
-      <div className="flex gap-3 items-center bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search TAX codes..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-10"
-          />
-        </div>
-        <Button
-          onClick={openCreateModal}
-          className="fm-button-fix fm-button-brand px-4 py-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add TAX codes
-        </Button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {isLoading && paginatedTacCodes.length === 0 ? (
-          <div className="flex items-center justify-start gap-2 p-8 text-black">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Loading ...
-          </div>
-        ) : filteredTacCodes.length === 0 ? (
-          <div className="flex items-center justify-center p-8 text-gray-500">
-            No TAX codes found
-          </div>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">Code</TableHead>
-                  <TableHead className="font-semibold">Name</TableHead>
-                  <TableHead className="font-semibold">Description</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedTacCodes.map((tacCode) => (
-                  <TableRow key={tacCode.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">
-                      {tacCode.content?.code}
-
-                    </TableCell>
-
-                    <TableCell>
-                      {tacCode.content?.name}
-                    </TableCell>
-
-                    <TableCell className="text-gray-600">
-                      {tacCode.content?.description || '-'}
-                    </TableCell>
-
-                  </TableRow>
-
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t">
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <FinanceMasterTable
+        data={tacCodes}
+        loading={isLoading}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        storageKey="tax-code-table"
+        emptyMessage="No TAX codes found"
+        addLabel="Add TAX codes"
+        onAdd={openCreateModal}
+      />
 
       {/* Create Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} modal={false}>
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent
           className="sm:max-w-[500px] bg-white overflow-visible"
           onPointerDownOutside={(e) => {
@@ -360,7 +253,7 @@ export const TACCodeTab = () => {
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent
           className="sm:max-w-[500px] bg-white overflow-visible"
           onPointerDownOutside={(e) => {

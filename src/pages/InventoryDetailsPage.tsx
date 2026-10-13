@@ -10,6 +10,13 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
+const expiryStatusPillStyle: React.CSSProperties = {
+  borderRadius: '999px',
+  padding: '3px 10px',
+  fontSize: '11px',
+  fontWeight: 500,
+};
+
 const historyColumns: ColumnConfig[] = [
   { key: 'dateTime', label: 'Date / Time', sortable: true, hideable: true, defaultVisible: true },
   { key: 'changedBy', label: 'Changed By', sortable: true, hideable: true, defaultVisible: true },
@@ -914,9 +921,9 @@ export const InventoryDetailsPage = () => {
                   <span className="flex items-center gap-2">
                     <span className="text-gray-500">:</span>
                     {((inventoryData as any)?.expired === true || String((inventoryData as any)?.expired).toLowerCase() === 'true') ? (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DA7756]/10 text-[#DA7756]">Expired</span>
+                      <span className="inline-flex items-center bg-[#DA7756]/10 text-[#DA7756]" style={expiryStatusPillStyle}>Expired</span>
                     ) : (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Valid</span>
+                      <span className="inline-flex items-center bg-green-100 text-green-700" style={expiryStatusPillStyle}>Valid</span>
                     )}
                   </span>
                 </div>

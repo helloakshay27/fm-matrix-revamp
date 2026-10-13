@@ -86,7 +86,8 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onOpenChange}>
+    <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }} open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-row items-center justify-between space-y-0 pb-4">
           <h1 className="text-lg font-semibold">FILTER BY</h1>
@@ -160,19 +161,19 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           </FormControl>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleApply}
-            className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
-          >
-            Apply
-          </Button>
+        <div className="flex gap-3 pt-4 items-center justify-end">
           <Button
             onClick={handleReset}
             variant="outline"
-            className="flex-1"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Reset
+          </Button>
+          <Button
+            onClick={handleApply}
+            className="fm-action-primary"
+          >
+            Apply
           </Button>
         </div>
       </DialogContent>

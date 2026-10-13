@@ -498,7 +498,8 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
                     <Button
                         type="submit"
                         size="lg"
-                        className="bg-[#C72030] hover:bg-[#C72030] text-white"
+                        variant="ghost"
+                        className="fm-button-fix fm-button-brand"
                         disabled={createLoading}
                     >
                         {createLoading ? "Submitting..." : "Submit"}
@@ -509,7 +510,7 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
                             type="button"
                             size="lg"
                             variant="outline"
-                            className="border-[#C72030] text-black hover:bg-gray-50"
+                            className="border-gray-300 text-gray-700"
                             onClick={() => {
                                 if (savedSprints.length === 0) {
                                     resetForm();
@@ -527,7 +528,7 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
                             type="button"
                             size="lg"
                             variant="outline"
-                            className="border-[#C72030] text-black hover:bg-gray-50"
+                            className="border-gray-300 text-gray-700"
                             onClick={handleAddSprints}
                             disabled={createLoading}
                         >

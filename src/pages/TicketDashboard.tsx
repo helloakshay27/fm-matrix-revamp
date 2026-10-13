@@ -1499,7 +1499,8 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'issue_status') {
       return <span
-        className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 transition-opacity ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
+        className="ticket-status-pill animate-scale-in cursor-pointer hover:opacity-80 transition-opacity"
+        data-status={String(item.issue_status || 'unknown').toLowerCase().replace(/\s+/g, '-')}
         onClick={(e) => {
           e.stopPropagation();
           setSelectedTicketForEdit(item);
@@ -1827,14 +1828,13 @@ export const TicketDashboard = () => {
                 clickable: true
               }].map((item, i) => {
                 const IconComponent = item.icon;
-                const isActive = isStatusCardActive(item.type);
                 return (
                   <div
                     key={i}
-                    className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${item.clickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+                    className={`relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-all duration-300 ${item.clickable ? 'cursor-pointer' : ''}`}
                     onClick={() => item.clickable && handleStatusCardClick(item.type)}
                   >
-                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
                       <IconComponent className="w-6 h-6 text-brand" />
                     </div>
                     <div>

@@ -593,21 +593,21 @@ export const PatrollingDashboard = () => {
             )}
           </>
         )}
-        rightActions={(
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefreshSchedules}
-            disabled={refreshLoading}
-            className="rounded-lg"
-          >
-            {refreshLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-          </Button>
-        )}
+        // rightActions={(
+        //   <Button
+        //     size="sm"
+        //     variant="outline"
+        //     onClick={handleRefreshSchedules}
+        //     disabled={refreshLoading}
+        //     className="rounded-lg"
+        //   >
+        //     {refreshLoading ? (
+        //       <Loader2 className="w-4 h-4 animate-spin" />
+        //     ) : (
+        //       <RefreshCw className="w-4 h-4" />
+        //     )}
+        //   </Button>
+        // )}
       />
 
       {showActionPanel && (

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -74,13 +73,14 @@ export const CheckInMarginDashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">CHECK-IN MARGIN</h1>
         </div>
 
+        <form onSubmit={handleSubmit}>
         {/* Form Card */}
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-brand">Configure Check-in Margin</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="hours">Hours</Label>
@@ -138,22 +138,7 @@ export const CheckInMarginDashboard = () => {
                 </MuiFormControl>
               </div>
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCheckInMargin({ hours: '', minutes: '', shift: '' })}
-                >
-                  Reset
-                </Button>
-                <Button 
-                  type="submit"
-                  className="bg-brand hover:bg-brand-hover text-white"
-                >
-                  Save Settings
-                </Button>
-              </div>
-            </form>
+            </div>
           </CardContent>
         </Card>
 
@@ -169,6 +154,24 @@ export const CheckInMarginDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button
+            type="button"
+            onClick={() => setCheckInMargin({ hours: '', minutes: '', shift: '' })}
+            className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+          >
+            Reset
+          </button>
+          <button
+            type="submit"
+            className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)]"
+            style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
+          >
+            Save Settings
+          </button>
+        </div>
+        </form>
       </div>
     </div>
   );

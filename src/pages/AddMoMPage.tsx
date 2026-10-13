@@ -12,7 +12,7 @@ import {
   Box,
   Checkbox,
 } from "@mui/material";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Upload } from "lucide-react";
 import { Button as SButton } from "../components/ui/button";
 import axios from "axios";
 
@@ -982,23 +982,14 @@ const AddMoMPage = () => {
             ))}
           </div>
 
-          <Button
-            variant="outlined"
-            sx={{
-              textTransform: "none",
-              borderColor: "#C72030",
-              color: "#C72030",
-              fontWeight: 500,
-              padding: "6px 20px",
-              "&:hover": {
-                borderColor: "#A01020",
-                bgcolor: "rgba(199, 32, 48, 0.04)",
-              },
-            }}
+          <SButton
+            type="button"
+            variant="outline"
             onClick={() => attachmentRef.current?.click()}
           >
-            Attach Files( Max 10 MB )
-          </Button>
+            <Upload className="w-4 h-4 mr-2" />
+            Attach Files (Max 10 MB)
+          </SButton>
 
           <input
             type="file"

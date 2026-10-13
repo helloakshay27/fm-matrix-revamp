@@ -9,6 +9,7 @@ import {
   Link as LinkIcon,
   Send,
   Copy,
+  X,
 } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -173,30 +174,30 @@ export const PaymentLinksDashboard = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-500 hover:text-blue-600"
+            className="h-8 w-8 p-0"
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
       </div>
     ),
-    date: <span className="text-sm text-gray-600">{item.date}</span>,
+    date: <span className="acc-amount-plain">{item.date}</span>,
     payment_link_number: (
-      <span className="font-medium text-blue-600 cursor-pointer hover:underline">
+      <span className="acc-row-name cursor-pointer hover:underline">
         {item.payment_link_number}
       </span>
     ),
     reference_number: (
-      <span className="text-sm text-gray-900">{item.reference_number}</span>
+      <span>{item.reference_number}</span>
     ),
     customer_name: (
-      <span className="text-sm text-gray-900">{item.customer_name}</span>
+      <span>{item.customer_name}</span>
     ),
     project_name: (
-      <span className="text-sm text-gray-600">{item.project_name}</span>
+      <span>{item.project_name}</span>
     ),
     amount: (
-      <span className="text-sm font-medium text-gray-900">
+      <span className="acc-amount">
         ₹
         {item.amount.toLocaleString("en-IN", {
           minimumFractionDigits: 2,
@@ -255,16 +256,24 @@ export const PaymentLinksDashboard = () => {
             <DialogTitle className="acc-dialog-title">
               New Payment Link
             </DialogTitle>
+            <button
+              type="button"
+              className="acc-dialog-close"
+              aria-label="Close"
+              onClick={() => setIsNewLinkOpen(false)}
+            >
+              <X className="w-4 h-4" />
+            </button>
           </DialogHeader>
 
           <div className="acc-form acc-dialog-body">
             <div className="acc-field">
               <Label className="acc-label">
-                Customer Name <span className="acc-required">*</span>
+                Customer Name <span className="">*</span>
               </Label>
               <div className="flex gap-2">
                 <Select>
-                  <SelectTrigger className="w-full text-gray-500 border-gray-300">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Customer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,18 +292,18 @@ export const PaymentLinksDashboard = () => {
 
             <div className="acc-field">
               <Label className="acc-label">
-                Payment Amount <span className="acc-required">*</span>
+                Payment Amount <span className="">*</span>
               </Label>
-              <Input className="border-gray-300" />
+              <Input />
             </div>
 
             <div className="acc-field">
               <Label className="acc-label">
-                Link Expiration Date <span className="acc-required">*</span>
+                Link Expiration Date <span className="">*</span>
               </Label>
               <div className="relative">
                 <Input
-                  className="border-gray-300 pr-10"
+                  className="pr-10"
                   defaultValue="04/03/2026"
                 />
               </div>
@@ -302,31 +311,33 @@ export const PaymentLinksDashboard = () => {
 
             <div className="acc-field">
               <Label className="acc-label">
-                Description <span className="acc-required">*</span>
+                Description <span className="">*</span>
               </Label>
               <Textarea
                 placeholder="Tell your customer why you're collecting this payment..."
-                className="min-h-[100px] resize-none border-gray-300"
+                className="min-h-[100px] resize-none"
               />
             </div>
           </div>
 
-          <DialogFooter className="acc-dialog-foot sm:justify-start">
-            <Button className="acc-btn acc-btn-sm fm-button-fix fm-button-brand" onClick={() => toast.success("Payment link generated successfully!")}>
-              Generate Link
-            </Button>
-            <Button
-              variant="outline"
-              className="acc-btn acc-btn-sm acc-btn-secondary"
-            >
-              Save and Share
-            </Button>
+          <DialogFooter className="acc-dialog-foot acc-actions">
             <Button
               variant="outline"
               className="acc-btn acc-btn-sm acc-btn-secondary"
               onClick={() => setIsNewLinkOpen(false)}
             >
               Cancel
+            </Button>
+
+            <Button
+              variant="outline"
+              className="acc-btn acc-btn-sm acc-btn-secondary"
+            >
+              Save and Share
+            </Button>
+
+            <Button className="acc-btn acc-btn-sm fm-button-fix fm-button-brand" onClick={() => toast.success("Payment link generated successfully!")}>
+              Generate Link
             </Button>
           </DialogFooter>
         </DialogContent>

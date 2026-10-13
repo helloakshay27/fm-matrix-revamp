@@ -4330,7 +4330,7 @@ export const EditSchedulePage = () => {
       </Box>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
         <CancelButton
           onClick={() => navigate('/maintenance/schedule')}
         >

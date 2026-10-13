@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast as sonnerToast } from "sonner";
+import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 
 // Bill shape from lock_account_bill.json
@@ -222,6 +223,7 @@ export const CreatePaymentPage: React.FC = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date("2026-02-12"));
   const [isSaving, setIsSaving] = useState(false);
+  const [showVendorError, setShowVendorError] = useState(false);
 
   // Form State
   const [paymentNumber, setPaymentNumber] = useState("");
@@ -554,6 +556,7 @@ export const CreatePaymentPage: React.FC = () => {
 
   const handleSave = async (status: "DRAFT" | "PAID") => {
     if (!selectedVendor) {
+      setShowVendorError(true);
       sonnerToast.error("Please select a vendor.");
       return;
     }
@@ -1004,7 +1007,7 @@ export const CreatePaymentPage: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-white">
+      <div className="accounting-ui min-h-screen bg-white">
         <div className="w-full">
           <Tabs
             value={activeTab}
@@ -1023,17 +1026,17 @@ export const CreatePaymentPage: React.FC = () => {
               </Button>
 
               {/* Tab Switcher */}
-              <div className="flex justify-start items-end border-b border-gray-200 mb-6">
-                <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 gap-6">
+              <div className="mb-6">
+                <TabsList className="acc-tabs h-auto">
                   <TabsTrigger
                     value="bill_payment"
-                    className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                    className="acc-tab"
                   >
                     Bill Payment
                   </TabsTrigger>
                   <TabsTrigger
                     value="vendor_advance"
-                    className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                    className="acc-tab"
                   >
                     Vendor Advance
                   </TabsTrigger>
@@ -1045,7 +1048,7 @@ export const CreatePaymentPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Vendor Name<span className="text-red-500">*</span>
                 </label>
-                <FormControl fullWidth error={!selectedVendor}>
+                <FormControl fullWidth error={showVendorError && !selectedVendor}>
                   <MuiSelect
                     value={selectedSupplier?.id || ""}
                     onChange={(e) => {
@@ -2081,29 +2084,31 @@ export const CreatePaymentPage: React.FC = () => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
+                <div className="acc-actions mt-4 border-t border-gray-200 pt-6 pb-4">
                   <Button
                     variant="outline"
                     disabled={isSaving}
-                    className="fm-button-fix px-8 py-2"
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    onClick={() => navigate("/accounting/payments-made")}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    disabled={isSaving}
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                     onClick={() => handleSave("DRAFT")}
                   >
                     {isSaving ? "Saving..." : "Save as Draft"}
                   </Button>
+
                   <Button
                     disabled={isSaving}
-                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
                     onClick={() => handleSave("PAID")}
                   >
                     {isSaving ? "Saving..." : "Save as Paid"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={isSaving}
-                    className="fm-button-fix px-8 py-2"
-                    onClick={() => navigate("/accounting/payments-made")}
-                  >
-                    Cancel
                   </Button>
                 </div>
               </div>

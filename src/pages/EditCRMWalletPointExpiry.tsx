@@ -1,3 +1,4 @@
+import { Settings } from "lucide-react";
 import TextField from "@mui/material/TextField";
 import RuleAlert from "@/components/RuleAlert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,25 +68,14 @@ const EditCRMWalletPointExpiry = () => {
 
     return (
         <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
-            <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                        <span
-                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                            style={{ color: '#C72030' }}
-                        >
-                            R
-                        </span>
+            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
+                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Settings className="w-[18px] h-[18px]" /></span>
                         RULE EDIT
                     </CardTitle>
                 </CardHeader>
-                <CardContent
-                    className="px-[50px] py-[25px] bg-white"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+                <CardContent className="px-6 pb-6 pt-0">
                     <TextField
                         fullWidth
                         label="Rule Name"
@@ -169,25 +159,25 @@ const EditCRMWalletPointExpiry = () => {
                 </CardContent>
             </Card>
 
-            <div className="flex items-center justify-center gap-3">
-                <Button
-                    onClick={() => {
-                        setShowRuleCreateAlert(true);
-                        setButtonClick("submit");
-                    }}
-                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
-                >
-                    Update Rule
-                </Button>
+            <div className="fm-action-bar mt-6">
                 <Button
                     onClick={() => {
                         setShowRuleCreateAlert(true);
                         setButtonClick("cancel");
                     }}
                     variant="outline"
-                    className="fm-button-fix border-[#DA7756] text-[#DA7756] hover:bg-[#fdf0ea] px-4 py-2"
+                    className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                 >
                     Cancel
+                </Button>
+                <Button
+                    onClick={() => {
+                        setShowRuleCreateAlert(true);
+                        setButtonClick("submit");
+                    }}
+                    className="fm-action-primary"
+                >
+                    Update Rule
                 </Button>
             </div>
 

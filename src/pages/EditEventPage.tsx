@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Switch } from "@/components/ui/switch";
 import {
   TextField,
   FormControl,
@@ -8,7 +9,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Switch as MuiSwitch,
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -501,37 +501,20 @@ export const EditEventPage = () => {
 
       <div className="space-y-6">
         {/* Event Detail Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                <Calendar size={16} />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <Calendar className="w-[18px] h-[18px]" />
               </div>
-              <span className="font-semibold text-lg text-gray-800">Event Detail</span>
+              <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Event Detail</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
-              <MuiSwitch
+              <Switch
                 checked={isActive}
-                onChange={(e) => handleStatusChange(e.target.checked)}
+                onCheckedChange={(checked) => handleStatusChange(checked)}
                 disabled={updatingStatus}
-                size="small"
-                sx={{
-                  '& .MuiSwitch-switchBase': {
-                    color: '#ffffff',
-                    '&.Mui-checked': {
-                      color: '#22c55e',
-                    },
-                    '&.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: '#22c55e',
-                      opacity: 1,
-                    },
-                  },
-                  '& .MuiSwitch-track': {
-                    backgroundColor: '#9ca3af',
-                    opacity: 1,
-                  },
-                }}
               />
             </div>
           </div>
@@ -967,14 +950,14 @@ export const EditEventPage = () => {
         </div>
 
         {/* Share Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <Share2 size={16} />
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Share2 className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Share</span>
+            <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Share</span>
           </div>
-          <div className="p-6 bg-white">
+          <div className="px-6 pb-6 pt-3 bg-white">
             <div className="flex flex-col md:flex-row md:items-center gap-8 mb-3">
               <div className="flex items-center gap-4">
                 <Label className="text-sm text-gray-700 whitespace-nowrap">
@@ -1083,14 +1066,14 @@ export const EditEventPage = () => {
         </div>
 
         {/* Attachment Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <File size={16} />
+        <div className="border border-gray-200 overflow-hidden bg-white rounded-2xl shadow-sm">
+          <div className="px-6 pt-6 pb-0 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <File className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Attachment</span>
+            <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachment</span>
           </div>
-          <div className="p-6 bg-white">
+          <div className="px-6 pb-6 pt-3 bg-white">
             <div className="grid grid-cols-1 gap-6">
               <div>
                 <Label className="text-sm font-bold text-gray-700 mb-4 block">
@@ -1100,13 +1083,13 @@ export const EditEventPage = () => {
                 <div className="flex flex-wrap gap-6">
                   {/* Existing Attachments */}
                   {existingAttachments.map((att) => (
-                    <div key={att.id} className="relative border-2 border-gray-200 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
-                      <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                    <div key={att.id} className="relative border-2 border-gray-200 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         Existing File
                       </span>
                       <button
                         onClick={() => handleRemoveExistingAttachment(att.id)}
-                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                        className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-600 hover:text-red-500 transition-colors"
                       >
                         <XCircle size={20} />
                       </button>
@@ -1122,15 +1105,15 @@ export const EditEventPage = () => {
                   {newAttachments.map((attachment, index) => (
                     <div
                       key={index}
-                      className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white"
+                      className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white"
                     >
-                      <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {attachment.file.name}
                       </span>
                       <button
                         type="button"
                         onClick={(e) => handleRemoveNewAttachment(index, e)}
-                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                        className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-600 hover:text-red-500 transition-colors"
                       >
                         <XCircle size={20} />
                       </button>
@@ -1149,9 +1132,9 @@ export const EditEventPage = () => {
                   {/* Add new attachment box */}
                   <div
                     onClick={triggerFileInput}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    <div className="absolute top-2 right-2 text-gray-400">
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1188,12 +1171,12 @@ export const EditEventPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-4 mt-8 pb-8">
+        <div className="fm-action-bar mt-8 pb-8">
           <Button
             type="button"
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="min-w-[150px] h-10 !border-brand !text-brand bg-white hover:!bg-brand-selected hover:!text-brand"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
           </Button>
@@ -1201,7 +1184,7 @@ export const EditEventPage = () => {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
+            className="fm-action-primary"
           >
             {isSubmitting ? "Updating..." : "Update Event"}
           </Button>

@@ -102,7 +102,7 @@ export const CRMEventsFilterModal = ({ open, onOpenChange, onApply }: CRMEventsF
         <>
             <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={() => onOpenChange(false)} />
             <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col">
+                <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between p-6 border-b">
                         <h2 className="text-xl font-semibold text-gray-900 tracking-wide">FILTER BY</h2>
                         <button onClick={() => onOpenChange(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -170,12 +170,19 @@ export const CRMEventsFilterModal = ({ open, onOpenChange, onApply }: CRMEventsF
                         </div>
                     </div>
 
-                    <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-                        <Button variant="outline" onClick={handleReset} className="px-8">
-                            Reset
+                    <div className="px-6 pb-6 pt-4 flex gap-3 items-center justify-end">
+                        <Button
+                          onClick={handleReset}
+                          variant="outline"
+                          className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                        >
+                          Reset
                         </Button>
-                        <Button onClick={handleApply} className="px-8 !bg-brand hover:!bg-brand-hover !text-white">
-                            Apply
+                        <Button
+                          onClick={handleApply}
+                          className="fm-action-primary"
+                        >
+                          Apply
                         </Button>
                     </div>
                 </div>

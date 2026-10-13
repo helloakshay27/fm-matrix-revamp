@@ -300,12 +300,20 @@ export const EditLockFunctionDialog = ({
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-              <Button
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
                 type="button"
                 onClick={handleSave}
                 disabled={isSubmitting}
-                className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+                className="fm-action-primary"
               >
                 {isSubmitting ? (
                   <>
@@ -313,18 +321,9 @@ export const EditLockFunctionDialog = ({
                     Saving...
                   </>
                 ) : (
-                  "UPDATE"
+                  "Update"
                 )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                className="border-brand text-brand px-8 w-full sm:w-auto"
-              >
-                CANCEL
-              </Button>
+              </button>
             </div>
           </>
         )}

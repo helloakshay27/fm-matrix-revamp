@@ -1938,7 +1938,7 @@ export const ExpenseCreatePage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-3 pt-6 border-t">
+      <div className="flex justify-end gap-3 pt-6 border-t">
         <Button
           variant="outlined"
           onClick={() => navigate('/accounting/expense')}

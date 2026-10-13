@@ -74,7 +74,7 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
-      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg">
+      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg rounded-2xl sm:rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <DialogTitle className="text-lg font-semibold text-gray-900 text-left">Filter</DialogTitle>
           <DialogDescription className="sr-only">
@@ -155,19 +155,19 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              onClick={handleApply}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-            >
-              Apply Filters
-            </Button>
+          <div className="flex gap-3 pt-4 items-center justify-end">
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Reset
+            </Button>
+            <Button
+              onClick={handleApply}
+              className="fm-action-primary"
+            >
+              Apply Filters
             </Button>
           </div>
         </div>

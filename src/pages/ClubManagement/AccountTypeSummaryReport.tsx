@@ -81,20 +81,20 @@ const AccountTypeSummaryReport: React.FC = () => {
                     <td className="border-b border-[#ececec] px-4 py-3 text-sm text-[#111827] sm:px-5">
                       {row.label}
                     </td>
-                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1463df] sm:px-5">
+                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1a1a18] tabular-nums sm:px-5">
                       <button
                         type="button"
                         onClick={() => openDetails(row.label, "debit")}
-                        className="text-[#1463df] hover:underline"
+                        className="text-[#1a1a18] tabular-nums hover:underline"
                       >
                         {formatValue(row.debit)}
                       </button>
                     </td>
-                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1463df] sm:px-5">
+                    <td className="border-b border-[#ececec] px-4 py-3 text-right text-sm font-medium text-[#1a1a18] tabular-nums sm:px-5">
                       <button
                         type="button"
                         onClick={() => openDetails(row.label, "credit")}
-                        className="text-[#1463df] hover:underline"
+                        className="text-[#1a1a18] tabular-nums hover:underline"
                       >
                         {formatValue(row.credit)}
                       </button>

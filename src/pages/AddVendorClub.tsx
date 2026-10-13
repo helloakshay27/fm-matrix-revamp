@@ -1586,7 +1586,6 @@ export const AddVendorClub = () => {
                   fontWeight: (index === activeStep) ? 600 : 500,
                   padding: '8px 12px',
                   fontSize: '11px',
-                  fontWeight: 500,
                   textAlign: 'center',
                   minWidth: '140px',
                   maxWidth: '140px',

@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Paperclip, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { staffService, SocietyStaffDetails, Unit, Department, WorkType } from '@/services/staffService';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { API_CONFIG } from '@/config/apiConfig';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -374,21 +375,22 @@ export const EditStaffPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">EDIT STAFF</h1>
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
         {/* Section 1: Staff Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              Staff Details
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center gap-2 mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center"><Users className="w-3 h-3 sm:w-4 sm:h-4" /></span>
+              STAFF DETAILS
             </h2>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="px-2 pb-4 sm:px-6 sm:pb-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <TextField
                 label="First Name*"
@@ -629,13 +631,14 @@ export const EditStaffPage = () => {
         </div>
 
         {/* Section 2: Attachments */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              Add Attachments
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center gap-2 mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center"><Paperclip className="w-3 h-3 sm:w-4 sm:h-4" /></span>
+              ADD ATTACHMENTS
             </h2>
           </div>
-          <div className="p-6">
+          <div className="px-2 pb-4 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Picture Upload</Label>
@@ -689,112 +692,82 @@ export const EditStaffPage = () => {
         </div>
 
         {/* Section 3: Schedule */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              Schedule Information
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <h2 className="text-[#DA7756] text-sm sm:text-base font-semibold flex items-center gap-2 mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center"><CalendarDays className="w-3 h-3 sm:w-4 sm:h-4" /></span>
+              SCHEDULE INFORMATION
             </h2>
           </div>
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full border border-gray-200 rounded-lg">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-200 p-4 text-left font-medium text-gray-700">Day</th>
-                    <th className="border border-gray-200 p-4 text-center font-medium text-gray-700">Start Time</th>
-                    <th className="border border-gray-200 p-4 text-center font-medium text-gray-700">End Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schedule.map((scheduleDay, index) => (
-                    <tr key={scheduleDay.day} className="hover:bg-gray-50">
-                      <td className="border border-gray-200 p-4">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={scheduleDay.enabled}
-                            onChange={(e) => handleScheduleChange(index, 'enabled', e.target.checked)}
-                            className="rounded border-gray-300 text-red-600 focus:ring-red-600"
-                          />
-                          <span className="capitalize font-medium text-gray-700">{scheduleDay.day}</span>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 p-4">
-                        <div className="flex gap-2 justify-center">
-                          <Select 
-                            value={scheduleDay.startHour}
-                            onValueChange={(value) => handleScheduleChange(index, 'startHour', value)}
-                          >
-                            <SelectTrigger className="w-16 h-8 border-gray-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {generateHourOptions().map(hour => (
-                                <SelectItem key={hour} value={hour}>{hour}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="flex items-center text-gray-500">:</span>
-                          <Select 
-                            value={scheduleDay.startMinute}
-                            onValueChange={(value) => handleScheduleChange(index, 'startMinute', value)}
-                          >
-                            <SelectTrigger className="w-16 h-8 border-gray-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {generateMinuteOptions().map(minute => (
-                                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </td>
-                      <td className="border border-gray-200 p-4">
-                        <div className="flex gap-2 justify-center">
-                          <Select 
-                            value={scheduleDay.endHour}
-                            onValueChange={(value) => handleScheduleChange(index, 'endHour', value)}
-                          >
-                            <SelectTrigger className="w-16 h-8 border-gray-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {generateHourOptions().map(hour => (
-                                <SelectItem key={hour} value={hour}>{hour}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <span className="flex items-center text-gray-500">:</span>
-                          <Select 
-                            value={scheduleDay.endMinute}
-                            onValueChange={(value) => handleScheduleChange(index, 'endMinute', value)}
-                          >
-                            <SelectTrigger className="w-16 h-8 border-gray-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {generateMinuteOptions().map(minute => (
-                                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="px-2 pb-4 sm:px-6 sm:pb-6">
+            <EnhancedTable
+              data={schedule.map((scheduleDay, index) => ({ ...scheduleDay, index }))}
+              columns={[
+                { key: 'day', label: 'Day', sortable: false, draggable: false, hideable: false, width: 260 },
+                { key: 'startHour', label: 'Start Time', sortable: false, draggable: false, hideable: false, width: 350 },
+                { key: 'endHour', label: 'End Time', sortable: false, draggable: false, hideable: false, width: 350 },
+              ]}
+              renderCell={(item, columnKey) => {
+                if (columnKey === 'day') {
+                  return (
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={item.enabled}
+                        onChange={(e) => handleScheduleChange(item.index, 'enabled', e.target.checked)}
+                        className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
+                      />
+                      <span className="capitalize font-medium text-gray-700">{item.day}</span>
+                    </div>
+                  );
+                }
+
+                const isStart = columnKey === 'startHour';
+                const hourKey: 'startHour' | 'endHour' = isStart ? 'startHour' : 'endHour';
+                const minuteKey: 'startMinute' | 'endMinute' = isStart ? 'startMinute' : 'endMinute';
+                return (
+                  <div className="flex gap-2 justify-center">
+                    <Select value={item[hourKey]} onValueChange={(value) => handleScheduleChange(item.index, hourKey, value)}>
+                      <SelectTrigger className="w-16 h-8 border-gray-300"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {generateHourOptions().map((hour) => <SelectItem key={hour} value={hour}>{hour}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <span className="flex items-center text-gray-500">:</span>
+                    <Select value={item[minuteKey]} onValueChange={(value) => handleScheduleChange(item.index, minuteKey, value)}>
+                      <SelectTrigger className="w-16 h-8 border-gray-300"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {generateMinuteOptions().map((minute) => <SelectItem key={minute} value={minute}>{minute}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              }}
+              storageKey="edit-staff-schedule"
+              className="staff-schedule-table"
+              hideTableSearch
+              hideTableExport
+              hideColumnsButton
+              pagination={false}
+              emptyMessage="No schedule days available"
+            />
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button 
+        <div className="flex justify-end gap-3 pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="min-w-36 border-gray-200 bg-white px-8 py-2 text-gray-900 hover:bg-gray-50"
+          >
+            Cancel
+          </Button>
+          <Button
             type="submit"
             disabled={saving}
-            className="bg-red-600 hover:bg-red-700 !text-white px-8 py-2"
+            className="min-w-36 bg-[#111827] px-8 py-2 text-white hover:bg-[#1F2937]"
           >
             {saving ? (
               <>
@@ -802,16 +775,8 @@ export const EditStaffPage = () => {
                 Updating...
               </>
             ) : (
-              'Update Staff'
+              'Submit'
             )}
-          </Button>
-          <Button 
-            type="button"
-            variant="ghost"
-            onClick={handleBack}
-            className="fm-button-fix fm-button-brand px-4 py-2"
-          >
-            Cancel
           </Button>
         </div>
       </form>

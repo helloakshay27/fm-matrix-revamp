@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity, BarChart3, Zap, Sun, Droplet, Recycle, BarChart, Plug, Frown, Wind, ArrowDown, ArrowUp, Plus, X, ChevronUp, ChevronDown, Building
+  Activity, BarChart3, Zap, Sun, Droplet, Recycle, BarChart, Plug, Frown, Wind, ArrowDown, ArrowUp, Plus, X, ChevronUp, ChevronDown, Building,
+  MapPin, Package, ShieldCheck, Paperclip
 } from 'lucide-react';
 import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { Button } from '@/components/ui/button';
@@ -740,6 +741,10 @@ function AddWaterAssetDashboard() {
     navigate('/utility/water');
   };
 
+  const handleCancel = () => {
+    navigate('/utility/water');
+  };
+
   // Helper: Check if any files are present in attachments
   const hasFiles = () => {
     return Object.values(attachments).some((arr) => Array.isArray(arr) && arr.length > 0);
@@ -1108,10 +1113,10 @@ function AddWaterAssetDashboard() {
         <Card>
           <Collapsible open={locationOpen} onOpenChange={setLocationOpen}>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="cursor-pointer">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                    <span className="bg-[#f5f4f0] text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"><MapPin className="w-4 h-4" /></span>
                     LOCATION DETAILS
                   </span>
                   {locationOpen ? <ChevronUp /> : <ChevronDown />}
@@ -1233,10 +1238,10 @@ function AddWaterAssetDashboard() {
         <Card>
           <Collapsible open={assetOpen} onOpenChange={setAssetOpen}>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="cursor-pointer">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                    <span className="bg-[#f5f4f0] text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"><Package className="w-4 h-4" /></span>
                     ASSET DETAILS
                   </span>
                   {assetOpen ? <ChevronUp /> : <ChevronDown />}
@@ -1508,11 +1513,11 @@ function AddWaterAssetDashboard() {
         <Card>
           <Collapsible open={warrantyOpen} onOpenChange={setWarrantyOpen}>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="cursor-pointer">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
-                    Warranty Details
+                    <span className="bg-[#f5f4f0] text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"><ShieldCheck className="w-4 h-4" /></span>
+                    WARRANTY DETAILS
                   </span>
                   {warrantyOpen ? <ChevronUp /> : <ChevronDown />}
                 </CardTitle>
@@ -1602,10 +1607,10 @@ function AddWaterAssetDashboard() {
             <Card>
               <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
                 <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50">
-                    <CardTitle className="flex items-center justify-between">
+                  <CardHeader className="cursor-pointer">
+                    <CardTitle className="flex items-center justify-between text-sm font-semibold">
                       <span className="flex items-center gap-2 text-black">
-                        <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"><Activity className="w-4 h-4" /></span>
+                        <span className="bg-[#f5f4f0] text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"><Activity className="w-4 h-4" /></span>
                         METER DETAILS
                       </span>
                       <div className="flex items-center gap-2">
@@ -1620,7 +1625,7 @@ function AddWaterAssetDashboard() {
                           />
                           <label
                             htmlFor="meter-details-toggle"
-                            className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}
+                            className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-black' : 'bg-gray-300'}`}
                           >
                             <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                           </label>
@@ -1703,7 +1708,7 @@ function AddWaterAssetDashboard() {
 
                       <div className="mb-6">
                         <div className="rounded-lg p-4 bg-[#f6f4ee]">
-                          <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
+                          <h3 className="font-medium mb-4 text-sm sm:text-base text-black">METER DETAILS</h3>
                           {/* Water: Nested Fresh Water options */}
                           {type === 'Water' ? (
                             <>
@@ -2023,10 +2028,10 @@ function AddWaterAssetDashboard() {
         <Card>
           <Collapsible open={attachmentsOpen} onOpenChange={setAttachmentsOpen}>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="cursor-pointer pb-2">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                    <span className="bg-[#f5f4f0] text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"><Paperclip className="w-4 h-4" /></span>
                     ATTACHMENTS
                   </span>
                   {attachmentsOpen ? <ChevronUp /> : <ChevronDown />}
@@ -2035,7 +2040,7 @@ function AddWaterAssetDashboard() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                <div className="p-4 sm:p-6">
+                <div className="p-4 sm:px-6 sm:pb-0 sm:pt-6">
                   {/* Category-specific Asset Image */}
                   <div className="mb-6">
                     <h3 className="text-sm font-semibold text-gray-700 mb-4">
@@ -2235,8 +2240,17 @@ function AddWaterAssetDashboard() {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-end gap-4 pt-10">
           <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="border-gray-400 bg-white text-gray-900 hover:bg-gray-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
             onClick={handleSaveAndCreateNew}
             disabled={saving}
           >

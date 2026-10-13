@@ -992,13 +992,10 @@ export const CategoryTypeTab: React.FC = () => {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
+                      <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Priority</label>
                       <FormControl>
                         <MuiFormControl fullWidth variant="outlined">
-                          <InputLabel id="add-priority-label" shrink>Priority</InputLabel>
                           <MuiSelect
-                            labelId="add-priority-label"
-                            label="Priority"
-                            notched
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value as string)}
                             displayEmpty
@@ -1323,7 +1320,8 @@ export const CategoryTypeTab: React.FC = () => {
       {/* modal={false} lets portaled MUI Select menus receive clicks/scroll */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
         <DialogContent
-          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-[24px] p-7"
+          data-settings-modal="true"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
               e.preventDefault();

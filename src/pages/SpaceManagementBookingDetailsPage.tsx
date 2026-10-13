@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Clock, MapPin, User, ChevronDown, ChevronUp } from "lucide-react";
 import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
@@ -187,24 +184,81 @@ export const SpaceManagementBookingDetailsPage = () => {
     fetchBookingDetails();
   }, [id, navigate]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'Confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'Pending':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const statusPill = (status: string): React.CSSProperties => {
+    if (status === 'Cancelled') {
+      return { backgroundColor: 'var(--color-error-bg)', color: 'var(--color-danger)' };
     }
+    if (status === 'Confirmed') {
+      return { backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success-solid)' };
+    }
+    return { backgroundColor: 'var(--color-surface)', color: 'var(--color-ink-68)' };
   };
+
+  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div>
+      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--color-ink-48)', margin: '0 0 4px' }}>
+        {label}
+      </p>
+      <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--color-text)', lineHeight: 1.4 }}>
+        {children}
+      </div>
+    </div>
+  );
+
+  const Section = ({
+    title,
+    icon: Icon,
+    open,
+    onToggle,
+    children,
+  }: {
+    title: string;
+    icon: React.ElementType;
+    open: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+  }) => (
+    <div
+      className="bg-white"
+      style={{
+        border: '1px solid var(--color-divider)',
+        borderRadius: 16,
+        boxShadow: 'none',
+        outline: 'none',
+      }}
+    >
+      <div
+        onClick={onToggle}
+        className="flex cursor-pointer items-center justify-between"
+        style={{ padding: '22px 24px', backgroundColor: '#fff' }}
+      >
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+            <Icon className="h-4 w-4" />
+          </div>
+          <h3 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-text)', margin: 0 }}>
+            {title}
+          </h3>
+        </div>
+        {open
+          ? <ChevronUp className="h-4 w-4 text-[var(--color-ink-48)]" />
+          : <ChevronDown className="h-4 w-4 text-[var(--color-ink-48)]" />}
+      </div>
+      {open && (
+        <div style={{ padding: '0 24px 22px', backgroundColor: '#fff' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 14 }}>
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mx-auto mb-4"></div>
           <p className="text-gray-700">Loading booking details...</p>
         </div>
       </div>
@@ -212,261 +266,102 @@ export const SpaceManagementBookingDetailsPage = () => {
   }
 
   return (
-    <div className="p-6 min-h-screen" style={{ backgroundColor: 'white' }}>
-      <div className="mb-6">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#6B7280' }}>
-          <span>Space</span>
-          <span>&gt;</span>
-          <span 
-            className="cursor-pointer"
-            style={{ color: '#6B7280' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#C72030'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
-            onClick={() => navigate(-1)}
-          >
-            Seat Booking List 
-          </span>
-          <span>&gt;</span>
-          <span>Booking Details</span>
-        </div>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div style={{ padding: '24px 32px 48px' }}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[12.5px] font-semibold text-[var(--color-ink-48)] hover:text-[var(--color-text)]"
+          style={{ marginBottom: 12 }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="hover:bg-gray-100"
-              style={{ color: '#1A1A1A' }}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#1A1A1A' }}>
-                Booking 
-                {/* #{booking.id} */}
-              </h1>
-              <p className="text-sm" style={{ color: '#6B7280' }}>{booking.employeeName}</p>
-            </div>
+        <div className="flex items-start justify-between" style={{ marginBottom: 22, gap: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em', lineHeight: 1.2, margin: 0, color: 'var(--color-text)' }}>
+              Booking
+            </h1>
+            <p style={{ fontSize: 13.5, color: 'var(--color-ink-68)', margin: '4px 0 0' }}>{booking.employeeName}</p>
           </div>
-          <Badge 
-            className="px-3 py-1 text-sm font-medium" 
-            style={{
-              backgroundColor: booking.status === 'Cancelled' ? '#FEE2E2' : booking.status === 'Confirmed' ? '#D1FAE5' : '#DBEAFE',
-              color: booking.status === 'Cancelled' ? '#991B1B' : booking.status === 'Confirmed' ? '#065F46' : '#1E40AF',
-              border: 'none'
-            }}
+          <span
+            className="rounded-full"
+            style={{ ...statusPill(booking.status), fontSize: 12, fontWeight: 600, padding: '4px 12px', border: 'none' }}
           >
             {booking.status}
-          </Badge>
+          </span>
         </div>
 
-        {/* Details Section - No Tabs */}
-        <div className="space-y-4">
-          {/* Booking Information Section */}
-          <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
-              <CardHeader 
-                className="cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ backgroundColor: '#f6f4ee', borderBottom: '1px solid #E5E7EB' }}
-                onClick={() => toggleSection('bookingInfo')}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2" style={{ color: '#1A1A1A' }}>
-                    <Calendar className="w-5 h-5" style={{ color: '#C72030' }} />
-                    Booking Information
-                  </CardTitle>
-                  {expandedSections.bookingInfo ? <ChevronUp className="w-5 h-5" style={{ color: '#6B7280' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#6B7280' }} />}
-                </div>
-              </CardHeader>
-              {expandedSections.bookingInfo && (
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Booking ID</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Schedule Date</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.scheduleDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Day</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.day}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Category</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Time Slot</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.slotsAndSeat}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Created On</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.createdOn}</p>
-                    </div>
-                    {booking.notes && (
-                      <div className="md:col-span-3">
-                        <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Notes</p>
-                        <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <Section
+            title="Booking Information"
+            icon={Calendar}
+            open={expandedSections.bookingInfo}
+            onToggle={() => toggleSection('bookingInfo')}
+          >
+            <Field label="Booking ID">{booking.id}</Field>
+            <Field label="Schedule Date">{booking.scheduleDate}</Field>
+            <Field label="Day">{booking.day}</Field>
+            <Field label="Category">{booking.category}</Field>
+            <Field label="Time Slot">{booking.slotsAndSeat}</Field>
+            <Field label="Created On">{booking.createdOn}</Field>
+            {booking.notes && <div className="md:col-span-3"><Field label="Notes">{booking.notes}</Field></div>}
+          </Section>
 
-            {/* Employee Information Section */}
-            <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
-              <CardHeader 
-                className="cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ backgroundColor: '#f6f4ee', borderBottom: '1px solid #E5E7EB' }}
-                onClick={() => toggleSection('employeeInfo')}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2" style={{ color: '#1A1A1A' }}>
-                    <User className="w-5 h-5" style={{ color: '#C72030' }} />
-                    Employee Information
-                  </CardTitle>
-                  {expandedSections.employeeInfo ? <ChevronUp className="w-5 h-5" style={{ color: '#6B7280' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#6B7280' }} />}
-                </div>
-              </CardHeader>
-              {expandedSections.employeeInfo && (
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Employee ID</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.employeeId}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Employee Name</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.employeeName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Email</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.employeeEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Phone</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.employeePhone}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Designation</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.designation || 'Not specified'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Department</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.department || 'Not specified'}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+          <Section
+            title="Employee Information"
+            icon={User}
+            open={expandedSections.employeeInfo}
+            onToggle={() => toggleSection('employeeInfo')}
+          >
+            <Field label="Employee ID">{booking.employeeId}</Field>
+            <Field label="Employee Name">{booking.employeeName}</Field>
+            <Field label="Email">{booking.employeeEmail}</Field>
+            <Field label="Phone">{booking.employeePhone}</Field>
+            <Field label="Designation">{booking.designation || 'Not specified'}</Field>
+            <Field label="Department">{booking.department || 'Not specified'}</Field>
+          </Section>
 
-            {/* Location Information Section */}
-            <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
-              <CardHeader 
-                className="cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ backgroundColor: '#f6f4ee', borderBottom: '1px solid #E5E7EB' }}
-                onClick={() => toggleSection('locationInfo')}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2" style={{ color: '#1A1A1A' }}>
-                    <MapPin className="w-5 h-5" style={{ color: '#C72030' }} />
-                    Location Information
-                  </CardTitle>
-                  {expandedSections.locationInfo ? <ChevronUp className="w-5 h-5" style={{ color: '#6B7280' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#6B7280' }} />}
-                </div>
-              </CardHeader>
-              {expandedSections.locationInfo && (
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Building</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.building}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Floor</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.floor}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Seat Details</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.slotsAndSeat}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+          <Section
+            title="Location Information"
+            icon={MapPin}
+            open={expandedSections.locationInfo}
+            onToggle={() => toggleSection('locationInfo')}
+          >
+            <Field label="Building">{booking.building}</Field>
+            <Field label="Floor">{booking.floor}</Field>
+            <Field label="Seat Details">{booking.slotsAndSeat}</Field>
+          </Section>
 
-            {/* Attendance Information Section */}
-            <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
-              <CardHeader 
-                className="cursor-pointer hover:bg-gray-100 transition-colors"
-                style={{ backgroundColor: '#f6f4ee', borderBottom: '1px solid #E5E7EB' }}
-                onClick={() => toggleSection('attendanceInfo')}
+          <Section
+            title="Attendance Information"
+            icon={Clock}
+            open={expandedSections.attendanceInfo}
+            onToggle={() => toggleSection('attendanceInfo')}
+          >
+            <Field label="Check-In Time">{booking.checkInTime || 'Not checked in yet'}</Field>
+            <Field label="Check-Out Time">{booking.checkOutTime || 'Not checked out yet'}</Field>
+            <Field label="Status">
+              <span
+                className="inline-flex rounded-full"
+                style={{ ...statusPill(booking.status), fontSize: 12, fontWeight: 600, padding: '3px 10px' }}
               >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2" style={{ color: '#1A1A1A' }}>
-                    <Clock className="w-5 h-5" style={{ color: '#C72030' }} />
-                    Attendance Information
-                  </CardTitle>
-                  {expandedSections.attendanceInfo ? <ChevronUp className="w-5 h-5" style={{ color: '#6B7280' }} /> : <ChevronDown className="w-5 h-5" style={{ color: '#6B7280' }} />}
-                </div>
-              </CardHeader>
-              {expandedSections.attendanceInfo && (
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Check-In Time</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.checkInTime || 'Not checked in yet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Check-Out Time</p>
-                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.checkOutTime || 'Not checked out yet'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Status</p>
-                      <Badge 
-                        className="px-2 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: booking.status === 'Cancelled' ? '#FEE2E2' : booking.status === 'Confirmed' ? '#D1FAE5' : '#DBEAFE',
-                          color: booking.status === 'Cancelled' ? '#991B1B' : booking.status === 'Confirmed' ? '#065F46' : '#1E40AF',
-                          border: 'none'
-                        }}
-                      >
-                        {booking.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          </div>
+                {booking.status}
+              </span>
+            </Field>
+          </Section>
+        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 mt-6">
-          {/* {booking.status !== 'Cancelled' && (
-            <Button
-              className="hover:opacity-90 px-6 py-2 rounded"
-              style={{
-                backgroundColor: '#C72030',
-                color: '#FFFFFF',
-                border: 'none'
-              }}
-            >
-              Cancel Booking
-            </Button>
-          )} */}
-          <Button
-            variant="ghost"
-            className="fm-button-fix fm-button-brand px-4 py-2"
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+          <button
+            type="button"
             onClick={() => navigate(-1)}
+            className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)]"
+            style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
           >
             Back to List
-          </Button>
+          </button>
         </div>
       </div>
     </div>

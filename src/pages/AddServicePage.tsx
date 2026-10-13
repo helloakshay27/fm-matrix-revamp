@@ -233,7 +233,7 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6 relative">
+    <div className="service-form p-6 relative">
       {isSubmitting && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
@@ -254,9 +254,9 @@ export const AddServicePage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             BASIC DETAILS
           </CardTitle>
@@ -346,15 +346,16 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SERVICE DESCRIPTION
           </CardTitle>
         </CardHeader>
         <CardContent>
           <TextField
+            className="service-description-field"
             label="Service Description"
             value={formData.serviceDescription}
             onChange={(e) => handleInputChange('serviceDescription', e.target.value)}
@@ -386,9 +387,9 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className="bg-[#F6F4EE] mb-4">
-          <CardTitle className="text-lg text-black flex items-center">
+      <Card className="service-form-card mb-6">
+        <CardHeader className="service-form-card-header">
+          <CardTitle className="service-form-card-title flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>
@@ -488,11 +489,10 @@ export const AddServicePage = () => {
 
 
 
-      <div className="flex gap-4 flex-wrap justify-center">
+      <div className="flex gap-4 flex-wrap justify-end">
         <Button
           onClick={() => handleSubmit('show')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 flex items-center"
+          className="service-form-primary-action"
           disabled={isSubmitting}
         >
           {isSubmitting && submittingAction === 'show' ? (
@@ -506,8 +506,7 @@ export const AddServicePage = () => {
         </Button>
         <Button
           onClick={() => handleSubmit('new')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 flex items-center"
+          className="service-form-secondary-action"
           disabled={isSubmitting}
         >
           {isSubmitting && submittingAction === 'new' ? (

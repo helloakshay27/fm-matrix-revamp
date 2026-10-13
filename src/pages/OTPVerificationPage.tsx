@@ -32,9 +32,9 @@ export const OTPVerificationPage = () => {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
-
-  useEffect(() => {
+  const isViSite = hostname.includes("vi-web.gophygital.work") ||
+  hostname.includes("https://vi-uat.gophygital.work/") ;
+    useEffect(() => {
     // Get email from localStorage
     const tempEmail = localStorage.getItem("temp_email");
     if (tempEmail) {

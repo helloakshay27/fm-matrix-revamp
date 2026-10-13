@@ -11,6 +11,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Plus, RefreshCw, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -455,10 +456,10 @@ export const VisitingPurposePage = () => {
       case 'status':
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md ${
+            className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
               item.status
-                ? 'bg-brand text-white'
-                : 'bg-brand-light text-brand border border-brand/30'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600'
             }`}
           >
             {item.status ? 'Active' : 'Inactive'}
@@ -1174,24 +1175,26 @@ export const VisitingPurposePage = () => {
             </div>
           )} */}
           
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="flex border-b border-gray-200">
-              {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabClick(tab)}
-                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-brand text-brand bg-brand-selected'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+          <div>
+            <div className="mb-6">
+              <div className="inline-flex items-center rounded-xl bg-gray-100 p-[3px] gap-[3px]">
+                {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => handleTabClick(tab)}
+                    className={`px-6 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === tab
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="p-6">
+            <div>
               <EnhancedTable
                 data={getFilteredData}
                 columns={tableColumns}
@@ -1232,7 +1235,7 @@ export const VisitingPurposePage = () => {
 
       {/* Add Purpose Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Add Purpose</DialogTitle>
@@ -1258,7 +1261,7 @@ export const VisitingPurposePage = () => {
                   const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
                   setFormData({ ...formData, purpose: [...currentPurposes, ''].join('|') });
                 }}
-                className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
+                className="rounded-lg h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -1268,18 +1271,23 @@ export const VisitingPurposePage = () => {
             <div className="space-y-3">
               {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <TextField
-                    label={`Purpose ${index + 1} *`}
-                    value={purpose}
-                    onChange={(e) => {
-                      const purposes = formData.purpose ? formData.purpose.split('|') : [''];
-                      purposes[index] = e.target.value;
-                      setFormData({ ...formData, purpose: purposes.join('|') });
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    sx={fieldStyles}
-                  />
+                  <div className="flex-1">
+                    <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                      Purpose {index + 1} <span className="text-red-500">*</span>
+                    </label>
+                    <TextField
+                      placeholder="Enter purpose"
+                      value={purpose}
+                      onChange={(e) => {
+                        const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                        purposes[index] = e.target.value;
+                        setFormData({ ...formData, purpose: purposes.join('|') });
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
                   {(formData.purpose ? formData.purpose.split('|') : ['']).length > 1 && (
                     <Button
                       type="button"
@@ -1300,11 +1308,11 @@ export const VisitingPurposePage = () => {
             </div>
 
             <div className="flex items-center space-x-2 pt-1">
-              <Checkbox
+              <Switch
                 id="active"
                 checked={formData.active}
                 onCheckedChange={(checked) =>
-                  setFormData({ ...formData, active: checked as boolean })
+                  setFormData({ ...formData, active: checked })
                 }
               />
               <Label htmlFor="active" className="text-sm font-medium">
@@ -1313,11 +1321,20 @@ export const VisitingPurposePage = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={handleModalClose}
+              disabled={isSubmitting}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+              className="fm-action-primary"
             >
               {isSubmitting ? (
                 <>
@@ -1325,25 +1342,16 @@ export const VisitingPurposePage = () => {
                   Creating...
                 </>
               ) : (
-                'CREATE'
+                'Create'
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleModalClose}
-              disabled={isSubmitting}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-8 w-full sm:w-auto"
-            >
-              CANCEL
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Add Move In/Out Purpose Modal */}
       <Dialog open={isMoveInOutModalOpen} onOpenChange={setIsMoveInOutModalOpen}>
-        <DialogContent className="max-w-md !bg-white">
+        <DialogContent className="max-w-md !bg-white rounded-[24px] p-7">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
             <DialogTitle className="text-lg font-semibold">Add Move In/Out Purpose</DialogTitle>
             <Button
@@ -1369,7 +1377,7 @@ export const VisitingPurposePage = () => {
                     const currentPurposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
                     setMoveInOutFormData({...moveInOutFormData, purpose: [...currentPurposes, ''].join('|')});
                   }}
-                  className="border-[#C72030] text-[#C72030]  hover:text-[#C72030] h-8"
+                  className="rounded-lg h-8"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add
@@ -1379,20 +1387,23 @@ export const VisitingPurposePage = () => {
               <div className="space-y-3">
                 {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).map((purpose, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <TextField
-                      label={`Purpose ${index + 1} *`}
-                      placeholder="Enter purpose"
-                      value={purpose}
-                      onChange={(e) => {
-                        const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
-                        purposes[index] = e.target.value;
-                        setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      sx={fieldStyles}
-                    />
+                    <div className="flex-1">
+                      <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                        Purpose {index + 1} <span className="text-red-500">*</span>
+                      </label>
+                      <TextField
+                        placeholder="Enter purpose"
+                        value={purpose}
+                        onChange={(e) => {
+                          const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
+                          purposes[index] = e.target.value;
+                          setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                      />
+                    </div>
                     {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).length > 1 && (
                       <Button
                         type="button"
@@ -1424,11 +1435,20 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
+                onClick={() => setIsMoveInOutModalOpen(false)}
+                disabled={isSubmittingMoveInOut}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleMoveInOutSubmit}
                 disabled={isSubmittingMoveInOut}
-                className={`${solidBrandBtn} px-8`}
+                className="fm-action-primary"
               >
                 {isSubmittingMoveInOut ? (
                   <>
@@ -1438,7 +1458,7 @@ export const VisitingPurposePage = () => {
                 ) : (
                   'Submit'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -1447,7 +1467,7 @@ export const VisitingPurposePage = () => {
       {/* Add Work Type Modal */}
       <Dialog open={isWorkTypeModalOpen} onOpenChange={setIsWorkTypeModalOpen} modal={false}>
         <DialogContent
-          className="max-w-md !bg-white"
+          className="max-w-md !bg-white rounded-[24px] p-7"
           onPointerDownOutside={(e) => {
             if (isMuiOverlayTarget(e.target)) e.preventDefault();
           }}
@@ -1469,46 +1489,48 @@ export const VisitingPurposePage = () => {
           
           <div className="space-y-4">
             {/* Staff Type Selection */}
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="add-staff-type-label" shrink>
-                Select Staff Type *
-              </InputLabel>
-              <MuiSelect
-                labelId="add-staff-type-label"
-                label="Select Staff Type *"
-                value={workTypeFormData.staffType}
-                onChange={(e) =>
-                  setWorkTypeFormData({
-                    ...workTypeFormData,
-                    staffType: e.target.value as string,
-                  })
-                }
-                displayEmpty
-                notched
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  <em>Select Staff Type</em>
-                </MenuItem>
-                <MenuItem value="Personal">Personal</MenuItem>
-                <MenuItem value="Society">Society</MenuItem>
-              </MuiSelect>
-            </FormControl>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Work Staff Type <span className="text-red-500">*</span>
+              </label>
+              <FormControl fullWidth variant="outlined">
+                <MuiSelect
+                  value={workTypeFormData.staffType}
+                  onChange={(e) =>
+                    setWorkTypeFormData({
+                      ...workTypeFormData,
+                      staffType: e.target.value as string,
+                    })
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Staff Type</em>
+                  </MenuItem>
+                  <MenuItem value="Personal">Personal</MenuItem>
+                  <MenuItem value="Society">Society</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
 
             {/* Work Type Input */}
-            <TextField
-              label="Enter Work Type *"
-              placeholder="Enter Work Type"
-              value={workTypeFormData.workType}
-              onChange={(e) =>
-                setWorkTypeFormData({ ...workTypeFormData, workType: e.target.value })
-              }
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Work Type <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                placeholder="Enter Work Type"
+                value={workTypeFormData.workType}
+                onChange={(e) =>
+                  setWorkTypeFormData({ ...workTypeFormData, workType: e.target.value })
+                }
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
 
             {/* Active Checkbox */}
             <div className="flex items-center space-x-2">
@@ -1521,11 +1543,20 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
+                onClick={() => setIsWorkTypeModalOpen(false)}
+                disabled={isSubmittingWorkType}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleWorkTypeSubmit}
                 disabled={isSubmittingWorkType}
-                className={`${solidBrandBtn} px-8`}
+                className="fm-action-primary"
               >
                 {isSubmittingWorkType ? (
                   <>
@@ -1535,7 +1566,7 @@ export const VisitingPurposePage = () => {
                 ) : (
                   'Submit'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -1543,7 +1574,7 @@ export const VisitingPurposePage = () => {
 
       {/* Add Comment Modal */}
       <Dialog open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
-        <DialogContent className="max-w-md !bg-white">
+        <DialogContent className="max-w-md !bg-white rounded-[24px] p-7">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
             <DialogTitle className="text-lg font-semibold">Add Comment <span className="text-red-500">*</span></DialogTitle>
             <Button
@@ -1558,16 +1589,19 @@ export const VisitingPurposePage = () => {
           
           <div className="space-y-4">
             {/* Comment field */}
-            <TextField
-              label="Enter Comment *"
-              placeholder="Enter Comment"
-              value={commentFormData.comment}
-              onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Comment <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                placeholder="Enter Comment"
+                value={commentFormData.comment}
+                onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
 
             {/* Active Checkbox */}
             <div className="flex items-center space-x-2">
@@ -1580,11 +1614,20 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
+                onClick={handleCommentModalClose}
+                disabled={isSubmittingComment}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleCommentSubmit}
                 disabled={isSubmittingComment}
-                className={`${solidBrandBtn} px-8`}
+                className="fm-action-primary"
               >
                 {isSubmittingComment ? (
                   <>
@@ -1594,7 +1637,7 @@ export const VisitingPurposePage = () => {
                 ) : (
                   'Submit'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -1602,7 +1645,7 @@ export const VisitingPurposePage = () => {
 
       {/* Edit Purpose Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Edit Purpose</DialogTitle>
@@ -1625,7 +1668,7 @@ export const VisitingPurposePage = () => {
                 variant="outline"
                 size="sm"
                 onClick={addEditPurpose}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+                className="rounded-lg h-8"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add
@@ -1635,14 +1678,19 @@ export const VisitingPurposePage = () => {
             <div className="space-y-3">
               {editingPurposes.map((purpose, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <TextField
-                    label={`Purpose ${index + 1} *`}
-                    value={purpose}
-                    onChange={(e) => updateEditPurpose(index, e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    sx={fieldStyles}
-                  />
+                  <div className="flex-1">
+                    <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                      Purpose {index + 1} <span className="text-red-500">*</span>
+                    </label>
+                    <TextField
+                      placeholder="Enter purpose"
+                      value={purpose}
+                      onChange={(e) => updateEditPurpose(index, e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
                   {editingPurposes.length > 1 && (
                     <Button
                       type="button"
@@ -1659,14 +1707,14 @@ export const VisitingPurposePage = () => {
             </div>
 
             <div className="flex items-center space-x-2 pt-1">
-              <Checkbox
+              <Switch
                 id="editActive"
                 checked={editingPurpose?.status || false}
                 onCheckedChange={(checked) =>
                   editingPurpose &&
                   setEditingPurpose({
                     ...editingPurpose,
-                    status: checked as boolean,
+                    status: checked,
                   })
                 }
               />
@@ -1676,11 +1724,20 @@ export const VisitingPurposePage = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={handleEditModalClose}
+              disabled={isSubmittingEdit}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleEditSubmit}
               disabled={isSubmittingEdit || editingPurposes.every((p) => !p.trim())}
-              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+              className="fm-action-primary"
             >
               {isSubmittingEdit ? (
                 <>
@@ -1688,18 +1745,9 @@ export const VisitingPurposePage = () => {
                   Updating...
                 </>
               ) : (
-                'UPDATE'
+                'Update'
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleEditModalClose}
-              disabled={isSubmittingEdit}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-8 w-full sm:w-auto"
-            >
-              CANCEL
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

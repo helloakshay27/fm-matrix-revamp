@@ -281,12 +281,16 @@ const InventoryConsumptionDashboard = () => {
         console.warn('Cost value missing for item:', item); // Debug logging
       }
 
-      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `${getCurrencySymbol()}${formatNumber(costValue)}` : '-'}</span>;
+      return (
+        <span className="block w-full text-right tabular-nums text-[12.5px] text-[var(--color-ink-68)]">
+          {costValue !== null && costValue !== undefined ? `${getCurrencySymbol()}${formatNumber(costValue)}` : '-'}
+        </span>
+      );
     }
     if (columnKey === 'name') {
       // by_category consumption records use `inventory_name`, not `name`.
       const nameValue = value ?? item.inventory_name;
-      return <span className="font-medium text-gray-900">{nameValue ?? '-'}</span>;
+      return <span className="block w-full text-[12.5px] font-medium text-[var(--color-text)]">{nameValue ?? '-'}</span>;
     }
     if (columnKey === 'quantity' || columnKey === 'consumption') {
       // by_category consumption records track stock via `closing` (post-transaction
@@ -294,15 +298,23 @@ const InventoryConsumptionDashboard = () => {
       // this transaction, used as "Consumed Quantity") instead of quantity/consumption.
       const fallback = columnKey === 'quantity' ? item.closing : item.difference;
       const cellValue = value ?? fallback;
-      return <span className="text-gray-700">{cellValue !== null && cellValue !== undefined ? formatNumber(cellValue) : '-'}</span>;
+      return (
+        <span className="block w-full text-right tabular-nums text-[12.5px] text-[var(--color-ink-68)]">
+          {cellValue !== null && cellValue !== undefined ? formatNumber(cellValue) : '-'}
+        </span>
+      );
     }
     if (columnKey === 'category') {
-      return <span className="text-gray-700">{value !== null && value !== undefined ? value : '-'}</span>;
+      return <span className="block w-full text-[12.5px] font-medium text-[var(--color-text)]">{value !== null && value !== undefined ? value : '-'}</span>;
     }
     if (columnKey === 'total_cost') {
       // by_category consumption records carry the transaction's total cost in `cost`.
       const totalCostValue = value ?? item.cost ?? null;
-      return <span className="font-semibold text-red-600">{totalCostValue !== null && totalCostValue !== undefined ? `${getCurrencySymbol()}${formatNumber(totalCostValue)}` : '-'}</span>;
+      return (
+        <span className="block w-full text-right tabular-nums text-[12.5px] text-[var(--color-ink-68)]">
+          {totalCostValue !== null && totalCostValue !== undefined ? `${getCurrencySymbol()}${formatNumber(totalCostValue)}` : '-'}
+        </span>
+      );
     }
     if (columnKey === 'criticality') {
       return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">{value}</span>;

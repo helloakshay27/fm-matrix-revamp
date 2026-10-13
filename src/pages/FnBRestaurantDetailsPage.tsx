@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox as MuiCheckbox,
 } from "@mui/material";
-import { ArrowLeft, Ban, Clock, Image, Images, IndianRupee, Loader2, Menu, Save, TicketPercent, User } from "lucide-react";
+import { ArrowLeft, Ban, Plus, Clock, Image, Images, IndianRupee, Loader2, Menu, Save, TicketPercent, User } from "lucide-react";
 import { StatusSetupTable } from "../components/StatusSetupTable";
 import { CategoriesSetupTable } from "../components/CategoriesSetupTable";
 import { SubCategoriesSetupTable } from "../components/SubCategoriesSetupTable";
@@ -134,7 +134,23 @@ const mapRestaurantData = (
     active: !!apiData.status,
   };
 
-  const schedule: DaySchedule[] = apiData.restaurant_operations || [];
+  // The selects match zero-padded "HH" / "MM" option values, so normalise every
+  // time to "HH:MM" — preferring the numeric hour/min fields, falling back to the
+  // time string the API sends.
+  const toHHMM = (hour: unknown, min: unknown, fallback?: string) => {
+    const pad = (v: unknown) => String(Number(v) || 0).padStart(2, "0");
+    if (hour !== undefined && hour !== null && hour !== "") return `${pad(hour)}:${pad(min)}`;
+    const match = String(fallback ?? "").match(/(\d{1,2}):(\d{1,2})/);
+    return match ? `${pad(match[1])}:${pad(match[2])}` : "00:00";
+  };
+  const schedule: DaySchedule[] = (apiData.restaurant_operations || []).map((op: any) => ({
+    ...op,
+    start_time: toHHMM(op.start_hour, op.start_min, op.start_time),
+    end_time: toHHMM(op.end_hour, op.end_min, op.end_time),
+    break_start_time: toHHMM(op.break_start_hour, op.break_start_min, op.break_start_time),
+    break_end_time: toHHMM(op.break_end_hour, op.break_end_min, op.break_end_time),
+    last_order_time: toHHMM(op.last_hour, op.last_min, op.last_order_time),
+  }));
   const coverImages: Image[] =
     apiData.cover_images?.map((img: any) => ({
       id: img.id,
@@ -576,49 +592,46 @@ export const FnBRestaurantDetailsPage = () => {
       </div>
 
       <Tabs defaultValue="restaurant" className="w-full">
-        <TabsList
-          className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 bg-[#FAFAFA] gap-1 sm:gap-2 p-1 h-auto"
-          style={{ border: "1px solid #D9D9D9" }}
-        >
+        <TabsList className="inline-flex flex-wrap h-auto items-center rounded-xl bg-gray-100 p-[3px] gap-[3px]">
           <TabsTrigger
             value="restaurant"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Restaurant
           </TabsTrigger>
           <TabsTrigger
             value="status-setup"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Status
           </TabsTrigger>
           <TabsTrigger
             value="categories-setup"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Categories
           </TabsTrigger>
           <TabsTrigger
             value="sub-categories-setup"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Sub Categories
           </TabsTrigger>
           <TabsTrigger
             value="restaurant-menu"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Menu
           </TabsTrigger>
           <TabsTrigger
             value="restaurant-bookings"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Table Bookings
           </TabsTrigger>
           <TabsTrigger
             value="restaurant-orders"
-            className="data-[state=active]:bg-[#EDEAE3] bg-[#FAFAFA] data-[state=active]:text-[#C72030] text-[#1A1A1A] whitespace-nowrap text-xs sm:text-sm px-2 py-2 sm:px-3"
+            className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
           >
             Orders
           </TabsTrigger>
@@ -628,7 +641,7 @@ export const FnBRestaurantDetailsPage = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <User className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC DETAIL</h3>
@@ -1020,7 +1033,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <Clock className="h-4 w-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">RESTAURANT SCHEDULE</h3>
@@ -1085,7 +1098,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${e.target.value}:${dayData.start_time.split(":")[1] || "00"}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 24 }, (_, i) => (
                                   <option
@@ -1105,7 +1118,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${dayData.start_time.split(":")[0]}:${e.target.value}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 60 }, (_, i) => (
                                   <option
@@ -1129,7 +1142,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${e.target.value}:${dayData.end_time.split(":")[1] || "00"}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 24 }, (_, i) => (
                                   <option
@@ -1149,7 +1162,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${dayData.end_time.split(":")[0]}:${e.target.value}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 60 }, (_, i) => (
                                   <option
@@ -1173,7 +1186,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${e.target.value}:${dayData.break_start_time.split(":")[1] || "00"}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 24 }, (_, i) => (
                                   <option
@@ -1195,7 +1208,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${dayData.break_start_time.split(":")[0]}:${e.target.value}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 60 }, (_, i) => (
                                   <option
@@ -1219,7 +1232,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${e.target.value}:${dayData.break_end_time.split(":")[1] || "00"}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 24 }, (_, i) => (
                                   <option
@@ -1241,7 +1254,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${dayData.break_end_time.split(":")[0]}:${e.target.value}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 60 }, (_, i) => (
                                   <option
@@ -1289,7 +1302,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${e.target.value}:${dayData.last_order_time.split(":")[1] || "00"}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 24 }, (_, i) => (
                                   <option
@@ -1311,7 +1324,7 @@ export const FnBRestaurantDetailsPage = () => {
                                     `${dayData.last_order_time.split(":")[0]}:${e.target.value}`
                                   )
                                 }
-                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                                className="border border-gray-300 rounded px-2 py-1 text-xs min-w-[56px] bg-white"
                               >
                                 {Array.from({ length: 60 }, (_, i) => (
                                   <option
@@ -1334,7 +1347,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <Ban className="h-4 w-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BLOCKED DAYS</h3>
@@ -1394,20 +1407,21 @@ export const FnBRestaurantDetailsPage = () => {
                       </Button>
                     </div>
                   ))}
-                  <Button
-                    variant="outline"
+                  <button
+                    type="button"
                     onClick={addBlockedDay}
-                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                    className="fm-action-secondary"
                   >
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Blocked Day
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <TicketPercent className="h-4 w-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TABLE BOOKING CONFIGURATION</h3>
@@ -1502,7 +1516,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <IndianRupee className="h-4 w-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">ORDER CONFIGURATION</h3>
@@ -1589,7 +1603,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <Image className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">COVER</h3>
@@ -1639,7 +1653,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <Menu className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">MENU</h3>
@@ -1690,7 +1704,7 @@ export const FnBRestaurantDetailsPage = () => {
 
             <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-ink-68)]">
                   <Images className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY</h3>
@@ -1739,26 +1753,27 @@ export const FnBRestaurantDetailsPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-center gap-4">
-              <Button
+            <div className="fm-action-bar">
+              <button
+                type="button"
+                onClick={handleGoBack}
+                className="fm-action-secondary"
+              >
+                Back
+              </button>
+              <button
+                type="button"
                 onClick={handleSave}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+                className="fm-action-primary"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
-                  <Save className="w-4 h-4" />
+                  <Save className="w-4 h-4 mr-2" />
                 )}
                 Save
-              </Button>
-              <Button
-                onClick={handleGoBack}
-                variant="ghost"
-                className="fm-button-fix fm-button-brand px-4 py-2"
-              >
-                Back
-              </Button>
+              </button>
             </div>
           </div>
         </TabsContent>

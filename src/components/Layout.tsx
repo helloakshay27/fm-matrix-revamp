@@ -124,7 +124,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-
     hostname === "recess-club.panchshil.com" ||
     location.pathname.startsWith("/club-management");
 
@@ -152,7 +151,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     "/vas/documents",
     "/maintenance/documents",
     "/report-analytics",
-    "/vas/project-dashboard"
+    "/vas/project-dashboard",
   ];
   const isProjectTaskRoute = EMPLOYEE_PROJECT_TASK_ROUTE_PREFIXES.some(
     (prefix) => location.pathname.startsWith(prefix)
@@ -174,8 +173,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isEmployeeUser = userType === "pms_occupant";
 
   // Check if non-employee user needs to select project/site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
-
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("vi-uat.gophygital.work");
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -327,38 +327,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const hasToken = hasTokenParam || storedToken;
 
     if (
-      selectedCompany?.id === 300 ||
-      selectedCompany?.id === 295 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199 ||
-      selectedCompany?.id === 307 ||
-      org_id === "90" ||
-      org_id === "1" ||
-      org_id === "84" ||
-      org_id === "1" ||
-      org_id === "10" ||
-      org_id === "3" ||
-      org_id === "67" ||
-      org_id === "63" ||
-      org_id === "112" ||
-      org_id === "87" ||
-      org_id === "82" ||
-      org_id === "116" ||
-      userEmail === "sumanta.karmakar@ltimindtree.com" ||
-      userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com" ||
-      userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com" ||
-      userEmail === "abdul.ghaffar@lockated.com" ||
-      userEmail === "mailroom2@zs.com" ||
-      userEmail === "tested4@gmail.com" ||
-      userEmail === "tested3@gmail.com" ||
-      userEmail === "testtwo@gmail.com" ||
-      // userEmail === "ps1@gophygital.work" ||
-      userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "zs@lockated.com" ||
+      (hostname !== "pulse.lockated.com" &&
+        (selectedCompany?.id === 300 ||
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          selectedCompany?.id === 307 ||
+          org_id === "90" ||
+          org_id === "1" ||
+          org_id === "84" ||
+          org_id === "1" ||
+          org_id === "10" ||
+          org_id === "3" ||
+          org_id === "67" ||
+          org_id === "63" ||
+          org_id === "112" ||
+          org_id === "87" ||
+          org_id === "82" ||
+          org_id === "116" ||
+          userEmail === "sumanta.karmakar@ltimindtree.com" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com" ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "mailroom2@zs.com" ||
+          userEmail === "tested4@gmail.com" ||
+          userEmail === "tested3@gmail.com" ||
+          userEmail === "testtwo@gmail.com" ||
+          // userEmail === "ps1@gophygital.work" ||
+          userEmail === "ps@gophygital.work" ||
+          userEmail === "abdul.g@gophygital.work" ||
+          userEmail === "zs@lockated.com")) ||
       (org_id === "87" &&
         (userEmail === "reception.pune@zycus.com" ||
           userEmail === "reception.blr@zycus.com" ||
@@ -449,38 +450,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Company-specific logic (Admin layout)
 
     if (
-      selectedCompany?.id === 300 ||
-      selectedCompany?.id === 295 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199 ||
-      selectedCompany?.id === 307 ||
-      org_id === "90" ||
-      org_id === "1" ||
-      org_id === "84" ||
-      org_id === "1" ||
-      org_id === "10" ||
-      org_id === "3" ||
-      org_id === "67" ||
-      org_id === "63" ||
-      org_id === "112" ||
-      org_id === "87" ||
-      org_id === "82" ||
-      org_id === "116" ||
-      userEmail === "sumanta.karmakar@ltimindtree.com" ||
-      userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com" ||
-      userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com" ||
-      userEmail === "abdul.ghaffar@lockated.com" ||
-      userEmail === "mailroom2@zs.com" ||
-      userEmail === "tested4@gmail.com" ||
-      userEmail === "tested3@gmail.com" ||
-      userEmail === "testtwo@gmail.com" ||
-      // userEmail === "ps1@gophygital.work" ||
-      userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "zs@lockated.com" ||
+      (hostname !== "pulse.lockated.com" &&
+        (selectedCompany?.id === 300 ||
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          selectedCompany?.id === 307 ||
+          org_id === "90" ||
+          org_id === "1" ||
+          org_id === "84" ||
+          org_id === "1" ||
+          org_id === "10" ||
+          org_id === "3" ||
+          org_id === "67" ||
+          org_id === "63" ||
+          org_id === "112" ||
+          org_id === "87" ||
+          org_id === "82" ||
+          org_id === "116" ||
+          userEmail === "sumanta.karmakar@ltimindtree.com" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com" ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "mailroom2@zs.com" ||
+          userEmail === "tested4@gmail.com" ||
+          userEmail === "tested3@gmail.com" ||
+          userEmail === "testtwo@gmail.com" ||
+          // userEmail === "ps1@gophygital.work" ||
+          userEmail === "ps@gophygital.work" ||
+          userEmail === "abdul.g@gophygital.work" ||
+          userEmail === "zs@lockated.com")) ||
       (org_id === "87" &&
         (userEmail === "reception.pune@zycus.com" ||
           userEmail === "reception.blr@zycus.com" ||
@@ -610,15 +612,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeLayout ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "1" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           // <TopNavigation
@@ -642,7 +644,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // Backdrop ko exactly wahin se shuru karo warna navbar ke neeche
             // ek patli dark patti dikhti hai jo gap jaisi lagti hai.
             isEmployeeLayout ? "top-14 sm:top-16" : "top-16"
-            }`}
+          }`}
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
@@ -658,7 +660,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-            isEmployeeLayout
+              isEmployeeLayout
               ? isEmployeeProjectTaskSection ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -669,14 +671,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   : "ml-0 md:ml-64"
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
-              isActionSidebarVisible
+                isActionSidebarVisible
                 ? isSidebarCollapsed
                   ? "ml-0 md:ml-16 pt-28"
                   : "ml-0 md:ml-64 pt-28"
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeLayout ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
+        } ${isEmbedded ? "" : isEmployeeLayout ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

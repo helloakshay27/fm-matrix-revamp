@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X } from "lucide-react";
 import axios from "axios";
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 
 const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
@@ -166,17 +167,17 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
 
 
     return (
-        <Dialog open={open} onClose={onOpenChange} fullWidth>
-            <div className="flex items-center justify-between px-6 pt-6">
-                <h5 className="text-lg font-semibold">{editingAccessory ? "Edit Account" : "Create Account"}</h5>
-                <Button
-                    variant="ghost"
-                    size="sm"
+        <Dialog open={open} onClose={onOpenChange} fullWidth PaperProps={{ className: "accounting-ui acc-mui-dialog" }}>
+            <div className="acc-dialog-head flex items-center justify-between">
+                <h5 className="acc-dialog-title">{editingAccessory ? "Edit Account" : "Create Account"}</h5>
+                <button
+                    type="button"
                     onClick={() => onOpenChange(false)}
-                    className="h-6 w-6 p-0"
+                    className="acc-dialog-close"
+                    aria-label="Close"
                 >
-                    {/* <X className="h-4 w-4" /> */}
-                </Button>
+                    <X className="h-4 w-4" />
+                </button>
             </div>
 
             <DialogContent >
@@ -393,30 +394,22 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                             )}
                         </div>
                     </div>
-                    <div className="mt-4 pt-5 flex justify-center gap-3">
+                    <div className="acc-actions acc-dialog-foot">
+                        <Button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            variant="outline"
+                            className="acc-btn acc-btn-sm acc-btn-secondary"
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             type="button"
                             onClick={handleSubmit}
                             disabled={isSubmitting}
-                            style={{ backgroundColor: "#C72030" }}
-                            className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+                            className="acc-btn acc-btn-sm fm-button-fix fm-button-brand"
                         >
                             Save
-                        </Button>
-                        {/* <Button
-                            onClick={() => onOpenChange(false)}
-                            variant="outline"
-                            className="min-w-[100px]"
-                        >
-                            Cancel
-                        </Button> */}
-                        <Button
-                            type="button"
-                            onClick={() => onOpenChange(false)}
-                            variant="outline"
-                            className="min-w-[100px]"
-                        >
-                            Cancel
                         </Button>
                     </div>
                 </form>

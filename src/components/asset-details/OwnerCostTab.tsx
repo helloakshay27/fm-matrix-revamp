@@ -11,6 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CreditCard, X } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
+// Asset Status Update modal (repair from breakdown, and Cost on Owner Cost) — labels above
+// controls, white rounded fields, Cancel (white) + Submit (ink) bottom-right.
+const modalLabelClass = "block mb-2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)]";
+const modalFieldClass =
+  "h-[52px] w-full rounded-[14px] border border-[rgba(26,26,24,0.12)] bg-white px-4 text-[14px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.38)] shadow-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#1A1A18] [&>span]:text-left";
+const modalTextareaClass =
+  "min-h-[104px] w-full rounded-[14px] border border-[rgba(26,26,24,0.12)] bg-white px-4 py-3 text-[14px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.38)] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-[#1A1A18]";
+const modalPrefixClass =
+  "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)]";
+const modalCancelClass =
+  "inline-flex h-12 items-center justify-center rounded-[10px] border border-[rgba(26,26,24,0.12)] bg-white px-6 text-[14px] font-semibold text-[#1A1A18] hover:bg-[#F7F6F2] transition-colors";
+const modalSubmitClass =
+  "inline-flex h-12 items-center justify-center rounded-[10px] border border-[#1A1A18] bg-[#1A1A18] px-6 text-[14px] font-semibold text-white hover:bg-[#12100E] transition-colors";
+
 interface OwnerCostTabProps {
   asset: Asset;
   assetId?: string | number;
@@ -60,6 +74,11 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
     paymentStatus: '',
     comments: ''
   });
+
+  const closeRepairModal = () => {
+    setShowModal(false);
+    setIsInUse(!(asset?.breakdown ?? true));
+  };
 
   const handleToggle = async () => {
     const newInUseState = !isInUse;
@@ -306,44 +325,43 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
       </div>
 
       {/* Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md rounded-3xl p-7">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Asset Status Update
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowModal(false)}
-                className="p-1"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+      <Dialog
+        open={showModal}
+        onOpenChange={(open) => (open ? setShowModal(true) : closeRepairModal())}
+      >
+        <DialogContent className="max-w-[620px] rounded-3xl p-8">
+          <DialogHeader className="mb-2 flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">Asset Status Update</DialogTitle>
+            <button
+              type="button"
+              onClick={closeRepairModal}
+              className="rounded-sm text-gray-400 transition-colors hover:text-gray-700"
+              aria-label="Close asset status update"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <Label className="text-sm font-medium">Repaired:</Label>
+              <Label className={modalLabelClass}>Repaired</Label>
               <RadioGroup
                 value={formData.status}
                 onValueChange={handleStatusChange}
-                className="flex gap-4 mt-2"
+                className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="repaired" id="repaired" />
-                  <Label htmlFor="repaired">Repaired</Label>
+                  <RadioGroupItem value="repaired" id="status-repaired" />
+                  <Label htmlFor="status-repaired" className="text-[14px] font-medium text-[#1A1A18]">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="cost" className="text-sm font-medium">
-                Cost ({currencySymbol.trim()}):
-              </Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 ">
-                  {currencySymbol}
+              <Label htmlFor="cost" className={modalLabelClass}>Cost ({currencySymbol.trim()})</Label>
+              <div className="relative">
+                <span className={modalPrefixClass}>
+                  {currencySymbol.trim()}
                 </span>
                 <Input
                   id="cost"
@@ -352,15 +370,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={formData.cost}
                   onChange={handleInputChange}
                   placeholder="Enter cost"
-                  className="pl-20"
+                  className={`${modalFieldClass} pl-[62px]`}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="warranty" className="text-sm font-medium">
-                Warranty (in Months):
-              </Label>
+              <Label htmlFor="warranty" className={modalLabelClass}>Warranty (in months)</Label>
               <Input
                 id="warranty"
                 name="warranty"
@@ -368,64 +384,60 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={formData.warranty}
                 onChange={handleInputChange}
                 placeholder="Enter warranty period"
-                className="mt-1"
+                className={modalFieldClass}
               />
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">
-                Type of Warranty:
-              </Label>
-              <Select value={formData.warrantyType} onValueChange={handleWarrantyTypeChangeModal}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select warranty type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fully">Fully</SelectItem>
-                  <SelectItem value="partially">Partially</SelectItem>
-                  <SelectItem value="no_claim">No Claim</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label className={modalLabelClass}>Type of Warranty</Label>
+                <Select value={formData.warrantyType} onValueChange={handleWarrantyTypeChangeModal}>
+                  <SelectTrigger className={modalFieldClass}>
+                    <SelectValue placeholder="Select warranty type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fully">Fully</SelectItem>
+                    <SelectItem value="partially">Partially</SelectItem>
+                    <SelectItem value="no_claim">No Claim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className={modalLabelClass}>Payment Status</Label>
+                <Select value={formData.paymentStatus} onValueChange={handlePaymentStatusChangeModal}>
+                  <SelectTrigger className={modalFieldClass}>
+                    <SelectValue placeholder="Select payment status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="not_paid">Not Paid</SelectItem>
+                    <SelectItem value="claimed">Claimed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                Payment Status:
-              </Label>
-              <Select value={formData.paymentStatus} onValueChange={handlePaymentStatusChangeModal}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="not_paid">Not Paid</SelectItem>
-                  <SelectItem value="claimed">Claimed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="reason" className="text-sm font-medium">
-                Comments:
-              </Label>
+              <Label htmlFor="reason" className={modalLabelClass}>Comments</Label>
               <Textarea
                 id="reason"
                 name="reason"
                 value={formData.reason}
                 onChange={handleInputChange}
                 placeholder="Enter reason"
-                rows={3}
-                className="mt-1"
+                rows={4}
+                className={modalTextareaClass}
               />
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={handleSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={closeRepairModal} className={modalCancelClass}>
+                Cancel
+              </button>
+              <button type="button" onClick={handleSubmit} className={modalSubmitClass}>
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -433,43 +445,39 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
       {/* Asset Status Update Modal */}
       <Dialog open={showAssetStatusModal} onOpenChange={setShowAssetStatusModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Ownership Cost
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAssetStatusModal(false)}
-                className="p-1"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+        <DialogContent className="max-w-[620px] rounded-3xl p-8">
+          <DialogHeader className="mb-2 flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">Asset Status Update</DialogTitle>
+            <button
+              type="button"
+              onClick={() => setShowAssetStatusModal(false)}
+              className="rounded-sm text-gray-400 transition-colors hover:text-gray-700"
+              aria-label="Close asset status update"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <Label className="text-sm font-medium">Repaired:</Label>
+              <Label className={modalLabelClass}>Repaired</Label>
               <RadioGroup
                 value={assetStatusFormData.status}
                 onValueChange={handleAssetStatusChange}
-                className="flex gap-4 mt-2"
+                className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="repaired" id="asset-repaired" />
-                  <Label htmlFor="asset-repaired">Repaired</Label>
+                  <RadioGroupItem value="repaired" id="cost-status-repaired" />
+                  <Label htmlFor="cost-status-repaired" className="text-[14px] font-medium text-[#1A1A18]">Repaired</Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="asset-cost" className="text-sm font-medium">
-                Cost ({currencySymbol.trim()}):
-              </Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  {currencySymbol}
+              <Label htmlFor="asset-cost" className={modalLabelClass}>Cost ({currencySymbol.trim()})</Label>
+              <div className="relative">
+                <span className={modalPrefixClass}>
+                  {currencySymbol.trim()}
                 </span>
                 <Input
                   id="asset-cost"
@@ -478,15 +486,13 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   value={assetStatusFormData.cost}
                   onChange={handleAssetStatusInputChange}
                   placeholder="Enter cost"
-                  className="pl-16"
+                  className={`${modalFieldClass} pl-[62px]`}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="asset-warranty" className="text-sm font-medium">
-                Warranty (in Months):
-              </Label>
+              <Label htmlFor="asset-warranty" className={modalLabelClass}>Warranty (in months)</Label>
               <Input
                 id="asset-warranty"
                 name="warranty"
@@ -494,64 +500,60 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 value={assetStatusFormData.warranty}
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter warranty period"
-                className="mt-1"
+                className={modalFieldClass}
               />
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">
-                Type of Warranty:
-              </Label>
-              <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select warranty type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fully">Fully</SelectItem>
-                  <SelectItem value="partially">Partially</SelectItem>
-                  <SelectItem value="no_claim">No Claim</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label className={modalLabelClass}>Type of Warranty</Label>
+                <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
+                  <SelectTrigger className={modalFieldClass}>
+                    <SelectValue placeholder="Select warranty type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fully">Fully</SelectItem>
+                    <SelectItem value="partially">Partially</SelectItem>
+                    <SelectItem value="no_claim">No Claim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className={modalLabelClass}>Payment Status</Label>
+                <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
+                  <SelectTrigger className={modalFieldClass}>
+                    <SelectValue placeholder="Select payment status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="not_paid">Not Paid</SelectItem>
+                    <SelectItem value="claimed">Claimed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                Payment Status:
-              </Label>
-              <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="not_paid">Not Paid</SelectItem>
-                  <SelectItem value="claimed">Claimed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="asset-comments" className="text-sm font-medium">
-                Comments:
-              </Label>
+              <Label htmlFor="asset-comments" className={modalLabelClass}>Comments</Label>
               <Textarea
                 id="asset-comments"
                 name="comments"
                 value={assetStatusFormData.comments}
                 onChange={handleAssetStatusInputChange}
                 placeholder="Enter reason"
-                rows={3}
-                className="mt-1"
+                rows={4}
+                className={modalTextareaClass}
               />
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={handleAssetStatusSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
+            <div className="flex justify-end gap-3 pt-1">
+              <button type="button" onClick={() => setShowAssetStatusModal(false)} className={modalCancelClass}>
+                Cancel
+              </button>
+              <button type="button" onClick={handleAssetStatusSubmit} className={modalSubmitClass}>
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

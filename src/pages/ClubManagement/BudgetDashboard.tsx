@@ -830,7 +830,7 @@ const columns = [
   const renderRightActions = () => (
     <div className="flex gap-2">
       <Button
-        variant="outline"
+        variant="ghost"
         onClick={handleDownloadSocietyQR}
         className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
       >

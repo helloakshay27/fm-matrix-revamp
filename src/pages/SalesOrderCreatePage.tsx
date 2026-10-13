@@ -49,8 +49,8 @@ import {
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+    <section className="acc-section bg-card">
+        <div className="acc-section-head px-6 py-4 flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 {icon}
             </div>
@@ -2174,7 +2174,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     InputLabelProps={{ shrink: true }}
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField
                                                     type="number"
                                                     size="small"
@@ -2192,7 +2192,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td className="acc-num px-4 py-3">
                                                 <TextField
                                                     type="number"
                                                     size="small"
@@ -2681,23 +2681,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </Section>
             </div>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
-                <Button
-                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
-                    onClick={() => handleSubmit(true)}
-                    disabled={isSubmitting}
-                    sx={{ textTransform: 'none', fontWeight: 600 }}
-                >
-                    Save as Draft
-                </Button>
-                <Button
-                    className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    sx={{ textTransform: 'none', fontWeight: 600 }}
-                >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
-                </Button>
+            <div className="acc-actions pt-2">
                 <Button
                     variant="outlined"
                     className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
@@ -2706,6 +2690,24 @@ export const SalesOrderCreatePage: React.FC = () => {
                     sx={{ textTransform: 'none' }}
                 >
                     Cancel
+                </Button>
+
+                <Button
+                    className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    onClick={() => handleSubmit(true)}
+                    disabled={isSubmitting}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                    Save as Draft
+                </Button>
+
+                <Button
+                    className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                    onClick={() => handleSubmit(false)}
+                    disabled={isSubmitting}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
                 </Button>
             </div>
 

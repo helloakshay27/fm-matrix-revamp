@@ -210,14 +210,16 @@ export const EditInvoiceApprovalsPage = () => {
         </div>
 
         <div className="bg-card rounded-lg border p-6 space-y-6">
-          <FormControl fullWidth variant="outlined">
-            <InputLabel>Function *</InputLabel>
-            <Select value={selectedFunction} onChange={(e) => setSelectedFunction(e.target.value)} label="Function *">
-              {functionOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Function *</label>
+            <FormControl fullWidth variant="outlined">
+              <Select displayEmpty value={selectedFunction} onChange={(e) => setSelectedFunction(e.target.value)}>
+                {functionOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -228,19 +230,20 @@ export const EditInvoiceApprovalsPage = () => {
             {approvalLevels.map((level, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
                 <div className="col-span-2">
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Order *</label>
                   <TextField
-                    label="Order *"
                     type="number"
                     fullWidth
                     value={level.order}
                     onChange={(e) => updateApprovalLevel(index, 'order', parseInt(e.target.value) || 1)}
+                    placeholder="Order"
                     inputProps={{ min: 1 }}
                     size="small"
                   />
                 </div>
                 <div className="col-span-3">
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Name of Level *</label>
                   <TextField
-                    label="Name of Level *"
                     fullWidth
                     value={level.name}
                     onChange={(e) => updateApprovalLevel(index, 'name', e.target.value)}
@@ -249,16 +252,16 @@ export const EditInvoiceApprovalsPage = () => {
                   />
                 </div>
                 <div className="col-span-4">
+                  <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Users *</label>
                   <FormControl fullWidth variant="outlined" size="small">
-                    <InputLabel>Users *</InputLabel>
                     <Select
                       multiple
+                      displayEmpty
                       value={level.users}
                       onChange={(e) => {
                         const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
                         updateApprovalLevel(index, 'users', value);
                       }}
-                      label="Users *"
                       renderValue={(selected) => {
                         const selectedUsers = users.filter(user => selected.includes(user.id.toString()));
                         return selectedUsers.map(user => user.full_name).join(', ');
@@ -295,20 +298,29 @@ export const EditInvoiceApprovalsPage = () => {
               </div>
             ))}
 
-            <Button variant="ghost" onClick={addApprovalLevel} className="bg-brand text-white [&_svg]:!text-white [&_svg]:!stroke-white px-4 py-1.5">
+            <Button variant="ghost" onClick={addApprovalLevel} className="bg-[#1a1a18] hover:bg-[#12100e] text-white [&_svg]:!text-white [&_svg]:!stroke-white px-4 py-1.5">
               <Plus className="w-4 h-4" />
               Add More Level
             </Button>
           </div>
+        </div>
 
-          <div className="flex gap-4 pt-6">
-            <Button variant="outline" onClick={() => navigate('/accounting/asset-setup/approval-matrix')}>
-              Back
-            </Button>
-            <Button onClick={handleUpdate} disabled={submitting} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
-              {submitting ? 'Updating...' : 'Update'}
-            </Button>
-          </div>
+        <div className="fm-action-bar mt-6">
+          <button
+            type="button"
+            className="fm-action-secondary"
+            onClick={() => navigate('/accounting/asset-setup/approval-matrix')}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={submitting}
+            className="fm-action-primary"
+          >
+            {submitting ? 'Updating...' : 'Update'}
+          </button>
         </div>
       </div>
     </ThemeProvider>

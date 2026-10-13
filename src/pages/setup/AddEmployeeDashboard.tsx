@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Upload, User, Briefcase, Armchair, Paperclip } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 const fieldStyles = {
@@ -157,29 +157,31 @@ export const AddEmployeeDashboard = () => {
     <div className="border border-gray-200 rounded-lg p-4">
       <h4 className="text-sm font-medium text-gray-700 mb-3">{title}</h4>
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-brand border-brand hover:bg-brand-selected"
+        <button
+          type="button"
+          className="inline-flex h-[42px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
+          style={{ boxShadow: 'none' }}
         >
+          <Upload className="h-4 w-4" />
           Choose File
-        </Button>
-        <span className="text-sm text-gray-500">No file chosen</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-brand hover:bg-brand-selected p-1"
+        </button>
+        <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--color-ink-48)' }}>No file chosen</span>
+        <button
+          type="button"
+          aria-label="Remove file"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-[var(--color-ink-48)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
         >
-          <X className="w-4 h-4" />
-        </Button>
+          <X className="h-4 w-4" />
+        </button>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="fm-button-fix fm-button-brand px-4 py-2 mt-3"
+      <button
+        type="button"
+        aria-label="Add file"
+        className="mt-3 inline-flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+        style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
       >
-        <Plus className="w-4 h-4" />
-      </Button>
+        <Plus className="h-4 w-4" />
+      </button>
     </div>
   );
 
@@ -196,8 +198,8 @@ export const AddEmployeeDashboard = () => {
           {/* Basic Information Section */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white font-bold">
-                1
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <User className="h-4 w-4" />
               </div>
               <h2 className="text-lg font-semibold text-brand">BASIC INFORMATION</h2>
             </div>
@@ -264,8 +266,8 @@ export const AddEmployeeDashboard = () => {
           {/* Functional Details Section */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white font-bold">
-                2
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Briefcase className="h-4 w-4" />
               </div>
               <h2 className="text-lg font-semibold text-brand">FUNCTIONAL DETAILS</h2>
             </div>
@@ -334,8 +336,8 @@ export const AddEmployeeDashboard = () => {
           {/* Seat Management Section */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white font-bold">
-                3
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Armchair className="h-4 w-4" />
               </div>
               <h2 className="text-lg font-semibold text-brand">Seat Management</h2>
             </div>
@@ -383,8 +385,8 @@ export const AddEmployeeDashboard = () => {
           {/* Attachments Section */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white font-bold">
-                4
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-ink-68)]">
+                <Paperclip className="h-4 w-4" />
               </div>
               <h2 className="text-lg font-semibold text-brand">ATTACHMENTS</h2>
             </div>
@@ -404,9 +406,10 @@ export const AddEmployeeDashboard = () => {
           <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
-              className="!bg-[#DA7756] hover:!bg-[#C45F40] px-12 py-3 text-lg"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
-              <span className="!text-white font-medium">Submit</span>
+              Submit
             </Button>
           </div>
         </div>

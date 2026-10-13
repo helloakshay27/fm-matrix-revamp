@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
-import { X } from "lucide-react";
+import { X, Building2, Package, Paperclip } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
 
 interface ItemDetail {
@@ -103,12 +103,12 @@ export const CloneMaterialPRPage = () => {
       </div>
 
       {/* Supplier Details Section */}
-      <div className="mb-8 bg-white rounded-lg border p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-            9
+      <div className="mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Building2 className="w-[18px] h-[18px]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#C72030]">SUPPLIER DETAILS</h2>
+          <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">SUPPLIER DETAILS</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -251,25 +251,24 @@ export const CloneMaterialPRPage = () => {
       </div>
 
       {/* Item Details Section */}
-      <div className="bg-white rounded-lg border p-6 mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-            9
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Package className="w-[18px] h-[18px]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#C72030]">ITEM DETAILS</h2>
+          <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">ITEM DETAILS</h2>
         </div>
 
         <div className="space-y-6">
           {itemDetails.map((item, index) => (
-            <div key={item.id} className="border rounded-lg p-4 relative">
+            <div key={item.id} className="relative p-4 border rounded-lg">
               {itemDetails.length > 1 && (
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-400 hover:text-red-500"
                   onClick={() => removeItem(item.id)}
+                  size="sm"
+                  className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="w-4 h-4" />
                 </Button>
               )}
               
@@ -350,13 +349,16 @@ export const CloneMaterialPRPage = () => {
           ))}
         </div>
 
-        <div className="mt-6 flex justify-between items-center">
-          <Button 
+        <div className="flex justify-end p-4">
+          <Button
             onClick={addNewItem}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            size="sm"
+            className="bg-[#C72030] hover:bg-[#C72030]/90"
           >
             Add Item
           </Button>
+        </div>
+        <div className="flex justify-end">
           <div className="bg-[#C72030] text-white px-4 py-2 rounded text-sm">
             Total Amount: - 1000
           </div>
@@ -364,12 +366,12 @@ export const CloneMaterialPRPage = () => {
       </div>
 
       {/* Attachments Section */}
-      <div className="bg-white rounded-lg border p-6 mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-            9
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Paperclip className="w-[18px] h-[18px]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#C72030]">ATTACHMENTS</h2>
+          <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">ATTACHMENTS</h2>
         </div>
 
         <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
@@ -378,19 +380,20 @@ export const CloneMaterialPRPage = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end">
-        <Button 
-          variant="outline"
+      <div className="fm-action-bar mt-6">
+        <Button
           onClick={() => navigate('/finance/material-pr')}
+          variant="outline"
+          className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
         >
           Cancel
         </Button>
-        <Button 
-          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        <Button
           onClick={() => {
             console.log('Submitting cloned Material PR...');
             navigate('/finance/material-pr');
           }}
+          className="fm-action-primary"
         >
           Submit
         </Button>

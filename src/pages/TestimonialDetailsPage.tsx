@@ -70,20 +70,17 @@ const TestimonialDetailsPage = () => {
                     </h1>
                 </div>
 
-                <Card className="mb-6">
+                <Card className="mb-6 rounded-2xl overflow-hidden">
                     <CardHeader
-                        className="bg-[#F6F4EE]"
+                        className="bg-white"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                                D
-                            </span>
+                        <CardTitle className="text-sm font-semibold text-gray-800">
                             DETAILS
                         </CardTitle>
                     </CardHeader>
                     <CardContent
-                        className="px-[80px] py-[31px] bg-[#F6F7F7]"
+                        className="px-[80px] py-[31px] bg-white"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -122,24 +119,21 @@ const TestimonialDetailsPage = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="mb-6">
+                <Card className="mb-6 rounded-2xl overflow-hidden">
                     <CardHeader
-                        className="bg-[#F6F4EE]"
+                        className="bg-white"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                                A
-                            </span>
+                        <CardTitle className="text-sm font-semibold text-gray-800">
                             Attachments
                         </CardTitle>
                     </CardHeader>
                     <CardContent
-                        className="px-[40px] py-[31px] bg-[#F6F7F7]"
+                        className="px-[40px] py-[31px] bg-white"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
                         <div
-                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-white shadow-md"
                         >
                             <button
                                 className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"

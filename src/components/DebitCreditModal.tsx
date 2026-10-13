@@ -4,6 +4,7 @@ import { Button } from "./ui/button"
 const DebitCreditModal = ({ openDebitCreditModal, handleCloseDebitCreditModal, debitCreditForm, handleDebitCreditChange, handleSubmitDebitCredit, options }) => {
     return (
         <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }}
             open={openDebitCreditModal}
             onClose={handleCloseDebitCreditModal}
             maxWidth="sm"
@@ -90,13 +91,19 @@ const DebitCreditModal = ({ openDebitCreditModal, handleCloseDebitCreditModal, d
                     }}
                 />
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleCloseDebitCreditModal}>Close</Button>
+            <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
                 <Button
-                    onClick={handleSubmitDebitCredit}
-                    style={{ backgroundColor: "#6B46C1", color: "white" }}
+                  onClick={handleCloseDebitCreditModal}
+                  variant="outline"
+                  className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
                 >
-                    Submit
+                  Close
+                </Button>
+                <Button
+                  onClick={handleSubmitDebitCredit}
+                  className="fm-action-primary"
+                >
+                  Submit
                 </Button>
             </DialogActions>
         </Dialog>

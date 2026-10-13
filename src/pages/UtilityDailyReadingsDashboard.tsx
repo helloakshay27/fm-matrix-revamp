@@ -37,13 +37,15 @@ const ASSET_OPTIONS = [
 ];
 
 const fieldStyles = {
-  height: '40px',
+  height: '48px',
   backgroundColor: '#fff',
+  borderRadius: '12px',
   '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#d1d5db',
+    borderColor: '#eeeeee',
+    borderRadius: '12px',
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'var(--color-primary)',
+    borderColor: '#d1d5db',
   },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
     borderColor: 'var(--color-primary)',
@@ -668,14 +670,14 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Filter Modal */}
       <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-        <DialogContent className="max-w-2xl bg-white [&>button]:hidden">
+        <DialogContent className="max-w-2xl rounded-2xl border border-[#eeeeee] bg-white shadow-xl [&>button]:hidden">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowFilterModal(false)}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 rounded-full p-0 text-gray-700 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -684,7 +686,7 @@ export default function UtilityDailyReadingsDashboard() {
             Filter the daily readings data by asset, date range, customer name, and parameter name.
           </DialogDescription>
 
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Asset */}
               <div className="space-y-2">
@@ -726,7 +728,7 @@ export default function UtilityDailyReadingsDashboard() {
                   value={filterFormData.dateRange}
                   onChange={(e) => handleFilterChange('dateRange', e.target.value)}
                   placeholder="Select Date Range"
-                  className="border-gray-300"
+                  className="h-12 rounded-xl border-[#eeeeee] px-4 placeholder:text-gray-400"
                 />
               </div>
 
@@ -778,7 +780,7 @@ export default function UtilityDailyReadingsDashboard() {
                   value={filterFormData.parameterName}
                   onChange={(e) => handleFilterChange('parameterName', e.target.value)}
                   placeholder="Enter Parameter Name"
-                  className="border-gray-300"
+                  className="h-12 rounded-xl border-[#eeeeee] px-4 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -788,13 +790,13 @@ export default function UtilityDailyReadingsDashboard() {
               <Button
                 onClick={handleFilterReset}
                 variant="outline"
-                className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2"
+                className="h-12 rounded-xl border border-gray-300 bg-white px-8 text-gray-800 hover:bg-gray-50"
               >
                 Reset
               </Button>
               <Button
                 onClick={() => handleFilterApply(filterFormData)}
-                className="!bg-brand hover:!bg-brand-hover !text-white px-8 py-2"
+                className="h-12 rounded-xl bg-[#1a1a1a] px-8 text-white hover:bg-[#333333]"
               >
                 Apply
               </Button>

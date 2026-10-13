@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Search, RotateCcw, FileText, Calendar } from "lucide-react";
+import { ArrowLeft, Search, RotateCcw, FileText, Calendar, User } from "lucide-react";
 
 // Mock employee data - this would normally come from an API
 const employeesData = [
@@ -221,10 +221,10 @@ export const EmployeeDetailsPage = () => {
     <div className="space-y-6">
       <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">👤</span>
+          <div className="w-8 h-8 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-[var(--color-ink-68)]" />
           </div>
-          <h3 className="text-lg font-semibold text-[#da7756]">
+          <h3 className="text-lg font-semibold text-brand">
             EMPLOYEE INFORMATION
           </h3>
         </div>
@@ -272,10 +272,10 @@ export const EmployeeDetailsPage = () => {
       <div className="grid grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">ROSTER</h4>
+            <h4 className="font-semibold text-brand">ROSTER</h4>
           </div>
           <div className="space-y-2 text-sm">
             <div>
@@ -291,10 +291,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LOGS</h4>
+            <h4 className="font-semibold text-brand">LOGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>
@@ -307,10 +307,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LIST OF BOOKINGS</h4>
+            <h4 className="font-semibold text-brand">LIST OF BOOKINGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>No bookings to display for {employee.firstName}</p>
@@ -324,10 +324,10 @@ export const EmployeeDetailsPage = () => {
     <div className="space-y-6">
       <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">👤</span>
+          <div className="w-8 h-8 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-[var(--color-ink-68)]" />
           </div>
-          <h3 className="text-lg font-semibold text-[#da7756]">
+          <h3 className="text-lg font-semibold text-brand">
             EMPLOYEE INFORMATION
           </h3>
         </div>
@@ -367,10 +367,10 @@ export const EmployeeDetailsPage = () => {
       <div className="grid grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">ROSTER</h4>
+            <h4 className="font-semibold text-brand">ROSTER</h4>
           </div>
           <div className="space-y-2 text-sm">
             <div>
@@ -386,10 +386,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LOGS</h4>
+            <h4 className="font-semibold text-brand">LOGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>
@@ -402,10 +402,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LIST OF BOOKINGS</h4>
+            <h4 className="font-semibold text-brand">LIST OF BOOKINGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>No bookings to display for {employee.firstName}</p>
@@ -419,10 +419,10 @@ export const EmployeeDetailsPage = () => {
     <div className="space-y-6">
       <div className="bg-white rounded-lg border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">👤</span>
+          <div className="w-8 h-8 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-[var(--color-ink-68)]" />
           </div>
-          <h3 className="text-lg font-semibold text-[#da7756]">
+          <h3 className="text-lg font-semibold text-brand">
             EMPLOYEE INFORMATION
           </h3>
         </div>
@@ -460,10 +460,10 @@ export const EmployeeDetailsPage = () => {
       <div className="grid grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">ROSTER</h4>
+            <h4 className="font-semibold text-brand">ROSTER</h4>
           </div>
           <div className="space-y-2 text-sm">
             <div>
@@ -479,10 +479,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LOGS</h4>
+            <h4 className="font-semibold text-brand">LOGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>
@@ -495,10 +495,10 @@ export const EmployeeDetailsPage = () => {
 
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-[#da7756] rounded-full flex items-center justify-center">
-              <FileText className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+              <FileText className="w-3 h-3 text-[var(--color-ink-68)]" />
             </div>
-            <h4 className="font-semibold text-[#da7756]">LIST OF BOOKINGS</h4>
+            <h4 className="font-semibold text-brand">LIST OF BOOKINGS</h4>
           </div>
           <div className="text-sm text-gray-600">
             <p>No bookings to display for {employee.firstName}</p>
@@ -511,10 +511,10 @@ export const EmployeeDetailsPage = () => {
   const DocumentsTab = () => (
     <div className="bg-white rounded-lg border p-6">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-          <span className="text-white text-sm">👤</span>
+        <div className="w-8 h-8 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-[var(--color-ink-68)]" />
         </div>
-        <h3 className="text-lg font-semibold text-[#da7756]">
+        <h3 className="text-lg font-semibold text-brand">
           EMPLOYEE INFORMATION - {employee.firstName} {employee.lastName}
         </h3>
       </div>
@@ -524,35 +524,35 @@ export const EmployeeDetailsPage = () => {
           {
             title: "On Boarding",
             count: "0 Items",
-            color: "bg-white border border-[#da7756]",
+            color: "bg-white border border-brand",
           },
           {
             title: "Employee Handbook",
             count: "0 Items",
-            color: "bg-white border border-[#da7756]",
+            color: "bg-white border border-brand",
           },
           {
             title: "Employee Compensation",
             count: "0 Items",
-            color: "bg-white border border-[#da7756]",
+            color: "bg-white border border-brand",
           },
           {
             title: "Employee Management & Record keeping",
             count: "0 Items",
-            color: "bg-white border border-[#da7756]",
+            color: "bg-white border border-brand",
           },
           {
             title: "Exit Process",
             count: "0 Items",
-            color: "bg-white border border-[#da7756]",
+            color: "bg-white border border-brand",
           },
         ].map((doc, index) => (
           <div key={index} className={`p-4 rounded-lg ${doc.color}`}>
             <div className="flex items-center gap-2 mb-2">
-              <FileText className="w-4 h-4 text-[#da7756] shrink-0" />
-              <h4 className="font-medium text-sm text-[#da7756]">{doc.title}</h4>
+              <FileText className="w-4 h-4 text-brand shrink-0" />
+              <h4 className="font-medium text-sm text-brand">{doc.title}</h4>
             </div>
-            <p className="text-sm text-[#da7756]">{doc.count}</p>
+            <p className="text-sm text-brand">{doc.count}</p>
           </div>
         ))}
       </div>
@@ -562,10 +562,10 @@ export const EmployeeDetailsPage = () => {
   const AttendanceTab = () => (
     <div className="bg-white rounded-lg border p-6">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
-          <span className="text-white text-sm">👤</span>
+        <div className="w-8 h-8 bg-[var(--color-surface)] rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-[var(--color-ink-68)]" />
         </div>
-        <h3 className="text-lg font-semibold text-[#da7756]">
+        <h3 className="text-lg font-semibold text-brand">
           ATTENDANCE - {employee.firstName} {employee.lastName}
         </h3>
       </div>

@@ -21,6 +21,8 @@ type TaskCategoryValue = {
 };
 type TopTenItem = { type?: string; count?: number };
 
+const isTotalRow = (label: string) => label.trim().toLowerCase() === 'total';
+
 interface TaskAnalyticsCardProps {
   title: string;
   data: Record<string, TaskCategoryValue> | TopTenItem[] | unknown;
@@ -32,13 +34,11 @@ interface TaskAnalyticsCardProps {
   };
 }
 
-// Guideline bar colors — kept visually distinct so each stacked segment
-// (even a small one) is distinguishable, not just the two largest by value.
 const CHART_COLORS = {
-  primary: "#6B9BCC", // Open     — blue
-  secondary: "#798C5E", // Closed   — olive green
-  tertiary: "#CDCAF5", // WIP      — purple-light
-  overdue: "#E39090", // Overdue  — pink
+  primary: "var(--ticket-analytics-series-1)",
+  secondary: "var(--ticket-analytics-series-2)",
+  tertiary: "var(--ticket-analytics-series-3)",
+  overdue: "var(--ticket-analytics-series-4)",
 };
 
 export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
@@ -90,8 +90,8 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
     }
   };
 
-  const thCls = 'px-4 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
-  const tdCls = 'px-4 py-3 text-sm border-b border-gray-100';
+  const thCls = 'task-analytics-table-header';
+  const tdCls = 'task-analytics-table-cell';
 
   const renderContent = () => {
     if (!data) {
@@ -188,16 +188,16 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
             {/* Scrollable table */}
             <div className="flex-1 overflow-auto mt-3">
-              <div className="rounded-xl overflow-hidden border border-gray-200">
-                <table className="w-full text-sm min-w-[340px] border-collapse">
+              <div className="task-analytics-table-clip">
+                <table className="task-analytics-table min-w-[340px]">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Category</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                      <th className={thCls}>Category</th>
+                      <th className={thCls}>Open</th>
+                      <th className={thCls}>Closed</th>
+                      <th className={thCls}>WIP</th>
+                      <th className={thCls}>Overdue</th>
+                      <th className={thCls}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -207,7 +207,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                       </tr>
                     ) : (
                       chartData.map((item, index) => (
-                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                        <tr key={index} className={isTotalRow(item.name) ? 'task-analytics-total-row' : undefined}>
                           <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.name}</td>
                           <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
                           <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
@@ -237,16 +237,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
           );
         }
 
-        const topTenColors = [
-          "#9EC8BA",
-          "#8E7BE0",
-          "#DA7756",
-          "#798C5E",
-          "#EDC488",
-          "#76CDC1",
-          "#E39090",
-          "#CDCAF5",
-        ];
+        const topTenColors = Array.from(
+          { length: 8 },
+          (_, index) => `var(--ticket-analytics-series-${index + 1})`
+        );
         const chartData = (responseData as TopTenItem[])
           .slice(0, 10)
           .map((item, index) => ({
@@ -289,18 +283,18 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
             {/* Scrollable table */}
             <div className="flex-1 overflow-auto mt-3">
-              <div className="rounded-xl overflow-hidden border border-gray-200">
-                <table className="w-full text-sm min-w-[280px] border-collapse">
+              <div className="task-analytics-table-clip">
+                <table className="task-analytics-table min-w-[280px]">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Rank</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Checklist Type</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Count</th>
+                      <th className={thCls}>Rank</th>
+                      <th className={thCls}>Checklist Type</th>
+                      <th className={thCls}>Count</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(responseData as TopTenItem[]).slice(0, 10).map((item, index) => (
-                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                      <tr key={index}>
                         <td className={`${tdCls} text-left font-medium text-gray-800`}>#{index + 1}</td>
                         <td className={`${tdCls} text-left`}>{item.type || 'N/A'}</td>
                         <td className={`${tdCls} text-left font-semibold`}>{item.count || 0}</td>
@@ -403,16 +397,16 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
             {/* Scrollable table */}
             <div className="flex-1 overflow-auto mt-3">
-              <div className="rounded-xl overflow-hidden border border-gray-200">
-                <table className="w-full text-sm min-w-[360px] border-collapse">
+              <div className="task-analytics-table-clip">
+                <table className="task-analytics-table min-w-[360px]">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Open</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Closed</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>WIP</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Overdue</th>
-                      <th className={`${thCls}`} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total</th>
+                      <th className={thCls}>Site</th>
+                      <th className={thCls}>Open</th>
+                      <th className={thCls}>Closed</th>
+                      <th className={thCls}>WIP</th>
+                      <th className={thCls}>Overdue</th>
+                      <th className={thCls}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -422,7 +416,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                       </tr>
                     ) : (
                       chartData.map((item, index) => (
-                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                        <tr key={index} className={isTotalRow(item.site) ? 'task-analytics-total-row' : undefined}>
                           <td className={`${tdCls} text-left font-medium text-gray-800`}>{item.site}</td>
                           <td className={`${tdCls} text-left`}>{item.open ?? 0}</td>
                           <td className={`${tdCls} text-left`}>{item.closed ?? 0}</td>
@@ -446,7 +440,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm flex flex-col ${className}`}>
+    <div className={`task-analytics-card bg-white rounded-xl shadow-sm flex flex-col ${className}`}>
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
         <h3
           className="text-base font-semibold text-gray-900 truncate flex-1"

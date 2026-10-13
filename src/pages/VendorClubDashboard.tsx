@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, Eye, Edit, Upload, X, Loader2 } from 'lucide-react';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
-import { Toaster } from '@/components/ui/sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
@@ -388,7 +387,6 @@ export const VendorClubDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-work-sans font-semibold text-2xl text-[#1a1a1a]">Vendors</h1>
       </div>
-      <Toaster position="top-right" richColors closeButton />
       <div className="w-full">
         {renderListTab()}
       </div>

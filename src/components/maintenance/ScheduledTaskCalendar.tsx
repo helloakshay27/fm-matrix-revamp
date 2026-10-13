@@ -146,19 +146,20 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   }, [weekOffset]);
 
   const calendarEvents = useMemo(() => {
-    return events.map(event => ({
-      id: String(event.id),
-      title: event.title,
-      start: event.start,
-      end: moment(event.start).add(1, 'hour').toISOString(),
-      backgroundColor: event.color || '#fdbb0b',
-      borderColor: event.color || '#fdbb0b',
-      textColor: '#000',
-      extendedProps: {
-        status: event.status,
-        resource: event
-      }
-    }));
+    return events.map(event => {
+      const statusClass = String(event.status || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return {
+        id: String(event.id),
+        title: event.title,
+        start: event.start,
+        end: moment(event.start).add(1, 'hour').toISOString(),
+        classNames: ['task-calendar-event', `task-calendar-event--${statusClass}`],
+        extendedProps: {
+          status: event.status,
+          resource: event
+        }
+      };
+    });
   }, [events]);
 
   // Track when calendar events are fully processed and rendered
@@ -394,7 +395,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
         <h2 className="text-xl font-semibold">{getToolbarTitle()}</h2>
 
-        <div className="flex items-center gap-2">
+        <div className="task-calendar-view-tabs">
           {[
             { key: 'dayGridMonth', label: 'month' },
             { key: 'timeGridWeek', label: 'week' },
@@ -404,10 +405,11 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
           ].map(({ key, label }) => (
             <Button
               key={key}
-              variant={view === key ? 'default' : 'outline'}
+              variant="ghost"
               size="sm"
               onClick={() => handleViewChange(key)}
-              className="px-3 py-1 h-8 capitalize"
+              className="task-calendar-view-tab"
+              data-active={view === key}
               disabled={isYearLoading && key === 'year'}
             >
               {isYearLoading && key === 'year' ? (
@@ -431,11 +433,11 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       <div className="flex items-center justify-end gap-3">
         {/* Date Range Label */}
         {(activeFilters.dateFrom || activeFilters.dateTo) && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#da7756] rounded-lg">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="task-calendar-date-range">
+            <svg className="task-calendar-date-range-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-sm font-medium text-white">
+            <span className="task-calendar-date-range-text">
               {activeFilters.dateFrom && activeFilters.dateTo
                 ? `${activeFilters.dateFrom} - ${activeFilters.dateTo}`
                 : activeFilters.dateFrom || activeFilters.dateTo || 'All Dates'}
@@ -445,7 +447,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
         <Button
           onClick={() => setIsFilterModalOpen(true)}
-          className="fm-button-fix fm-button-brand flex items-center gap-2"
+          className="task-calendar-filter-button"
         >
           <Filter className="h-4 w-4" />
           {activeFilterCount > 0 && (
@@ -529,7 +531,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               selectMirror={true}
               dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
               eventContent={(eventInfo) => (
-                <div className="fc-event-content p-1">
+                <div className="fc-event-content task-calendar-event-content">
                   <div className="fc-event-title text-xs font-medium truncate">
                     {eventInfo.event.title}
                   </div>
@@ -653,14 +655,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
                       {selectedEvent.extendedProps?.status && (
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-2">Status</label>
-                          <div className={`
-                        inline-flex px-3 py-2 rounded-lg text-sm font-medium border
-                        ${selectedEvent.extendedProps.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                              selectedEvent.extendedProps.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                selectedEvent.extendedProps.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                  selectedEvent.extendedProps.status === 'Scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                    'bg-gray-50 text-gray-700 border-gray-200'}
-                      `}>
+                          <div className="task-calendar-status-pill" data-status={String(selectedEvent.extendedProps.status).toLowerCase().replace(/\s+/g, '-')}>
                             {selectedEvent.extendedProps.status}
                           </div>
                         </div>
@@ -1083,14 +1078,7 @@ const YearlyView: React.FC<{
                             {event.extendedProps?.status && (
                               <div className="text-sm">
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                                <div className={`
-                                  inline-flex px-2 py-1 rounded text-xs font-medium border
-                                  ${event.extendedProps.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    event.extendedProps.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                      event.extendedProps.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                        event.extendedProps.status === 'Scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                          'bg-gray-50 text-gray-700 border-gray-200'}
-                                `}>
+                                <div className="task-calendar-status-pill" data-status={String(event.extendedProps.status).toLowerCase().replace(/\s+/g, '-')}>
                                   {event.extendedProps.status}
                                 </div>
                               </div>

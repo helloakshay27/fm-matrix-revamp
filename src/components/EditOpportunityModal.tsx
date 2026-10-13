@@ -396,7 +396,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
         cursor: "pointer",
       },
       itemFocused: {
-        backgroundColor: "#01569E",
+        backgroundColor: "var(--color-primary)",
         color: "white",
         fontWeight: "bold",
       },
@@ -438,7 +438,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
         cursor: "pointer",
       },
       itemFocused: {
-        backgroundColor: "#01569E",
+        backgroundColor: "var(--color-primary)",
         color: "white",
         fontWeight: "bold",
       },
@@ -476,7 +476,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
             </IconButton>
           </div>
 
-          <div className="border-b border-[#E95420] w-full" />
+          <div className="border-b border-brand w-full" />
 
           {/* Body */}
           {isLoading ? (
@@ -503,7 +503,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
                         }
                       }}
                       color={isListening && activeId === "edit-opportunity-title" ? "secondary" : "default"}
-                      sx={{ color: isListening && activeId === "edit-opportunity-title" ? "#C72030" : "inherit" }}
+                      sx={{ color: isListening && activeId === "edit-opportunity-title" ? "var(--color-primary)" : "inherit" }}
                     >
                       {isListening && activeId === "edit-opportunity-title" ? <Mic size={18} /> : <MicOff size={18} />}
                     </IconButton>
@@ -553,7 +553,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
                         }
                       }}
                       color={isListening && activeId === "edit-opportunity-description" ? "secondary" : "default"}
-                      sx={{ color: isListening && activeId === "edit-opportunity-description" ? "#C72030" : "inherit" }}
+                      sx={{ color: isListening && activeId === "edit-opportunity-description" ? "var(--color-primary)" : "inherit" }}
                     >
                       {isListening && activeId === "edit-opportunity-description" ? <Mic size={18} /> : <MicOff size={18} />}
                     </IconButton>
@@ -584,7 +584,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
 
               <div>
                 <div
-                  className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                  className="text-[12px] text-brand text-right cursor-pointer mb-2"
                   onClick={() => setIsTagModalOpen(true)}
                 >
                   <i>Create new tag</i>
@@ -666,13 +666,15 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
                   </span>
                   <Button
                     variant="contained"
-                    color="error"
                     size="small"
+                    startIcon={<Upload size={16} />}
                     onClick={() => fileInputRef.current?.click()}
                     sx={{
                       textTransform: "none",
-                      bgcolor: "#C72030",
-                      "&:hover": { bgcolor: "#A01020" },
+                      boxShadow: "none",
+                      bgcolor: "var(--color-primary)",
+                      color: "#fff",
+                      "&:hover": { bgcolor: "var(--color-primary-hover)", boxShadow: "none" },
                     }}
                   >
                     Attach Files
@@ -713,20 +715,18 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
           {/* Footer */}
           <div className="p-6 pt-0 flex justify-center">
             <Button
-              variant="outlined"
+              variant="contained"
               onClick={handleSubmit}
               disabled={isSubmitting || isLoading}
               sx={{
-                color: "black",
-                borderColor: "black",
-                borderRadius: 0,
+                color: "#fff",
+                bgcolor: "var(--color-primary)",
+                boxShadow: "none",
                 minWidth: "120px",
                 textTransform: "none",
-                borderWidth: "1px",
                 "&:hover": {
-                  borderWidth: "1px",
-                  borderColor: "black",
-                  bgcolor: "rgba(0,0,0,0.05)",
+                  bgcolor: "var(--color-primary-hover)",
+                  boxShadow: "none",
                 },
               }}
             >
@@ -771,11 +771,11 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
       }
 
       .ql-toolbar button:hover {
-        color: #01569E;
+        color: var(--color-primary);
       }
 
       .ql-toolbar button.ql-active {
-        color: #01569E;
+        color: var(--color-primary);
       }
     `}</style>
     </>

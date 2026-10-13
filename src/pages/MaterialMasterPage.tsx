@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Plus, Trash2, Search, Loader2 } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -45,6 +45,21 @@ const materialData = [
     createdOn: '14/12/2024',
     updatedOn: '14/12/2024'
   }
+];
+
+type MaterialRow = (typeof materialData)[number];
+
+const columns: ColumnConfig[] = [
+  { key: 'componentName', label: 'Component Name', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'specification', label: 'Specification', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'quantityUsed', label: 'Qty Used', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'unitOfMeasure', label: 'Unit', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'estimatedUnitCost', label: 'Unit Cost (₹)', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'totalEstimatedCost', label: 'Total Cost (₹)', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'consumedIn', label: 'Consumed In', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'includedInCapEx', label: 'CapEx', sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  { key: 'inventoryTracking', label: 'Tracking', sortable: true, hideable: true, defaultVisible: true, draggable: true },
 ];
 
 interface MaterialFormData {
@@ -108,129 +123,100 @@ export const MaterialMasterPage = () => {
     });
   };
 
+  // Search sirf name / category / specification pe (pehle jaisa) — isliye
+  // EnhancedTable ka client search band karke khud filter karte hain
   const filteredMaterials = materials.filter(material =>
     material.componentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     material.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     material.specification.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const renderCell = (material: MaterialRow, columnKey: string) => {
+    switch (columnKey) {
+      case 'componentName':
+        return <span className="font-medium">{material.componentName}</span>;
+      case 'estimatedUnitCost':
+        return `₹${material.estimatedUnitCost.toLocaleString()}`;
+      case 'totalEstimatedCost':
+        return `₹${material.totalEstimatedCost.toLocaleString()}`;
+      case 'includedInCapEx':
+        return material.includedInCapEx ? 'Yes' : 'No';
+      case 'inventoryTracking':
+        return material.inventoryTracking ? 'Yes' : 'No';
+      default:
+        return material[columnKey as keyof MaterialRow] as React.ReactNode;
+    }
+  };
+
+  const renderActions = (material: MaterialRow) => (
+    <div className="flex items-center gap-2">
+      {shouldShow("Material Master -> EBom", "update") && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(`/materials/edit/${material.id}`)}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      )}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the material component.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(material.id)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+
   return (
     <div className="w-full min-h-screen bg-[#fafafa] p-6">
       <div className="w-full space-y-6">
-        {/* Header with Add Button */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">MATERIAL MASTER (E-BOM MODULE)</h1>
-          {shouldShow("Material Master -> EBom", "create") && (
-          <Button 
-            onClick={() => navigate('/materials/add')}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Material
-          </Button>
-          )}
-        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">MATERIAL MASTER (E-BOM MODULE)</h1>
 
         {/* Materials Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-[#1a1a1a]">Material Components</h2>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search materials..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-64"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="font-medium">Actions</TableHead>
-                <TableHead className="font-medium">Component Name</TableHead>
-                <TableHead className="font-medium">Category</TableHead>
-                <TableHead className="font-medium">Specification</TableHead>
-                <TableHead className="font-medium">Qty Used</TableHead>
-                <TableHead className="font-medium">Unit</TableHead>
-                <TableHead className="font-medium">Unit Cost (₹)</TableHead>
-                <TableHead className="font-medium">Total Cost (₹)</TableHead>
-                <TableHead className="font-medium">Consumed In</TableHead>
-                <TableHead className="font-medium">CapEx</TableHead>
-                <TableHead className="font-medium">Tracking</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8">
-                    <div className="flex items-center justify-center gap-2 text-black">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Loading ...
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredMaterials.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-4 text-muted-foreground">
-                    No materials found
-                  </TableCell>
-                </TableRow>
-              ) : filteredMaterials.map((material) => (
-                <TableRow key={material.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {shouldShow("Material Master -> EBom", "update") && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => navigate(`/materials/edit/${material.id}`)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the material component.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(material.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{material.componentName}</TableCell>
-                  <TableCell>{material.category}</TableCell>
-                  <TableCell>{material.specification}</TableCell>
-                  <TableCell>{material.quantityUsed}</TableCell>
-                  <TableCell>{material.unitOfMeasure}</TableCell>
-                  <TableCell>₹{material.estimatedUnitCost.toLocaleString()}</TableCell>
-                  <TableCell>₹{material.totalEstimatedCost.toLocaleString()}</TableCell>
-                  <TableCell>{material.consumedIn}</TableCell>
-                  <TableCell>{material.includedInCapEx ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <EnhancedTable
+          data={filteredMaterials}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          getItemId={(material) => String(material.id)}
+          storageKey="material-master-ebom-table"
+          enableSearch={true}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          disableClientSearch={true}
+          searchPlaceholder="Search materials..."
+          emptyMessage="No materials found"
+          loading={loading}
+          pagination={true}
+          pageSize={10}
+          leftActions={
+            shouldShow("Material Master -> EBom", "create") ? (
+              <Button
+                onClick={() => navigate('/materials/add')}
+                className="bg-brand hover:bg-brand-hover text-white gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Material
+              </Button>
+            ) : null
+          }
+        />
       </div>
     </div>
   );

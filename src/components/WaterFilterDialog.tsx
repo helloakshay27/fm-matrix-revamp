@@ -276,10 +276,10 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
-          <Button 
+          <Button
+            variant="outline"
             onClick={handleClearFilters}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 rounded-none"
+            className="border-gray-200 text-black hover:bg-gray-50 hover:text-black rounded-none"
           >
             Clear All
           </Button>

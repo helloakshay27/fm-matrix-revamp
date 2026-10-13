@@ -37,13 +37,14 @@ import {
   File,
   FileIcon,
   Radio,
+  ClipboardList,
+  Settings,
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { apiClient } from "@/utils/apiClient";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { QuestionMark } from "@mui/icons-material";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 // Questions table item interface
 interface QuestionsTableItem {
@@ -72,6 +73,29 @@ interface QRCodeData {
   added_from: string | null;
   comments: string | null;
 }
+
+const SurveyStatusSwitch = ({
+  checked,
+  onClick,
+  label,
+}: {
+  checked: boolean;
+  onClick: () => void;
+  label: string;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={label}
+    onClick={onClick}
+    className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(26,26,24,0.16)] disabled:cursor-not-allowed disabled:opacity-50 ${checked ? "bg-[#1A1A18]" : "bg-[#D5DBDB]"}`}
+  >
+    <span
+      className={`pointer-events-none absolute left-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${checked ? "translate-x-3" : "translate-x-0"}`}
+    />
+  </button>
+);
 
 interface SurveyMapping {
   id: number;
@@ -531,16 +555,11 @@ export const SurveyMappingDetailsPage = () => {
       case "status": {
         return (
           <div className="flex items-center justify-center">
-            <button
+            <SurveyStatusSwitch
+              checked={Boolean(item.active)}
               onClick={() => handleQuestionStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
-                }`}
-            >
-              <div
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
-                  }`}
-              />
-            </button>
+              label={`Toggle question ${item.qnumber} status`}
+            />
           </div>
         );
       }
@@ -720,16 +739,11 @@ export const SurveyMappingDetailsPage = () => {
       case "status":
         return (
           <div className="flex items-center justify-center">
-            <button
+            <SurveyStatusSwitch
+              checked={Boolean(item.active)}
               onClick={() => handleStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
-                }`}
-            >
-              <div
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
-                  }`}
-              />
-            </button>
+              label={`Toggle location mapping ${item.mapping_id} status`}
+            />
           </div>
         );
       default:
@@ -1055,7 +1069,7 @@ export const SurveyMappingDetailsPage = () => {
           <div className="flex gap-2">
             <Badge
               variant={mapping.active ? "default" : "secondary"}
-              className="mr-2 rounded-none flex items-center"
+              className="mr-2 rounded-md flex items-center"
             >
               {mapping.active ? (
                 <>
@@ -1112,43 +1126,40 @@ export const SurveyMappingDetailsPage = () => {
             ))}
           </TabsList> */}
           {/* Custom tab bar — plain buttons for full style control */}
-          <div className="flex w-full border border-gray-200 rounded-t-lg overflow-hidden">
+          <div role="tablist" aria-label="Survey mapping details" className="flex w-fit max-w-full flex-wrap items-center gap-[3px] rounded-xl bg-[#F5F4F0] p-[3px]">
             {[
               { label: "Survey Information", value: "survey-information" },
               { label: "Questions", value: "questions" },
               { label: "Location Details", value: "location-details" },
             ].map((tab) => (
               <button
+                type="button"
+                role="tab"
                 key={tab.value}
+                aria-selected={activeTab === tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                className={`rounded-lg px-4 py-2 text-[12.5px] font-semibold transition-colors ${
                   activeTab === tab.value
-                    ? "bg-[#C72030] text-white"
-                    : "bg-white text-black hover:bg-gray-50"
+                    ? "bg-white text-[#1A1A18] shadow-sm"
+                    : "bg-transparent text-[var(--color-ink-68)] hover:text-[#1A1A18]"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          {/* Hidden TabsList keeps Radix in sync */}
-          <TabsList className="hidden">
-            <TabsTrigger value="survey-information" />
-            <TabsTrigger value="questions" />
-            <TabsTrigger value="location-details" />
-          </TabsList>
 
           {/* Survey Information */}
           <TabsContent value="survey-information" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
+            <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 lg:grid-cols-4 mb-5">
+              <Card className="rounded-2xl border-0 bg-[#F5F4F0] shadow-none">
+                <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <QuestionMark className="w-5 h-5 text-[#C72030]" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white">
+                      <ClipboardList className="h-[18px] w-[18px] text-[#1A1A18]" />
                     </div>
                     <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
+                      <p className="text-xl font-semibold tabular-nums text-[#1A1A18]">
                         {mapping.questions_count || 0}
                       </p>
                       <p className="text-sm text-gray-600">Questions</p>
@@ -1157,14 +1168,14 @@ export const SurveyMappingDetailsPage = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
+              <Card className="rounded-2xl border-0 bg-[#F5F4F0] shadow-none">
+                <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <MapPin className="w-5 h-5 text-[#C72030]" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white">
+                      <MapPin className="h-[18px] w-[18px] text-[#1A1A18]" />
                     </div>
                     <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
+                      <p className="text-xl font-semibold tabular-nums text-[#1A1A18]">
                         {mapping.mappings?.length || 0}
                       </p>
                       <p className="text-sm text-gray-600">
@@ -1189,27 +1200,15 @@ export const SurveyMappingDetailsPage = () => {
     </div>
   </CardContent>
 </Card> */}
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
+              <Card className="rounded-2xl border-0 bg-[#F5F4F0] shadow-none">
+                <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6 text-[#C72030]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white">
+                      <Settings className="h-[18px] w-[18px] text-[#1A1A18]" />
                     </div>
 
                     <div>
-                      <p className="text-xl font-semibold capitalize text-[#C72030]">
+                      <p className="text-xl font-semibold capitalize tabular-nums text-[#1A1A18]">
                         {mapping.check_type || "N/A"}
                       </p>
                       <p className="text-sm text-gray-600">Question Type</p>
@@ -1219,12 +1218,10 @@ export const SurveyMappingDetailsPage = () => {
               </Card>
             </div>
 
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-                    <FileText className="h-5 w-5 text-[#C72030]" />
-                  </div>
+            <Card className="mb-5 rounded-2xl border border-[#D5DBDB] bg-white shadow-sm">
+              <CardHeader className="px-4 pt-4 pb-0">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-[#1A1A18]">
+                  <FileText className="h-[18px] w-[18px] text-[#1A1A18]" />
                   Survey Information
                 </CardTitle>
               </CardHeader>
@@ -1364,12 +1361,10 @@ export const SurveyMappingDetailsPage = () => {
 
           {/* Questions */}
           <TabsContent value="questions" className="mt-4">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-                    <QuestionMark className="h-5 w-5 text-[#C72030]" />
-                  </div>
+            <Card className="mb-5 rounded-2xl border border-[#D5DBDB] bg-white shadow-sm">
+              <CardHeader className="px-4 pt-4 pb-0">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-[#1A1A18]">
+                  <ClipboardList className="h-[18px] w-[18px] text-[#1A1A18]" />
                   Survey Question
                   {/* ({mapping.questions?.length || 0}) */}
                 </CardTitle>
@@ -1381,7 +1376,7 @@ export const SurveyMappingDetailsPage = () => {
                   renderCell={renderQuestionCell}
                   getItemId={(item: QuestionsTableItem) => String(item.id)}
                   storageKey="survey-questions-table"
-                  className="min-w-[800px] bg-[#F6F7F7]"
+                  className="min-w-[800px] bg-white"
                   emptyMessage="No questions available"
                   enableSearch={true}
                   enableSelection={false}
@@ -1395,12 +1390,10 @@ export const SurveyMappingDetailsPage = () => {
 
           {/* Location Details */}
           <TabsContent value="location-details" className="mt-4">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-                    <MapPin className="h-5 w-5 text-[#C72030]" />
-                  </div>
+            <Card className="mb-5 rounded-2xl border border-[#D5DBDB] bg-white shadow-sm">
+              <CardHeader className="px-4 pt-4 pb-0">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-[#1A1A18]">
+                  <MapPin className="h-[18px] w-[18px] text-[#1A1A18]" />
                   Location Details
                   {/* ({mapping.mappings?.length || 0} Locations) */}
                 </CardTitle>
@@ -1429,7 +1422,7 @@ export const SurveyMappingDetailsPage = () => {
                     String(item.mapping_id)
                   }
                   storageKey="location-details-table"
-                  className="min-w-[1200px] bg-[#F6F7F7]"
+                  className="min-w-[1200px] bg-white"
                   emptyMessage="No location details found"
                   enableSearch={true}
                   enableSelection={false}

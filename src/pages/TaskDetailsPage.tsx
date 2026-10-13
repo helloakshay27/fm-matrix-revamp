@@ -701,23 +701,6 @@ export const TaskDetailsPage = () => {
   };
 
   // --- Dynamic Data Helpers
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "open":
-        return "bg-blue-100 text-blue-700";
-      case "scheduled":
-        return "bg-green-100 text-green-700";
-      case "overdue":
-        return "bg-red-100 text-red-700";
-      case "completed":
-        return "bg-gray-100 text-gray-700";
-      case "in progress":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
   // Get task name dynamically
   const getTaskName = () => {
     return taskDetails?.task_details?.task_name || "Task Details";
@@ -1344,7 +1327,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                            className="task-detail-action-secondary"
                           >
                             Task Reschedule
                           </Button>
@@ -1517,13 +1500,13 @@ export const TaskDetailsPage = () => {
           )}
 
           {/* Task Info */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
+          <Card className="w-full bg-transparent shadow-none border-none task-detail-section-card">
+            <div className="figma-card-header task-detail-section-header">
               <div className="flex items-center gap-3">
                 <div className="figma-card-icon-wrapper">
                   <FileText className="figma-card-icon" />
                 </div>
-                <h3 className="figma-card-title">Task Info</h3>
+                <h3 className="figma-card-title task-detail-section-title">Task Info</h3>
                 {/* Steps Indicator */}
                 {taskDetails?.steps && (
                   <div className="flex items-center gap-1 ml-auto">
@@ -1554,7 +1537,7 @@ export const TaskDetailsPage = () => {
                 )}
               </div>
             </div>
-            <div className="figma-card-content">
+            <div className="figma-card-content task-detail-section-content">
               <div className="task-info-enhanced">
                 <div className="task-info-row">
                   <span
@@ -1830,9 +1813,8 @@ export const TaskDetailsPage = () => {
                     }}
                   >
                     <Badge
-                      className={getStatusColor(
-                        taskDetails?.task_details?.status?.value || ""
-                      )}
+                      className="entity-status-pill"
+                      data-status={String(taskDetails?.task_details?.status?.value || 'unknown').toLowerCase().replace(/\s+/g, '-')}
                       title={
                         taskDetails?.task_details?.status?.display_name ||
                         "Unknown"
@@ -1954,16 +1936,16 @@ export const TaskDetailsPage = () => {
           </Card>
 
           {/* Location Details */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
+          <Card className="w-full bg-transparent shadow-none border-none task-detail-section-card">
+            <div className="figma-card-header task-detail-section-header">
               <div className="flex items-center gap-3">
                 <div className="figma-card-icon-wrapper">
                   <MapPin className="figma-card-icon" />
                 </div>
-                <h3 className="figma-card-title">Location Details</h3>
+                <h3 className="figma-card-title task-detail-section-title">Location Details</h3>
               </div>
             </div>
-            <div className="figma-card-content">
+            <div className="figma-card-content task-detail-section-content">
               <div className="relative w-full px-4">
                 <div
                   className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
@@ -2020,16 +2002,16 @@ export const TaskDetailsPage = () => {
           </Card>
 
           {/* Activity */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
+          <Card className="w-full bg-transparent shadow-none border-none task-detail-section-card">
+            <div className="figma-card-header task-detail-section-header">
               <div className="flex items-center gap-3">
                 <div className="figma-card-icon-wrapper">
                   <FileText className="figma-card-icon" />
                 </div>
-                <h3 className="figma-card-title">Activity</h3>
+                <h3 className="figma-card-title task-detail-section-title">Activity</h3>
               </div>
             </div>
-            <div className="figma-card-content">
+            <div className="figma-card-content task-detail-section-content">
               {taskDetails?.checklist_questions?.length > 0 ||
                 taskDetails?.activity?.resp?.length > 0 ? (
                 <div className="space-y-6">
@@ -2037,7 +2019,7 @@ export const TaskDetailsPage = () => {
                   {getGroupedActivityData().map((section, sectionIndex) => (
                     <div key={section.sectionKey} className="space-y-3">
                       {/* Section Header */}
-                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                      <div className="task-detail-activity-group-heading">
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="text-base font-semibold text-gray-800">
@@ -2261,7 +2243,7 @@ export const TaskDetailsPage = () => {
         onOpenChange={setShowRescheduleDialog}
       >
         <DialogContent
-          className="max-w-lg"
+          className="max-w-lg task-reschedule-dialog"
           aria-describedby="reschedule-dialog-description"
         >
           <span id="reschedule-dialog-description" className="sr-only">
@@ -2281,9 +2263,9 @@ export const TaskDetailsPage = () => {
             </button>
           </DialogHeader>
 
-          <div className="space-y-6 p-4">
+          <div className="task-reschedule-body space-y-6">
             <div>
-              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
+              <h3 className="task-reschedule-section-title">
                 New Schedule
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -2330,7 +2312,7 @@ export const TaskDetailsPage = () => {
             </div>
 
             <div>
-              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
+              <h3 className="task-reschedule-section-title">
                 Notification Preferences
               </h3>
               <div className="flex items-center space-x-2">
@@ -2354,14 +2336,13 @@ export const TaskDetailsPage = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowRescheduleDialog(false)}
-                className="px-6"
+                className="task-reschedule-cancel-button"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleRescheduleSubmit}
-                style={{ backgroundColor: "#C72030" }}
-                className="text-white hover:bg-[#C72030]/90 px-6"
+                className="task-reschedule-submit-button"
               >
                 Reschedule Task
               </Button>

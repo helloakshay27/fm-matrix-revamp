@@ -92,7 +92,7 @@ export const GDNFilterDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent
-        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        className="w-full sm:max-w-[500px] bg-white overflow-visible rounded-2xl sm:rounded-2xl"
         onPointerDownOutside={(e) => {
           if (
             (e.target as HTMLElement).closest(
@@ -192,19 +192,19 @@ export const GDNFilterDialog = ({
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+        <div className="flex gap-3 pt-4 items-center justify-end">
           <Button
-            onClick={handleApply}
-            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
-          >
-            APPLY
-          </Button>
-          <Button
-            variant="outline"
             onClick={handleReset}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             RESET
+          </Button>
+          <Button
+            onClick={handleApply}
+            className="fm-action-primary"
+          >
+            APPLY
           </Button>
         </div>
       </DialogContent>

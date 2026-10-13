@@ -24,46 +24,21 @@ import {
   SelectChangeEvent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Settings, Add, Delete, ArrowBack, Close, AttachFile } from '@mui/icons-material';
-import { Cog } from 'lucide-react';
+import { Add, ArrowBack, Close, AttachFile } from '@mui/icons-material';
+import { FileText, ListChecks, CalendarClock, type LucideIcon } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User as UserType, Supplier } from '../services/assetService';
 
 // Styled Components
-const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: 'var(--color-primary)',
-  color: 'white !important',
-  borderRadius: 0,
-  textTransform: 'none',
-  padding: '10px 24px',
-  fontFamily: 'Work Sans, sans-serif',
-  fontWeight: 500,
-  '&:hover': {
-    backgroundColor: 'var(--color-primary-hover)',
-    boxShadow: '0 4px 8px rgba(var(--color-primary-rgb), 0.3)',
-  },
-}));
-RedButton.defaultProps = { color: 'inherit' };
-
-const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#e7e3d9',
-  color: 'var(--color-primary)',
-  borderRadius: 0,
-  textTransform: 'none',
-  padding: '10px 24px',
-  fontFamily: 'Work Sans, sans-serif',
-  fontWeight: 500,
-  '&:hover': {
-    backgroundColor: '#d9d5c9',
-  },
-}));
-
+// Standard form section (matches Add Asset): white card, hairline border, 16px radius,
+// heading directly on the surface, 12px to body, 20px between sections.
 const SectionCard = styled(Paper)(({ theme }) => ({
   backgroundColor: 'white',
-  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  borderRadius: 0,
+  border: '1px solid rgba(26, 26, 24, 0.09)',
+  boxShadow: 'none',
+  borderRadius: '16px',
   overflow: 'hidden',
-  marginBottom: '24px',
+  marginBottom: '20px',
   padding: '24px',
 }));
 
@@ -71,16 +46,61 @@ const SectionHeader = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
-  marginBottom: '24px',
+  marginBottom: '12px',
 }));
 
-const RedIcon = styled(Settings)(({ theme }) => ({
-  color: '#fff',
-  backgroundColor: 'var(--color-primary)',
-  borderRadius: '50%',
-  padding: '8px',
-  fontSize: '32px',
-}));
+// Neutral icon tile: soft grey 36px square, 10px radius, muted 18px line icon.
+const SectionIcon: React.FC<{ icon: LucideIcon }> = ({ icon: Icon }) => (
+  <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0">
+    <Icon className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" />
+  </span>
+);
+
+const sectionTitleSx = {
+  fontFamily: 'inherit',
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#1A1A18',
+  textTransform: 'uppercase',
+  letterSpacing: '0.02em',
+} as const;
+
+// Supporting actions use the neutral outlined shell; the footer keeps the one ink primary.
+const secondaryActionSx = {
+  height: 40,
+  padding: '0 18px',
+  gap: '7px',
+  borderRadius: '8px',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(26, 26, 24, 0.12)',
+  color: '#1A1A18',
+  fontFamily: 'inherit',
+  fontSize: '12.5px',
+  fontWeight: 600,
+  textTransform: 'none',
+  boxShadow: 'none',
+  '& .MuiButton-startIcon': { marginRight: 0, marginLeft: 0 },
+  '& .MuiSvgIcon-root': { fontSize: 16, color: '#1A1A18' },
+  '&:hover': { backgroundColor: '#F7F6F2', borderColor: 'rgba(26, 26, 24, 0.28)', boxShadow: 'none' },
+} as const;
+
+// Small inline "+ value" actions: outline/edit variant (30px, 1.5px ink border).
+const outlineActionSx = {
+  height: 30,
+  padding: '0 12px',
+  gap: '6px',
+  borderRadius: '8px',
+  backgroundColor: '#FFFFFF',
+  border: '1.5px solid #1A1A18',
+  color: '#1A1A18',
+  fontFamily: 'inherit',
+  fontSize: '11.5px',
+  fontWeight: 600,
+  textTransform: 'none',
+  '& .MuiButton-startIcon': { marginRight: 0, marginLeft: 0 },
+  '& .MuiSvgIcon-root': { fontSize: 14, color: '#1A1A18' },
+  '&:hover': { backgroundColor: '#F7F6F2', border: '1.5px solid #1A1A18' },
+} as const;
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -1651,7 +1671,6 @@ export const AddOperationalAuditSchedulePage = () => {
                     fontWeight: (index === activeStep) ? 600 : 500,
                     padding: '12px 20px',
                     fontSize: '13px',
-                    fontWeight: (index === activeStep) ? 600 : 500,
                     textAlign: 'center',
                     minWidth: '140px',
                     height: '40px',
@@ -1695,8 +1714,8 @@ export const AddOperationalAuditSchedulePage = () => {
         {activeStep === 0 && (
           <SectionCard>
             <SectionHeader>
-              <RedIcon />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', fontFamily: 'Work Sans, sans-serif' }}>
+              <SectionIcon icon={FileText} />
+              <Typography variant="h6" sx={sectionTitleSx}>
                 BASIC INFO
               </Typography>
               {/* <Typography variant="caption" sx={{ ml: 'auto', color: '#666' }}>
@@ -1830,13 +1849,14 @@ export const AddOperationalAuditSchedulePage = () => {
 
               {/* Add Attachment Button */}
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <RedButton
-                  variant="contained"
+                <MuiButton
+                  variant="outlined"
                   onClick={addAttachment}
                   startIcon={<Add />}
+                sx={secondaryActionSx}
                 >
                   Add Attachment
-                </RedButton>
+                </MuiButton>
               </Box>
             </Box>
           </SectionCard>
@@ -1846,12 +1866,12 @@ export const AddOperationalAuditSchedulePage = () => {
         {activeStep === 1 && (
           <SectionCard>
             <SectionHeader>
-              <RedIcon />
+              <SectionIcon icon={ListChecks} />
               <Box>
                 <Typography variant="caption" sx={{ color: '#666', display: 'block', fontSize: '12px' }}>
                   Step 2 of 3
                 </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Work Sans, sans-serif' }}>
+                <Typography variant="h6" sx={sectionTitleSx}>
                   TASK
                 </Typography>
               </Box>
@@ -2103,16 +2123,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               size="small"
                               startIcon={<Add />}
                               onClick={() => addDropdownValue(section.id, task.id)}
-                              sx={{
-                                color: 'var(--color-primary)',
-                                borderColor: 'var(--color-primary)',
-                                fontSize: '12px',
-                                padding: '4px 12px',
-                                '&:hover': {
-                                  borderColor: 'var(--color-primary)',
-                                  backgroundColor: 'var(--color-primary-light)'
-                                }
-                              }}
+                              sx={outlineActionSx}
                             >
                               Add Option
                             </MuiButton>
@@ -2194,16 +2205,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               size="small"
                               startIcon={<Add />}
                               onClick={() => addRadioValue(section.id, task.id)}
-                              sx={{
-                                color: 'var(--color-primary)',
-                                borderColor: 'var(--color-primary)',
-                                fontSize: '12px',
-                                padding: '4px 12px',
-                                '&:hover': {
-                                  borderColor: 'var(--color-primary)',
-                                  backgroundColor: 'var(--color-primary-light)'
-                                }
-                              }}
+                              sx={outlineActionSx}
                             >
                               Add Option
                             </MuiButton>
@@ -2270,16 +2272,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               size="small"
                               startIcon={<Add />}
                               onClick={() => addCheckboxValue(section.id, task.id)}
-                              sx={{
-                                color: 'var(--color-primary)',
-                                borderColor: 'var(--color-primary)',
-                                fontSize: '12px',
-                                padding: '4px 12px',
-                                '&:hover': {
-                                  borderColor: 'var(--color-primary)',
-                                  backgroundColor: 'var(--color-primary-light)'
-                                }
-                              }}
+                              sx={outlineActionSx}
                             >
                               Add Option
                             </MuiButton>
@@ -2338,16 +2331,7 @@ export const AddOperationalAuditSchedulePage = () => {
                               size="small"
                               startIcon={<Add />}
                               onClick={() => addOptionsInputsValue(section.id, task.id)}
-                              sx={{
-                                color: 'var(--color-primary)',
-                                borderColor: 'var(--color-primary)',
-                                fontSize: '12px',
-                                padding: '4px 12px',
-                                '&:hover': {
-                                  borderColor: 'var(--color-primary)',
-                                  backgroundColor: 'var(--color-primary-light)'
-                                }
-                              }}
+                              sx={outlineActionSx}
                             >
                               Add Option
                             </MuiButton>
@@ -2363,7 +2347,7 @@ export const AddOperationalAuditSchedulePage = () => {
                     variant="outlined"
                     onClick={() => addTaskToSection(section.id)}
                     startIcon={<Add />}
-                    sx={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', '&:hover': { borderColor: 'var(--color-primary-hover)', backgroundColor: 'var(--color-primary-light)' } }}
+                    sx={secondaryActionSx}
                   >
                     Add Question
                   </MuiButton>
@@ -2374,16 +2358,10 @@ export const AddOperationalAuditSchedulePage = () => {
             {/* Add Section Button */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
               <MuiButton
-                variant="contained"
+                variant="outlined"
                 startIcon={<Add />}
                 onClick={addTaskSection}
-                sx={{
-                  backgroundColor: 'var(--color-primary)',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'var(--color-primary-hover)'
-                  }
-                }}
+                sx={secondaryActionSx}
               >
                 Add Section
               </MuiButton>
@@ -2393,26 +2371,16 @@ export const AddOperationalAuditSchedulePage = () => {
 
         {/* Step 3: Schedule Setup */}
         {activeStep === 2 && (
-          <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+          <SectionCard style={{ margin: 0 }}>
             {/* Header with icon and title */}
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 2,
-              mb: 3
+              gap: 1.5,
+              mb: 1.5
             }}>
-              <Box sx={{
-                backgroundColor: 'var(--color-primary)',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+              <SectionIcon icon={CalendarClock} />
+              <Typography variant="h6" sx={sectionTitleSx}>
                 Schedule Setup
               </Typography>
             </Box>
@@ -2474,7 +2442,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Assign To Type Selection */}
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Assign To <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Assign To"
                       notched
@@ -2498,7 +2466,7 @@ export const AddOperationalAuditSchedulePage = () => {
                   <Box sx={{ minWidth: 0 }}>
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 0, maxWidth: '100%' }}>
                       <InputLabel shrink>
-                        Select Users <span style={{ color: 'red' }}>*</span>
+                        Select Users <span className="fm-required-mark">*</span>
                       </InputLabel>
                       <MuiSelect
                         multiple
@@ -2540,7 +2508,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Multi-select Groups - Show when assignToType is 'group' */}
                 {assignToType === 'group' && (
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Select Groups <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       multiple
                       label="Select Groups"
@@ -2579,7 +2547,7 @@ export const AddOperationalAuditSchedulePage = () => {
 
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Backup Assignee <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Backup Assignee"
                       notched
@@ -2603,7 +2571,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Plan Duration with conditional input */}
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Plan Duration <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Plan Duration"
                       notched
@@ -2627,7 +2595,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Plan Duration Value Input - Show when duration type is selected */}
                 {needsValueInput(planDuration) && (
                   <TextField
-                    label={<span>Plan Duration ({planDuration}) <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Plan Duration ({planDuration}) <span className="fm-required-mark">*</span></span>}
                     type="number"
                     fullWidth
                     value={planDurationValue}
@@ -2667,7 +2635,7 @@ export const AddOperationalAuditSchedulePage = () => {
 
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Category <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Category"
                       notched
@@ -2708,7 +2676,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Submission Time Value Input - Show when time type is selected */}
                 {needsValueInput(submissionTime) && (
                   <TextField
-                    label={<span>Submission Time ({submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Submission Time ({submissionTime}) <span className="fm-required-mark">*</span></span>}
                     type="number"
                     fullWidth
                     value={submissionTimeValue}
@@ -2748,7 +2716,7 @@ export const AddOperationalAuditSchedulePage = () => {
 
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Lock Overdue Task <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Lock Overdue Task"
                       notched
@@ -2766,7 +2734,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Grace Time with conditional input */}
                 <Box>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Grace Time <span className="fm-required-mark">*</span></InputLabel>
                     <MuiSelect
                       label="Grace Time"
                       notched
@@ -2789,7 +2757,7 @@ export const AddOperationalAuditSchedulePage = () => {
                 {/* Grace Time Value Input - Show when time type is selected */}
                 {needsValueInput(graceTime) && (
                   <TextField
-                    label={<span>Grace Time ({graceTime}) <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Grace Time ({graceTime}) <span className="fm-required-mark">*</span></span>}
                     type="number"
                     fullWidth
                     value={graceTimeValue}
@@ -2829,7 +2797,7 @@ export const AddOperationalAuditSchedulePage = () => {
 
                 <Box>
                   <TextField
-                    label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                     id="startFrom"
                     type="date"
                     fullWidth
@@ -2846,7 +2814,7 @@ export const AddOperationalAuditSchedulePage = () => {
 
                 <Box>
                   <TextField
-                    label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>End Date <span className="fm-required-mark">*</span></span>}
                     id="endAt"
                     type="date"
                     fullWidth
@@ -2872,9 +2840,10 @@ export const AddOperationalAuditSchedulePage = () => {
         )}
 
         {/* Navigation Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
-          <RedButton
-            variant="contained"
+        <div className="fm-action-bar mt-6 pt-4 sm:pt-6">
+          <button
+            type="button"
+            className="fm-action-secondary"
             onClick={() => {
               captureAuditEvent("Save to Draft clicked");
               toast.success('Draft saved');
@@ -2882,14 +2851,15 @@ export const AddOperationalAuditSchedulePage = () => {
             }}
           >
             Save to Draft
-          </RedButton>
-          <RedButton
-            variant="contained"
+          </button>
+          <button
+            type="button"
+            className="fm-action-primary"
             onClick={activeStep === 2 ? handleSubmit : handleNext}
           >
-            {activeStep === 2 ? 'Proceed to Save' : 'Proceed to Save'}
-          </RedButton>
-        </Box>
+            Proceed to Save
+          </button>
+        </div>
       </Box>
     </Box>
   );

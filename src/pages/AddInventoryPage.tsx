@@ -735,10 +735,10 @@ export const AddInventoryPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         {/* Inventory Details Section */}
-        <div className="border-b bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="border-b border-gray-200">
           <button
             onClick={() => setInventoryDetailsExpanded(!inventoryDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
+            className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -1232,13 +1232,13 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Tax Details Section */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="border-b border-gray-200">
           <button
             onClick={() => setTaxDetailsExpanded(!taxDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-4"
+            className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3  ">
-              <div className="w-8 h8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
               <h2 className="text-lg font-semibold text-[#DA7756] uppercase">TAX DETAILS</h2>

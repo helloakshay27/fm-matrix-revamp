@@ -98,25 +98,27 @@ export const AddCompanyPartnerModal = ({ isOpen, onClose, fetchData, isEditing, 
   };
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogContent>
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth sx={{ '& .MuiPaper-root': { borderRadius: '24px' } }}>
+      <DialogContent sx={{ padding: '28px' }}>
         <div>
           <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Company Partner' : 'Add Company Partner'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <TextField
-            label="Company Name*"
-            name="companyName"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            type='text'
-            fullWidth
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
-          />
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">Company Name*</label>
+            <TextField
+              name="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              type='text'
+              placeholder="Company Name"
+              fullWidth
+              variant="outlined"
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+          </div>
 
 
           <Box sx={{ mb: 4 }}>
@@ -133,7 +135,7 @@ export const AddCompanyPartnerModal = ({ isOpen, onClose, fetchData, isEditing, 
                 onChange={handleFileChange}
               />
               <label htmlFor="file-upload" className="block cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-white p-8 text-center transition-colors">
                   <span className="text-gray-600">
                     Drag & Drop or{" "}
                     <span className="text-red-500 underline">Choose file</span>{" "}
@@ -182,14 +184,20 @@ export const AddCompanyPartnerModal = ({ isOpen, onClose, fetchData, isEditing, 
           </Box>
 
           {/* Submit Button */}
-          <div className="pt-4">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
               type="submit"
-              variant="outline"
-              className="fm-button-fix fm-button-brand w-full"
+              className="fm-action-primary"
             >
               Submit
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

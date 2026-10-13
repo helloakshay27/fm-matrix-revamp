@@ -665,7 +665,7 @@ const TaskForm = ({
           disabled={isReadOnly}
           variant="outlined"
           size="small"
-          sx={fieldStyles}
+          sx={{ ...fieldStyles, height: "auto" }}
           inputProps={{ maxLength: 200 }}
         />
         <div className="flex justify-end mt-1">
@@ -680,31 +680,6 @@ const TaskForm = ({
           <label className="text-sm font-medium">
             Description<span className="text-red-500">*</span>
           </label>
-          {supported && (
-            <IconButton
-              size="small"
-              onClick={() => {
-                if (isListening && activeId === "task-description") {
-                  stopListening();
-                } else {
-                  const currentText = quillEditorRef.current
-                    ? quillEditorRef.current.root.innerHTML
-                    : formData.description;
-                  setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
-                  startListening("task-description");
-                }
-              }}
-              color={isListening && activeId === "task-description" ? "secondary" : "default"}
-              sx={{ color: isListening && activeId === "task-description" ? "#C72030" : "inherit" }}
-              disabled={isReadOnly}
-            >
-              {isListening && activeId === "task-description" ? (
-                <Mic size={18} />
-              ) : (
-                <MicOff size={18} />
-              )}
-            </IconButton>
-          )}
         </div>
         <div className="bc-description-toolbar-compact">
           <div
@@ -1054,7 +1029,7 @@ const TaskForm = ({
 
       <div className="mb-6">
         <div
-          className="text-[12px] text-[#DA7756] text-right cursor-pointer mb-2"
+          className="text-[12px] text-brand text-right cursor-pointer mb-2"
           onClick={() => setIsTagModalOpen(true)}
         >
           <i>Create new tag</i>
@@ -2005,7 +1980,7 @@ const ProjectTaskCreateModal = ({
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white text-[12px]">
           <button
             type="submit"
-            className="flex items-center justify-center border-2 text-[#DA7756] border-[#DA7756] px-4 py-2 w-[100px]"
+            className="fm-button-fix fm-button-brand flex items-center justify-center px-4 py-2 min-w-[100px]"
             disabled={isSubmitting}
           >
             {loading || editLoading
@@ -2020,14 +1995,14 @@ const ProjectTaskCreateModal = ({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex items-center justify-center border-2 text-gray-600 border-gray-400 px-4 py-2 w-max"
+                className="flex items-center justify-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 w-max"
               >
                 Cancel
               </button>
             ) : (
               <button
                 type="button"
-                className="flex items-center justify-center border-2 text-[#DA7756] border-[#DA7756] px-4 py-2 w-max"
+                className="flex items-center justify-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 w-max"
                 onClick={handleAddTask}
                 disabled={isSubmitting}
               >

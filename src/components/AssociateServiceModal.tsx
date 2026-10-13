@@ -11,7 +11,7 @@ import {
   Select as MuiSelect,
 } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -108,7 +108,11 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
         }
       );
 
-  toast.success('Service associated successfully!');
+      toast.success('Service associated successfully!', {
+        position: 'bottom-center',
+        icon: <Check size={16} />,
+        className: 'service-association-toast',
+      });
       onClose();
     } catch (error) {
       console.error('Failed to associate service:', error);
@@ -131,22 +135,10 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
     fetchAssetData();
   }, [isOpen, assetGroupId]);
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-    '& .MuiInputBase-root': {
-      '& .MuiSelect-select': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' },
-      },
-    },
-  };
-
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
-      <div className="flex items-center justify-between px-6 pt-4">
-        <DialogTitle style={{ padding: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth className="service-association-dialog">
+      <div className="service-association-dialog-header">
+        <DialogTitle className="service-association-dialog-title">
           Associate Services To Asset
         </DialogTitle>
         <IconButton onClick={onClose} size="small">
@@ -154,9 +146,9 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
         </IconButton>
       </div>
 
-      <DialogContent style={{ padding: '24px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <FormControl fullWidth variant="outlined" disabled={loading || !assetGroupId}>
+      <DialogContent className="service-association-dialog-content">
+        <div className="service-association-asset-field-wrap">
+          <FormControl className="service-association-asset-control" fullWidth variant="outlined" disabled={loading || !assetGroupId}>
             <InputLabel id="asset-select-label" shrink>Asset</InputLabel>
             <MuiSelect
               labelId="asset-select-label"
@@ -164,7 +156,6 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
               displayEmpty
               value={selectedAsset}
               onChange={(e) => setSelectedAsset(e.target.value)}
-              sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Asset</em></MenuItem>
               {assets.map((asset) => (
@@ -189,7 +180,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
         <div className="flex justify-center">
           <Button
             onClick={handleAssociate}
-            className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+            className="service-association-submit"
             disabled={loading || !assetGroupId}
           >
             Associate Service

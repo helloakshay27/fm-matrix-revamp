@@ -178,19 +178,19 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }} modal={false}>
       <DialogContent className="max-w-2xl bg-white [&>button]:hidden" aria-describedby="filter-dialog-description">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-xl font-semibold">FILTER BY</DialogTitle>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
           >
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 py-4">
           {/* Search Section */}
       
 
@@ -344,19 +344,19 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-4 pt-6">
-            <Button 
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-6">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              className="h-11 px-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              Reset
+            </Button>
+            <Button
+              className="h-11 px-8 bg-[#1A1A18] text-white hover:bg-black"
               onClick={handleApply}
             >
               Apply Filters
-            </Button>
-            <Button
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              onClick={handleReset}
-            >
-              Reset
             </Button>
           </div>
         </div>

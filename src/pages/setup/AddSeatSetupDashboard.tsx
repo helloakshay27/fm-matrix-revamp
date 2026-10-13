@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';
-import { CirclePlus, CircleMinus, X, Minus } from 'lucide-react';
+import { CirclePlus, CircleMinus, X, Minus, Plus, Upload } from 'lucide-react';
 
 const fieldStyles = {
   height: '40px',
@@ -96,6 +96,7 @@ export const AddSeatSetupDashboard = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [selectedAssignmentSeatType, setSelectedAssignmentSeatType] = useState<string>("");
   const [seatsToAssign, setSeatsToAssign] = useState<string>("");
+  const [floorMapFile, setFloorMapFile] = useState<File | null>(null);
   
   const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
     { name: "Angular Ws", totalSeats: "", reservedSeats: "" },
@@ -501,34 +502,60 @@ export const AddSeatSetupDashboard = () => {
           <TabsContent value="seat-configuration" className="mt-6">
             <div className="flex gap-6">
               {/* Left Side - Seat Configuration Form */}
-              <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
-                <div className="space-y-1">
-                  {/* Header Row */}
-                  <div className="grid grid-cols-3 gap-4 py-3 border-b-2 border-gray-300 bg-gray-50 px-4 -mx-6 mb-4">
-                    <div className="font-semibold text-gray-700">Seat Type</div>
-                    <div className="font-semibold text-gray-700 text-center">Total No. of Seats</div>
-                    <div className="font-semibold text-gray-700 text-center">Reserved Seats</div>
-                  </div>
-                  
-                  {seatTypes.map((seatType, index) => (
-                    <div 
-                      key={index} 
-                      className={`grid grid-cols-3 gap-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-4 -mx-6 ${
-                        selectedSeatType === seatType.name ? 'bg-[#C72030]/10 border-[#C72030] border-l-4' : ''
-                      }`}
+              <div
+                className="flex-1 overflow-hidden bg-white"
+                style={{ border: '1px solid var(--color-divider)', borderRadius: 16, boxShadow: 'none' }}
+              >
+                <div
+                  className="grid items-center"
+                  style={{
+                    gridTemplateColumns: '1.4fr 1fr 1fr',
+                    gap: 12,
+                    padding: '11px 20px',
+                    backgroundColor: 'var(--color-surface)',
+                  }}
+                >
+                  {['Seat Type', 'Total No. of Seats', 'Reserved Seats'].map((label, i) => (
+                    <div
+                      key={label}
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        letterSpacing: '0.09em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-ink-48)',
+                        textAlign: i === 0 ? 'left' : 'center',
+                      }}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
+
+                {seatTypes.map((seatType, index) => {
+                  const selected = selectedSeatType === seatType.name;
+                  return (
+                    <div
+                      key={index}
+                      className="grid cursor-pointer items-center"
+                      style={{
+                        gridTemplateColumns: '1.4fr 1fr 1fr',
+                        gap: 12,
+                        padding: '10px 20px',
+                        borderTop: '1px solid var(--color-line)',
+                        backgroundColor: selected ? 'var(--color-hover)' : '#fff',
+                      }}
                       onClick={() => handleSeatTypeClick(seatType.name)}
                     >
-                      <div className="flex items-center">
-                        <span className={`text-sm font-medium ${selectedSeatType === seatType.name ? 'text-[#C72030]' : 'text-gray-700'}`}>
-                          {seatType.name}
-                        </span>
-                      </div>
+                      <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--color-text)' }}>
+                        {seatType.name}
+                      </span>
                       <div className="flex items-center justify-center">
                         <Input
                           placeholder="0"
                           value={seatType.totalSeats}
                           onChange={(e) => updateSeatType(index, 'totalSeats', e.target.value)}
-                          className="w-20 h-8 text-center"
+                          className="seat-count-input"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
@@ -537,17 +564,17 @@ export const AddSeatSetupDashboard = () => {
                           placeholder="0"
                           value={seatType.reservedSeats}
                           onChange={(e) => updateSeatType(index, 'reservedSeats', e.target.value)}
-                          className="w-20 h-8 text-center"
+                          className="seat-count-input"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
 
               {/* Right Side - Dynamic Seat Type Preview */}
-              <div className="w-80 bg-pink-50 rounded-lg border shadow-sm p-6">
+              <div className="w-80 bg-brand-card-bg rounded-lg border border-brand-card-border shadow-sm p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">{selectedSeatType}</h3>
                   <p className="text-sm text-gray-600">Common Seats</p>
@@ -644,38 +671,45 @@ export const AddSeatSetupDashboard = () => {
             {/* Floor Map Section */}
             <div className="mt-8 bg-white rounded-lg border shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Floor Map</h3>
-              <div className="border border-gray-300 rounded-lg p-4">
-                <input 
-                  type="file" 
-                  id="floor-map" 
-                  className="hidden" 
+              <div className="flex items-center gap-3 border border-gray-300 rounded-lg p-4">
+                <input
+                  type="file"
+                  id="floor-map"
+                  className="hidden"
                   accept="image/*"
+                  onChange={(e) => setFloorMapFile(e.target.files?.[0] ?? null)}
                 />
-                <label 
-                  htmlFor="floor-map" 
-                  className="text-[#C72030] cursor-pointer hover:underline"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('floor-map')?.click()}
                 >
+                  <Upload className="w-4 h-4 mr-2" />
                   Choose File
-                </label>
-                <span className="ml-2 text-gray-500">No file chosen</span>
+                </Button>
+                <span className="text-sm text-gray-500 truncate">
+                  {floorMapFile ? floorMapFile.name : 'No file chosen'}
+                </span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 mt-6">
-              <Button 
-                onClick={handleProceed}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-              >
-                Proceed
-              </Button>
-              <Button 
+            {/* Action Buttons — Cancel, then Proceed on its right */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
+              <button
+                type="button"
                 onClick={handleCancel}
-                variant="outline" 
-                className="border-gray-300 text-gray-700 px-8"
+                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-line)] bg-white px-[22px] text-[13px] font-semibold leading-none text-[var(--color-ink-68)] hover:border-[rgba(26,26,24,0.28)] hover:text-[var(--color-text)]"
               >
                 Cancel
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={handleProceed}
+                className="inline-flex h-[42px] w-[160px] shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-[22px] text-[13px] font-semibold leading-none text-white hover:bg-[var(--color-primary-hover)]"
+                style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: 'none' }}
+              >
+                Proceed
+              </button>
             </div>
           </TabsContent>
 
@@ -683,7 +717,7 @@ export const AddSeatSetupDashboard = () => {
             <div className="flex gap-6">
               {/* Left Side - Department List */}
               <div className="flex-1 bg-white rounded-lg border shadow-sm">
-                <div className="bg-gray-100 p-4 rounded-t-lg border-b border-[#C72030]">
+                <div className="bg-gray-100 p-4 rounded-t-lg border-b border-brand-card-border">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="font-semibold text-gray-700">Departments</div>
                     <div className="font-semibold text-gray-700 text-center">No. of Seats</div>
@@ -691,7 +725,7 @@ export const AddSeatSetupDashboard = () => {
                 </div>
                 <div className="p-0 max-h-96 overflow-y-auto">
                   {departments.map((department, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4 p-4 border-b border-gray-100 hover:bg-gray-50">
+                    <div key={index} className="grid grid-cols-2 gap-4 p-4 border-b border-gray-100 hover:bg-brand-selected">
                       <div className="text-sm text-gray-700">{department.name}</div>
                       <div className="text-sm text-gray-700 text-center">{department.seats}</div>
                     </div>
@@ -700,7 +734,7 @@ export const AddSeatSetupDashboard = () => {
               </div>
 
               {/* Right Side - Tag Department */}
-              <div className="w-80 bg-blue-50 rounded-lg border shadow-sm p-6">
+              <div className="w-80 bg-brand-card-bg rounded-lg border border-brand-card-border shadow-sm p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Tag Department</h3>
                 </div>
@@ -716,10 +750,10 @@ export const AddSeatSetupDashboard = () => {
                             <Button
                               onClick={() => toggleSeatTypeExpansion(seatType.name)}
                               size="sm"
-                              className="h-6 w-6 p-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-full"
+                              className="h-6 w-6 p-0 bg-brand hover:bg-brand-hover text-white rounded-full"
                               disabled={seatType.total === 0}
                             >
-                              {seatType.isExpanded ? <Minus className="h-3 w-3" /> : <CirclePlus className="h-3 w-3" />}
+                              {seatType.isExpanded ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
                             </Button>
                           </div>
                         </div>
@@ -740,7 +774,7 @@ export const AddSeatSetupDashboard = () => {
                                 <div className="flex gap-2 items-center">
                                   <Button
                                     size="sm"
-                                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
+                                    className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1"
                                     onClick={() => handleOpenAssignDialog(seatType.name)}
                                     disabled={seatType.assigned >= seatType.total}
                                   >
@@ -819,10 +853,10 @@ export const AddSeatSetupDashboard = () => {
             </Dialog>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mt-6">
+            <div className="flex justify-end gap-4 mt-6">
               <Button 
                 onClick={handleSubmit}
-                className="bg-[#6B3FA0] hover:bg-[#6B3FA0]/90 text-white px-8"
+                className="bg-brand hover:bg-brand-hover text-white px-8"
               >
                 Submit
               </Button>

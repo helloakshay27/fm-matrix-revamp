@@ -3,10 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BasicDetailsSection } from '@/components/BasicDetailsSection';
-import { AttachmentsSection } from '@/components/AttachmentsSection';
-import { ActionButtons } from '@/components/ActionButtons';
+import { FormActionBar } from '@/components/common/FormSection';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 
 export const AddDesignInsightDashboard = () => {
@@ -123,35 +121,26 @@ export const AddDesignInsightDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white min-h-screen">
-      {/* Header */}
-      {/* <div className="mb-6">
-        <p className="text-gray-600 mb-2 text-sm">Design Insight &gt; NEW Design Insight</p>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW DESIGN INSIGHT</h1>
-      </div> */}
-      {/* Header */}
-<div className="mb-6 flex items-center gap-3">
-  <Button
-    variant="ghost"
-    size="icon"
-    onClick={handleBack}
-    className="hover:bg-gray-100"
-  >
-    <ArrowLeft className="h-5 w-5 text-gray-700" />
-  </Button>
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      {/* Header — Add Asset page jaisa */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={handleBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Design Insights</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">New Design Insight</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW DESIGN INSIGHT</h1>
+      </div>
 
-  <div>
-    <p className="text-gray-600 mb-1 text-sm">
-      Design Insight &gt; NEW Design Insight
-    </p>
-    <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">
-      NEW DESIGN INSIGHT
-    </h1>
-  </div>
-</div>
-
-
-      {/* Basic Details Section */}
+      <div className="space-y-4 sm:space-y-6">
+      {/* Basic Details + Attachments Sections */}
       <BasicDetailsSection
         category={category}
         setCategory={setCategory}
@@ -177,8 +166,8 @@ export const AddDesignInsightDashboard = () => {
         attachments={attachments}
         onAttachmentsChange={onAttachmentsChange}
       />
-      {/* Action Buttons */}
-      <ActionButtons onSave={handleSave} onBack={handleBack} />
+      </div>
+      <FormActionBar onSubmit={handleSave} onCancel={handleBack} submitLabel="Save" />
     </div>
   );
 };

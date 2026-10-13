@@ -36,7 +36,7 @@ export const CancelBillModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm rounded-2xl sm:rounded-2xl">
         <DialogHeader>
           <DialogTitle>Cancel Invoice</DialogTitle>
         </DialogHeader>
@@ -53,15 +53,21 @@ export const CancelBillModal = ({
           />
         </div>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+        <DialogFooter className="flex flex-row justify-end gap-3 pt-4 sm:space-x-0">
+          <Button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-brand hover:bg-brand-hover text-white"
+            className="fm-action-primary"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>

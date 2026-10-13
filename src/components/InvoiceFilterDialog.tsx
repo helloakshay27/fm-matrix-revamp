@@ -29,7 +29,7 @@ export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white">
+      <DialogContent className="max-w-md bg-white rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
@@ -88,17 +88,17 @@ export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProp
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-center gap-3 pt-4">
+          <div className="flex gap-3 pt-4 items-center justify-end">
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2"
+              className="fm-action-primary"
             >
               Apply
             </Button>

@@ -582,7 +582,7 @@ export const TicketsFilterDialog = ({
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
           <Button
             onClick={handleSubmit}
             className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"

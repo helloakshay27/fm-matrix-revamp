@@ -104,16 +104,18 @@ export const SeatSetupDashboard = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Setup</div>
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">SEAT SETUP</h1>
-            <Button 
-              onClick={handleAddClick}
-              className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2 [&_svg]:text-white shrink-0 whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800">SEAT SETUP</h1>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center mb-4">
+          <Button
+            onClick={handleAddClick}
+            className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2 [&_svg]:text-white shrink-0 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </Button>
         </div>
 
         {/* Seat Type Headers */}

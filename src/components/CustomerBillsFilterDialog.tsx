@@ -43,7 +43,7 @@ export const CustomerBillsFilterDialog: React.FC<CustomerBillsFilterDialogProps>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl sm:rounded-2xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <Button
@@ -98,20 +98,19 @@ export const CustomerBillsFilterDialog: React.FC<CustomerBillsFilterDialogProps>
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button 
-            variant="secondary"
-            onClick={handleApply}
-            className="flex-1"
-          >
-            Apply
-          </Button>
-          <Button 
-            variant="outline"
+        <div className="flex gap-3 pt-4 items-center justify-end">
+          <Button
             onClick={handleReset}
-            className="flex-1"
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Reset
+          </Button>
+          <Button
+            onClick={handleApply}
+            className="fm-action-primary"
+          >
+            Apply
           </Button>
         </div>
       </DialogContent>

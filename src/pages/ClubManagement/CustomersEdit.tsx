@@ -2012,7 +2012,7 @@ const CustomersEdit = () => {
 
                 {/* DISPLAY NAME */}
                 <div className="acc-field mb-4">
-                    <div className="acc-label">Display Name <span className="acc-required">*</span></div>
+                    <div className="acc-label">Display Name <span className="fm-required-mark">*</span></div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -2183,7 +2183,11 @@ const CustomersEdit = () => {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 justify-center" style={{ marginBottom: '100px' }}>
+                <div className="acc-actions" style={{ marginBottom: '100px' }}>
+                    <Button variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
+                        Cancel
+                    </Button>
+
                     <Button
                         variant="ghost"
                         onClick={handleSubmit}
@@ -2198,10 +2202,6 @@ const CustomersEdit = () => {
                         ) : (
                             isEdit ? "Update" : "Save"
                         )}
-                    </Button>
-
-                    <Button variant="outline" className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
-                        Cancel
                     </Button>
                 </div>
             </div>

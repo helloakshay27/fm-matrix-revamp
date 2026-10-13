@@ -16,7 +16,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ConsumptionRecord {
@@ -51,7 +51,6 @@ const columns: ColumnConfig[] = [
 
 const UtilityConsumptionDashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -86,11 +85,11 @@ const UtilityConsumptionDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching consumption data:', error);
-      toast({ title: 'Error', description: 'Failed to fetch data', variant: 'destructive' });
+      toast.error('Failed to fetch data');
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchData(1);

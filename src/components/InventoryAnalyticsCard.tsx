@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ITEM_STATUS_COLORS, ANALYTICS_PALETTE, CATEGORY_BAR_COLOR, LINE_CHART_COLORS, getPaletteColor } from '@/styles/chartPalette';
+import { INVENTORY_ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, Info, RefreshCw } from 'lucide-react';
 import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
 import { toast } from 'sonner';
+
+const isInventoryAnalyticsTotalRow = (row: Record<string, unknown>) =>
+  row.is_total === true || Object.values(row).some(
+    (value) => typeof value === 'string' && value.trim().toLowerCase() === 'total'
+  );
 
 interface InventoryAnalyticsCardProps {
   title: string;
@@ -216,7 +221,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           <div className="w-full space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm text-gray-600 flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#D5DbDB] to-[#C4b89D]"></span>
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: INVENTORY_ANALYTICS_PALETTE[0] }}></span>
                 <span className="font-medium text-gray-700">Monthly Cost</span>
               </div>
               <div className="text-sm font-semibold text-gray-800">Total: <span className="text-[#DA7756]">{currency}{total}</span></div>
@@ -224,12 +229,6 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             <div className="w-full h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 48 }} barCategoryGap={20}>
-                  <defs>
-                    <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#D5DbDB" />
-                      <stop offset="100%" stopColor="#C4b89D" />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="label"
@@ -246,7 +245,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     label={{ value: `Cost (${currency})`, angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="cost" fill="url(#invCostBar)" radius={[4, 4, 0, 0]} maxBarSize={50}>
+                  <Bar dataKey="cost" fill={INVENTORY_ANALYTICS_PALETTE[0]} radius={[4, 4, 0, 0]} maxBarSize={50}>
                     <LabelList dataKey="cost" position="top" formatter={(v: number) => v ? `${currency}${formatNumber(v)}` : ''} className="text-[10px] fill-gray-800 font-medium" />
                   </Bar>
                 </BarChart>
@@ -310,7 +309,10 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Mobile: Stacked cards */}
             <div className="block sm:hidden space-y-2">
               {localData.response.map((row: any, index: number) => (
-                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
+                <div
+                  key={index}
+                  className={`border border-gray-200 rounded-md p-3 ${isInventoryAnalyticsTotalRow(row) ? 'bg-[var(--color-surface)] [&_*]:font-semibold [&_*]:text-[var(--color-text)]' : 'bg-white'}`}
+                >
                   {/* <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-500">Date</span>
                     <span className="font-medium text-gray-900">{row.date}</span>
@@ -363,35 +365,42 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Tablet/Desktop: Scrollable table */}
             <div className="overflow-x-auto -mx-3 sm:mx-0">
               <div className="min-w-[900px] px-3 sm:px-0">
-                <div className="rounded-xl overflow-hidden border border-gray-200">
+                <div className="overflow-hidden rounded-2xl border border-gray-200">
                   <table className="w-full text-sm">
                     <thead>
                       <tr>
-                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
+                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((heading) => (
                           <th
-                            key={h}
-                            className={`px-4 py-3 !text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
-                            style={{ backgroundColor: '#DA7756' }}
+                            key={heading}
+                            className="analytics-header whitespace-nowrap px-5 py-[11px] text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--color-ink-48)]"
+                            style={{ backgroundColor: 'var(--color-surface)' }}
                           >
-                            {h}
+                            {heading}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {localData.response.map((row: any, index: number) => (
-                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 whitespace-nowrap">{row.date}</td>
-                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 break-words">{row.product}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.unit}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.opening}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.addition}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.consumption}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.current_stock}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost_per_unit}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost}</td>
-                        </tr>
-                      ))}
+                      {localData.response.map((row: any, index: number) => {
+                        const isTotalRow = isInventoryAnalyticsTotalRow(row);
+                        return (
+                          <tr
+                            key={index}
+                            className={isTotalRow ? '[&>td]:font-semibold [&>td]:text-[var(--color-text)]' : ''}
+                            style={{ backgroundColor: isTotalRow ? 'var(--color-surface)' : index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}
+                          >
+                            <td className="whitespace-nowrap border-b border-[var(--color-line)] px-4 py-3 text-left text-xs font-medium text-gray-800">{row.date}</td>
+                            <td className="break-words border-b border-[var(--color-line)] px-4 py-3 text-left text-xs font-medium text-gray-800">{row.product}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.unit}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.opening}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.addition}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.consumption}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.current_stock}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.cost_per_unit}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.cost}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -405,12 +414,11 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         // Convert status data to chart format with safe fallbacks
         // Chart colors requested: Critical #8B7355, Non-Critical #DBC2A9, Eco-friendly #d1d5db
         const statusChartData = [
-          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: ITEM_STATUS_COLORS.active },
-          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: ITEM_STATUS_COLORS.inactive },
-          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#8B7355' },
-          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#DBC2A9' },
-          // Use a distinct light green for eco-friendly to avoid clashing with Inactive
-          { name: 'Eco-friendly', value: Number(data?.eco_friendly) || 0, color: '#A7F3D0' }
+          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: INVENTORY_ANALYTICS_PALETTE[0] },
+          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: INVENTORY_ANALYTICS_PALETTE[1] },
+          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: INVENTORY_ANALYTICS_PALETTE[2] },
+          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: INVENTORY_ANALYTICS_PALETTE[3] },
+          { name: 'Eco-friendly', value: Number(data?.eco_friendly) || 0, color: INVENTORY_ANALYTICS_PALETTE[4] }
         ];
         const total = Number(data?.total_items) || statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
         const withPct = statusChartData.map((s) => ({
@@ -500,13 +508,13 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   }}
                 />
                 <Tooltip />
-                <Bar dataKey="item_count" fill="#d1d5db" />
+                <Bar dataKey="item_count" fill={INVENTORY_ANALYTICS_PALETTE[0]} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-4 flex-wrap">
               {categoryData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#d1d5db' }}></div>
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: INVENTORY_ANALYTICS_PALETTE[0] }}></div>
                   <span className="text-sm font-medium text-gray-700">{item.group_name}: {item.item_count}</span>
                 </div>
               ))}
@@ -526,7 +534,10 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Mobile: Stacked cards */}
             <div className="block sm:hidden space-y-2">
               {localData.response.map((row: any, index: number) => (
-                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
+                <div
+                  key={index}
+                  className={`border border-gray-200 rounded-md p-3 ${isInventoryAnalyticsTotalRow(row) ? 'bg-[var(--color-surface)] [&_*]:font-semibold [&_*]:text-[var(--color-text)]' : 'bg-white'}`}
+                >
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-500">Date</span>
                     <span className="font-medium text-gray-900">{row.date}</span>
@@ -579,35 +590,42 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Tablet/Desktop: Scrollable table */}
             <div className="overflow-x-auto -mx-3 sm:mx-0">
               <div className="min-w-[900px] px-3 sm:px-0">
-                <div className="rounded-xl overflow-hidden border border-gray-200">
+                <div className="overflow-hidden rounded-2xl border border-gray-200">
                   <table className="w-full text-sm">
                     <thead>
                       <tr>
-                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((h, i) => (
+                        {['Date', 'Product', 'Unit', 'Opening', 'Addition', 'Consumption', 'Current Stock', 'Cost/Unit', 'Total Cost'].map((heading) => (
                           <th
-                            key={h}
-                            className={`px-4 py-3 !text-white font-semibold text-xs whitespace-nowrap analytics-header text-center`}
-                            style={{ backgroundColor: '#DA7756' }}
+                            key={heading}
+                            className="analytics-header whitespace-nowrap px-5 py-[11px] text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--color-ink-48)]"
+                            style={{ backgroundColor: 'var(--color-surface)' }}
                           >
-                            {h}
+                            {heading}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {localData.response.map((row: any, index: number) => (
-                        <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
-                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 whitespace-nowrap">{row.date}</td>
-                          <td className="px-4 py-3 text-left font-medium text-gray-800 text-xs border-b border-gray-100 break-words">{row.product}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.unit}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.opening}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.addition}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.consumption}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.current_stock}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost_per_unit}</td>
-                          <td className="px-4 py-3 text-left text-gray-800 text-xs border-b border-gray-100">{row.cost}</td>
-                        </tr>
-                      ))}
+                      {localData.response.map((row: any, index: number) => {
+                        const isTotalRow = isInventoryAnalyticsTotalRow(row);
+                        return (
+                          <tr
+                            key={index}
+                            className={isTotalRow ? '[&>td]:font-semibold [&>td]:text-[var(--color-text)]' : ''}
+                            style={{ backgroundColor: isTotalRow ? 'var(--color-surface)' : index % 2 === 0 ? '#ffffff' : '#F6F4EE' }}
+                          >
+                            <td className="whitespace-nowrap border-b border-[var(--color-line)] px-4 py-3 text-left text-xs font-medium text-gray-800">{row.date}</td>
+                            <td className="break-words border-b border-[var(--color-line)] px-4 py-3 text-left text-xs font-medium text-gray-800">{row.product}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.unit}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.opening}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.addition}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.consumption}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.current_stock}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.cost_per_unit}</td>
+                            <td className="border-b border-[var(--color-line)] px-4 py-3 text-left text-xs text-gray-800">{row.cost}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -631,7 +649,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Legend */}
             <div className="flex items-center justify-end gap-4 mb-2 text-sm flex-wrap">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#DA7756' }} />
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: INVENTORY_ANALYTICS_PALETTE[0] }} />
                 <span className="text-xs">Consumption</span>
               </div>
             </div>
@@ -657,7 +675,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                 />
-                <Bar dataKey="value" fill="#DA7756" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill={INVENTORY_ANALYTICS_PALETTE[0]} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
             {/* Info section */}
@@ -701,8 +719,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <YAxis width={80} domain={yDomainNG} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#D5DbDB" strokeWidth={2} dot={{ r: 4, fill: '#D5DbDB', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
-                <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={INVENTORY_ANALYTICS_PALETTE[0]} strokeWidth={2} dot={{ r: 4, fill: INVENTORY_ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke={INVENTORY_ANALYTICS_PALETTE[1]} strokeWidth={2} dot={{ r: 5, fill: INVENTORY_ANALYTICS_PALETTE[1], stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
               </LineChart>
             </ResponsiveContainer>
             {!hasValues && (
@@ -752,8 +770,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <YAxis width={80} domain={yDomain} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#D5DbDB" strokeWidth={2} dot={{ r: 4, fill: '#D5DbDB', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
-                <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={INVENTORY_ANALYTICS_PALETTE[0]} strokeWidth={2} dot={{ r: 4, fill: INVENTORY_ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke={INVENTORY_ANALYTICS_PALETTE[1]} strokeWidth={2} dot={{ r: 5, fill: INVENTORY_ANALYTICS_PALETTE[1], stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
               </LineChart>
             </ResponsiveContainer>
             {!hasValues && (

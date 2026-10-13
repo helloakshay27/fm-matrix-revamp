@@ -493,16 +493,16 @@ export const EditUtilityRequestPage = () => {
 
             {/* Form Card */}
             <Card className=" mx-auto">
-                <CardHeader className="bg-[#f6f4ee] border-b">
-                    <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                        <span className="inline-flex items-center">
-                            <FileChartColumnIncreasing className="w-5 h-5" color='#C72030' />
+                <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-900 sm:text-base">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                            <FileChartColumnIncreasing className="h-4 w-4 text-gray-700" />
                         </span>
-                        <span className="text-[#C72030]">Edit Utilizations</span>
+                        <span>Edit Utilizations</span>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                <CardContent className="px-8 pb-8 pt-2">
+                    <form id="edit-utility-request-form" onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Select Entity */}
                             <div className="space-y-2">
@@ -729,25 +729,34 @@ export const EditUtilityRequestPage = () => {
                                 </FormControl>
                             </div>
                         </div>
-
-                        {/* Submit Button */}
-                        <div className="flex justify-center pt-6">
-                            <Button
-                                type="submit"
-                                className="bg-[#C72030] hover:bg-[#A01B29] text-white px-8 py-3 rounded-none font-medium transition-colors duration-200"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <CircularProgress size={16} color="inherit" className="mr-2" />
-                                        Updating...
-                                    </>
-                                ) : 'Update'}
-                            </Button>
-                        </div>
                     </form>
                 </CardContent>
             </Card>
+
+            {/* Form Actions */}
+            <div className="flex justify-end gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    className="h-12 rounded-xl border-gray-300 bg-white px-8 text-gray-900 hover:bg-gray-50"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    type="submit"
+                    form="edit-utility-request-form"
+                    className="bg-[#C72030] hover:bg-[#A01B29] text-white px-8 py-3 rounded-none font-medium transition-colors duration-200"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <CircularProgress size={16} color="inherit" className="mr-2" />
+                            Updating...
+                        </>
+                    ) : 'Update'}
+                </Button>
+            </div>
         </div>
     );
 };

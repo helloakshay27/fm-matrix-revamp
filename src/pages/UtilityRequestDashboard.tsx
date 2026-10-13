@@ -547,11 +547,9 @@ export const UtilityRequestDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (page: number = 1) => {
     setLoading(true);
-    setError(null);
     try {
       const baseUrl = localStorage.getItem('baseUrl') || '-';
       const token = localStorage.getItem('token');
@@ -590,7 +588,6 @@ export const UtilityRequestDashboard = () => {
       setTotalEntries(pagination.total_entries || 0);
     } catch (err: any) {
       console.error('Error fetching consumption data:', err);
-      setError(`Failed to fetch consumption data: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -827,9 +824,6 @@ export const UtilityRequestDashboard = () => {
 
       {/* Action Buttons */}
 
-
-      {/* Display error message if any */}
-      {error && <div className="p-4 bg-red-100 text-red-800 rounded">{error}</div>}
 
       {/* Enhanced Data Table */}
       <div>

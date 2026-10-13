@@ -39,6 +39,7 @@ const fieldStyles = {
   },
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#ffffff !important',
+    borderRadius: '12px',
   },
 };
 
@@ -338,7 +339,7 @@ export const TimeSlotSetupPage = () => {
 
       {/* Create Time Slot Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={(open) => !open && handleCloseCreateModal()}>
-        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Create Time Slot</DialogTitle>
@@ -354,51 +355,57 @@ export const TimeSlotSetupPage = () => {
           </DialogHeader>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            <TextField
-              label="Start Time *"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
-            <TextField
-              label="End Time *"
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Start Time <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                End Time <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={handleCloseCreateModal}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleCreateTimeSlot}
               disabled={isCreating}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
+              className="fm-action-primary"
             >
-              {isCreating ? 'Creating...' : 'CREATE'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCloseCreateModal}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
-            >
-              CANCEL
-            </Button>
+              {isCreating ? 'Creating...' : 'Create'}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Time Slot Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEditModal()}>
-        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Edit Time Slot</DialogTitle>
@@ -414,44 +421,50 @@ export const TimeSlotSetupPage = () => {
           </DialogHeader>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            <TextField
-              label="Start Time *"
-              type="time"
-              value={editStartTime}
-              onChange={(e) => setEditStartTime(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
-            <TextField
-              label="End Time *"
-              type="time"
-              value={editEndTime}
-              onChange={(e) => setEditEndTime(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                Start Time <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                type="time"
+                value={editStartTime}
+                onChange={(e) => setEditStartTime(e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                End Time <span className="text-red-500">*</span>
+              </label>
+              <TextField
+                type="time"
+                value={editEndTime}
+                onChange={(e) => setEditEndTime(e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-            <Button
+          <div className="fm-action-bar pt-4">
+            <button
+              type="button"
+              onClick={handleCloseEditModal}
+              className="fm-action-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={handleUpdateTimeSlot}
               disabled={isUpdating}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
+              className="fm-action-primary"
             >
-              {isUpdating ? 'Updating...' : 'UPDATE'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCloseEditModal}
-              className="border-brand text-brand px-8 w-full sm:w-auto"
-            >
-              CANCEL
-            </Button>
+              {isUpdating ? 'Updating...' : 'Update'}
+            </button>
           </div>
         </DialogContent>
       </Dialog>

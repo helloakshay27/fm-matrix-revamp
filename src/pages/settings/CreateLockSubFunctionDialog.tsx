@@ -210,19 +210,19 @@ export const CreateLockSubFunctionDialog = ({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button
+          <div className="fm-action-bar pt-4 border-t">
+            <button
               type="button"
-              variant="outline"
               onClick={handleCancel}
               disabled={isSubmitting}
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              className="fm-action-primary"
             >
               {isSubmitting ? (
                 <>
@@ -232,7 +232,7 @@ export const CreateLockSubFunctionDialog = ({
               ) : (
                 'Create Sub Function'
               )}
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

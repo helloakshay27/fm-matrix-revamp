@@ -32,16 +32,16 @@ const buildScheduleSelectStyles = (
 ): StylesConfig<ReactSelectOption, false> => ({
   control: (base, state) => ({
     ...base,
-    minHeight: 45,
-    height: 45,
+    minHeight: 44,
+    height: 44,
     width: '100%',
-    fontSize: 14,
-    borderRadius: 4,
+    fontSize: 13.5,
+    borderRadius: 'var(--radius-input, 12px)',
     borderColor: hasError
       ? '#d32f2f'
       : state.isFocused
       ? 'var(--color-primary)'
-      : '#999',
+      : 'rgba(26, 26, 24, 0.12)',
     boxShadow: 'none',
     backgroundColor: '#fff',
     cursor: 'pointer',
@@ -53,13 +53,13 @@ const buildScheduleSelectStyles = (
   menuPortal: (base) => ({ ...base, zIndex: 99999 }),
   valueContainer: (base) => ({
     ...base,
-    height: 43,
+    height: 42,
     padding: '0 14px',
     cursor: 'pointer',
   }),
   indicatorsContainer: (base) => ({
     ...base,
-    height: 43,
+    height: 42,
   }),
   dropdownIndicator: (base) => ({
     ...base,
@@ -298,7 +298,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
       error={error}
       sx={{
         position: 'relative',
-        height: '45px',
+        minHeight: '44px',
         '& .MuiInputLabel-root.Mui-focused': { color: 'var(--color-primary)' },
       }}
     >

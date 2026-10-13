@@ -370,7 +370,7 @@ export const ParkingCategoryPage = () => {
       {/* Create Category Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={(open) => !open && handleCloseCreateModal()} modal={false}>
         <DialogContent
-          className="w-full sm:max-w-[500px] !bg-white overflow-visible"
+          className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7"
           {...dialogPointerGuards}
         >
           <DialogHeader>
@@ -415,7 +415,7 @@ export const ParkingCategoryPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-brand text-brand hover:bg-brand-selected"
+                  className="border-gray-300 text-[var(--color-text)] hover:bg-gray-50"
                   onClick={() => document.getElementById('file-input')?.click()}
                 >
                   Choose File
@@ -446,21 +446,22 @@ export const ParkingCategoryPage = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <Button
+            <div className="fm-action-bar pt-2">
+              <button
+                type="button"
+                onClick={handleCloseCreateModal}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleCreateCategory}
                 disabled={isCreating}
-                className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+                className="fm-action-primary"
               >
-                {isCreating ? 'Creating...' : 'CREATE'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCloseCreateModal}
-                className="border-brand text-brand px-8 w-full sm:w-auto"
-              >
-                CANCEL
-              </Button>
+                {isCreating ? 'Creating...' : 'Create'}
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -469,7 +470,7 @@ export const ParkingCategoryPage = () => {
       {/* Edit Category Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEditModal()} modal={false}>
         <DialogContent
-          className="w-full sm:max-w-[500px] !bg-white overflow-visible"
+          className="w-full sm:max-w-[500px] !bg-white overflow-visible rounded-[24px] p-7"
           {...dialogPointerGuards}
         >
           <DialogHeader>
@@ -514,7 +515,7 @@ export const ParkingCategoryPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-brand text-brand hover:bg-brand-selected"
+                  className="border-gray-300 text-[var(--color-text)] hover:bg-gray-50"
                   onClick={() => document.getElementById('edit-file-input')?.click()}
                 >
                   Choose File
@@ -562,21 +563,22 @@ export const ParkingCategoryPage = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <Button
+            <div className="fm-action-bar pt-2">
+              <button
+                type="button"
+                onClick={handleCloseEditModal}
+                className="fm-action-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleUpdateCategory}
                 disabled={isUpdating}
-                className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+                className="fm-action-primary"
               >
-                {isUpdating ? 'Updating...' : 'UPDATE'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCloseEditModal}
-                className="border-brand text-brand px-8 w-full sm:w-auto"
-              >
-                CANCEL
-              </Button>
+                {isUpdating ? 'Updating...' : 'Update'}
+              </button>
             </div>
           </div>
         </DialogContent>

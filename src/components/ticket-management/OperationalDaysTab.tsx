@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { ticketManagementAPI, OperationalDay, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 import { toast } from 'sonner';
-import { Upload, Download } from 'lucide-react';
+import { Upload, Download, CalendarClock } from 'lucide-react';
 
 const timeOptions = Array.from({ length: 24 }, (_, i) => {
   const hour = i.toString().padStart(2, '0');
@@ -191,11 +191,16 @@ export const OperationalDaysTab: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Operational Days Setup</span>
+            <span className="flex items-center gap-3 text-base font-semibold text-[var(--color-text)]">
+              <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+                <CalendarClock className="w-4 h-4 text-[var(--color-ink-68)]" />
+              </span>
+              Operational Days Setup
+            </span>
             <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2 text-[#C72030]" />
+                  <Upload className="h-4 w-4 mr-2" />
                   Import
                 </Button>
               </DialogTrigger>
@@ -305,15 +310,19 @@ export const OperationalDaysTab: React.FC = () => {
               ))}
             </div>
           )}
-
-          <div className="flex justify-end mt-6">
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost">
-              {isSubmitting ? 'Saving...' : 'Save All Changes'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <div className="fm-action-bar">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? 'Saving...' : 'Save All Changes'}
+        </button>
+      </div>
     </div>
   );
 };

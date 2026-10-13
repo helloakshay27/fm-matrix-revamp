@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast as sonnerToast } from "sonner";
+import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 
 // Bill shape from lock_account_bill.json
@@ -225,6 +226,7 @@ export const EditPaymentPage: React.FC = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [date, setDate] = useState<Date>(new Date("2026-02-12"));
   const [isSaving, setIsSaving] = useState(false);
+  const [showVendorError, setShowVendorError] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
   // Form State
@@ -553,6 +555,7 @@ export const EditPaymentPage: React.FC = () => {
 
   const handleSave = async (status: "DRAFT" | "PAID") => {
     if (!selectedVendor) {
+      setShowVendorError(true);
       sonnerToast.error("Please select a vendor.");
       return;
     }
@@ -669,7 +672,7 @@ export const EditPaymentPage: React.FC = () => {
   };
 
   const handleUpdate = async () => {
-    if (!selectedVendor) { sonnerToast.error("Please select a vendor."); return; }
+    if (!selectedVendor) { setShowVendorError(true); sonnerToast.error("Please select a vendor."); return; }
     if (!amount || isNaN(parseFloat(amount))) { sonnerToast.error("Please enter a valid amount."); return; }
     if (!paidThrough) { sonnerToast.error("Please select an account in 'Paid Through'."); return; }
     if (!paymentId) { sonnerToast.error("Payment ID not found."); return; }
@@ -879,7 +882,7 @@ export const EditPaymentPage: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-white">
+      <div className="accounting-ui min-h-screen bg-white">
         <div className="w-full">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* ══ HEADER SECTION (Gray Background) ══ */}
@@ -894,17 +897,17 @@ export const EditPaymentPage: React.FC = () => {
             </Button>
 
             {/* Tab Switcher */}
-            <div className="flex justify-start items-end border-b border-gray-200 mb-6">
-              <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 gap-6">
+            <div className="mb-6">
+              <TabsList className="acc-tabs h-auto">
                 <TabsTrigger
                   value="bill_payment"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  className="acc-tab"
                 >
                   Bill Payment
                 </TabsTrigger>
                 <TabsTrigger
                   value="vendor_advance"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  className="acc-tab"
                 >
                   Vendor Advance
                 </TabsTrigger>
@@ -916,7 +919,7 @@ export const EditPaymentPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Vendor Name<span className="text-red-500">*</span>
               </label>
-              <FormControl fullWidth error={!selectedVendor}>
+              <FormControl fullWidth error={showVendorError && !selectedVendor}>
                 <MuiSelect
                   value={selectedSupplier?.id || ""}
                   onChange={(e) => {
@@ -1710,21 +1713,22 @@ export const EditPaymentPage: React.FC = () => {
               </div>
 
               {/* Footer Actions */}
-              <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-200 pt-6 pb-4">
-                <Button
-                  disabled={isSaving || isLoadingPayment}
-                  className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium rounded-[4px]"
-                  onClick={handleUpdate}
-                >
-                  {isSaving ? "Updating..." : "Update"}
-                </Button>
+              <div className="acc-actions mt-4 border-t border-gray-200 pt-6 pb-4">
                 <Button
                   variant="outline"
                   disabled={isSaving}
-                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
+                  className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                   onClick={() => navigate("/accounting/payments-made")}
                 >
                   Cancel
+                </Button>
+
+                <Button
+                  disabled={isSaving || isLoadingPayment}
+                  className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                  onClick={handleUpdate}
+                >
+                  {isSaving ? "Updating..." : "Update"}
                 </Button>
               </div>
             </div>

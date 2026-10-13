@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Box, Loader2, Layers, FolderOpen } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Layers, FolderOpen } from 'lucide-react';
+import { FormSection } from '@/components/common/FormSection';
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
@@ -382,18 +382,9 @@ export const ViewChecklistMasterPage = () => {
           </TabsList>
 
           <TabsContent value="basic" className="p-4 sm:p-6">
-            <div className="space-y-6">
-              {/* Basic Information Card */}
-              <Card className="w-full">
-                <CardHeader className="pb-4 lg:pb-6">
-                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                    </div>
-                    <span className="uppercase tracking-wide">Basic Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
+            <div className="space-y-4 sm:space-y-6">
+              {/* Basic Information */}
+              <FormSection title="BASIC INFORMATION" icon={FileText}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Type</span>
@@ -455,24 +446,14 @@ export const ViewChecklistMasterPage = () => {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+              </FormSection>
             </div>
           </TabsContent>
 
           <TabsContent value="tasks" className="p-4 sm:p-6">
-            <div className="space-y-6">
-              {/* Tasks Card */}
-              <Card className="w-full">
-                <CardHeader className="pb-4 lg:pb-6">
-                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <Box className="w-6 h-6" style={{ color: '#C72030' }} />
-                    </div>
-                    <span className="uppercase tracking-wide">Task Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
+            <div className="space-y-4 sm:space-y-6">
+              {/* Task Details */}
+              <FormSection title="TASK DETAILS" icon={Box}>
                   {/* ── Grouped questions ─────────────────────────────── */}
                   {Array.isArray(checklistData.checklist_groups) &&
                   checklistData.checklist_groups.length > 0 ? (
@@ -627,8 +608,7 @@ export const ViewChecklistMasterPage = () => {
                       No tasks found
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </FormSection>
             </div>
           </TabsContent>
         </Tabs>

@@ -14,7 +14,8 @@ import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
 import InputLabel from '@mui/material/InputLabel';
 import { API_CONFIG } from '@/config/apiConfig';
-import { toast } from 'sonner';
+import { accountingToast as toast } from '@/lib/accountingToast';
+import '@/styles/accounting.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 
@@ -51,7 +52,7 @@ const TransactionsAdd = () => {
                         // If API expects token as query param, use params: { access_token: token }
                     },
                 });
-                setAccountOptions(response.data);
+                setAccountOptions(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
                 console.error('Error fetching account options:', error);
             }
@@ -213,7 +214,7 @@ const TransactionsAdd = () => {
 		navigate("/accounting/transactions");
 	};
     return (
-        <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
+        <div className="accounting-ui w-full min-h-screen bg-gray-50 p-0 m-0">
             <div className="w-full max-w-full px-8 py-8 mx-auto">
                 <div className="mb-6">
                                     <div className="flex items-end justify-between gap-2">
@@ -601,29 +602,30 @@ const TransactionsAdd = () => {
                             </Box>
                         )}
                     </Box>
-                    <div className="flex gap-3 pt-4 justify-center">
-
-                        <Button
-                            type="submit"
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
-                        >
-                            Save and Publish
-                        </Button>
-                        <Button
-                            variant="outline"
-                            type="button"
-                            className="min-w-[120px]"
-                        // onClick={handleSaveDraft} // Add your draft handler if needed
-                        >
-                            Save as Draft
-                        </Button>
+                    <div className="acc-actions pt-4">
                         <Button
                             variant="outline"
                             type="button"
                             onClick={() => window.history.back()}
-                            className="min-w-[100px]"
+                            className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                         >
                             Cancel
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                        // onClick={handleSaveDraft} // Add your draft handler if needed
+                        >
+                            Save as Draft
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                        >
+                            Save and Publish
                         </Button>
                     </div>
                 </form>

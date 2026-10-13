@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TrendingUp } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -230,148 +231,163 @@ export const TaskEscalationPage: React.FC = () => {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Escalation Levels Configuration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {/* Service Type Dropdown */}
-              <div className="mb-6 p-4 border rounded-lg bg-blue-50">
-                <FormField
-                  control={form.control}
-                  name="serviceType"
-                  render={({ field, fieldState }) => (
-                    <FormItem>
-                      <FormLabel className="text-lg font-semibold text-blue-700">Service Type</FormLabel>
-                      <FormControl>
-                        <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
-                          <MuiSelect
-                            displayEmpty
-                            value={field.value ?? ''}
-                            onChange={(event) => field.onChange(event.target.value)}
-                            onBlur={field.onBlur}
-                            inputRef={field.ref}
-                            MenuProps={menuProps}
-                            sx={selectStyles}
-                          >
-                            <MenuItem value="" disabled>
-                              <em>Select service type</em>
-                            </MenuItem>
-                            {SERVICE_OPTIONS.map((service) => (
-                              <MenuItem key={service} value={service}>
-                                {service}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-base font-semibold text-[var(--color-text)]">
+                <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 text-[var(--color-ink-68)]" />
+                </span>
+                Escalation Levels Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Service Type Dropdown */}
+                <div className="mb-6 p-4 border rounded-lg bg-white">
+                  <FormField
+                    control={form.control}
+                    name="serviceType"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-gray-800">Service Type</FormLabel>
+                        <FormControl>
+                          <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                            <MuiSelect
+                              displayEmpty
+                              value={field.value ?? ''}
+                              onChange={(event) => field.onChange(event.target.value)}
+                              onBlur={field.onBlur}
+                              inputRef={field.ref}
+                              MenuProps={menuProps}
+                              sx={selectStyles}
+                            >
+                              <MenuItem value="" disabled>
+                                <em>Select service type</em>
                               </MenuItem>
-                            ))}
-                          </MuiSelect>
-                        </MuiFormControl>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* E1 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-red-50">
-                <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-red-700 mb-2">E1 Level</h3>
+                              {SERVICE_OPTIONS.map((service) => (
+                                <MenuItem key={service} value={service}>
+                                  {service}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </MuiFormControl>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="e1Days"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Days</FormLabel>
-                      <FormControl>
-                        <TextField
-                          type="number"
-                          placeholder="Enter days"
-                          fullWidth
-                          inputProps={{ min: 1 }}
-                          sx={fieldStyles}
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {renderEscalationSelect('e1EscalateTo', 'Escalation To')}
-              </div>
 
-              {/* E2 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-yellow-50">
-                <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-yellow-700 mb-2">E2 Level</h3>
+                {/* E1 Level */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
+                  <div className="col-span-full">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">E1 Level</h3>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="e1Days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Days</FormLabel>
+                        <FormControl>
+                          <TextField
+                            type="number"
+                            placeholder="Enter days"
+                            fullWidth
+                            inputProps={{ min: 1 }}
+                            sx={fieldStyles}
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {renderEscalationSelect('e1EscalateTo', 'Escalation To')}
                 </div>
-                <FormField
-                  control={form.control}
-                  name="e2Days"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Days</FormLabel>
-                      <FormControl>
-                        <TextField
-                          type="number"
-                          placeholder="Enter days"
-                          fullWidth
-                          inputProps={{ min: 1 }}
-                          sx={fieldStyles}
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {renderEscalationSelect('e2EscalateTo', 'Escalation To')}
-              </div>
 
-              {/* E3 Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-green-50">
-                <div className="col-span-full">
-                  <h3 className="text-lg font-semibold text-green-700 mb-2">E3 Level</h3>
+                {/* E2 Level */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
+                  <div className="col-span-full">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">E2 Level</h3>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="e2Days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Days</FormLabel>
+                        <FormControl>
+                          <TextField
+                            type="number"
+                            placeholder="Enter days"
+                            fullWidth
+                            inputProps={{ min: 1 }}
+                            sx={fieldStyles}
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {renderEscalationSelect('e2EscalateTo', 'Escalation To')}
                 </div>
-                <FormField
-                  control={form.control}
-                  name="e3Days"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Days</FormLabel>
-                      <FormControl>
-                        <TextField
-                          type="number"
-                          placeholder="Enter days"
-                          fullWidth
-                          inputProps={{ min: 1 }}
-                          sx={fieldStyles}
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {renderEscalationSelect('e3EscalateTo', 'Escalation To')}
-              </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting || loading.users}
-                className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  {isSubmitting ? 'Saving...' : 'Submit'}
-                </Button>
+                {/* E3 Level */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-white">
+                  <div className="col-span-full">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">E3 Level</h3>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="e3Days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Days</FormLabel>
+                        <FormControl>
+                          <TextField
+                            type="number"
+                            placeholder="Enter days"
+                            fullWidth
+                            inputProps={{ min: 1 }}
+                            sx={fieldStyles}
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {renderEscalationSelect('e3EscalateTo', 'Escalation To')}
+                </div>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          <div className="fm-action-bar mt-6">
+            <button
+              type="button"
+              onClick={() => form.reset()}
+              className="fm-action-secondary"
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || loading.users}
+              className="fm-action-primary"
+            >
+              {isSubmitting ? 'Saving...' : 'Submit'}
+            </button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 };

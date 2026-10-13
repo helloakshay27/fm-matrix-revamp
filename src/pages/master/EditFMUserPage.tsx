@@ -4,8 +4,8 @@ import { useClubManagementEvents } from "@/components/PostHogClubManagementEvent
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Camera, User } from "lucide-react";
+import { FormSection } from "@/components/common/FormSection";
+import { ArrowLeft, Briefcase, Camera, Shield, User } from "lucide-react";
 import {
   TextField,
   Select,
@@ -340,7 +340,11 @@ export const EditFMUserPage = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentSection("Master");
+    // Under Club Management the sidebar owns this route; forcing "Master" here
+    // makes ClubSidebar bounce to Master's default page (Amenities Setup).
+    if (!location.pathname.includes("/club-management/")) {
+      setCurrentSection("Master");
+    }
   }, [setCurrentSection]);
 
   useEffect(() => {
@@ -576,13 +580,10 @@ export const EditFMUserPage = () => {
       </div>
 
       {/* Form Section */}
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
             <Box component="form" noValidate>
+              <div className="space-y-4 sm:space-y-6">
+              <FormSection title="BASIC DETAILS" icon={User}>
               <div className="flex flex-col items-center mb-8">
                 <div className="relative group cursor-pointer" onClick={handleImageClick}>
                   <Avatar
@@ -763,7 +764,11 @@ export const EditFMUserPage = () => {
                     </div>
                   )
                 }
+              </div>
+              </FormSection>
 
+              <FormSection title="WORK DETAILS" icon={Briefcase}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Row 3 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
@@ -943,8 +948,11 @@ export const EditFMUserPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
+              </div>
+              </FormSection>
 
-
+              <FormSection title="ROLE & ACCESS" icon={Shield}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>
@@ -1238,6 +1246,8 @@ export const EditFMUserPage = () => {
                 }
 
               </div>
+              </FormSection>
+              </div>
             </Box>
             {/* Action Buttons */}
             <div className="flex justify-center gap-4 pt-6">
@@ -1257,8 +1267,6 @@ export const EditFMUserPage = () => {
                 Update
               </Button>
             </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

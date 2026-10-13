@@ -1391,21 +1391,21 @@ const ItemsEdit = () => {
                 )}
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 mt-10 mb-5 justify-center">
-                    <Button
-                        variant="ghost"
-                        onClick={handleSubmit}
-                        className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
-                    >
-                        Update
-                    </Button>
-
+                <div className="acc-actions mt-10 mb-5">
                     <Button
                         variant="outline"
                         onClick={() => navigate("/accounting/items")}
                         className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                     >
                         Cancel
+                    </Button>
+
+                    <Button
+                        variant="ghost"
+                        onClick={handleSubmit}
+                        className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                    >
+                        Update
                     </Button>
                 </div>
             </div>

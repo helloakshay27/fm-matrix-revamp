@@ -91,17 +91,18 @@ export const CloneRolePage = () => {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center mt-8">
-              <Button
-                onClick={handleSubmit}
-                disabled={!fromUser || !toUser}
-                className="bg-[#1e3a8a] hover:bg-[#1d4ed8] text-white px-8 py-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                Submit
-              </Button>
-            </div>
+          {/* Submit Button */}
+          <div className="fm-action-bar mt-6">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!fromUser || !toUser}
+              className="fm-action-primary"
+            >
+              Submit
+            </button>
           </div>
         </div>
       </div>

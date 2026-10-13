@@ -240,7 +240,7 @@ const CRMPollsPage = () => {
   };
 
   const filteredPolls = polls.filter(poll =>
-    poll.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    (poll.subject || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -276,7 +276,7 @@ const CRMPollsPage = () => {
       </Box>
 
       {/* Search and Filter */}
-      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+      <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: '16px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
             All Polls
@@ -319,13 +319,15 @@ const CRMPollsPage = () => {
           {filteredPolls.map((poll) => (
             <Card
               key={poll.id}
-              elevation={2}
+              elevation={0}
               sx={{
                 height: '100%',
-                borderRadius: 3,
-                transition: 'all 0.3s ease',
+                borderRadius: '16px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'border-color 0.16s ease',
                 '&:hover': {
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
+                  borderColor: 'rgba(26, 26, 24, 0.28)'
                 }
               }}
             >
@@ -333,8 +335,8 @@ const CRMPollsPage = () => {
                 {/* Poll Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1.5 }}>
-                      {poll.title}
+                    <Typography variant="h6" component="h3" sx={{ fontSize: '15px', fontWeight: 600, color: '#1A1A18', mb: 1.5 }}>
+                      {poll.subject || poll.title}
                     </Typography>
 
                     <Stack spacing={1}>
@@ -347,7 +349,7 @@ const CRMPollsPage = () => {
                         Duration: {poll.showstart} - {poll.showend}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Shared with: <strong>{poll.sharedWith}</strong>
+                        Shared with: <strong>{poll.shared || poll.sharedWith || '-'}</strong>
                       </Typography>
                       {poll.publishResults && (
                         <Typography variant="body2" color="text.secondary">
@@ -361,20 +363,24 @@ const CRMPollsPage = () => {
                     <IconButton
                       size="small"
                       onClick={(e) => handleMenuClick(e, poll.id)}
-                      sx={{ ml: 1 }}
+                      sx={{ ml: 1, borderRadius: '8px' }}
                     >
                       <MoreHorizontal size={18} />
                     </IconButton>
 
-                    <Chip
-                      label={poll.status}
-                      color={getStatusColor(poll.status) as any}
-                      size="small"
-                      sx={{
-                        fontWeight: 500,
-                        textTransform: 'capitalize'
-                      }}
-                    />
+                    {poll.status && (
+                      <Chip
+                        label={poll.status}
+                        color={getStatusColor(poll.status) as any}
+                        size="small"
+                        sx={{
+                          borderRadius: '999px',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          textTransform: 'capitalize'
+                        }}
+                      />
+                    )}
                   </Stack>
                 </Box>
 
@@ -382,7 +388,7 @@ const CRMPollsPage = () => {
 
                 {/* Poll Options */}
                 <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(26, 26, 24, 0.68)', mb: 1.5 }}>
                     Poll Options & Results
                   </Typography>
 
@@ -412,8 +418,16 @@ const CRMPollsPage = () => {
                                 : "0%"
                             }
                             size="small"
-                            variant="outlined"
-                            sx={{ minWidth: 50, textAlign: "center" }}
+                            sx={{
+                              minWidth: 56,
+                              borderRadius: '999px',
+                              bgcolor: '#F5F4F0',
+                              color: '#1A1A18',
+                              fontSize: '11px',
+                              fontWeight: 500,
+                              fontVariantNumeric: 'tabular-nums',
+                              '& .MuiChip-label': { width: '100%', textAlign: 'center' }
+                            }}
                           />
                         </ListItem>
                       ))}
@@ -430,6 +444,14 @@ const CRMPollsPage = () => {
             </Card>
           ))}
         </Box>
+
+        {filteredPolls.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 6 }}>
+            <Typography variant="body2" color="text.secondary">
+              No polls found
+            </Typography>
+          </Box>
+        )}
 
         {/* Menu */}
         <Menu

@@ -29,7 +29,8 @@ import {
   DownloadCloud,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Badge } from "@/components/ui/badge";
@@ -1478,7 +1479,7 @@ export const ChartOfAccountsDashboard = () => {
     );
   };
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+    <div className="accounting-ui p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <div className="animate-fade-in">
         {searchLoading && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
@@ -1517,48 +1518,42 @@ export const ChartOfAccountsDashboard = () => {
 
 
 
-        <div className="mb-4 flex gap-2">
+        <div role="tablist" className="acc-tabs mb-4">
           {/* TABLE */}
-          <Button
-            variant={viewType === "table" ? "default" : "outline"}
-            size="sm"
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === "table"}
+            data-state={viewType === "table" ? "active" : "inactive"}
             onClick={() => setViewType("table")}
-            className={
-              viewType === "table"
-                ? "bg-[#C72030] text-white"
-                : "border-[#C72030] text-[#C72030]"
-            }
+            className="acc-tab"
           >
             Ledgers
-          </Button>
+          </button>
 
           {/* TREE */}
-          <Button
-            variant={viewType === "tree" ? "default" : "outline"}
-            size="sm"
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === "tree"}
+            data-state={viewType === "tree" ? "active" : "inactive"}
             onClick={() => setViewType("tree")}
-            className={
-              viewType === "tree"
-                ? "bg-[#C72030] text-white"
-                : "border-[#C72030] text-[#C72030]"
-            }
+            className="acc-tab"
           >
             Tree View
-          </Button>
+          </button>
 
           {/* GROUP */}
-          <Button
-            variant={viewType === "group" ? "default" : "outline"}
-            size="sm"
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewType === "group"}
+            data-state={viewType === "group" ? "active" : "inactive"}
             onClick={() => setViewType("group")}
-            className={
-              viewType === "group"
-                ? "bg-[#C72030] text-white"
-                : "border-[#C72030] text-[#C72030]"
-            }
+            className="acc-tab"
           >
             Groups
-          </Button>
+          </button>
         </div>
 
 

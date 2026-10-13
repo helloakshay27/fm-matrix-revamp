@@ -318,10 +318,10 @@ export const EmployeeAddBookingPage = () => {
                     </button>
                 </div>
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-                        <CheckCircle className="text-white w-5 h-5" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-[var(--color-ink-68)]" />
                     </div>
-                    <h1 className="text-xl font-semibold" style={{ color: '#C72030' }}>Facility Booking</h1>
+                    <h1 className="text-xl font-semibold text-[var(--color-text)]">Facility Booking</h1>
                 </div>
             </div>
 

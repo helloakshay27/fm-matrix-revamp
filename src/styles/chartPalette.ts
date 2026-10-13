@@ -16,6 +16,18 @@ export const ANALYTICS_PALETTE = [
   '#76CDC1', // [7] Pie - Teal
 ] as const;
 
+
+export const INVENTORY_ANALYTICS_PALETTE = [
+  '#CECBF6', // [0] Purple
+  '#6B9BCC', // [1] Blue
+  '#108C72', // [2] Growth
+  '#798C5E', // [3] Olive
+  '#9EC8BA', // [4] Sage mint
+  '#8E7BE0', // [5] Mid purple
+  '#EDC488', // [6] Warning
+  '#E7848E', // [7] Danger
+] as const;
+
 export type AnalyticsPaletteColor = typeof ANALYTICS_PALETTE[number];
 
 export const getPaletteColor = (index: number): AnalyticsPaletteColor => {

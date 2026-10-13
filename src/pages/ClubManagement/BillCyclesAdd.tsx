@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileCog } from "lucide-react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { toast } from "sonner";
+import { accountingToast as toast } from "@/lib/accountingToast";
+import "@/styles/accounting.css";
 import { API_CONFIG } from '@/config/apiConfig';
 import { useNavigate, useParams } from "react-router-dom";
 interface ChargeSetup {
@@ -221,7 +222,7 @@ const BillCyclesAdd: React.FC = () => {
     return (
         <ThemeProvider theme={muiTheme}>
             <form
-                className="w-full bg-white p-6"
+                className="accounting-ui w-full bg-white p-6"
                 style={{ minHeight: '100vh', boxSizing: 'border-box' }}
                 onSubmit={handleSubmit}
             >
@@ -541,26 +542,27 @@ const BillCyclesAdd: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-3 pt-5 mt-5 justify-center">
-                    <Button
-                        type="submit"
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
-                    >
-                        Save
-                    </Button>
-                    <Button
-                        type="submit"
-                        className="!bg-[#DA7756] hover:!bg-[#C45F40] min-w-[140px]"
-                    >
-                        <span className="!text-white font-medium">Save & New</span>
-                    </Button>
+                <div className="acc-actions pt-5 mt-5">
                     <Button
                         variant="outline"
                         type="button"
                         onClick={() => window.history.back()}
-                        className="min-w-[100px]"
+                        className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
                     >
                         Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        className="acc-btn acc-btn-secondary fm-button-fix px-8 py-2"
+                    >
+                        Save & New
+                    </Button>
+                    <Button
+                        type="submit"
+                        className="acc-btn fm-button-fix fm-button-brand px-8 py-2"
+                    >
+                        Save
                     </Button>
                 </div>
             </form>

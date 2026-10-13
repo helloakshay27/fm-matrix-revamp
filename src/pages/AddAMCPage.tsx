@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2, Settings, CalendarClock, Paperclip } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
@@ -1312,7 +1311,7 @@ export const AddAMCPage = () => {
       helperText={errors.supplier}
       label={
         <>
-          Supplier <span style={{ color: '#DA7756' }}>*</span>
+          Supplier <span className="fm-required-mark">*</span>
         </>
       }
       required
@@ -1647,14 +1646,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - AMC Configuration */}
               {stepIndex === 0 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       AMC CONFIGURATION
                     </CardTitle>
                   </CardHeader>
@@ -1759,7 +1754,7 @@ export const AddAMCPage = () => {
                       <>
                         {formData.details === 'Asset' ? (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Assets <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Assets"
@@ -1789,7 +1784,7 @@ export const AddAMCPage = () => {
                           </FormControl>
                         ) : (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Service <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Service"
@@ -1811,7 +1806,7 @@ export const AddAMCPage = () => {
                         )}
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -1886,7 +1881,7 @@ export const AddAMCPage = () => {
                           </FormControl>
 
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                            <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                             <MuiSelect
                               label="Supplier"
                               displayEmpty
@@ -1929,14 +1924,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - AMC Details */}
               {stepIndex === 1 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       AMC DETAILS
                     </CardTitle>
                   </CardHeader>
@@ -1944,7 +1935,7 @@ export const AddAMCPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <TextField
                         disabled
-                        label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter Contract Name"
                         fullWidth
                         value={formData.contractName}
@@ -1953,7 +1944,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.startDate || ''}
@@ -1963,7 +1954,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>End Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.endDate || ''}
@@ -1973,7 +1964,7 @@ export const AddAMCPage = () => {
 
                       {/* <TextField
                         disabled
-                        label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                         type="date"
                         fullWidth
                         value={formData.firstService || ''}
@@ -1984,7 +1975,7 @@ export const AddAMCPage = () => {
                       <TextField
                         label={
                           <span>
-                            First Service Date <span style={{ color: 'red' }}>*</span>
+                            First Service Date <span className="fm-required-mark">*</span>
                           </span>
                         }
                         type="date"
@@ -2001,7 +1992,7 @@ export const AddAMCPage = () => {
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                        <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                         <MuiSelect
                           label="Payment Terms"
                           displayEmpty
@@ -2020,7 +2011,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>Cost <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter Cost"
                         type="number"
                         fullWidth
@@ -2031,7 +2022,7 @@ export const AddAMCPage = () => {
 
                       <TextField
                         disabled
-                        label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                        label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                         placeholder="Enter No. of Visits"
                         type="number"
                         fullWidth
@@ -2056,14 +2047,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - Schedule */}
               {stepIndex === 2 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       SCHEDULE
                     </CardTitle>
                   </CardHeader>
@@ -2075,14 +2062,10 @@ export const AddAMCPage = () => {
 
               {/* Step Content - Attachments */}
               {stepIndex === 3 && (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px',
-                  background: '#FFF',
-                  boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
-                  <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                      <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                       ATTACHMENTS
                     </CardTitle>
                   </CardHeader>
@@ -2151,16 +2134,8 @@ export const AddAMCPage = () => {
             <div className="mb-4">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Configuration
                 </h3>
               </div>
@@ -2168,14 +2143,10 @@ export const AddAMCPage = () => {
 
 
               {/* Step Content - AMC Configuration (single card) */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     AMC CONFIGURATION
                   </CardTitle>
                 </CardHeader> */}
@@ -2280,7 +2251,7 @@ export const AddAMCPage = () => {
                     <>
                       {formData.details === 'Asset' ? (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Assets <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Assets"
@@ -2311,7 +2282,7 @@ export const AddAMCPage = () => {
                         </FormControl>
                       ) : (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Service <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Service"
@@ -2332,7 +2303,7 @@ export const AddAMCPage = () => {
                       )}
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                        <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                         <MuiSelect
                           label="Supplier"
                           displayEmpty
@@ -2406,7 +2377,7 @@ export const AddAMCPage = () => {
                         </FormControl>
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -2450,29 +2421,17 @@ export const AddAMCPage = () => {
             <div className="mb-4">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Details
                 </h3>
               </div>
 
               {/* Step Content - AMC Details */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     AMC DETAILS
                   </CardTitle>
                 </CardHeader> */}
@@ -2480,7 +2439,7 @@ export const AddAMCPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <TextField
                       disabled
-                      label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Contract Name"
                       fullWidth
                       value={formData.contractName}
@@ -2489,7 +2448,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.startDate || ''}
@@ -2499,7 +2458,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>End Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.endDate || ''}
@@ -2509,7 +2468,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.firstService || ''}
@@ -2518,7 +2477,7 @@ export const AddAMCPage = () => {
                     />
 
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                      <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                       <MuiSelect
                         label="Payment Terms"
                         displayEmpty
@@ -2537,7 +2496,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Cost <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Cost"
                       type="number"
                       fullWidth
@@ -2547,7 +2506,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
-                      label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter No. of Visits"
                       type="number"
                       fullWidth
@@ -2581,24 +2540,12 @@ export const AddAMCPage = () => {
             {/* Schedule Preview */}
             <div className="mb-4">
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Schedule
                 </h3>
               </div>
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-0">
                   {frequencyConfigs.length > 0 ? (
                     <>
@@ -2649,36 +2596,24 @@ export const AddAMCPage = () => {
             <div className="mb-6">
               {/* Step Header */}
               <div className="flex items-center mb-4">
-                <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-                  ✓
-                </span>
-                <h3 className="text-[#DA7756]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h3 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Attachments
                 </h3>
               </div>
 
               {/* Step Content - Attachments */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                {/* <CardHeader className="pb-0">
+                  <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                    <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                     ATTACHMENTS
                   </CardTitle>
                 </CardHeader> */}
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts <span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts <span className="fm-required-mark">*</span></label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.contracts.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -2794,13 +2729,13 @@ export const AddAMCPage = () => {
             </div >
 
             {/* Preview Mode Buttons */}
-            < div className="flex gap-4 justify-center" >
+            <div className="fm-action-bar">
               <Button
                 type="button"
                 onClick={() => setIsPreviewMode(false)}
                 disabled={isSubmitting}
                 variant="ghost"
-                className="fm-button-fix fm-button-brand px-8 font-medium"
+                className="fm-action-secondary"
               >
                 Back to Edit
               </Button>
@@ -2828,7 +2763,7 @@ export const AddAMCPage = () => {
                 }}
                 disabled={isSubmitting}
                 variant="ghost"
-                className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                className="fm-action-primary"
               >
                 {isSubmitting ? (
                   <>
@@ -2839,7 +2774,7 @@ export const AddAMCPage = () => {
                   'Proceed to Save'
                 )}
               </Button>
-            </div >
+            </div>
           </div >
         )}
 
@@ -2849,32 +2784,13 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Settings className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Configuration
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="space-y-6 p-6">
                   <div>
                     <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Details</label>
@@ -2979,7 +2895,7 @@ export const AddAMCPage = () => {
                           {/* Header row */}
                           <div className="flex items-center justify-between mb-2">
                             <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
-                              Assets <span style={{ color: '#DA7756' }}>*</span>
+                              Assets <span className="fm-required-mark">*</span>
                             </Typography>
                             {formData.asset_ids.length > 0 && (
                               <span className="text-xs text-[#DA7756] font-medium">{formData.asset_ids.length} selected</span>
@@ -3264,7 +3180,7 @@ export const AddAMCPage = () => {
                               color: "#444",
                             }}
                           >
-                            Services <span style={{ color: "#DA7756" }}>*</span>
+                            Services <span className="fm-required-mark">*</span>
                           </Typography>
 
                           <Select
@@ -3530,7 +3446,7 @@ export const AddAMCPage = () => {
                     //     </FormControl>
 
                     //     <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    //       <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                    //       <InputLabel shrink>Supplier <span className="fm-required-mark">*</span></InputLabel>
                     //       <MuiSelect
                     //         label="Supplier"
                     //         displayEmpty
@@ -3813,39 +3729,20 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   AMC Details
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
 
                 <CardContent className="space-y-4 p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Row 1: Contract Name | Start Date | End Date */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Contract Name <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Contract Name"
                       fullWidth
                       value={formData.contractName}
@@ -3857,7 +3754,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Start Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.startDate || ''}
@@ -3870,7 +3767,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={!formData.startDate || isSubmitting}
-                      label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>End Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.endDate || ''}
@@ -3885,7 +3782,7 @@ export const AddAMCPage = () => {
                     {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Service Date <span className="fm-required-mark">*</span></span>}
                       type="date"
                       fullWidth
                       value={formData.firstService || ''}
@@ -3897,7 +3794,7 @@ export const AddAMCPage = () => {
                     />
 
                     <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                      <InputLabel shrink>Payment Terms <span className="fm-required-mark">*</span></InputLabel>
                       <MuiSelect
                         label="Payment Terms"
                         displayEmpty
@@ -3918,7 +3815,7 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Cost <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter Cost"
                       type="number"
                       fullWidth
@@ -3937,7 +3834,7 @@ export const AddAMCPage = () => {
                     {/* Row 3: No. of Visits | Remarks */}
                     <TextField
                       disabled={isSubmitting}
-                      label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>No. of Visits <span className="fm-required-mark">*</span></span>}
                       placeholder="Enter No. of Visits"
                       type="number"
                       fullWidth
@@ -4046,29 +3943,14 @@ export const AddAMCPage = () => {
           currentStep === 2 && (
             <>
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Schedule
                 </h2>
               </div>
               {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
               {frequencyConfigs.length > 0 ? (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                   <CardContent className="p-0">
                     {/* Frequency tabs */}
                     <div className="flex border-b border-gray-200 overflow-x-auto">
@@ -4142,9 +4024,7 @@ export const AddAMCPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                  borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                }}>
+                <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                   <CardContent className="p-4">
                     <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
                       <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
@@ -4162,7 +4042,7 @@ export const AddAMCPage = () => {
               )}
 
               {/* Create Checklist */}
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-4">
                   {/* Toggle */}
                   <div className="flex items-center gap-3 mb-4">
@@ -4190,9 +4070,11 @@ export const AddAMCPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Checklist Template */}
                       <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
-                        <InputLabel shrink>Checklist Template *</InputLabel>
+                        <InputLabel shrink>
+                          Checklist Template <span className="fm-required-mark">*</span>
+                        </InputLabel>
                         <MuiSelect
-                          label="Checklist Template *"
+                          label="Checklist Template"
                           value={checklistFields.templateId}
                           onChange={e => {
                             setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
@@ -4211,9 +4093,11 @@ export const AddAMCPage = () => {
 
                       {/* Grace Time Type */}
                       <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
-                        <InputLabel shrink>Grace Time Type *</InputLabel>
+                        <InputLabel shrink>
+                          Grace Time Type <span className="fm-required-mark">*</span>
+                        </InputLabel>
                         <MuiSelect
-                          label="Grace Time Type *"
+                          label="Grace Time Type"
                           value={checklistFields.graceTimeType}
                           onChange={e => {
                             setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
@@ -4230,7 +4114,11 @@ export const AddAMCPage = () => {
 
                       {/* Grace Time Value */}
                       <TextField
-                        label="Grace Time Value *"
+                        label={
+                          <>
+                            Grace Time Value <span className="fm-required-mark">*</span>
+                          </>
+                        }
                         type="number"
                         variant="outlined"
                         fullWidth
@@ -4259,36 +4147,17 @@ export const AddAMCPage = () => {
             <>
               {/* Header above card */}
               <div className="flex items-center mb-4">
-                <Avatar sx={{
-                  bgcolor: '#111111',
-                  color: 'white',
-                  width: 32,
-                  height: 32,
-                  mr: 2,
-                  fontSize: '16px'
-                }}>
-                  <SettingsOutlinedIcon fontSize="small" />
-                </Avatar>
-                <h2 className="text-[#111111]" style={{
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '26px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%'
-                }}>
+                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><Paperclip className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
+                <h2 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                   Attachments
                 </h2>
               </div>
 
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px',
-                background: '#FFF',
-                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
+              <Card className="mb-6 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span className="fm-required-mark">*</span></label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                         <input
                           type="file"
@@ -4312,10 +4181,10 @@ export const AddAMCPage = () => {
                         <Button
                           type="button"
                           onClick={() => document.getElementById('contracts-upload')?.click()}
-                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none text-sm flex items-center justify-center"
+                          className="fm-action-secondary"
                           disabled={isSubmitting}
                         >
-                          <Plus className="w-4 h-4 mr-1" />
+                          <Plus className="w-4 h-4" />
                           Upload Files
                         </Button>
                         <p className="mt-3 text-xs text-gray-500">
@@ -4439,10 +4308,10 @@ export const AddAMCPage = () => {
                         <Button
                           type="button"
                           onClick={() => document.getElementById('invoices-upload')?.click()}
-                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
+                          className="fm-action-secondary"
                           disabled={isSubmitting}
                         >
-                          <Plus className="w-4 h-4 mr-1" />
+                          <Plus className="w-4 h-4" />
                           Upload Files
                         </Button>
                         <p className="mt-3 text-xs text-gray-500">
@@ -4553,7 +4422,7 @@ export const AddAMCPage = () => {
         {/* Step Navigation Buttons - Hide in preview mode */}
         {
           !isPreviewMode && (
-            <div className="flex gap-4 justify-center mt-8">
+            <div className="fm-action-bar mt-8">
               {/* {currentStep > 0 && (
           <Button
             type="button"
@@ -4574,19 +4443,19 @@ export const AddAMCPage = () => {
                 <>
                   <Button
                     type="button"
-                    onClick={handleProceedToSave}
+                    onClick={handleSaveToDraft}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-secondary"
                   >
-                    Proceed to save
+                    Save to draft
                   </Button>
                   <Button
                     type="button"
-                    onClick={handleSaveToDraft}
+                    onClick={handleProceedToSave}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-primary"
                   >
-                    Save to draft
+                    Proceed to save
                   </Button>
                 </>
               ) : (
@@ -4596,7 +4465,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={handlePreview}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-primary"
                   >
                     Preview
                   </Button>
@@ -4604,7 +4473,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={handleSaveToDraft}
                     variant="ghost"
-                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                    className="fm-action-secondary"
                   >
                     Save to draft
                   </Button>
@@ -4636,26 +4505,15 @@ export const AddAMCPage = () => {
                   // Only show if this step is not in completedSteps
                   if (completedSteps.includes(index)) return null;
                   return (
-                    <div key={`readonly-${index}`} className="bg-gray-50 border border-gray-200 rounded-md p-6">
+                    <div key={`readonly-${index}`} className="bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl p-6">
                       {/* Step Header */}
-                      <div className="flex items-center mb-4">
-                        <Avatar sx={{
-                          bgcolor: '#DA7756',
-                          color: 'white',
-                          width: 32,
-                          height: 32,
-                          mr: 2,
-                          fontSize: '16px'
-                        }}>
-                          <SettingsOutlinedIcon fontSize="small" />
-                        </Avatar>
-                        <h4 className="text-[#DA7756]" style={{
-                          fontFamily: 'Work Sans, sans-serif',
-                          fontWeight: 600,
-                          fontSize: '26px',
-                          lineHeight: '100%',
-                          letterSpacing: '0%'
-                        }}>
+                      <div className="flex items-center mb-3">
+                        <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0">
+                          {React.createElement([Settings, FileText, CalendarClock, Paperclip][index] ?? FileText, {
+                            className: 'w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]',
+                          })}
+                        </span>
+                        <h4 className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em]">
                           {index === 0 && 'AMC Configuration'}
                           {index === 1 && 'AMC Details'}
                           {index === 2 && 'Schedule'}
@@ -4801,14 +4659,10 @@ export const AddAMCPage = () => {
                         )}
 
                         {index === 2 && (
-                          <Card className="mb-4 border-[#D9D9D9] bg-white shadow-sm" style={{
-                            borderRadius: '4px',
-                            background: '#FFF',
-                            boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-                          }}>
-                            <CardHeader className="bg-[#F6F4EE] ">
-                              <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                                <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                          <Card className="mb-4 bg-white border border-[rgba(26,26,24,0.09)] rounded-2xl shadow-none">
+                            <CardHeader className="pb-0">
+                              <CardTitle className="text-[#1A1A18] text-[14px] font-semibold uppercase tracking-[0.02em] flex items-center">
+                                <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center mr-3 shrink-0"><CalendarClock className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" /></span>
                                 SCHEDULE
                               </CardTitle>
                             </CardHeader>
@@ -4887,8 +4741,8 @@ export const AddAMCPage = () => {
         >
           <DialogTitle
             sx={{
-              backgroundColor: '#DA7756',
-              color: 'white',
+              color: '#1A1A18',
+              fontSize: '18px',
               fontFamily: 'Work Sans, sans-serif',
               fontWeight: 600
             }}
@@ -4910,14 +4764,14 @@ export const AddAMCPage = () => {
             <Button
               variant="outline"
               onClick={handleStartFresh}
-              className="px-6 py-2 font-medium border border-[#DA7756] text-[#DA7756]"
+              className="fm-action-secondary"
             >
               Start Fresh
             </Button>
             <Button
               onClick={handleContinueWithDraft}
               variant="ghost"
-              className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+              className="fm-action-primary"
             >
               Continue with Draft
             </Button>
