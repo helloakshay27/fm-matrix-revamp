@@ -275,14 +275,32 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const rolesQ = useRoles(filters);
   const moduleTreeQ = useModuleTree(filters);
   const subModuleTreeQ = useSubModuleTree(filters);
-  const workflowQ = useWorkflowUsage(filters);
-
-  const league = useSiteLeague(filters, leagueSiteIds, scopedSites.length > 1);
 
   const modules = useMemo(() => toModuleOptions(moduleTreeQ.data?.tree), [moduleTreeQ.data]);
   const subModules = useMemo(
     () => toModuleOptions(subModuleTreeQ.data?.tree),
     [subModuleTreeQ.data]
+  );
+
+  // Hold workflow_usage until the sub-module default has been applied (or the module has
+  // none). Otherwise it fires once with no sub_module and again a moment later with one,
+  // and the first response is thrown away.
+  const subModuleReady =
+    !!state.module &&
+    subModuleTreeQ.isFetched &&
+    (subModules.length === 0 || subModules.some((m) => m.name === state.subModule));
+  const workflowFilters = useMemo<QueryFilters>(
+    () => ({ ...filters, enabled: filters.enabled && subModuleReady }),
+    [filters, subModuleReady]
+  );
+  const workflowQ = useWorkflowUsage(workflowFilters);
+
+  // The per-site traffic_session fan-out only feeds the site breakdown table on the
+  // Adoption tab, so don't fire one call per site while another tab is open.
+  const league = useSiteLeague(
+    filters,
+    leagueSiteIds,
+    scopedSites.length > 1 && state.activePage === 'pgAdopt'
   );
 
   // The module list is dynamic, so the initial selection has to wait for the tree.
@@ -354,7 +372,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
             pending ||
             moduleTreeQ.isLoading ||
             workflowQ.isLoading ||
-            (!state.module && modules.length > 0),
+            (!state.module && modules.length > 0) ||
+            (!!state.module && !subModuleReady),
           error: (sitesQ.error ?? moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
         siteHealth: {
@@ -435,8 +454,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const minDelay = new Promise((resolve) => setTimeout(resolve, 650));
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["fm-adoption"], refetchType: "all" }),
-        queryClient.refetchQueries({ queryKey: ["fm-adoption"], type: "active" }),
+        // One pass: refetch only the queries on screen (inactive ones are just marked
+        // stale and reload when next used), and leave the site/company lists alone —
+        // they don't change when analytics are refreshed.
+        queryClient.invalidateQueries({
+          predicate: ({ queryKey }) =>
+            queryKey[0] === 'fm-adoption' &&
+            queryKey[1] !== 'all-sites' &&
+            queryKey[1] !== 'company-names',
+          refetchType: 'active',
+        }),
         minDelay,
       ]);
     } catch {
