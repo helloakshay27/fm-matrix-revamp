@@ -92,7 +92,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
-  const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
   const [blacklistReason, setBlacklistReason] = useState("");
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelLoading, setIsCancelLoading] = useState(false);
@@ -448,11 +448,11 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       "VisitorSelectionPanel - Blacklist clicked for visitors:",
       selectedVisitors
     );
-    setIsBlacklistModalOpen(true);
+    setBlacklistDialogOpen(true);
   };
 
   const handleBlacklistModalClose = () => {
-    setIsBlacklistModalOpen(false);
+    setBlacklistDialogOpen(false);
     setBlacklistReason("");
   };
 
@@ -466,7 +466,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
     try {
       if (onBlacklist) {
         await onBlacklist(blacklistReason.trim());
-        setIsBlacklistModalOpen(false);
+        setBlacklistDialogOpen(false);
         setBlacklistReason("");
         fetchVisitorHistory();
       }
@@ -996,7 +996,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       {/* Blacklist Reason Modal */}
       <Dialog
-        open={isBlacklistModalOpen}
+        open={blacklistDialogOpen}
         onOpenChange={(open) => !open && handleBlacklistModalClose()}
       >
         <DialogContent className="sm:max-w-md">
