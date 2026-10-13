@@ -7560,3 +7560,61 @@ html body .settings-toast [data-close-button] {
   opacity: 0.7;
 }
 
+
+/* ============================================================
+   CHECKBOX — wireframe .cb (asset-management.html): 18px, 5px radius,
+   1.5px soft-ink border; ink fill + white tick when checked/indeterminate.
+   Placed last so it beats the legacy primary-colour and td-button padding rules.
+   ============================================================ */
+html body button[role="checkbox"],
+html body table td button[role="checkbox"],
+html body table th button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 5px !important;
+  border: 1.5px solid rgba(26, 26, 24, 0.22) !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body button[role="checkbox"][data-state="unchecked"] {
+  background-color: #ffffff !important;
+  border-color: rgba(26, 26, 24, 0.22) !important;
+}
+html body button[role="checkbox"][data-state="checked"],
+html body table td button[role="checkbox"][data-state="checked"],
+html body table th button[role="checkbox"][data-state="checked"] {
+  background-color: #1a1a18 !important;
+  border-color: #1a1a18 !important;
+}
+/* Partial selection (header): white box, ink border, ink dash */
+html body button[role="checkbox"][data-state="indeterminate"],
+html body table th button[role="checkbox"][data-state="indeterminate"] {
+  background-color: #ffffff !important;
+  border-color: #1a1a18 !important;
+}
+html body button[role="checkbox"][data-state="indeterminate"] span,
+html body button[role="checkbox"][data-state="indeterminate"] svg {
+  color: #1a1a18 !important;
+  stroke: #1a1a18 !important;
+}
+html body button[role="checkbox"] span {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+}
+html body button[role="checkbox"] svg {
+  width: 12px !important;
+  height: 12px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

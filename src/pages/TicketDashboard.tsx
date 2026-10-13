@@ -1801,7 +1801,7 @@ export const TicketDashboard = () => {
 
           <TabsContent value="tickets" className="space-y-4 sm:space-y-4 mt-4 sm:mt-6">
             {/* Ticket Statistics Cards */}
-            <div className="ticket-summary-grid mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
               {[{
                 label: 'Total Tickets',
                 value: displayTotalTickets,
@@ -1831,17 +1831,17 @@ export const TicketDashboard = () => {
                 return (
                   <div
                     key={i}
-                    className={`ticket-summary-card ${item.clickable ? 'ticket-summary-card-clickable' : ''}`}
+                    className={`relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-all duration-300 ${item.clickable ? 'cursor-pointer' : ''}`}
                     onClick={() => item.clickable && handleStatusCardClick(item.type)}
                   >
-                    <div className="ticket-summary-icon">
-                      <IconComponent className="ticket-summary-icon-svg" />
+                    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
+                      <IconComponent className="w-6 h-6 text-brand" />
                     </div>
-                    <div className="ticket-summary-copy">
-                      <div className="ticket-summary-value">
+                    <div>
+                      <div className="text-2xl font-semibold text-[#1A1A1A]">
                         {item.value}
                       </div>
-                      <div className="ticket-summary-label">
+                      <div className="text-sm font-medium text-[#1A1A1A]">
                         {item.label}
                       </div>
                     </div>

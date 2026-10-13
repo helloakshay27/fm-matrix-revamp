@@ -1274,10 +1274,9 @@ className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e
         <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#D5DbDB] bg-[#f6f4ee] px-3 py-2">
           <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
             <Checkbox
-              checked={isAllSelected}
+              checked={!!isAllSelected}
               onCheckedChange={handleSelectAllChange}
               aria-label={selectAllLabel}
-              {...(isIndeterminate && { "data-state": "indeterminate" })}
             />
             {selectAllLabel}
           </label>
@@ -1605,13 +1604,10 @@ className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e
                       >
                         <div className="flex justify-center">
                           <Checkbox
-                            checked={isAllSelected}
+                            checked={!!isAllSelected}
                             onCheckedChange={handleSelectAllChange}
                             aria-label={selectAllLabel}
                             disabled={!hasSelectableRows}
-                            {...(isIndeterminate && {
-                              "data-state": "indeterminate",
-                            })}
                           />
                         </div>
                       </TableHead>
@@ -1859,7 +1855,6 @@ className="flex w-full items-center justify-center gap-1 border-t border-[#f4f0e
                           className={cn(
                             onRowClick && "cursor-pointer",
                             "hover:bg-gray-50",
-                            !rowDisabled && isSelected && "bg-blue-50",
                             rowClassName?.(item)
                           )}
                           onClick={(e) => {

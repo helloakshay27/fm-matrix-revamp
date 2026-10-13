@@ -718,7 +718,6 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         className={cn(
                           onRowClick && "cursor-pointer",
                           "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
-                          isSelected && "bg-blue-100 hover:bg-blue-150",
                           getRowClassName?.(item),
                           rowClassName
                         )}
