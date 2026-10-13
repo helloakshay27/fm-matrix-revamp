@@ -293,6 +293,12 @@ const isViSite =
   hostname.includes("lockated.gophygital.work") ||
   hostname.includes("community.gophygital.work")
 
+const isViUatSite = hostname === "vi-uat.gophygital.work";
+
+// OTP verify / resend: Vi UAT has its own API host; every other site uses live-api.
+export const getViOtpApiBase = () =>
+  isViUatSite ? "https://vi-uat-api.gophygital.work" : "https://live-api.gophygital.work";
+
 const isViUatSite = hostname === "vi-uat.gophygital.work"
 
 const isFmSite =
@@ -604,7 +610,7 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
 
   // https://pulse-api.lockated.com/get_otps/verify_otp.json?email=sumitra.patil@lockated.com&otp=999999
   const response = await fetch(
-    `https://live-api.gophygital.work/verify_code.json`,
+    `${getViOtpApiBase()}/verify_code.json`,
     {
       method: "POST",
       headers,
