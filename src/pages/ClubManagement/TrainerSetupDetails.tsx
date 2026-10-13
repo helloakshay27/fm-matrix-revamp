@@ -46,37 +46,51 @@ const ReadOnlyField = ({ label, value }: { label: string; value: string | number
   />
 );
 
-const downloadAttachment = async (url: string, fileName = "download") => {
-  if (!url) return;
+const saveBlob = (blob: Blob, fileName: string) => {
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+};
 
-  try {
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = fileName;
-    anchor.style.display = "none";
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(blobUrl);
+// Prefer the API's download_url (sent with the auth header via apiClient), then the raw
+// S3 url as a blob, and finally just open the file so the user can still get it.
+const downloadAttachment = async (
+  { downloadUrl, url }: { downloadUrl?: string; url?: string },
+  fileName = "download"
+) => {
+  if (!downloadUrl && !url) {
+    toast.error("No file available to download");
     return;
-  } catch (error) {
-    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
   }
 
-  const fallback = document.createElement("a");
-  fallback.href = url;
-  fallback.download = fileName;
-  fallback.target = "_self";
-  fallback.rel = "noopener noreferrer";
-  fallback.style.display = "none";
-  document.body.appendChild(fallback);
-  fallback.click();
-  document.body.removeChild(fallback);
+  if (downloadUrl) {
+    try {
+      const response = await apiClient.get(downloadUrl, { responseType: "blob" });
+      saveBlob(response.data, fileName);
+      return;
+    } catch (error) {
+      console.warn("download_url failed, falling back to file url:", error);
+    }
+  }
+
+  if (url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      saveBlob(await response.blob(), fileName);
+      return;
+    } catch (error) {
+      console.warn("Blob download from file url failed, opening file instead:", error);
+    }
+  }
+
+  window.open(url || downloadUrl, "_blank", "noopener,noreferrer");
 };
 
 const normalizeShiftTimingLabel = (value: string | number | undefined): string | number | undefined => {
@@ -320,7 +334,7 @@ export const TrainerSetupDetails = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => downloadAttachment(cred.url || "", cred.name || "trainer-credential")}
+                      onClick={() => downloadAttachment(cred, cred.name || "trainer-credential")}
                       className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded shrink-0"
                       title="Download"
                     >
