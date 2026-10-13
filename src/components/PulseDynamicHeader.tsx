@@ -9,14 +9,7 @@ import { getUser } from "@/utils/auth";
 export const PulseDynamicHeader = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
 
-  const hostname = window.location.hostname;
-  const isPulseSiteDomain = hostname === "pulse.lockated.com";
-  const isPanchshilUatSiteDomain = hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
-  const showPulseUsageAnalytics = isPulseSiteDomain || isPanchshilUatSiteDomain;
-
-  const packages = showPulseUsageAnalytics
-    ? ["Pulse Privilege", "Master", "Settings", "Usage Analytics"]
-    : ["Pulse Privilege", "Master", "Settings"];
+  const packages = ["Pulse Privilege", "Master", "Settings"];
 
   const dispatch = useDispatch<AppDispatch>();
   const { selectedCompany } = useSelector((state: RootState) => state.project);

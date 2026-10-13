@@ -21,37 +21,49 @@ const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
   slotBy: 15,
 });
 
-const downloadAttachment = async (url: string, fileName = "download") => {
-  if (!url) return;
+const saveBlob = (blob: Blob, fileName: string) => {
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+};
 
-  try {
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = fileName;
-    anchor.style.display = "none";
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(blobUrl);
+const downloadAttachment = async (
+  { downloadUrl, url }: { downloadUrl?: string; url?: string },
+  fileName = "download"
+) => {
+  if (!downloadUrl && !url) {
+    toast.error("No file available to download");
     return;
-  } catch (error) {
-    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
   }
 
-  const fallback = document.createElement("a");
-  fallback.href = url;
-  fallback.download = fileName;
-  fallback.target = "_self";
-  fallback.rel = "noopener noreferrer";
-  fallback.style.display = "none";
-  document.body.appendChild(fallback);
-  fallback.click();
-  document.body.removeChild(fallback);
+  if (downloadUrl) {
+    try {
+      const response = await apiClient.get(downloadUrl, { responseType: "blob" });
+      saveBlob(response.data, fileName);
+      return;
+    } catch (error) {
+      console.warn("download_url failed, falling back to file url:", error);
+    }
+  }
+
+  if (url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      saveBlob(await response.blob(), fileName);
+      return;
+    } catch (error) {
+      console.warn("Blob download from file url failed, opening file instead:", error);
+    }
+  }
+
+  window.open(url || downloadUrl, "_blank", "noopener,noreferrer");
 };
 
 // Allows only positive integers, matching the pattern used on the Amenity Booking Setup form.
@@ -934,7 +946,7 @@ export const TrainerSetupForm = ({
               {initialValues.existingTrainerImageUrl && (
                 <button
                   type="button"
-                  onClick={() => downloadAttachment(initialValues.existingTrainerImageUrl!, "current-trainer-image")}
+                  onClick={() => downloadAttachment({ url: initialValues.existingTrainerImageUrl }, "current-trainer-image")}
                   className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                 >
                   <span className="flex min-w-0 items-center gap-2">
@@ -951,7 +963,7 @@ export const TrainerSetupForm = ({
                     <button
                       key={attachment.id}
                       type="button"
-                      onClick={() => downloadAttachment(attachment.url || "", attachment.name || "attachment")}
+                      onClick={() => downloadAttachment(attachment, attachment.name || "attachment")}
                       className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                     >
                       <span className="flex min-w-0 items-center gap-2">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete } from "@mui/material";
-import { Search, Crown, Trophy, Plus, X } from "lucide-react";
+import { Crown, Trophy, Plus, X, Award } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -90,14 +90,14 @@ const AchievementPoint = ({
         InputLabelProps={{ shrink: true }}
       />
       {showRemove && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           onClick={onRemove}
-          className="text-gray-400 hover:text-red-500 px-2"
+          className="w-10 h-10 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 shrink-0"
+          aria-label={`Remove achievement ${index + 1}`}
         >
           <X className="w-4 h-4" />
-        </Button>
+        </button>
       )}
     </div>
   );
@@ -189,6 +189,11 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
               historyItem = {
                 ...historyItem,
                 ...parsed,
+                // Empty values in the parsed JSON must not blank out the record's own fields
+                month: parsed.month || historyItem.month,
+                full_name: parsed.full_name || parsed.userName || historyItem.full_name,
+                role: parsed.role || historyItem.role,
+                profile_image: parsed.profile_image || parsed.profileImage || "",
                 // Ensure we don't overwrite IDs from the parse if they are missing
                 id: h.id || h.extra_field_id,
                 extra_field_id: h.id || h.extra_field_id
@@ -385,13 +390,13 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
   const renderCellHistory = (item: EOMHistoryItem, columnKey: string) => {
     switch (columnKey) {
       case "month":
-        return <span className="font-medium text-gray-900">{item.month || item.field_name}</span>;
+        return <span className="font-medium text-gray-900">{item.month || item.field_name || "-"}</span>;
       case "full_name":
         return (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-200">
-              {(item.profile_image || item.field_description) ? (
-                <img src={item.profile_image || item.field_description} alt="Avatar" className="w-full h-full object-cover" />
+              {item.profile_image ? (
+                <img src={item.profile_image} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <Crown className="w-4 h-4 text-gray-400" />
               )}
@@ -422,18 +427,24 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 bg-[#fafafa] min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <Crown className="w-6 h-6 text-[#C72030]" />
-              <h1 className="text-2xl font-bold text-gray-800">
-                Employee of the Month Setup
-              </h1>
-            </div>
-          </div>
+    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+      <div className="w-full space-y-6">
+        <div className="flex items-center gap-3">
+          <Crown className="w-6 h-6 text-[var(--color-ink-68)]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 uppercase">
+            Employee of the Month Setup
+          </h1>
+        </div>
 
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+              <Award className="w-4 h-4 text-[var(--color-ink-68)]" />
+            </span>
+            <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">
+              Employee Details
+            </h3>
+          </div>
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -497,7 +508,7 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Achievement Points</label>
+              <label className="text-sm font-medium text-gray-700 block mb-3">Achievement Points</label>
               <div className="space-y-3">
                 {employeeOfTheMonth.points.map((point, idx) => (
                   <AchievementPoint
@@ -516,66 +527,59 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
                     }}
                   />
                 ))}
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={() => setEmployeeOfTheMonth({ ...employeeOfTheMonth, points: [...employeeOfTheMonth.points, ""] })}
-                  className="border-dashed py-0 h-8 text-xs text-brand"
+                  className="fm-action-secondary"
                 >
-                  <Plus className="w-3 h-3 mr-1" /> Add Achievement Point
-                </Button>
+                  <Plus className="w-4 h-4 mr-2" /> Add Achievement Point
+                </button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-center gap-4 pt-6 border-t">
-              <Button variant="outline" onClick={() => navigate(-1)} className="border-[#C72030] text-[#C72030] px-8">Cancel</Button>
-              <button
-                onClick={handleEOMUpdate}
-                disabled={eomLoading}
-                className="px-8 py-2 font-semibold text-white rounded-none"
-                style={{ backgroundColor: '#C72030' }}
-              >
-                {eomLoading ? "Saving..." : "Save Employee of Month"}
-              </button>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
-              <Trophy className="w-6 h-6 text-[#C72030]" />
-              <h2 className="text-2xl font-bold text-gray-800">History</h2>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search history..."
-                value={historySearch}
-                onChange={(e) => setHistorySearch(e.target.value)}
-                className="pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-md focus:outline-none w-full sm:w-64 h-10"
-              />
-            </div>
-          </div>
+        <div className="fm-action-bar">
+          <button type="button" onClick={() => navigate(-1)} className="fm-action-secondary">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleEOMUpdate}
+            disabled={eomLoading}
+            className="fm-action-primary"
+          >
+            {eomLoading ? "Saving..." : "Save Employee of Month"}
+          </button>
+        </div>
 
-          <div className="overflow-hidden rounded-lg">
-            <EnhancedTable
-              data={eomHistory}
-              columns={historyColumns}
-              renderCell={renderCellHistory}
-              renderActions={renderActionsHistory}
-              getItemId={(item: EOMHistoryItem) => String(item.extra_field_id || item.id)}
-              searchTerm={historySearch}
-              onSearchChange={setHistorySearch}
-              hideTableSearch={true}
-              enableExport={true}
-              storageKey="eom-history-table"
-              pagination={true}
-              pageSize={5}
-              loading={historyLoading}
-            />
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4 text-[var(--color-ink-68)]" />
+            </span>
+            <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">
+              History
+            </h3>
           </div>
+          <EnhancedTable
+            data={eomHistory}
+            columns={historyColumns}
+            renderCell={renderCellHistory}
+            renderActions={renderActionsHistory}
+            getItemId={(item: EOMHistoryItem) => String(item.extra_field_id || item.id)}
+            enableSearch={true}
+            searchTerm={historySearch}
+            onSearchChange={setHistorySearch}
+            searchPlaceholder="Search history..."
+            enableExport={true}
+            exportFileName="employee-of-the-month-history"
+            storageKey="eom-history-table"
+            emptyMessage="No history found"
+            pagination={true}
+            pageSize={5}
+            loading={historyLoading}
+          />
         </div>
       </div>
     </div>

@@ -34,6 +34,8 @@ export interface ClassAttachment {
   id: string;
   name: string;
   url: string;
+  // API download endpoint - preferred over the raw S3/file url because it can use auth.
+  downloadUrl?: string;
 }
 
 // The API's attachment `url` comes back URL-encoded and protocol-relative, e.g.
