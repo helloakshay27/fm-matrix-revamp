@@ -55,6 +55,7 @@ interface VisitorSelectionPanelProps {
   onApprove: () => Promise<void>;
   onVerifyOtp?: () => Promise<void>;
   onBlacklist?: () => Promise<void>;
+  onCancel?: () => Promise<void>;
   onFlag?: () => Promise<void>;
   onExport: () => void;
   onClearSelection: () => void;
@@ -70,6 +71,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   onApprove,
   onVerifyOtp,
   onBlacklist,
+  onCancel,
   onFlag,
   onExport,
   onClearSelection,
@@ -89,6 +91,10 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelLoading, setIsCancelLoading] = useState(false);
 
   const handleCheckIn = async () => {
     console.log(
@@ -441,19 +447,62 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       "VisitorSelectionPanel - Blacklist clicked for visitors:",
       selectedVisitors
     );
+    setBlacklistDialogOpen(true);
+  };
+
+  const handleBlacklistModalClose = () => {
+    setBlacklistDialogOpen(false);
+    setBlacklistReason("");
+  };
+
+  const handleBlacklistSubmit = async () => {
+    if (!blacklistReason.trim()) {
+      toast.error("Reason is required to blacklist a visitor.");
+      return;
+    }
+
     setIsBlacklistLoading(true);
     try {
       if (onBlacklist) {
-        await onBlacklist();
-        toast.success(
-          `Successfully blacklisted ${selectedVisitors.length} visitor(s).`
-        );
+        await onBlacklist(blacklistReason.trim());
+        setBlacklistDialogOpen(false);
+        setBlacklistReason("");
+        fetchVisitorHistory();
       }
     } catch (error) {
       console.error("Failed to blacklist visitors:", error);
       toast.error("Failed to blacklist visitors. Please try again.");
     } finally {
       setIsBlacklistLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  const handleCancelModalClose = () => {
+    if (!isCancelLoading) {
+      setIsCancelModalOpen(false);
+    }
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!onCancel) {
+      setIsCancelModalOpen(false);
+      return;
+    }
+
+    setIsCancelLoading(true);
+    try {
+      await onCancel();
+      setIsCancelModalOpen(false);
+      fetchVisitorHistory();
+    } catch (error) {
+      console.error("Failed to cancel visitors:", error);
+      toast.error("Failed to cancel visitors. Please try again.");
+    } finally {
+      setIsCancelLoading(false);
     }
   };
 
@@ -744,6 +793,21 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
               <span className="text-xs text-gray-600">Blacklist</span>
             </Button>
 
+            {/* Cancel Button */}
+            {onCancel && (
+              <Button
+                type="button"
+                onClick={handleCancel}
+                disabled={isCancelLoading}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <XCircle className="w-6 h-6 text-black" aria-hidden="true" />
+                <span className="text-xs text-gray-600">Cancel</span>
+              </Button>
+            )}
+
             {/* Flag Button */}
             {onFlag && (
               <Button
@@ -908,7 +972,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       {/* Blacklist Reason Modal */}
       <Dialog
-        open={isBlacklistModalOpen}
+        open={blacklistDialogOpen}
         onOpenChange={(open) => !open && handleBlacklistModalClose()}
       >
         <DialogContent className="sm:max-w-md">
