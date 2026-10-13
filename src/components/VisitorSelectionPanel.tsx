@@ -119,6 +119,8 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
     }
   };
 
+  
+
   const handleCheckOut = async () => {
     console.log(
       "VisitorSelectionPanel - Bulk check out clicked for visitors:",
