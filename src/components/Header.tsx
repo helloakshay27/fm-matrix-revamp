@@ -138,7 +138,7 @@ export const Header = () => {
     hostname.includes("fm-matrix.lockated.com");
 
   // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
-  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // dashboard. The FM Matrix one at /fm-usage-analytics is still routed and reachable
   // directly by URL; it just no longer has a profile-menu entry.
   const usageAnalyticsPath = "/vi-posthog-dashboard";
   const showUsageAnalytics = isViSite || isLocalhost;
@@ -266,7 +266,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -432,6 +432,10 @@ export const Header = () => {
     navigate("/msafedashboard"); // new MSafe Dashboard revamp
   };
 
+  const handleFmPosthog = () => {
+    navigate("/fm-usage-analytics");
+  };
+
   const logoClassName =
     "max-h-10 w-auto max-w-full object-contain sm:max-h-12 md:max-h-[60px]";
 
@@ -453,10 +457,11 @@ export const Header = () => {
             )}
           </button>
           <div
-            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
-              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
-              : "w-16"
-              }`}
+            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${
+              isMobileUiSite()
+                ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+                : "w-16"
+            }`}
           >
             {isOmanSite ? (
               <svg
@@ -633,7 +638,6 @@ export const Header = () => {
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
-
                 </button>
               )}
               {/* {canShowMSafeDashboard && (
@@ -909,15 +913,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -1009,7 +1015,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex min-w-0 items-center text-gray-600 text-xs mt-0.5">
@@ -1085,7 +1091,7 @@ export const Header = () => {
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
 
-                {showFmUsageAnalytics && (
+                {/* {showFmUsageAnalytics && (
                   <DropdownMenuItem
                     onClick={() => navigate("/posthog-dashboard")}
                     className="mx-2 my-1 rounded-md"
@@ -1093,12 +1099,10 @@ export const Header = () => {
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
                     <span className="font-medium">Usage Analytics</span>
                   </DropdownMenuItem>
-                )}
+                )} */}
                 {showUsageAnalytics && (
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = usageAnalyticsPath)
-                    }
+                    onClick={() => (window.location.href = usageAnalyticsPath)}
                     className="mx-2 my-1 rounded-md"
                   >
                     <Activity className="w-4 h-4 mr-2 text-gray-500" />
