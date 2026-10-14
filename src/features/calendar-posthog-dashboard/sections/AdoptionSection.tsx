@@ -7,7 +7,7 @@ import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 /** Layer 2 — Adoption & Engagement. */
 export function AdoptionSection() {
-  const { vm, palette, adoptLoading } = useCalendarDashboard();
+  const { vm, palette, adoptLoading, errors } = useCalendarDashboard();
   const { adopt } = vm;
 
   const itemColor = [palette.blue, palette.violet, palette.green];
@@ -34,6 +34,8 @@ export function AdoptionSection() {
           </li>
         </ul>
       </div>
+
+      {errors.adopt && <p role="alert">Unable to load adoption data: {errors.adopt.message}</p>}
 
       <Tiles specs={adopt.tiles} columns={3} style={{ marginTop: 16 }} id="tilesAdoption" loading={adoptLoading} />
 

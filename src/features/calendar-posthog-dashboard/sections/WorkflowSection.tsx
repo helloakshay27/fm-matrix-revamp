@@ -6,7 +6,7 @@ import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 /** Layer 3 — Workflow Usage. */
 export function WorkflowSection() {
-  const { vm, palette, flowsLoading } = useCalendarDashboard();
+  const { vm, palette, flowsLoading, errors } = useCalendarDashboard();
   const { flows } = vm;
   const w = flows.workflow;
 
@@ -21,6 +21,8 @@ export function WorkflowSection() {
       </div>
 
       <ModuleNav />
+
+      {errors.flows && <p role="alert">Unable to load workflow data: {errors.flows.message}</p>}
 
       <Tiles specs={flows.tiles} columns={4} id="wfKpis" className="tiles-4" loading={flowsLoading} />
 

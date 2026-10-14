@@ -36,7 +36,7 @@ export function Sidebar() {
         <span className="bm-full">Calendar App</span>
         <span className="bm-mini">CA</span>
       </h1>
-      <p className="brandmark-sub">Calendar App · tenant value TBD</p>
+      <p className="brandmark-sub">Calendar App · Usage analytics</p>
       <nav aria-label="Sections">
         <div className="nav-group">
           <div className="nav-label">Layers</div>
