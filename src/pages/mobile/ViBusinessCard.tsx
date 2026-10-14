@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import viBusinessCardBg from "../../assets/vi new (1).png";
+import viBusinessCardBg from "../../assets/vi new (1).jpeg";
 import baseClient from "@/utils/withoutTokenBase";
 
 interface SocialLink {

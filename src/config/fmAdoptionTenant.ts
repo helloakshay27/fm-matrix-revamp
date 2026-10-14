@@ -33,6 +33,8 @@ function resolveTenantUrl(): string {
 
   if (isPulseHost) return "pulse-uat.panchshil.com";
 
+  if (host === "web.gophygital.work") return "web.gophygital.work";
+
   return "fm-matrix.lockated.com";
 }
 

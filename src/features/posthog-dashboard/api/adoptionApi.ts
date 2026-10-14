@@ -194,7 +194,7 @@ const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] 
   return data;
 };
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
 
 export const fetchRecentActiveUsers = (f: RangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', [

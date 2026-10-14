@@ -101,15 +101,6 @@ export const Header = () => {
 
   const location = useLocation();
   const currentPath = location.pathname;
-  const currentUser = JSON.parse(localStorage.getItem("user")).email
-
-  const allowedUsersForDashboard = [
-    "deveshjain928@gmail.com",
-    "madhur.khandelwal@vodafoneidea.com",
-    "rosemary.tj@vodafoneidea.com",
-    "deveshjain928@vodafoneidea.com",
-    "testlogin5@yopmail.com"
-  ]
 
   // Redux state
   const {
@@ -150,7 +141,7 @@ export const Header = () => {
     hostname.includes("fm-matrix.lockated.com");
 
   // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
-  // dashboard. The FM Matrix one at /posthog-dashboard is still routed and reachable
+  // dashboard. The FM Matrix one at /fm-usage-analytics is still routed and reachable
   // directly by URL; it just no longer has a profile-menu entry.
   const usageAnalyticsPath = "/vi-posthog-dashboard";
 
@@ -458,7 +449,7 @@ export const Header = () => {
   // const canShowMSafeDashboard =
   //   !isRestrictedUser && canShowMsafeForSelectedCompany;
 
-  const canShowMSafeDashboard = canShowMsafeForSelectedCompany && allowedUsersForDashboard.includes(currentUser)
+  const canShowMSafeDashboard = canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
@@ -470,7 +461,7 @@ export const Header = () => {
   };
 
   const handleFmPosthog = () => {
-    navigate('/posthog-dashboard')
+    navigate('/fm-usage-analytics')
   }
 
   const logoClassName =

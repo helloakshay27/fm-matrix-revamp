@@ -1,4 +1,5 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   fetchAdoptionEngagement,
   fetchAdoptionTrend,
@@ -295,25 +296,66 @@ export interface SiteLeagueEntry {
 }
 
 export function useSiteLeague(f: QueryFilters, siteIds: string[], enabled: boolean) {
-  // `traffic_session` aggregates all supplied site ids. Query every site
-  // separately so the league table contains actual per-site values.
-  const queries = useQueries({
-    queries: siteIds.map((siteId) => ({
-      queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteId, f.devices.join(','), f.requestId ?? 0],
-      queryFn: () =>
-        fetchTrafficSession({ from: f.from, to: f.to, siteIds: [siteId], devices: f.devices, dev: f.dev }),
-      enabled: enabled && f.enabled,
-      ...CACHE,
-    })),
+  // `traffic_session` aggregates all supplied site ids, so the league table still needs one
+  // call per site for real per-site values. To keep the load on the analytics API down,
+  // those calls run one at a time inside a single query: each site waits for the previous
+  // one, on first load and on Refresh alike (separate per-site queries would all be
+  // refetched in parallel). Rows stream in through `progress` as each site lands.
+  const runKey = [f.from, f.to, siteIds.join(','), f.devices.join(','), f.dev ?? '', f.requestId ?? 0].join('|');
+  const [progress, setProgress] = useState<{
+    runKey: string;
+    entries: SiteLeagueEntry[];
+    failed: number;
+  } | null>(null);
+
+  const query = useQuery({
+    queryKey: ['fm-adoption', 'site_league', runKey],
+    queryFn: async ({ signal }) => {
+      const entries: SiteLeagueEntry[] = siteIds.map((siteId) => ({ siteId, data: undefined }));
+      let failed = 0;
+      setProgress({ runKey, entries: entries.slice(), failed });
+      for (let i = 0; i < siteIds.length; i++) {
+        // Filters changed or the page unmounted: stop instead of finishing a stale run.
+        if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        try {
+          const data = await fetchTrafficSession({
+            from: f.from,
+            to: f.to,
+            siteIds: [siteIds[i]],
+            devices: f.devices,
+            dev: f.dev,
+          });
+          entries[i] = { siteId: siteIds[i], data };
+        } catch {
+          // One failing site must not blank the rest of the table.
+          failed++;
+        }
+        setProgress({ runKey, entries: entries.slice(), failed });
+      }
+      return { entries, failed };
+    },
+    enabled: enabled && f.enabled && siteIds.length > 0,
+    ...CACHE,
   });
 
+  // While a run is in flight, show the rows it has fetched so far and keep the previous
+  // run's values for the sites it hasn't reached yet, so a Refresh doesn't blank the table.
+  const live = query.isFetching && progress?.runKey === runKey ? progress : null;
+  const previous = query.data?.entries ?? [];
+  const entries: SiteLeagueEntry[] = live
+    ? live.entries.map((e) => (e.data ? e : previous.find((p) => p.siteId === e.siteId) ?? e))
+    : previous.length
+      ? previous
+      : siteIds.map((siteId) => ({ siteId, data: undefined }));
+  const failed = live ? live.failed : query.data?.failed ?? 0;
+
   return {
-    entries: siteIds.map((siteId, index) => ({ siteId, data: queries[index]?.data })) as SiteLeagueEntry[],
-    isLoading: enabled && queries.some((query) => query.isLoading),
-    isError: queries.some((query) => query.isError),
-    error: queries.find((query) => query.error)?.error ?? null,
-    loaded: queries.filter((query) => query.data !== undefined).length,
-    failed: queries.filter((query) => query.isError).length,
+    entries,
+    isLoading: enabled && query.isLoading,
+    isError: query.isError || failed > 0,
+    error: query.error ?? null,
+    loaded: (live ? live.entries : entries).filter((e) => e.data !== undefined).length,
+    failed,
     total: siteIds.length,
   };
 }
