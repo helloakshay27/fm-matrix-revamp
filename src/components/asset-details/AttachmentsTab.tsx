@@ -164,8 +164,7 @@
 //     </div>;
 // };
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FileText, File, Image, FileSpreadsheet } from "lucide-react";
+import { FileText, File, Image, FileSpreadsheet, Paperclip } from "lucide-react";
 
 interface AttachmentsTab {
   asset: Asset;
@@ -234,33 +233,33 @@ export const AttachmentsTab: React.FC<AttachmentsTab> = ({ asset }) => {
         {attachmentTypes.map((type, index) => {
           const isActive = type.name === activeType;
           return (
-            <Button
+            // Neutral selection chip: selected = soft surface + ink border/text,
+            // unselected = white + hairline border. No status colour for selection.
+            <button
               key={index}
-              variant={isActive ? "default" : "outline"}
-              className={`flex items-center gap-2 whitespace-nowrap min-w-fit px-4 py-2 rounded-lg 
-        ${
-          isActive
-            ? "bg-[#FBE8EA] border-[#C72030]"
-            : "border-gray-300 bg-white hover:bg-gray-50"
-        }`}
+              type="button"
+              aria-pressed={isActive}
+              className={`inline-flex items-center gap-2 whitespace-nowrap min-w-fit h-11 px-4 rounded-[10px] border transition-colors ${
+                isActive
+                  ? "bg-[#F5F4F0] border-[#1A1A18] text-[#1A1A18]"
+                  : "bg-white border-[rgba(26,26,24,0.12)] text-[rgba(26,26,24,0.68)] hover:bg-[#F7F6F2] hover:border-[rgba(26,26,24,0.28)]"
+              }`}
               onClick={() => setActiveType(type.name)}
             >
-              <div className="w-4 h-4 rounded flex-shrink-0 bg-red-700"></div>
-              <span
-                className={`text-sm font-medium ${
-                  isActive ? "text-[#C72030]" : "text-black"
+              <Paperclip
+                className={`w-4 h-4 shrink-0 ${
+                  isActive ? "text-[#1A1A18]" : "text-[rgba(26,26,24,0.48)]"
                 }`}
-              >
-                {type.name}
-              </span>
+              />
+              <span className="text-sm font-semibold">{type.name}</span>
               <span
-                className={`text-xs ${
-                  isActive ? "text-[#C72030]" : "text-black"
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  isActive ? "bg-white text-[#1A1A18]" : "bg-[#F5F4F0] text-[rgba(26,26,24,0.68)]"
                 }`}
               >
                 {filesMap[type.name].length} Files
               </span>
-            </Button>
+            </button>
           );
         })}
       </div>

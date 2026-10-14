@@ -4,7 +4,7 @@ import { Guard } from '../components/Guard';
 import { LineChart } from '../components/charts/LineChart';
 import { HorizontalBars } from '../components/charts/HorizontalBars';
 import { useDashboard } from '../context/DashboardContext';
-import { BenchmarkNote } from '../components/TierNote';
+// import { BenchmarkNote } from '../components/TierNote'; // benchmarks note card temporarily hidden
 import { CanvasGrid } from '../components/CanvasGrid';
 import { CanvasTile } from '../components/CanvasTile';
 
@@ -21,7 +21,7 @@ export function TrafficSection() {
 
   return (
     <section className="page on" id="pgTraffic">
-      <BenchmarkNote />
+      {/* <BenchmarkNote /> */}
 
       <div className="section" id="secTraffic">
         <div className="section-head">

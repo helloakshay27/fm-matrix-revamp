@@ -31,6 +31,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Settings } from "lucide-react";
+
+// Month / year pickers in the Actual Cost Calculator: white, hairline border, 14px radius.
+const calendarSelectTriggerClass =
+  "h-[52px] w-full rounded-[14px] border border-[rgba(26,26,24,0.12)] bg-white px-5 text-[15px] font-medium text-[#1A1A18] shadow-none focus:ring-0 focus:ring-offset-0";
 interface DepreciationTab {
   asset: Asset;
   assetId?: string | number;
@@ -390,18 +394,18 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({
 
         {/* Actual Cost Calculator */}
         <div className="w-full">
-          <Card className="h-full">
-            <CardHeader className="pb-4 lg:pb-6">
-              <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                  <Settings className="w-6 h-6 text-[#C72030]" />
-                </div>
-                <span>ACTUAL COST CALCULATOR</span>
+          <Card className="h-full rounded-[20px] border border-[rgba(26,26,24,0.09)] bg-white shadow-none">
+            <CardHeader className="p-6 sm:p-7 pb-0 sm:pb-0 space-y-1">
+              <CardTitle className="text-[18px] font-semibold text-[#1A1A18]">
+                Actual Cost Calculator
               </CardTitle>
+              <p className="text-[14px] text-[rgba(26,26,24,0.48)]">
+                Projected value of this asset on the date you pick
+              </p>
             </CardHeader>
-            <CardContent className="space-y-6 pt-0">
+            <CardContent className="p-6 sm:p-7 pt-5 sm:pt-5 space-y-5">
+              {/* Month and Year Selects */}
               <div className="grid grid-cols-2 gap-3 lg:gap-4">
-                {/* Month and Year Selects */}
                 <Select
                   value={selectedMonth}
                   onValueChange={(val) => {
@@ -409,22 +413,18 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({
                     setSelectedDay(1);
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={calendarSelectTriggerClass}>
                     <SelectValue placeholder="Select Month" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="January">January</SelectItem>
-                    <SelectItem value="February">February</SelectItem>
-                    <SelectItem value="March">March</SelectItem>
-                    <SelectItem value="April">April</SelectItem>
-                    <SelectItem value="May">May</SelectItem>
-                    <SelectItem value="June">June</SelectItem>
-                    <SelectItem value="July">July</SelectItem>
-                    <SelectItem value="August">August</SelectItem>
-                    <SelectItem value="September">September</SelectItem>
-                    <SelectItem value="October">October</SelectItem>
-                    <SelectItem value="November">November</SelectItem>
-                    <SelectItem value="December">December</SelectItem>
+                    {[
+                      "January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December",
+                    ].map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {month}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select
@@ -434,7 +434,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({
                     setSelectedDay(1);
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={calendarSelectTriggerClass}>
                     <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -450,64 +450,68 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({
                 </Select>
               </div>
 
-              {/* Calendar */}
-              <div className="bg-gray-50 p-4 lg:p-5 rounded-lg">
-                <div className="grid grid-cols-7 gap-1 text-center text-sm mb-3">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                    (day) => (
-                      <div
-                        key={day}
-                        className="font-medium text-gray-600 p-1 text-xs"
-                      >
-                        {day}
-                      </div>
-                    )
-                  )}
+              {/* Calendar — weekdays in ink, weekends and adjacent-month days muted,
+                  selected day = soft surface + ink outline, dot marks today */}
+              <div>
+                <div className="grid grid-cols-7 text-center mb-1">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                    <div
+                      key={day}
+                      className="py-2 text-[13px] font-semibold text-[rgba(26,26,24,0.48)]"
+                    >
+                      {day}
+                    </div>
+                  ))}
                 </div>
                 {calendarDays.map((week, weekIndex) => (
-                  <div
-                    key={weekIndex}
-                    className="grid grid-cols-7 gap-1 text-center text-sm"
-                  >
-                    {week.map((dayObj, dayIndex) => (
-                      <div
-                        key={dayIndex}
-                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${
-                          dayObj.day === selectedDay && dayObj.isCurrentMonth
-                            ? "bg-[#C72030] text-white"
-                            : !dayObj.isCurrentMonth
-                            ? "text-gray-300 hover:bg-gray-100"
-                            : dayIndex === 6
-                            ? "text-red-500 hover:bg-red-50"
-                            : "text-gray-700 hover:bg-gray-200"
-                        }`}
-                        onClick={() =>
-                          dayObj.isCurrentMonth && setSelectedDay(dayObj.day)
-                        }
-                      >
-                        {dayObj.day}
-                      </div>
-                    ))}
+                  <div key={weekIndex} className="grid grid-cols-7 text-center">
+                    {week.map((dayObj, dayIndex) => {
+                      const isSelected = dayObj.isCurrentMonth && dayObj.day === selectedDay;
+                      const isWeekend = dayIndex >= 5;
+                      const isToday =
+                        dayObj.isCurrentMonth &&
+                        dayObj.day === currentDate.getDate() &&
+                        selectedMonth === currentMonthName &&
+                        selectedYear === currentYear;
+                      return (
+                        <div key={dayIndex} className="flex items-center justify-center py-1">
+                          <button
+                            type="button"
+                            disabled={!dayObj.isCurrentMonth}
+                            onClick={() => setSelectedDay(dayObj.day)}
+                            aria-pressed={isSelected}
+                            className={`relative flex h-11 w-full max-w-[56px] items-center justify-center rounded-[10px] text-[15px] transition-colors disabled:cursor-default ${
+                              isSelected
+                                ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] font-bold text-[#1A1A18]"
+                                : !dayObj.isCurrentMonth
+                                ? "text-[rgba(26,26,24,0.3)]"
+                                : isWeekend
+                                ? "text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0]"
+                                : "text-[#1A1A18] hover:bg-[#F5F4F0]"
+                            }`}
+                          >
+                            {dayObj.day}
+                            {isToday && (
+                              <span className="absolute bottom-[5px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#1A1A18]" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-4">
-                <div className="text-sm text-gray-500 leading-relaxed">
-                  Actual Cost Calculator is used to calculate the projected
-                  amount you would get for a particular date selected.
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500 mb-1">ACTUAL COST</div>
-                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">
-                    {localStorage.getItem("currency")}{" "}
-                    {actualCost.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </div>
-                  <div className="w-full h-1 bg-[#C72030] mt-2 rounded-full"></div>
-                </div>
+              {/* Result */}
+              <div className="flex items-end justify-between gap-4 border-t border-[rgba(26,26,24,0.12)] pt-5">
+                <span className="text-[14px] text-[rgba(26,26,24,0.48)]">Actual cost</span>
+                <span className="text-[28px] sm:text-[32px] font-bold leading-none text-[#1A1A18]">
+                  {localStorage.getItem("currency")}{" "}
+                  {actualCost.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
               </div>
             </CardContent>
           </Card>

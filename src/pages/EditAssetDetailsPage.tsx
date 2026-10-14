@@ -187,9 +187,9 @@ const AssetImageUpload = ({
   return (
     <> </>
     // <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-    //   <div className="border-l-4 border-l-[#C72030] p-4 bg-white">
-    //     <div className="flex items-center gap-2 text-[#C72030] text-sm font-semibold mb-4">
-    //       <span className="bg-[#C72030] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+    //   <div className="border-l-4 border-l-[#DA7756] p-4 bg-white">
+    //     <div className="flex items-center gap-2 text-[#DA7756] text-sm font-semibold mb-4">
+    //       <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
     //         <Package className="w-3 h-3" />
     //       </span>
     //       {categoryName.toUpperCase()} ASSET IMAGE
@@ -249,7 +249,7 @@ const AssetImageUpload = ({
     //             <p className="text-sm text-gray-500 mb-4">
     //               Click to upload an image of your {categoryName.toLowerCase()}
     //             </p>
-    //             <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#C72030] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
+    //             <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#DA7756] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
     //               <Package className="w-5 h-5" />
     //               Choose Image
     //             </div>
@@ -5851,7 +5851,7 @@ export const EditAssetDetailsPage = () => {
 
   const renderCriticalField = () => (
     <div>
-      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+      <label className="text-sm font-medium text-[#DA7756] mb-2 block">
         Critical
       </label>
       <div className="flex gap-6">
@@ -5866,9 +5866,9 @@ export const EditAssetDetailsPage = () => {
               setCriticalStatus(e.target.value);
               handleFieldChange("critical", e.target.value);
             }}
-            className="w-4 h-4 text-[#C72030] border-gray-300"
+            className="w-4 h-4 text-[#DA7756] border-gray-300"
             style={{
-              accentColor: "#C72030",
+              accentColor: "#DA7756",
             }}
           />
           <label htmlFor="critical-yes" className="text-sm">
@@ -5886,9 +5886,9 @@ export const EditAssetDetailsPage = () => {
               setCriticalStatus(e.target.value);
               handleFieldChange("critical", e.target.value);
             }}
-            className="w-4 h-4 text-[#C72030] border-gray-300"
+            className="w-4 h-4 text-[#DA7756] border-gray-300"
             style={{
-              accentColor: "#C72030",
+              accentColor: "#DA7756",
             }}
           />
           <label htmlFor="critical-no" className="text-sm">
@@ -5924,9 +5924,9 @@ export const EditAssetDetailsPage = () => {
       <div className="space-y-4 sm:space-y-6">
         {/* Asset Category Selection */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div className="border-l-4 border-l-[#C72030] p-2 sm:p-6 bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
               ASSET CATEGORY
@@ -6015,7 +6015,7 @@ export const EditAssetDetailsPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
@@ -6161,7 +6161,7 @@ export const EditAssetDetailsPage = () => {
               {/* Location & Ownership */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Ownership
@@ -6352,7 +6352,7 @@ export const EditAssetDetailsPage = () => {
               {/* Land Size & Value */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Ruler className="w-5 h-5" />
                       Land Size & Value
@@ -6601,7 +6601,7 @@ export const EditAssetDetailsPage = () => {
               {/* Land Usage & Development */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Land Usage & Development
@@ -6746,7 +6746,7 @@ export const EditAssetDetailsPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
@@ -6906,7 +6906,7 @@ export const EditAssetDetailsPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
@@ -7011,7 +7011,7 @@ export const EditAssetDetailsPage = () => {
               {/* Location & Association */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Association
@@ -7164,7 +7164,7 @@ export const EditAssetDetailsPage = () => {
               {/* Improvement Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Improvement Details
@@ -7431,7 +7431,7 @@ export const EditAssetDetailsPage = () => {
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Financial & Depreciation
@@ -7710,7 +7710,7 @@ export const EditAssetDetailsPage = () => {
               {/* Lease & Maintenance Linkages */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5" />
                       Lease & Maintenance Linkages
@@ -7900,7 +7900,7 @@ export const EditAssetDetailsPage = () => {
               {/* Oversight & Documentation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users2 className="w-5 h-5" />
                       Oversight & Documentation
@@ -8068,7 +8068,7 @@ export const EditAssetDetailsPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
@@ -8219,7 +8219,7 @@ export const EditAssetDetailsPage = () => {
 
                     {/* ✅ Asset Type radio buttons */}
                     <div className="mb-2 md:col-span-2">
-                      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                      <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                         Asset Type
                       </label>
                       <div className="flex gap-6">
@@ -8230,8 +8230,8 @@ export const EditAssetDetailsPage = () => {
                             name="assetType"
                             value="true"
                             checked={formData.asset_type === "true"}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                             onChange={(e) =>
                               handleFieldChange("asset_type", e.target.value)
                             }
@@ -8250,8 +8250,8 @@ export const EditAssetDetailsPage = () => {
                             name="assetType"
                             value="false"
                             checked={formData.asset_type === "false"}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                             onChange={(e) =>
                               handleFieldChange("asset_type", e.target.value)
                             }
@@ -8306,7 +8306,7 @@ export const EditAssetDetailsPage = () => {
               {/* Technical Specifications */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Cog className="w-5 h-5" />
                       Technical Specifications
@@ -8438,7 +8438,7 @@ export const EditAssetDetailsPage = () => {
               {/* Ownership & Usage */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users2 className="w-5 h-5" />
                       Ownership & Usage
@@ -8619,7 +8619,7 @@ export const EditAssetDetailsPage = () => {
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Financial & Depreciation
@@ -8858,8 +8858,8 @@ export const EditAssetDetailsPage = () => {
                                 e.target.value === "yes"
                               );
                             }}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
@@ -8882,8 +8882,8 @@ export const EditAssetDetailsPage = () => {
                                 e.target.value === "no"
                               );
                             }}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                           />
                           <label
                             htmlFor="vehicle-warranty-no"
@@ -9019,7 +9019,7 @@ export const EditAssetDetailsPage = () => {
               {/* Performance Tracking */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Performance className="w-5 h-5" />
                       Performance Tracking
@@ -9232,7 +9232,7 @@ export const EditAssetDetailsPage = () => {
               {/* Legal & Compliance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5" />
                       Legal & Compliance
@@ -9485,7 +9485,7 @@ export const EditAssetDetailsPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
@@ -9630,7 +9630,7 @@ export const EditAssetDetailsPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
@@ -9794,7 +9794,7 @@ export const EditAssetDetailsPage = () => {
               {/* Location & Ownership */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Ownership
@@ -9929,7 +9929,7 @@ export const EditAssetDetailsPage = () => {
               {/* Construction Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Construction Details
@@ -10175,7 +10175,7 @@ export const EditAssetDetailsPage = () => {
               {/* Acquisition & Value */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5" />
                       Acquisition & Value
@@ -10515,7 +10515,7 @@ export const EditAssetDetailsPage = () => {
               {/* Usage & Compliance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
                       Usage & Compliance
@@ -10791,7 +10791,7 @@ export const EditAssetDetailsPage = () => {
               {/* Maintenance & Linkages */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Wrench className="w-5 h-5" />
                       Maintenance & Linkages
@@ -10913,7 +10913,7 @@ export const EditAssetDetailsPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
@@ -11049,10 +11049,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("asset")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET DETAILS
@@ -11320,7 +11320,7 @@ export const EditAssetDetailsPage = () => {
                     <div className="mb-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                          <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                             Status
                           </label>
                           <div className="flex gap-6">
@@ -11331,9 +11331,9 @@ export const EditAssetDetailsPage = () => {
                                 name="status"
                                 value="false"
                                 checked={formData.status === "in_use"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) => {
                                   handleFieldChange("breakdown", e.target.value);
@@ -11351,9 +11351,9 @@ export const EditAssetDetailsPage = () => {
                                 name="status"
                                 value="true"
                                 checked={formData.status === "breakdown"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) => {
                                   handleFieldChange("breakdown", e.target.value);
@@ -11370,7 +11370,7 @@ export const EditAssetDetailsPage = () => {
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                          <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                             Critical
                           </label>
                           <div className="flex gap-6">
@@ -11385,9 +11385,9 @@ export const EditAssetDetailsPage = () => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
                                 }}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                               />
                               <label htmlFor="critical-yes" className="text-sm">
@@ -11405,9 +11405,9 @@ export const EditAssetDetailsPage = () => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
                                 }}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                               />
                               <label htmlFor="critical-no" className="text-sm">
@@ -11423,7 +11423,7 @@ export const EditAssetDetailsPage = () => {
                     <div className="mb-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                          <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                             Asset Type
                           </label>
                           <div className="flex gap-6">
@@ -11434,9 +11434,9 @@ export const EditAssetDetailsPage = () => {
                                 name="assetType"
                                 value="true"
                                 checked={formData.asset_type === "true"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) =>
                                   handleFieldChange("asset_type", e.target.value)
@@ -11456,9 +11456,9 @@ export const EditAssetDetailsPage = () => {
                                 name="assetType"
                                 value="false"
                                 checked={formData.asset_type === "false"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) =>
                                   handleFieldChange("asset_type", e.target.value)
@@ -11519,10 +11519,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("location")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     LOCATION DETAILS
@@ -11778,10 +11778,10 @@ export const EditAssetDetailsPage = () => {
                 <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                   <div
                     onClick={() => toggleSection("warranty")}
-                    className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                    className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                   >
-                    <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                      <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                      <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                         <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                       </span>
                       IT ASSETS DETAILS
@@ -11840,7 +11840,7 @@ export const EditAssetDetailsPage = () => {
                         <h3
                           className="font-semibold mb-4"
                           style={{
-                            color: "#C72030",
+                            color: "#DA7756",
                           }}
                         >
                           SYSTEM DETAILS
@@ -11965,8 +11965,8 @@ export const EditAssetDetailsPage = () => {
                                 }
                                 className="font-semibold text-sm bg-transparent border-b focus:outline-none"
                                 style={{
-                                  color: "#C72030",
-                                  borderColor: "#C72030",
+                                  color: "#DA7756",
+                                  borderColor: "#DA7756",
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
@@ -12006,7 +12006,7 @@ export const EditAssetDetailsPage = () => {
                             <div className="flex items-center gap-2">
                               <h3
                                 className="font-semibold"
-                                style={{ color: "#C72030" }}
+                                style={{ color: "#DA7756" }}
                               >
                                 {hardDiskHeading}
                               </h3>
@@ -12140,10 +12140,10 @@ export const EditAssetDetailsPage = () => {
                   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                     <div
                       onClick={() => toggleSection("meterCategory")}
-                      className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                      className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                     >
-                      <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                        <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                        <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                           <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                         </span>
                         METER DETAILS
@@ -12199,7 +12199,7 @@ export const EditAssetDetailsPage = () => {
                         {/* Meter Type */}
                         <div className="mb-6">
                           <div className="flex items-center gap-4 mb-4">
-                            <span className="text-[#C72030] font-medium text-sm sm:text-base">
+                            <span className="text-[#DA7756] font-medium text-sm sm:text-base">
                               Meter Type
                             </span>
                             <div className="flex gap-6">
@@ -12218,9 +12218,9 @@ export const EditAssetDetailsPage = () => {
                                     );
                                   }}
                                   disabled={!meterDetailsToggle}
-                                  className="w-4 h-4 text-[#C72030] border-gray-300"
+                                  className="w-4 h-4 text-[#DA7756] border-gray-300"
                                   style={{
-                                    accentColor: "#C72030",
+                                    accentColor: "#DA7756",
                                   }}
                                 />
                                 <label
@@ -12246,9 +12246,9 @@ export const EditAssetDetailsPage = () => {
                                     );
                                   }}
                                   disabled={!meterDetailsToggle}
-                                  className="w-4 h-4 text-[#C72030] border-gray-300"
+                                  className="w-4 h-4 text-[#DA7756] border-gray-300"
                                   style={{
-                                    accentColor: "#C72030",
+                                    accentColor: "#DA7756",
                                   }}
                                 />
                                 <label
@@ -12266,12 +12266,8 @@ export const EditAssetDetailsPage = () => {
                         {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
                         {meterType === "SubMeter" && (
                           <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Parent Meter{" "}
-                              <span className="fm-required-mark">*</span>
-                            </label>
                             <FormControl fullWidth>
-                              <InputLabel>Parent Meter</InputLabel>
+                              <InputLabel shrink>Parent Meter <span className="fm-required-mark">*</span></InputLabel>
                               <MuiSelect
                                 label="Parent Meter"
                                 value={selectedParentMeterId}
@@ -12337,9 +12333,9 @@ export const EditAssetDetailsPage = () => {
                                             e.target.value
                                           )
                                         }
-                                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                        className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                         style={{
-                                          accentColor: "#C72030",
+                                          accentColor: "#DA7756",
                                         }}
                                       />
                                       <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12409,9 +12405,9 @@ export const EditAssetDetailsPage = () => {
                                               e.target.value
                                             );
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12452,9 +12448,9 @@ export const EditAssetDetailsPage = () => {
                                               e.target.value
                                             );
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12495,9 +12491,9 @@ export const EditAssetDetailsPage = () => {
                                               e.target.value
                                             );
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12538,9 +12534,9 @@ export const EditAssetDetailsPage = () => {
                                               e.target.value
                                             );
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12581,9 +12577,9 @@ export const EditAssetDetailsPage = () => {
                                               e.target.value
                                             );
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -12682,10 +12678,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("consumption")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     PURCHASE DETAILS
@@ -12835,9 +12831,9 @@ export const EditAssetDetailsPage = () => {
                               id="warranty-yes"
                               name="underWarranty"
                               value="yes"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               // style={{
-                              //   accentColor: "#C72030",
+                              //   accentColor: "#DA7756",
                               // }}
                               checked={underWarranty === "yes"}
                               onChange={(e) => {
@@ -12855,9 +12851,9 @@ export const EditAssetDetailsPage = () => {
                               id="warranty-no"
                               name="underWarranty"
                               value="no"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               // style={{
-                              //   accentColor: "#C72030",
+                              //   accentColor: "#DA7756",
                               // }}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
@@ -12948,10 +12944,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("nonConsumption")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     DEPRECIATION RULE
@@ -13029,9 +13025,9 @@ export const EditAssetDetailsPage = () => {
                               name="depreciationMethod"
                               value="straight_line"
                               // disabled={!depreciationToggle}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               checked={
                                 formData.depreciation_method === "straight_line"
@@ -13063,9 +13059,9 @@ export const EditAssetDetailsPage = () => {
                               name="depreciationMethod"
                               value="wdv"
                               // disabled={!depreciationToggle}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               checked={formData.depreciation_method === "wdv"}
                               onChange={(e) => {
@@ -13255,9 +13251,9 @@ export const EditAssetDetailsPage = () => {
                               name="depreciation_applicable_for"
                               value="only_this"
                               defaultChecked
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -13278,9 +13274,9 @@ export const EditAssetDetailsPage = () => {
                               id="similar-product"
                               name="depreciation_applicable_for"
                               value="similar_product"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -13299,7 +13295,7 @@ export const EditAssetDetailsPage = () => {
                       {/* Similar Product Sub Options */}
                       {formData.depreciation_applicable_for ===
                         "similar_product" && (
-                          <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-l-gray-300">
+                          <div className="rounded-[12px] border border-[rgba(26,26,24,0.09)] bg-white p-4">
                             <div className="mb-4">
                               <label className="text-sm font-medium text-gray-700 mb-3 block">
                                 Choose Configuration Type
@@ -13313,9 +13309,9 @@ export const EditAssetDetailsPage = () => {
                                       name="similar_product_type"
                                       value="individual"
                                       // disabled={!depreciationToggle}
-                                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                                      className="w-4 h-4 text-[#DA7756] border-gray-300"
                                       style={{
-                                        accentColor: "#C72030",
+                                        accentColor: "#DA7756",
                                       }}
                                       onChange={(e) =>
                                         handleFieldChange(
@@ -13340,9 +13336,9 @@ export const EditAssetDetailsPage = () => {
                                       name="similar_product_type"
                                       value="group"
                                       // disabled={!depreciationToggle}
-                                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                                      className="w-4 h-4 text-[#DA7756] border-gray-300"
                                       style={{
-                                        accentColor: "#C72030",
+                                        accentColor: "#DA7756",
                                       }}
                                       onChange={(e) =>
                                         handleFieldChange(
@@ -13369,12 +13365,8 @@ export const EditAssetDetailsPage = () => {
                             {/* Individual Asset Dropdown */}
                             {formData.similar_product_type === "individual" && (
                               <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Select Assets{" "}
-                                  <span className="fm-required-mark">*</span>
-                                </label>
                                 <FormControl fullWidth>
-                                  <InputLabel>Select Assets</InputLabel>
+                                  <InputLabel shrink>Select Assets <span className="fm-required-mark">*</span></InputLabel>
                                   <MuiSelect
                                     label="Select Assets"
                                     value=""
@@ -13463,12 +13455,8 @@ export const EditAssetDetailsPage = () => {
                               <div className="mt-6 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Select Group{" "}
-                                      <span className="fm-required-mark">*</span>
-                                    </label>
                                     <FormControl fullWidth>
-                                      <InputLabel>Select Group</InputLabel>
+                                      <InputLabel shrink>Select Group <span className="fm-required-mark">*</span></InputLabel>
                                       <MuiSelect
                                         label="Select Group"
                                         value={formData.selected_group_id || ""}
@@ -13510,11 +13498,8 @@ export const EditAssetDetailsPage = () => {
                                     </FormControl>
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Select Sub Group
-                                    </label>
                                     <FormControl fullWidth>
-                                      <InputLabel>Select Sub Group</InputLabel>
+                                      <InputLabel shrink>Select Sub Group</InputLabel>
                                       <MuiSelect
                                         label="Select Sub Group"
                                         value={formData.selected_sub_group_id || ""}
@@ -13604,10 +13589,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("assetAllocation")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET ALLOCATION
@@ -13641,9 +13626,9 @@ export const EditAssetDetailsPage = () => {
                                 setSelectedUserId("");
                                 handleSingleFieldChange("allocation_ids", []);
                               }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                             />
                             <label
@@ -13667,9 +13652,9 @@ export const EditAssetDetailsPage = () => {
                                 setSelectedUserId("");
                                 handleSingleFieldChange("allocation_ids", []);
                               }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                             />
                             <label htmlFor="allocation-users" className="text-sm">
@@ -13773,10 +13758,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("assetLoaned")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET LOANED
@@ -13942,10 +13927,10 @@ export const EditAssetDetailsPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("amcDetails")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     AMC DETAILS
@@ -14269,10 +14254,10 @@ export const EditAssetDetailsPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div
             onClick={() => toggleSection("attachments")}
-            className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+            className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
           >
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
               ATTACHMENTS
@@ -14312,7 +14297,7 @@ export const EditAssetDetailsPage = () => {
             //         className="cursor-pointer block"
             //       >
             //         <div className="flex items-center justify-center space-x-2 mb-2">
-            //           <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+            //           <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
             //             Choose Asset Image
             //           </span>
             //           <span className="text-gray-500 text-xs sm:text-sm">
@@ -14362,9 +14347,9 @@ export const EditAssetDetailsPage = () => {
             //           onClick={() =>
             //             document.getElementById("asset-image-upload")?.click()
             //           }
-            //           className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+            //           className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
             //         >
-            //           <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+            //           <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
             //           Upload Asset Image
             //         </button>
             //       </div>
@@ -14431,7 +14416,7 @@ export const EditAssetDetailsPage = () => {
             //             className="cursor-pointer block"
             //           >
             //             <div className="flex items-center justify-center space-x-2 mb-2">
-            //               <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+            //               <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
             //                 Choose File
             //               </span>
             //               <span className="text-gray-500 text-xs sm:text-sm">
@@ -14471,9 +14456,9 @@ export const EditAssetDetailsPage = () => {
             //               onClick={() =>
             //                 document.getElementById(field.id)?.click()
             //               }
-            //               className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+            //               className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
             //             >
-            //               <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+            //               <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
             //               Upload Files
             //             </button>
             //           </div>
@@ -14511,7 +14496,7 @@ export const EditAssetDetailsPage = () => {
                     className="cursor-pointer block"
                   >
                     <div className="flex items-center justify-center space-x-2 mb-2">
-                      <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                      <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
                         Choose Asset Image
                       </span>
                       <span className="text-gray-500 text-xs sm:text-sm">
@@ -14562,7 +14547,7 @@ export const EditAssetDetailsPage = () => {
                       <div className="text-xs font-medium text-gray-600 mb-2">
                         Existing Asset Image
                       </div>
-                      <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                      <div className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
                         <div className="flex items-center space-x-2">
                           <img
                             src={existingAttachments.asset_image.document}
@@ -14578,7 +14563,7 @@ export const EditAssetDetailsPage = () => {
                             onClick={() =>
                               downloadAttachment(existingAttachments.asset_image!)
                             }
-                            className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                            className="text-[#DA7756] hover:text-[#DA7756]/80 p-1 rounded"
                           >
                             <Download className="w-3 h-3" />
                           </button>
@@ -14592,7 +14577,7 @@ export const EditAssetDetailsPage = () => {
                                   )
                                 }
                                 title="Remove existing image"
-                                className="text-red-500 hover:text-red-700 p-1 rounded"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -14608,9 +14593,9 @@ export const EditAssetDetailsPage = () => {
                       onClick={() =>
                         document.getElementById("asset-image-upload")?.click()
                       }
-                      className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                      className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
                     >
-                      <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                      <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
                       Upload Asset Image
                     </button>
                   </div>
@@ -14677,7 +14662,7 @@ export const EditAssetDetailsPage = () => {
                         className="cursor-pointer block"
                       >
                         <div className="flex items-center justify-center space-x-2 mb-2">
-                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                          <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
                             Choose File
                           </span>
                           <span className="text-gray-500 text-xs sm:text-sm">
@@ -14747,7 +14732,7 @@ export const EditAssetDetailsPage = () => {
                                   return (
                                     <div
                                       key={file.id}
-                                      className="flex items-center justify-between bg-gray-100 p-2 rounded"
+                                      className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
                                     >
                                       <div className="flex items-center space-x-2">
                                         {isImage ? (
@@ -14776,7 +14761,7 @@ export const EditAssetDetailsPage = () => {
                                       <div className="flex items-center gap-1">
                                         <button
                                           onClick={() => downloadAttachment(file)}
-                                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                                          className="text-[#DA7756] hover:text-[#DA7756]/80 p-1 rounded"
                                         >
                                           <Download className="w-3 h-3" />
                                         </button>
@@ -14806,7 +14791,7 @@ export const EditAssetDetailsPage = () => {
                                               );
                                             }
                                           }}
-                                          className="text-red-500 hover:text-red-700 p-1 rounded"
+                                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
                                         >
                                           <X className="w-3 h-3" />
                                         </button>
@@ -14826,9 +14811,9 @@ export const EditAssetDetailsPage = () => {
                           onClick={() =>
                             document.getElementById(field.id)?.click()
                           }
-                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
                         >
-                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
                           Upload Files
                         </button>
                       </div>

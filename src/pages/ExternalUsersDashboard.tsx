@@ -89,6 +89,7 @@ export const ExternalUsersDashboard = () => {
   const allowedActionIds = useMemo(() => new Set(['92501', '88468']), []);
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
   const canSeeActionButton = currentUserId ? allowedActionIds.has(String(currentUserId)) : false;
+  const canShowUserDeletion = window.location.hostname !== 'vi-uat.gophygital.work';
 
 
   useEffect(() => {
@@ -672,7 +673,7 @@ export const ExternalUsersDashboard = () => {
                     Action
                   </Button>
                 )}
-                {shouldShow("External User (NON FTE)", "destroy") && (
+                {canShowUserDeletion && shouldShow("External User (NON FTE)", "destroy") && (
                   <Button
                     onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
                     className="fm-button-fix fm-button-brand px-4 py-2"

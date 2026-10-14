@@ -34,7 +34,7 @@ export function WorkflowSection() {
             </div>
           </CanvasTile>
 
-          <CanvasTile id="flows-funnel" title={flows.flagshipFunnelName} defaultCs={8}>
+          <CanvasTile id="flows-funnel" title={flows.flagshipFunnelName} defaultCs={12}>
             <Card
               infoKey="chart.funnel"
               aiKey="chart.funnel"
@@ -46,7 +46,7 @@ export function WorkflowSection() {
             </Card>
           </CanvasTile>
 
-          <CanvasTile id="flows-list" title="All screens in this module" defaultCs={4}>
+          <CanvasTile id="flows-list" title="All screens in this module" defaultCs={12}>
             <Card
               infoKey="chart.flowList"
               aiKey="chart.flowList"

@@ -142,6 +142,9 @@ const ClubWalletsPage = lazy(() =>
     default: m.ClubWalletsPage,
   }))
 );
+const ClubUsageDashboard = lazy(() =>
+  import("./pages/ClubManagement/usage/ClubUsageDashboard")
+);
 const AddTicketDashboard = lazy(() =>
   import("./pages/AddTicketDashboard").then((m) => ({
     default: m.AddTicketDashboard,
@@ -4738,7 +4741,7 @@ function App() {
                             element={<OnlyOfficePublicEditorPage />}
                           />
                           <Route
-                            path="/posthog-dashboard"
+                            path="/fm-usage-analytics"
                             element={<PosthogDashboardPage />}
                           />
                           <Route
@@ -5111,6 +5114,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <ClubDashboardV6 />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/club-management/usage-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <ClubUsageDashboard />
                               </ProtectedRoute>
                             }
                           />

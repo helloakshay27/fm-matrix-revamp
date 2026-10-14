@@ -70,21 +70,28 @@ const SummaryInfoIcon = () => (
   </svg>
 );
 
-// Shared shell for the 4-column summary-card grid (Business Genie M21.1):
-// #F5F4F0 card, 16px radius, 18px/20px padding, no border/shadow, white 36x36
-// icon tile with 10px radius holding a neutral 18px line icon.
-const SummaryCard: React.FC<{ icon: React.ReactNode; children: React.ReactNode }> = ({ icon, children }) => (
-  <div
-    className="flex items-center rounded-2xl"
-    style={{ background: "#F5F4F0", padding: "18px 20px" }}
-  >
-    <div
-      className="flex items-center justify-center bg-white shrink-0 mr-4"
-      style={{ width: 36, height: 36, borderRadius: 10 }}
-    >
+// Same card anatomy as the Asset dashboard stat cards (components/AssetStats.tsx):
+// value on top (24px/600), label below (14px/500), 56px icon tile, p-6 — so both
+// screens render identical cards. `meta` is an optional single truncated line.
+const SummaryCard: React.FC<{
+  icon: React.ReactNode;
+  value: React.ReactNode;
+  label: string;
+  meta?: string;
+}> = ({ icon, value, label, meta }) => (
+  <div className="h-full bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+    <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded shrink-0">
       {icon}
     </div>
-    <div className="flex flex-col justify-center min-w-0">{children}</div>
+    <div className="min-w-0">
+      <div className="text-2xl font-semibold text-[#1A1A1A] truncate">{value}</div>
+      <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
+      {meta && (
+        <div className="text-xs text-[#9CA3AF] mt-1 truncate" title={meta}>
+          {meta}
+        </div>
+      )}
+    </div>
   </div>
 );
 
@@ -428,66 +435,42 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
       </div> */}
 
       {/* Cards Grid - four columns regardless of count, per the design system */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
-        <SummaryCard icon={<SummaryCogIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
-            Open Tickets
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            {dashboardSummary?.tickets !== undefined ? dashboardSummary.tickets : "-"}
-          </span>
-        </SummaryCard>
-
-        <SummaryCard icon={<SummaryCogIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>
-            {dashboardSummary?.upcoming_amc_date || "-"}
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            Upcoming AMC
-          </span>
-        </SummaryCard>
-
-        <SummaryCard icon={<SummaryCogIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
-            PPM Completion %
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            {dashboardSummary?.ppm_comp_rate || "-"}
-          </span>
-        </SummaryCard>
-
-        <SummaryCard icon={<SummaryCogIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
-            Last PPM Conducted On
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            {dashboardSummary?.last_ppm || "-"}
-          </span>
-        </SummaryCard>
-
-        <SummaryCard icon={<SummaryCogIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 24 }}>
-            Next PPM Due
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            {dashboardSummary?.next_ppm_due || "-"}
-          </span>
-        </SummaryCard>
-
-        <SummaryCard icon={<SummaryInfoIcon />}>
-          <span className="font-semibold text-[#1A1A1A]" style={{ fontSize: 18 }}>
-            Recent Updates
-          </span>
-          <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-            {asset?.last_updated_by ? `Last updated by ${asset.last_updated_by}` : "No recent updates"}
-          </span>
-          <span className="text-[12px] text-[#9CA3AF] mt-2">
-            {asset?.created_by && asset?.updated_at
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 auto-rows-fr gap-4 mb-6">
+        <SummaryCard
+          icon={<SummaryCogIcon />}
+          value={dashboardSummary?.tickets !== undefined ? dashboardSummary.tickets : "-"}
+          label="Open Tickets"
+        />
+        <SummaryCard
+          icon={<SummaryCogIcon />}
+          value={dashboardSummary?.upcoming_amc_date || "-"}
+          label="Upcoming AMC"
+        />
+        <SummaryCard
+          icon={<SummaryCogIcon />}
+          value={dashboardSummary?.ppm_comp_rate || "-"}
+          label="PPM Completion %"
+        />
+        <SummaryCard
+          icon={<SummaryCogIcon />}
+          value={dashboardSummary?.last_ppm || "-"}
+          label="Last PPM Conducted On"
+        />
+        <SummaryCard
+          icon={<SummaryCogIcon />}
+          value={dashboardSummary?.next_ppm_due || "-"}
+          label="Next PPM Due"
+        />
+        <SummaryCard
+          icon={<SummaryInfoIcon />}
+          value={asset?.last_updated_by || "-"}
+          label="Recent Updates"
+          meta={
+            asset?.created_by && asset?.updated_at
               ? `Created by ${asset.created_by} • Last updated on ${asset.updated_at}`
-              : "No update information available"
-            }
-          </span>
-        </SummaryCard>
+              : undefined
+          }
+        />
       </div>
     </div>
   );

@@ -4,6 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from 'axios';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Recessed-strip tab trigger: muted text at rest, raised white segment when active.
+const historyTabTriggerClass =
+  'rounded-[9px] px-4 py-2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)] shadow-none transition-colors hover:text-[#1A1A18] data-[state=active]:bg-white data-[state=active]:text-[#1A1A18] data-[state=active]:shadow-[0_1px_3px_rgba(26,26,24,0.08)]';
+
+// Standard tinted status pills — same tone mapping as the other status pills
+// (danger / warning / info / success), low-saturation fill with matching text.
+const SEVERITY_PILL_CLASS: Record<string, string> = {
+  Critical: 'bg-[rgba(231,132,142,0.15)] text-[#B04A55]',
+  High: 'bg-[rgba(237,196,136,0.28)] text-[#8A6420]',
+  Medium: 'bg-[rgba(107,155,204,0.15)] text-[#3F6E9E]',
+  Low: 'bg-[rgba(121,140,94,0.15)] text-[#56683F]',
+};
 
 interface HistoryCardTabProps {
   asset: Asset;
@@ -277,26 +291,24 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
                         
                         <TableCell className="text-sm">{breakdown.type || '-'}</TableCell>
                         <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              breakdown.severity === 'Critical'
-                                ? 'bg-red-100 text-red-800'
-                                : breakdown.severity === 'High'
-                                ? 'bg-orange-100 text-orange-800'
-                                : breakdown.severity === 'Medium'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}
-                          >
-                            {breakdown.severity || '-'}
-                          </span>
+                          {breakdown.severity ? (
+                            <span
+                              className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
+                                SEVERITY_PILL_CLASS[breakdown.severity] ?? SEVERITY_PILL_CLASS.Low
+                              }`}
+                            >
+                              {breakdown.severity}
+                            </span>
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell className="text-sm">{breakdown.expected_repair_duration || '-'}</TableCell>
                         <TableCell className="text-sm">
                           {breakdown.in_use_date ? new Date(breakdown.in_use_date).toLocaleString() : 'Not restored'}
                         </TableCell>
                         <TableCell className="text-sm font-medium">
-                          <span className={breakdown.in_use_date ? 'text-green-700' : 'text-orange-600'}>
+                          <span className={breakdown.in_use_date ? 'text-[#56683F]' : 'text-[#8A6420]'}>
                             {calcDuration(breakdown.date, breakdown.in_use_date)}
                           </span>
                           {!breakdown.in_use_date && breakdown.date && (
@@ -319,13 +331,13 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
   const renderLogs = () => (
     <div className="space-y-6">
       <div className="relative">
-        <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-[#C72030]"></div>
+        <div className="absolute left-4 top-8 bottom-0 w-px bg-[rgba(26,26,24,0.12)]"></div>
         <div className="space-y-8">
           {activityHistory.length > 0 ? (
             activityHistory.map((entry, index) => (
               <div key={index} className="flex items-start gap-4 relative">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center z-10 flex-shrink-0">
-                  <div className="w-3 h-3 bg-white rounded-full"></div>
+                <div className="w-8 h-8 bg-[#F5F4F0] border border-[rgba(26,26,24,0.12)] rounded-full flex items-center justify-center z-10 flex-shrink-0">
+                  <div className="w-2.5 h-2.5 bg-[rgba(26,26,24,0.48)] rounded-full"></div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="bg-white">
@@ -362,7 +374,9 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
-        <FileText className="w-5 h-5 text-[#C72030]" />
+        <span className="w-9 h-9 rounded-[10px] bg-[#F5F4F0] flex items-center justify-center shrink-0">
+          <FileText className="w-[18px] h-[18px] text-[rgba(26,26,24,0.68)]" />
+        </span>
         <h2 className="text-lg font-semibold uppercase text-[#1A1A1A]">History In Details</h2>
       </div>
 
@@ -387,32 +401,30 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
             Logs
           </button>
         </div> */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('history-details')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
-              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
-              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-              }`}
-          >
-            History Details
-          </button>
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'logs'
-              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
-              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-              }`}
-          >
-            Logs
-          </button>
-        </div>
+        {/* Standard tab treatment: recessed neutral strip, raised neutral active segment */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'history-details' | 'logs')}
+          className="w-full"
+        >
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6">
+            <TabsList className="inline-flex h-auto gap-1 rounded-[12px] border border-[rgba(26,26,24,0.06)] bg-[#F5F4F0] p-1">
+              <TabsTrigger value="history-details" className={historyTabTriggerClass}>
+                History Details
+              </TabsTrigger>
+              <TabsTrigger value="logs" className={historyTabTriggerClass}>
+                Logs
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-
-        <div className="p-4 sm:p-6 ">
-          {activeTab === 'history-details' && renderHistoryDetails()}
-          {activeTab === 'logs' && renderLogs()}
-        </div>
+          <TabsContent value="history-details" className="mt-0 p-4 sm:p-6">
+            {renderHistoryDetails()}
+          </TabsContent>
+          <TabsContent value="logs" className="mt-0 p-4 sm:p-6">
+            {renderLogs()}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

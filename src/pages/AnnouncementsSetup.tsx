@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { TextField } from "@mui/material";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X, Megaphone } from "lucide-react";
+import { Plus, X, Megaphone, FileText, History } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getUser } from "@/utils/auth";
-import { Trash2, Search, Trophy, Edit2 } from "lucide-react";
+import { Trash2, Edit2 } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 
@@ -193,7 +191,7 @@ const AnnouncementsSetup: React.FC = () => {
         variant="ghost"
         size="icon"
         onClick={() => {
-          setAnnouncements([item]);
+          setAnnouncements([{ ...item }]);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         className="text-gray-400 hover:text-blue-500 hover:bg-blue-50"
@@ -251,141 +249,159 @@ const AnnouncementsSetup: React.FC = () => {
   };
 
 
+  const updateAnnouncement = (id: string, changes: Partial<Announcement>) => {
+    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, ...changes } : a)));
+  };
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 bg-[#fafafa] min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
-          <div className="flex items-center gap-3 mb-8">
-            <Megaphone className="w-6 h-6 text-[#C72030]" />
-            <h1 className="text-2xl font-bold text-gray-800">Announcements Setup</h1>
+    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+      <div className="w-full space-y-6">
+        <div className="flex items-center gap-3">
+          <Megaphone className="w-6 h-6 text-[var(--color-ink-68)]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 uppercase">
+            Announcements Setup
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+              <FileText className="w-4 h-4 text-[var(--color-ink-68)]" />
+            </span>
+            <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">
+              Announcement Details
+            </h3>
           </div>
 
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              {announcements.map((ann, idx) => (
-                <Card key={ann.id} className="border border-gray-100 bg-white shadow-none">
-                  <CardContent className="pt-6 relative">
-                    <div className="absolute top-2 right-2 flex gap-2 items-center">
+            {announcements.map((ann, idx) => (
+              <div
+                key={ann.id}
+                className={idx > 0 ? "pt-6 border-t border-gray-100 space-y-4" : "space-y-4"}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">
+                    Announcement {idx + 1}
+                  </span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                       <Checkbox
                         id={`active-${ann.id}`}
                         checked={ann.isActive}
-                        onCheckedChange={(checked) => {
-                          const newAnns = [...announcements];
-                          newAnns[idx].isActive = checked as boolean;
-                          setAnnouncements(newAnns);
-                        }}
-                        className="border-gray-300 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                        onCheckedChange={(checked) =>
+                          updateAnnouncement(ann.id, { isActive: checked === true })
+                        }
                       />
-                      <Label htmlFor={`active-${ann.id}`} className="text-xs text-gray-500 cursor-pointer mr-4">Active</Label>
-                      
-                      {announcements.length > 1 && (
-                        <button onClick={() => handleDeleteAnnouncement(ann.id, ann.dbId)} className="text-gray-400 hover:text-red-500">
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      <Label
+                        htmlFor={`active-${ann.id}`}
+                        className="text-sm text-gray-600 font-normal cursor-pointer"
+                      >
+                        Active
+                      </Label>
                     </div>
+                    {announcements.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAnnouncement(ann.id, ann.dbId)}
+                        className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                        aria-label={`Remove announcement ${idx + 1}`}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                      <div className="relative">
-                        <span className="absolute -top-2.5 left-4 bg-white px-2 text-xs text-gray-400 z-10">Title</span>
-                        <Input
-                          value={ann.title}
-                          onChange={(e) => {
-                            const newAnns = [...announcements];
-                            newAnns[idx].title = e.target.value;
-                            setAnnouncements(newAnns);
-                          }}
-                          placeholder="Announcement title"
-                          className="border-gray-200"
-                        />
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TextField
+                    label="Title"
+                    value={ann.title}
+                    onChange={(e) => updateAnnouncement(ann.id, { title: e.target.value })}
+                    placeholder="Announcement title"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <div className="md:col-span-2">
+                    <TextField
+                      label="Content / Description"
+                      value={ann.description}
+                      onChange={(e) => updateAnnouncement(ann.id, { description: e.target.value })}
+                      placeholder="Enter announcement details..."
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
 
-                    <div className="relative">
-                      <span className="absolute -top-2.5 left-4 bg-white px-2 text-xs text-gray-400 z-10">Content / Description</span>
-                      <Textarea
-                        value={ann.description}
-                        onChange={(e) => {
-                          const newAnns = [...announcements];
-                          newAnns[idx].description = e.target.value;
-                          setAnnouncements(newAnns);
-                        }}
-                        placeholder="Enter announcement details..."
-                        className="min-h-[100px] border-gray-200 resize-none"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              <Button
-                variant="outline"
-                onClick={() => setAnnouncements([...announcements, { id: Math.random().toString(36).substr(2, 9), title: "", description: "", isActive: true }])}
-                className="border-dashed border-brand bg-white text-brand hover:bg-brand-selected"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Announcement
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-4 pt-6 border-t">
-              <Button variant="outline" onClick={() => navigate(-1)} className="border-[#C72030] text-[#C72030] px-8">Cancel</Button>
-              <button
-                onClick={handleAnnouncementsUpdate}
-                disabled={announcementLoading}
-                className="px-8 py-2 font-semibold text-white rounded-none"
-                style={{ backgroundColor: "#C72030" }}
-              >
-                {announcementLoading ? "Saving..." : "Save Announcements"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setAnnouncements([
+                  ...announcements,
+                  { id: Math.random().toString(36).substr(2, 9), title: "", description: "", isActive: true },
+                ])
+              }
+              className="fm-action-secondary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Announcement
+            </button>
           </div>
         </div>
 
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
-          <div className="flex items-center gap-3 mb-8">
-            <Trophy className="w-6 h-6 text-[#C72030]" />
-            <h2 className="text-2xl font-bold text-gray-800">Announcement History</h2>
-          </div>
+        <div className="fm-action-bar">
+          <button type="button" onClick={() => navigate(-1)} className="fm-action-secondary">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleAnnouncementsUpdate}
+            disabled={announcementLoading}
+            className="fm-action-primary"
+          >
+            {announcementLoading ? "Saving..." : "Save Announcements"}
+          </button>
+        </div>
 
-          <div className="overflow-hidden rounded-lg">
-            <EnhancedTable
-              data={announcementHistory}
-              columns={historyColumns}
-              renderCell={renderCellHistory}
-              renderActions={renderActionsHistory}
-              getItemId={(item: Announcement) => item.id}
-              searchTerm={historySearch}
-              onSearchChange={setHistorySearch}
-              hideTableSearch={true}
-              // enableExport={true}
-              exportFileName="announcements-history"
-              pagination={true}
-              pageSize={5}
-              loading={historyLoading}
-              rightActions={
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search history..."
-                      value={historySearch}
-                      onChange={(e) => setHistorySearch(e.target.value)}
-                      className="pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-md focus:outline-none w-full sm:w-64 h-10"
-                    />
-                  </div>
-                  <button
-                    onClick={handleDeactivateAll}
-                    disabled={historyLoading || announcementHistory.every(a => !a.isActive)}
-                    className="h-10 px-4 min-w-[140px] font-semibold text-white rounded-none bg-[#C72030] hover:bg-[#a61a28] disabled:bg-[#C72030] disabled:opacity-100 disabled:text-white disabled:cursor-not-allowed"
-                  >
-                    Deactivate All
-                  </button>
-                </div>
-              }
-            />
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-surface)] flex items-center justify-center shrink-0">
+              <History className="w-4 h-4 text-[var(--color-ink-68)]" />
+            </span>
+            <h3 className="text-sm font-semibold uppercase text-[var(--color-text)]">
+              Announcement History
+            </h3>
           </div>
+          <EnhancedTable
+            data={announcementHistory}
+            columns={historyColumns}
+            renderCell={renderCellHistory}
+            renderActions={renderActionsHistory}
+            getItemId={(item: Announcement) => item.id}
+            enableSearch={true}
+            searchTerm={historySearch}
+            onSearchChange={setHistorySearch}
+            searchPlaceholder="Search history..."
+            storageKey="announcement-history-table"
+            emptyMessage="No announcements found"
+            pagination={true}
+            pageSize={5}
+            loading={historyLoading}
+            rightActions={
+              <button
+                type="button"
+                onClick={handleDeactivateAll}
+                disabled={historyLoading || announcementHistory.every((a) => !a.isActive)}
+                className="fm-action-secondary"
+              >
+                Deactivate All
+              </button>
+            }
+          />
         </div>
       </div>
     </div>

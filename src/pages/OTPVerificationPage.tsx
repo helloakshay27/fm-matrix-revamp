@@ -14,6 +14,7 @@ import {
   saveBaseUrl,
   getBaseUrl,
   fetchLockAccount,
+  getViOtpApiBase,
 } from "@/utils/auth";
 import { ArrowLeft } from "lucide-react";
 
@@ -33,7 +34,7 @@ export const OTPVerificationPage = () => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work") ||
-  hostname.includes("https://vi-uat.gophygital.work/") ;
+  hostname.includes("https://vi-uat.gophygital.work") ;
     useEffect(() => {
     // Get email from localStorage
     const tempEmail = localStorage.getItem("temp_email");
@@ -186,7 +187,7 @@ export const OTPVerificationPage = () => {
 
     try {
       const response = await fetch(
-        "https://live-api.gophygital.work/resend_code.json",
+        `${getViOtpApiBase()}/resend_code.json`,
         {
           method: "POST",
           headers: {
