@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
+import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card';
 import './PATMAnalyticsDashboard.css';
 import { RecentActivitySidebar } from './RecentActivitySidebar';
 import {
@@ -17,6 +19,27 @@ import {
 } from './patmQueries';
 
 /* Analytics metrics are sourced exclusively from API responses. */
+
+/* ---------- KPI info dictionary ---------- */
+const KPI_INFO: Record<string, { f: string; m: string }> = {
+ "Active Users":{f:"Unique team members (user_id) who fired at least one event during the selected period, across all connected organizations.",m:"Shows the reach of PATM among the team members with access — pulled directly from PostHog's person-level activity."},
+ "Screen Views":{f:"Count of all View-typed events across the modules reported by the API (e.g. dashboard_viewed, task_details_viewed, project_details_viewed).",m:"Overall content consumption across the app."},
+ "Sessions":{f:"Count of distinct app sessions started in the period, from the first event of every session (app_opened / app_foregrounded).",m:"Usage volume across all team members."},
+ "Session Duration":{f:"Total session time ÷ total sessions.",m:"Engagement depth per visit — how long team members stay in PATM once they open it."},
+ "Bounce Rate":{f:"% of sessions with only a session-start event and dashboard_viewed, and no further interaction.",m:"Immediate exits or a poor first impression of the home dashboard."},
+ "Recently Online":{f:"Distinct team members with an event in the last 30 minutes.",m:"A live pulse of who is actively working in PATM right now."},
+ "Seat Utilisation":{f:"Active team members this period ÷ total licensed/onboarded team members across all organizations.",m:"How much of the licensed team base is actually opening the app."},
+ "Stickiness":{f:"Average daily active users ÷ monthly active users (DAU/MAU) over the period.",m:"Whether PATM use is a daily habit or an occasional check-in."},
+ "Adoption Trend":{f:"% change in weekly active users versus the prior 8-week average.",m:"Whether adoption is accelerating or plateauing across organizations."},
+ "14-Day Activation":{f:"% of newly onboarded team members who fired an Action-typed event (e.g. task_created, todo_created) within 14 days of first login_success.",m:"Whether new team members actually start creating and managing work, not just logging in."},
+ "Module Breadth":{f:"Count of distinct modules used at least once out of the total modules reported by the API.",m:"How much of the platform a team has actually adopted, not just Tasks and Home."},
+ "Workflow Adoption":{f:"% of active users who fired the workflow's first event (e.g. task_create_opened, project_create_opened).",m:"Shows how many team members attempt this process."},
+ "Completion Rate":{f:"% of users who reached the workflow's terminal event after starting it.",m:"How effectively the workflow converts an attempt into a completed action."},
+ "Biggest Step Drop":{f:"The single step in the funnel with the largest % of entrants lost, based on the workflow funnel reported by the API.",m:"Points to exactly where in the process team members are abandoning."},
+ "Usage Volume":{f:"Count of users who fired the workflow's terminal event during the selected date range.",m:"Absolute volume of completed tasks, sprints, or documents — the raw workload this workflow represents."}
+};
+
+
 
 /* ---------- formatting ---------- */
 function fmtC(n: number): string {
@@ -57,70 +80,6 @@ function datesForRange(rangeDays: number): { from: string; to: string } {
   from.setDate(to.getDate() - (rangeDays - 1));
   return { from: ymd(from), to: ymd(to) };
 }
-
-/* ---------- KPI info dictionary ---------- */
-const KPI_INFO: Record<string, { f: string; m: string }> = {
-  'Active Users': {
-    f: 'Unique team members (user_id) who fired at least one event during the selected period, across all connected organizations.',
-    m: "Shows the reach of PATM among the team members with access — pulled directly from PostHog's person-level activity.",
-  },
-  'Screen Views': {
-    f: 'Count of all View-typed events across the modules reported by the API.',
-    m: 'Overall content consumption across the app.',
-  },
-  Sessions: {
-    f: 'Count of distinct app sessions started in the period, from the first event of every session.',
-    m: 'Usage volume across all team members.',
-  },
-  'Session Duration': {
-    f: 'Total session time ÷ total sessions.',
-    m: 'Engagement depth per visit — how long team members stay in PATM once they open it.',
-  },
-  'Bounce Rate': {
-    f: '% of sessions with only a session-start event and dashboard_viewed, and no further interaction.',
-    m: 'Immediate exits or a poor first impression of the home dashboard.',
-  },
-  'Recently Online': {
-    f: 'Distinct team members with an event in the last 30 minutes.',
-    m: 'A live pulse of who is actively working in PATM right now.',
-  },
-  'Seat Utilisation': {
-    f: 'Active team members this period ÷ total licensed/onboarded team members across all organizations.',
-    m: 'How much of the licensed team base is actually opening the app.',
-  },
-  Stickiness: {
-    f: 'Average daily active users ÷ monthly active users (DAU/MAU) over the period.',
-    m: 'Whether PATM use is a daily habit or an occasional check-in.',
-  },
-  'Adoption Trend': {
-    f: '% change in weekly active users versus the prior 8-week average.',
-    m: 'Whether adoption is accelerating or plateauing across organizations.',
-  },
-  '14-Day Activation': {
-    f: '% of newly onboarded team members who fired an Action-typed event within 14 days of first login_success.',
-    m: 'Whether new team members actually start creating and managing work, not just logging in.',
-  },
-  'Module Breadth': {
-    f: 'Modules used at least once out of the total modules reported by the API.',
-    m: 'How much of the platform a team has adopted.',
-  },
-  'Workflow Adoption': {
-    f: "% of active users who fired the workflow's first event.",
-    m: 'Shows how many team members attempt this process.',
-  },
-  'Completion Rate': {
-    f: "% of users who reached the workflow's terminal event after starting it.",
-    m: 'How effectively the workflow converts an attempt into a completed action.',
-  },
-  'Biggest Step Drop': {
-    f: 'The single step in the funnel with the largest % of entrants lost.',
-    m: 'Points to exactly where in the process team members are abandoning.',
-  },
-  'Usage Volume': {
-    f: "Count of users who fired the workflow's terminal event this period.",
-    m: 'Absolute volume of completed tasks, sprints, or documents.',
-  },
-};
 
 /* ================================================================
    SVG CHART BUILDERS
@@ -215,6 +174,7 @@ function lineChart(
     pctScale?: boolean;
     showPrev?: boolean;
     metric?: string;
+    hoverByWeek?: boolean;
   },
   C: ChartColors,
 ): string {
@@ -275,6 +235,12 @@ function lineChart(
   const points = cur
     .map((value, i) => {
       const text = `${opts.labels?.[i] ?? i + 1}\n${opts.metric ?? 'Users'}: ${value.toLocaleString()}${opts.pctScale ? '%' : ''}`;
+      if (opts.hoverByWeek) {
+        const left = i === 0 ? pl : X(i) - xw / 2;
+        const right = i === n - 1 ? W - pr : X(i) + xw / 2;
+        return `<circle cx="${X(i)}" cy="${Y(value)}" r="4" fill="${opts.color}" pointer-events="none"/>
+          <rect x="${left}" y="${pt}" width="${right - left}" height="${base - pt}" fill="transparent" pointer-events="all" ${chartTooltip(text)}/>`;
+      }
       return `<circle cx="${X(i)}" cy="${Y(value)}" r="9" fill="transparent" ${chartTooltip(text)}/>`;
     })
     .join('');
@@ -355,28 +321,59 @@ function stackedBarChart(
    SUBCOMPONENTS
    ================================================================ */
 
-/* -------- Info popover -------- */
-function InfoWrap({ label }: { label: string }) {
-  const info = KPI_INFO[label] || {
-    f: 'Definition not yet finalized.',
-    m: 'Business meaning to be confirmed.',
-  };
+/* -------- KPI Tile -------- */
+function MetricInfo({ label, purpose }: { label: string; purpose?: string }) {
+  const [open, setOpen] = useState(false);
+  const info = KPI_INFO[label];
+  if (!info && !purpose) return null;
   return (
-    <span className="info-wrap">
-      <button className="info-btn">i</button>
-      <div className="info-pop">
-        <b>Formula</b>
-        {info.f}
-        <div className="sep">
-          <b>Business meaning</b>
-          {info.m}
-        </div>
-      </div>
-    </span>
+    <HoverCard open={open} onOpenChange={setOpen} openDelay={0} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          className="info-btn"
+          aria-label={`About ${label}`}
+          aria-expanded={open}
+          onMouseEnter={() => setOpen(true)}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setOpen(false);
+          }}
+        >
+          i
+        </button>
+      </HoverCardTrigger>
+      <HoverCardPortal>
+      <HoverCardContent
+        side="bottom"
+        align="end"
+        sideOffset={8}
+        collisionPadding={12}
+        sticky="always"
+        className="z-[1100] w-80 max-w-[calc(100vw-24px)] overflow-y-auto break-words rounded-xl px-4 py-3.5 text-[12.5px] leading-[1.55] text-muted-foreground shadow-[0_10px_34px_rgba(20,20,19,0.13)] [&_b]:text-foreground"
+        style={{ maxHeight: 'var(--radix-hover-card-content-available-height)' }}
+      >
+        {info ? (
+          <>
+            <b className="mb-1 block font-medium">Formula</b>
+            <p>{info.f}</p>
+            <div className="mt-2 border-t pt-2">
+              <b className="mb-1 block font-medium">Business meaning</b>
+              <p>{info.m}</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <b className="mb-1 block font-medium">Purpose</b>
+            <p>{purpose}</p>
+          </>
+        )}
+      </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
   );
 }
 
-/* -------- KPI Tile -------- */
 interface TileProps {
   id?: string;
   label: string;
@@ -415,7 +412,7 @@ function Tile({
     <div className="tile">
       <div className="tophead">
         <div className="lbl">{label}</div>
-        <InfoWrap label={label} />
+        <MetricInfo label={label} />
       </div>
       <div className="val">{val}</div>
       {delta != null && (
@@ -504,18 +501,12 @@ function ChartCard({
             <div className="ct">{title}</div>
           </div>
           <div className="card-head-actions">
+            <MetricInfo label={title} purpose={purpose} />
             {showInsight && (
               <button className="insight-btn">
                 <span className="insight-plus">+</span> Insight
               </button>
             )}
-            <span className="info-wrap">
-              <button className="info-btn">i</button>
-              <div className="info-pop">
-                <b>Purpose</b>
-                {purpose}
-              </div>
-            </span>
           </div>
         </div>
       </div>
@@ -676,17 +667,12 @@ function TrafficPage({
           delta={delta?.bounce_rate}
           percent
         />
-        <Metric
-          label="Recently Online"
-          value={t?.recently_online}
-          sub="active in last 30 min"
-        />
       </div>
       <div className="grid2">
         <ChartCard
           eyebrow="Usage over time"
           title="Usage over time"
-          purpose="Daily usage from the selected period, with the previous period for comparison."
+          purpose="Visitors, screen views, and sessions over time, across all connected organizations, with the previous period overlaid for comparison."
         >
           <div className="charttabs">
             {(['visitors', 'views', 'sessions'] as const).map((tab) => (
@@ -739,7 +725,7 @@ function TrafficPage({
         <ChartCard
           eyebrow="U7 · Device / platform split"
           title="Web vs mobile usage"
-          purpose="Share of sessions by device_type, with distinct users per device."
+          purpose="Share of sessions by platform — desktop web and mobile app — showing where usage concentrates. Distinct users per device and screens per visit provide additional context."
         >
           <p className="sd device-split-description">
             Share of sessions by device_type, with distinct users per device.
@@ -844,17 +830,6 @@ function AdoptionPage({
       <DataState query={engagementQ} />
       <div className="tiles cols-3">
         <Metric
-          label="Seat Utilisation"
-          value={eng?.seat_utilisation?.value}
-          delta={eng?.seat_utilisation?.delta_pct}
-          percent
-          sub={
-            eng?.seat_utilisation?.licensed_seats == null
-              ? 'Licensed seat count is required'
-              : 'active / licensed team members'
-          }
-        />
-        <Metric
           label="Stickiness"
           value={
             eng?.stickiness?.value == null
@@ -885,16 +860,11 @@ function AdoptionPage({
           }
           noTarget
         />
-        <Metric
-          label="Dormant Users"
-          value={eng?.dormant_users?.value}
-          sub={eng?.dormant_users?.band}
-        />
       </div>
       <ChartCard
         eyebrow="Trend · SVG line chart"
         title={`Adoption trend (weekly active users, last ${trend.length || TREND_WEEKS} weeks)`}
-        purpose="Weekly active users reported by the API."
+        purpose={`Weekly active users over the last ${trend.length || TREND_WEEKS} weeks — the trend line behind the Adoption Trend tile above.`}
       >
         <DataState query={trendQ} empty={!trend.length} />
         {trend.length > 0 && (
@@ -907,6 +877,7 @@ function AdoptionPage({
                   {
                     labels: trend.map((_, i) => `W${i + 1}`),
                     metric: 'Weekly active users',
+                    hoverByWeek: true,
                     color: C.blue,
                     fill: C.fill,
                   },
@@ -927,7 +898,7 @@ function AdoptionPage({
         <ChartCard
           eyebrow="Growth accounting"
           title="New / Returning / Resurrecting / Dormant"
-          purpose="Weekly growth categories reported by the API."
+          purpose="Breaks the active base into newly onboarded team members, retained users, win-backs and users going quiet — a fuller view than a simple new-vs-returning split."
         >
           <DataState query={growthQ} empty={!growth.length} />
           {growth.length > 0 && (
@@ -981,7 +952,7 @@ function AdoptionPage({
         <ChartCard
           eyebrow="Retention"
           title="Do new team members keep coming back?"
-          purpose="Weekly retention for API cohorts."
+          purpose="Each row = team members first active that week; cells = % of that cohort still active N weeks later."
         >
           <DataState query={retentionQ} empty={!cohorts.length} />
           {cohorts.length > 0 && (
@@ -1040,7 +1011,7 @@ function AdoptionPage({
       <ChartCard
         eyebrow="Module adoption"
         title="Which modules get used most?"
-        purpose="Module users divided by active users for the same tenant and filters."
+        purpose="Active users touching each module, divided by total active users for the same tenant and filters — showing which parts of PATM the team has adopted."
       >
         <DataState query={modulesQ} empty={!modules.length} />
         <DataState query={trafficQ} />
@@ -1075,7 +1046,7 @@ function AdoptionPage({
       <ChartCard
         eyebrow="Module breakdown"
         title="Module-wise breakdown"
-        purpose="Users, events, sessions and adoption rate per module for the selected period and filters."
+        purpose="Compare users, events, sessions and adoption rate across modules for the selected period and filters — showing which modules attract users and how deeply they are used."
       >
         <DataState query={modulesQ} empty={!modules.length} />
         <DataState query={trafficQ} />
@@ -1263,7 +1234,7 @@ function WorkflowPage({
           <ChartCard
             eyebrow="Workflow funnel"
             title={name + ' - completion funnel'}
-            purpose="API funnel steps and drop-off rates."
+            purpose="Shows step-by-step completion and drop-off for the selected workflow, using the real PostHog event names in sequence."
           >
             <DataState query={workflowQ} empty={!funnel.length} />
             <div className="funnel">
@@ -1281,7 +1252,7 @@ function WorkflowPage({
                   <div
                     className="fstep"
                     style={{
-                      width: Math.max(0, Math.min(100, row.reach)) + '%',
+                      width: '100%',
                       background: C.blue,
                       borderRadius: 8,
                     }}
@@ -1298,7 +1269,7 @@ function WorkflowPage({
           <ChartCard
             eyebrow="Module screens"
             title={'All screens in ' + name}
-            purpose="Screen metrics reported by the API."
+            purpose={`Every screen path inside ${name}, with users, events, sessions and completion rate for each — the module-scoped equivalent of the funnel above, at the individual-screen level.`}
           >
             <div className="tbl-wrap">
               <table className="pathtbl">
@@ -1335,7 +1306,7 @@ function WorkflowPage({
           <ChartCard
             eyebrow="Entry screens"
             title="Top entry screens"
-            purpose="First screens reached in sessions, as reported by the API."
+            purpose="The first screen property seen in each session — usually reached via push notification, deep link, or the app icon."
           >
             <div className="tbl-wrap">
               <table className="pathtbl">
