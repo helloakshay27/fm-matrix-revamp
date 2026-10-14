@@ -1,73 +1,30 @@
-import { useState, type ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Building2, Edit, MapPin, Truck } from "lucide-react";
+import type { ReactNode } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransportSupplierDetailQuery } from "../hooks/useTransportSupplierDetailQuery";
-import { TRANSPORT_SUPPLIERS_LIST_PATH } from "../const/transportSupplierConstants";
+import {
+    SUPPLIER_DETAIL_TABS,
+    TRANSPORT_SUPPLIERS_LIST_PATH,
+    type SupplierDetailTab,
+} from "../const/transportSupplierConstants";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
-import { TransportSupplierFormDialog } from "../components/TransportSupplierFormDialog";
+import { SupplierDetailsTab } from "../components/tabs/SupplierDetailsTab";
+import { SupplierDriversTab } from "../components/tabs/SupplierDriversTab";
+import { SupplierSlabsTab } from "../components/tabs/SupplierSlabsTab";
+import { SupplierVehiclesTab } from "../components/tabs/SupplierVehiclesTab";
 
-function SectionCard({
-    icon: Icon,
-    title,
-    subtitle,
-    children,
-}: {
-    icon: typeof Building2;
-    title: string;
-    subtitle: string;
-    children: ReactNode;
-}) {
-    return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-brand-bg p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-brand" />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-                        <p className="text-xs text-gray-500">{subtitle}</p>
-                    </div>
-                </div>
-            </div>
-            <div className="p-6">{children}</div>
-        </div>
-    );
-}
+const TAB_LABELS: Record<SupplierDetailTab, string> = {
+    details: "Details",
+    slab: "Slab",
+    drivers: "Drivers",
+    vehicles: "Vehicles",
+};
 
-function Field({ label, value }: { label: string; value: ReactNode }) {
-    const isEmpty = value === null || value === undefined || value === "";
-    return (
-        <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-            <div className="mt-1 text-sm text-gray-900 break-words">{isEmpty ? "—" : value}</div>
-        </div>
-    );
-}
-
-// The slab's shape isn't known yet (null in every sample), so render it
-// generically: scalars as text, objects as label/value pairs.
-function SlabContent({ slab }: { slab: unknown }) {
-    if (slab === null || slab === undefined) {
-        return <p className="text-sm text-gray-500">No transportation slab assigned.</p>;
-    }
-    if (typeof slab !== "object") {
-        return <p className="text-sm text-gray-900">{String(slab)}</p>;
-    }
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(slab as Record<string, unknown>).map(([key, value]) => (
-                <Field
-                    key={key}
-                    label={key.replace(/_/g, " ")}
-                    value={value !== null && typeof value === "object" ? JSON.stringify(value) : (value as ReactNode)}
-                />
-            ))}
-        </div>
-    );
-}
+const isSupplierDetailTab = (value: string | null): value is SupplierDetailTab =>
+    SUPPLIER_DETAIL_TABS.includes(value as SupplierDetailTab);
 
 const CenteredMessage = ({ children }: { children: ReactNode }) => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -80,7 +37,23 @@ const TransportSupplierDetailsPage = () => {
     const { id } = useParams<{ id: string }>();
     const supplierId = id ? Number.parseInt(id, 10) : Number.NaN;
     const hasValidId = !Number.isNaN(supplierId);
-    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    // Active tab lives in the URL (?tab=) so refresh/back keeps it.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get("tab");
+    const activeTab: SupplierDetailTab = isSupplierDetailTab(tabParam) ? tabParam : "details";
+
+    const handleTabChange = (value: string) => {
+        setSearchParams(
+            (params) => {
+                const next = new URLSearchParams(params);
+                if (value === "details") next.delete("tab");
+                else next.set("tab", value);
+                return next;
+            },
+            { replace: true }
+        );
+    };
 
     const { data: supplier, isLoading, isError, error, refetch } = useTransportSupplierDetailQuery(
         hasValidId ? supplierId : null
@@ -149,50 +122,43 @@ const TransportSupplierDetailsPage = () => {
                             <p className="text-sm text-gray-500">Supplier ID: {supplier.id}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <StatusBadge className="rounded-[10px]" status={supplier.active ? "active" : "inactive"}>
-                            {supplier.active ? "Active" : "Inactive"}
-                        </StatusBadge>
-                        <Button
-                            className="bg-brand hover:bg-brand-hover text-white"
-                            onClick={() => setIsEditOpen(true)}
-                        >
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                        </Button>
-                    </div>
+                    <StatusBadge className="rounded-[10px] shrink-0" status={supplier.active ? "active" : "inactive"}>
+                        {supplier.active ? "Active" : "Inactive"}
+                    </StatusBadge>
                 </div>
             </div>
 
-            <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-6">
-                <SectionCard icon={Building2} title="Supplier Details" subtitle="Basic and contact information">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Field label="Company Name" value={supplier.company_name} />
-                        <Field label="Email" value={supplier.email} />
-                        <Field label="Mobile" value={supplier.mobile1} />
-                    </div>
-                </SectionCard>
+            <div className="flex-1 w-full mx-auto px-6 pb-6">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 bg-gray-100">
+                        {SUPPLIER_DETAIL_TABS.map((tab) => (
+                            <TabsTrigger
+                                key={tab}
+                                value={tab}
+                                className="data-[state=active]:bg-brand data-[state=active]:text-white rounded"
+                            >
+                                {TAB_LABELS[tab]}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
 
-                <SectionCard icon={MapPin} title="Address" subtitle="Location details">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="md:col-span-2">
-                            <Field label="Address" value={supplier.address} />
-                        </div>
-                        <Field label="City" value={supplier.city} />
-                        <Field label="State" value={supplier.state} />
-                        <Field label="Pincode" value={supplier.pincode} />
-                    </div>
-                </SectionCard>
+                    <TabsContent value="details" className="mt-4">
+                        <SupplierDetailsTab supplier={supplier} />
+                    </TabsContent>
 
-                <SectionCard icon={Truck} title="Transportation Slab" subtitle="Currently applicable slab">
-                    <SlabContent slab={supplier.current_transportation_slab} />
-                </SectionCard>
+                    <TabsContent value="slab" className="mt-4">
+                        <SupplierSlabsTab supplierId={supplier.id} />
+                    </TabsContent>
+
+                    <TabsContent value="drivers" className="mt-4">
+                        <SupplierDriversTab supplierId={supplier.id} />
+                    </TabsContent>
+
+                    <TabsContent value="vehicles" className="mt-4">
+                        <SupplierVehiclesTab supplierId={supplier.id} />
+                    </TabsContent>
+                </Tabs>
             </div>
-
-            <TransportSupplierFormDialog
-                open={isEditOpen}
-                onOpenChange={setIsEditOpen}
-                supplierId={supplier.id}
-            />
         </div>
     );
 };
