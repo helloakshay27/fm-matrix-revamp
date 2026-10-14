@@ -127,11 +127,19 @@ export type DeviceType = 'Desktop' | 'Mobile';
 export interface RangeFilters {
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
+  /** Optional product scoping for dashboards that share these endpoints. */
+  projectCode?: string;
+  /** Optional analytics tenant override; the tenant is independent of projectCode. */
+  tenantUrl?: string;
+  signal?: AbortSignal;
   siteIds?: string[];
   devices?: DeviceType[];
   /** Raw platform/device selection ("all" | "ios" | "android") — used by the
       Panchshil Pulse tenant to build the Connect-style `os`/`device_type` param. */
   dev?: string;
+  /** Optional app/platform scope used by the recent active users endpoint. */
+  appId?: number | string;
+  recentDeviceType?: string;
 }
 
 export interface RecentActiveUser {
@@ -151,6 +159,11 @@ export interface RecentActiveUsersResponse {
 export interface WeeklyFilters {
   to: string; // YYYY-MM-DD
   weeks: number;
+  /** Optional product scoping for dashboards that share these endpoints. */
+  projectCode?: string;
+  /** Optional analytics tenant override; the tenant is independent of projectCode. */
+  tenantUrl?: string;
+  signal?: AbortSignal;
   siteIds?: string[];
   devices?: DeviceType[];
   dev?: string;
@@ -187,10 +200,10 @@ const buildQuery = (pairs: Array<[string, string | string[] | number | undefined
  * GET helper: appends a manually built query string (raw commas preserved for
  * site_id) to the endpoint and returns the parsed response.
  */
-const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] | number | undefined | null]>): Promise<T> => {
+const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] | number | undefined | null]>, signal?: AbortSignal): Promise<T> => {
   const qs = buildQuery(pairs);
   const url = `/fm/adoption/${endpoint}${qs ? `?${qs}` : ''}`;
-  const { data } = await analyticsClient.get<T>(url);
+  const { data } = await analyticsClient.get<T>(url, { signal });
   return data;
 };
 
@@ -198,9 +211,16 @@ export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_ex
 
 export const fetchRecentActiveUsers = (f: RangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', [
-    ...rangeParams(f),
+    ...(f.appId != null
+      ? [
+          ['app_id', f.appId] as [string, string | number],
+          ['device_type', f.recentDeviceType],
+          ['from', f.from],
+          ['to', f.to],
+        ]
+      : rangeParams(f)),
     ['limit', 10],
-  ]);
+  ], f.signal);
 
 export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
   const qs = buildQuery([...rangeParams(f), ['limit', 10]]);
@@ -213,24 +233,34 @@ export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> 
 
 /* Shared param slices ---------------------------------------------------- */
 
-const rangeParams = ({ from, to, siteIds, devices, dev }: RangeFilters): Array<[string, string | string[] | number | undefined | null]> => [
-  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['url', ANALYTICS_TENANT],
+const rangeParams = ({ from, to, siteIds, devices, dev, projectCode, tenantUrl }: RangeFilters): Array<[string, string | string[] | number | undefined | null]> => [
+  ...(tenantUrl
+    ? [['url', tenantUrl] as [string, string]]
+    : IS_PULSE
+      ? [['project_code', ANALYTICS_PROJECT_CODE] as [string, string]]
+      : [['url', ANALYTICS_TENANT] as [string, string]]),
+  ...(projectCode ? [['project_code', projectCode] as [string, string]] : []),
   ['from', from],
   ['to', to],
   ['site_id', siteIds],
-  ...(IS_PULSE
-    ? Object.entries(getDeviceInfo(dev))
-    : ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)),
+  ...(tenantUrl || !IS_PULSE
+    ? ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)
+    : Object.entries(getDeviceInfo(dev))),
 ];
 
-const weeklyParams = ({ to, weeks, siteIds, devices, dev }: WeeklyFilters): Array<[string, string | string[] | number | undefined | null]> => [
-  IS_PULSE ? ['project_code', ANALYTICS_PROJECT_CODE] : ['url', ANALYTICS_TENANT],
+const weeklyParams = ({ to, weeks, siteIds, devices, dev, projectCode, tenantUrl }: WeeklyFilters): Array<[string, string | string[] | number | undefined | null]> => [
+  ...(tenantUrl
+    ? [['url', tenantUrl] as [string, string]]
+    : IS_PULSE
+      ? [['project_code', ANALYTICS_PROJECT_CODE] as [string, string]]
+      : [['url', ANALYTICS_TENANT] as [string, string]]),
+  ...(projectCode ? [['project_code', projectCode] as [string, string]] : []),
   ['to', to],
   ['weeks', weeks],
   ['site_id', siteIds],
-  ...(IS_PULSE
-    ? Object.entries(getDeviceInfo(dev))
-    : ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)),
+  ...(tenantUrl || !IS_PULSE
+    ? ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)
+    : Object.entries(getDeviceInfo(dev))),
 ];
 
 /* ------------------------------------------------------------------ shared */
@@ -291,7 +321,7 @@ export interface TrafficSessionResponse {
 }
 
 export const fetchTrafficSession = (f: RangeFilters) =>
-  get<TrafficSessionResponse>('traffic_session', rangeParams(f));
+  get<TrafficSessionResponse>('traffic_session', rangeParams(f), f.signal);
 
 /* ------------------------------------------ Layer 1 · usage_and_distribution */
 
@@ -319,7 +349,7 @@ export interface UsageDistributionResponse {
 }
 
 export const fetchUsageAndDistribution = (f: RangeFilters) =>
-  get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f));
+  get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f), f.signal);
 
 /* ---------------------------------------- Layer 2 · adoption_engagement (A*) */
 
@@ -346,7 +376,7 @@ export const fetchAdoptionEngagement = (f: RangeFilters & { licensedSeats?: numb
   if (licensedSeats != null && licensedSeats > 0) {
     pairs.push(['licensed_seats', Number(licensedSeats)]);
   }
-  return get<AdoptionEngagementResponse>('adoption_engagement', pairs);
+  return get<AdoptionEngagementResponse>('adoption_engagement', pairs, f.signal);
 };
 
 /* -------------------------------------------- Layer 2 · adoption_trend (A3) */
@@ -366,7 +396,7 @@ export interface AdoptionTrendResponse {
 }
 
 export const fetchAdoptionTrend = (f: WeeklyFilters) =>
-  get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
+  get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f), f.signal);
 
 /* ------------------------------------------------------- Layer 2 · growth */
 
@@ -384,7 +414,7 @@ export interface GrowthResponse {
   info?: AdoptionInfo;
 }
 
-export const fetchGrowth = (f: WeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f));
+export const fetchGrowth = (f: WeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f), f.signal);
 
 /* ---------------------------------------------------- Layer 2 · retention */
 
@@ -402,7 +432,7 @@ export interface RetentionResponse {
 }
 
 export const fetchRetention = (f: WeeklyFilters) =>
-  get<RetentionResponse>('retention', weeklyParams(f));
+  get<RetentionResponse>('retention', weeklyParams(f), f.signal);
 
 /* ------------------------------------------------------ Layer 2 · roles (A8) */
 
@@ -413,7 +443,7 @@ export interface RolesResponse {
   info?: AdoptionInfo;
 }
 
-export const fetchRoles = (f: RangeFilters) => get<RolesResponse>('roles', rangeParams(f));
+export const fetchRoles = (f: RangeFilters) => get<RolesResponse>('roles', rangeParams(f), f.signal);
 
 /* ----------------------------------------------------- Layer 3 · modules */
 
@@ -434,7 +464,7 @@ export interface ModulesResponse {
 export const fetchModules = (f: RangeFilters & { module?: string }) => {
   const pairs = rangeParams(f);
   if (f.module) pairs.push(['module', f.module]);
-  return get<ModulesResponse>('modules', pairs);
+  return get<ModulesResponse>('modules', pairs, f.signal);
 };
 
 /* ---------------------------------------------- Layer 3 · workflow_usage */
@@ -490,5 +520,5 @@ export const fetchWorkflowUsage = (
   const pairs = rangeParams(f);
   if (f.module) pairs.push(['module', f.module]);
   if (f.subModule) pairs.push(['sub_module', f.subModule]);
-  return get<WorkflowUsageResponse>('workflow_usage', pairs);
+  return get<WorkflowUsageResponse>('workflow_usage', pairs, f.signal);
 };
