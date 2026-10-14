@@ -12,6 +12,7 @@ import type {
 } from '../api/adoptionApi';
 import type { SiteLeagueEntry } from '../api/queries';
 import {
+  GROWTH_WEEKS,
   RETENTION_WEEKS,
   ROLE_COLORS,
   TREND_WEEKS,
@@ -313,18 +314,18 @@ export function buildTraffic(
     },
   ];
 
-  const days = unionDays(dayRange(from, to), usage?.usage_over_time.current);
+  const days = unionDays(dayRange(from, to), usage?.usage_over_time?.current);
   // The previous line is a reference overlay, so keep it the same length as the current
   // line and aligned on its most recent days.
   const prevDays = unionDays(
     windowBefore(days[0], days.length),
-    usage?.usage_over_time.previous
+    usage?.usage_over_time?.previous
   ).slice(-days.length);
 
   const cur = densifyDays(usage?.usage_over_time.current ?? [], days, state.sessTab);
   const prev = densifyDays(usage?.usage_over_time.previous ?? [], prevDays, state.sessTab);
 
-  const deviceRows: [string, number, string][] = (usage?.device_split.devices ?? []).map((d) => [
+  const deviceRows: [string, number, string][] = (usage?.device_split?.devices ?? []).map((d) => [
     d.device,
     d.session_share / 100,
     DEVICE_COLORS[d.device] ?? 'var(--faint)',
@@ -440,10 +441,10 @@ export function buildAdopt(
   // The API omits weeks with no activity — rebuild the full window so the line stays evenly spaced.
   const curWeeks = weekRange(to, TREND_WEEKS);
   const prevWeeks = weekRange(to, TREND_WEEKS, TREND_WEEKS);
-  const curMap = new Map((trend?.weekly.current ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
-  const prevMap = new Map((trend?.weekly.previous ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
+  const curMap = new Map((trend?.weekly?.current ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
+  const prevMap = new Map((trend?.weekly?.previous ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
 
-  const growthWeeks: GrowthWeek[] = (growth?.weeks ?? []).map((w) => ({
+  const growthWeeks: GrowthWeek[] = (growth?.weeks ?? []).slice(-GROWTH_WEEKS).map((w) => ({
     label: mdLabel(w.week),
     nw: w.new,
     ret: w.returning,
@@ -484,7 +485,7 @@ export function buildAdopt(
     retentionRowLabels,
     roleShares,
     breadthKv: breadth ? `${breadth.in_use} / ${breadth.total}` : '—',
-    dormantKv: eng ? fmtC(eng.dormant_users.value) : '—',
+    dormantKv: eng?.dormant_users ? fmtC(eng.dormant_users.value) : '—',
     activationKv: pctVal(act?.value),
   };
 }
@@ -611,41 +612,41 @@ export function buildFlows(
     {
       id: 'F-adopt',
       label: 'Workflow Adoption (F-adopt)',
-      disp: pctVal(k?.f_adopt.value),
-      delta: deltaOf(k?.f_adopt.delta_pct),
+      disp: pctVal(k?.f_adopt?.value),
+      delta: deltaOf(k?.f_adopt?.delta_pct),
       goodUp: true,
       sub: 'active users who enter',
-      raw: round1(k?.f_adopt.value ?? 0),
+      raw: round1(k?.f_adopt?.value ?? 0),
       unit: '%',
     },
     {
       id: 'F-comp',
       label: 'Completion Rate (F-comp)',
-      disp: pctVal(k?.f_comp.value),
-      delta: deltaOf(k?.f_comp.delta_pct),
+      disp: pctVal(k?.f_comp?.value),
+      delta: deltaOf(k?.f_comp?.delta_pct),
       goodUp: true,
       sub: 'reach the last step',
-      raw: round1(k?.f_comp.value ?? 0),
+      raw: round1(k?.f_comp?.value ?? 0),
       unit: '%',
     },
     {
       id: 'F-step',
       label: 'Biggest Step Drop (F-step)',
-      disp: pctVal(k?.f_step.value),
-      delta: deltaOf(k?.f_step.delta_pct),
+      disp: pctVal(k?.f_step?.value),
+      delta: deltaOf(k?.f_step?.delta_pct),
       goodUp: false,
       sub: 'at worst step',
-      raw: round1(k?.f_step.value ?? 0),
+      raw: round1(k?.f_step?.value ?? 0),
       unit: '%',
     },
     {
       id: 'F-vol',
       label: 'Usage Volume (F-vol)',
-      disp: k?.f_vol.value == null ? '—' : fmtC(k.f_vol.value),
-      delta: deltaOf(k?.f_vol.delta_pct),
+      disp: k?.f_vol?.value == null ? '—' : fmtC(k.f_vol.value),
+      delta: deltaOf(k?.f_vol?.delta_pct),
       goodUp: true,
       sub: 'sessions entering the flow',
-      raw: k?.f_vol.value ?? 0,
+      raw: k?.f_vol?.value ?? 0,
     },
   ];
 
