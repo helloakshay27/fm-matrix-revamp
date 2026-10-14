@@ -541,7 +541,7 @@ export const RoomPage = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
                 {shouldShow("Room", "create") && (
                   <DialogTrigger asChild>
                     <Button className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
