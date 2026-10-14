@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { RANGE_LABELS, type DateRange, type Device } from '../data/constants';
+import { PROVIDERS } from '../data/sampleData';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 import { CALENDAR_APP_ID } from '../api/adoptionApi';
 
@@ -26,7 +27,7 @@ export function ControlBar() {
   const calendarQueryKey = ['calendar-adoption', 'app', CALENDAR_APP_ID] as const;
   const isRefreshing = useIsFetching({ queryKey: calendarQueryKey }) > 0;
   const {
-    vm, setPreset, setCustomRange, customRange, setDev, togglePrev,
+    vm, setPreset, setCustomRange, customRange, setDev, provider, setProvider, togglePrev,
   } = useCalendarDashboard();
   const { range } = vm;
 
@@ -132,6 +133,19 @@ export function ControlBar() {
           </button>
         ))}
       </div>
+
+      <label className="ctrl" htmlFor="providerFilter">
+        Provider
+        <select
+          id="providerFilter"
+          value={provider}
+          onChange={(e) => setProvider(e.target.value)}
+          aria-label="Calendar provider"
+        >
+          <option>All Providers</option>
+          {PROVIDERS.map((item) => <option key={item}>{item}</option>)}
+        </select>
+      </label>
 
       <button
         type="button"

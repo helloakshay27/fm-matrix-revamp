@@ -195,6 +195,18 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
   const subModulesLoading = subModulesQuery.isLoading || subModulesQuery.isFetching;
   const flowsLoading =
     workflowQuery.isLoading || workflowQuery.isFetching || modulesLoading || subModulesLoading;
+  const errors = useMemo(
+    () => ({
+      traffic: (trafficQuery.error ?? usageQuery.error) as Error | null,
+      adopt: (adoptQuery.error ?? trendQuery.error ?? growthQuery.error ?? retentionQuery.error ?? rolesQuery.error) as Error | null,
+      flows: (modulesQuery.error ?? subModulesQuery.error ?? workflowQuery.error) as Error | null,
+    }),
+    [
+      trafficQuery.error, usageQuery.error, adoptQuery.error, trendQuery.error,
+      growthQuery.error, retentionQuery.error, rolesQuery.error,
+      modulesQuery.error, subModulesQuery.error, workflowQuery.error,
+    ],
+  );
   const isLoading = trafficLoading || adoptLoading || flowsLoading;
   const isLive = Boolean(trafficQuery.data || adoptQuery.data || workflowQuery.data);
 
@@ -672,8 +684,9 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       range,
       scopeLabel,
       selectedModule,
+      selectedSubModule,
     }),
-    [traffic, adopt, flows, sessTab, dev, provider, prev, range, scopeLabel, selectedModule],
+    [traffic, adopt, flows, sessTab, dev, provider, prev, range, scopeLabel, selectedModule, selectedSubModule],
   );
 
   /* ---------------------------------------------------------------- setters */
@@ -726,6 +739,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     () => ({
       vm,
       queryFilters,
+      errors,
       provider, setProvider,
       setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev,
@@ -743,7 +757,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       refetch,
     }),
     [
-      vm, queryFilters, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
+      vm, queryFilters, errors, provider, setProvider, setPreset, setCustomRange, customRange, setDev, setSessTab,
       workflow, setWorkflow, togglePrev, selectedModule, setSelectedModule, modulesList,
       selectedSubModule, setSelectedSubModule, subModulesList,
       modulesLoading, subModulesLoading,

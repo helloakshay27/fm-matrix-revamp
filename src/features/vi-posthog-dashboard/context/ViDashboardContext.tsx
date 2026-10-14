@@ -48,6 +48,7 @@ import {
 import { paletteFor, type ChartPalette, type ViTheme } from '../data/palette';
 import type { PageKey } from '../data/pages';
 import { VI_BM_DEFAULTS } from '../data/viMetricIds';
+import { VI_APP_ID } from '../api/adoptionApi';
 import {
   ViDashboardContext,
   type SectionStatus,
@@ -58,6 +59,7 @@ import {
 
 const THEME_KEY = 'vimyworkspace-theme';
 const NAV_KEY = 'vimyworkspace-nav';
+const VI_QUERY_KEY = ['fm-adoption', 'app', VI_APP_ID] as const;
 
 /** Best-effort persistence — storage may be unavailable (private mode, embedded webview). */
 function readStored(key: string): string | null {
@@ -109,6 +111,7 @@ const DEFAULT_STATE: DashboardState = {
   tier: 't3',
   scope: 'org',
   date: 30,
+  customDateRange: null,
   // Unused: the shared state shape requires it, but this dashboard never sends device_type.
   dev: 'all',
   // Layer 3 is navigated by the `modules` tree, so there is nothing to select until that
@@ -320,7 +323,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
 
   const queryClient = useQueryClient();
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const isFetchingAdoption = useIsFetching({ queryKey: ['fm-adoption'] }) > 0;
+  const isFetchingAdoption = useIsFetching({ queryKey: VI_QUERY_KEY }) > 0;
   const isRefreshing = isManualRefreshing || isFetchingAdoption;
 
   const refreshAll = useCallback(async () => {
@@ -329,8 +332,7 @@ export function ViDashboardProvider({ children }: { children: ReactNode }) {
     const minDelay = new Promise((resolve) => setTimeout(resolve, 650));
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['fm-adoption'], refetchType: 'all' }),
-        queryClient.refetchQueries({ queryKey: ['fm-adoption'], type: 'active' }),
+        queryClient.invalidateQueries({ queryKey: VI_QUERY_KEY, refetchType: 'active' }),
         minDelay,
       ]);
     } catch {

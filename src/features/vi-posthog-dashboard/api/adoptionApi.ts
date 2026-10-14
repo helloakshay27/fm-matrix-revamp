@@ -217,7 +217,7 @@ async function get<T>(path: string, params: Record<string, string>): Promise<T> 
   return res.data;
 }
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
 
 export const fetchRecentActiveUsers = (f: ViRangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', {
