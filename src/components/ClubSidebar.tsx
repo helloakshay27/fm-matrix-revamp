@@ -61,7 +61,10 @@ const modulesByPackage = {
       name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
-      additionalRoutes: ["/club-management/group-membership"],
+      additionalRoutes: [
+        "/club-management/group-membership",
+        "/club-management/usage-dashboard",
+      ],
     },
     {
       name: "Class Purchase",

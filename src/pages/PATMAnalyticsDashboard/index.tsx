@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card';
 import './PATMAnalyticsDashboard.css';
@@ -1352,6 +1353,7 @@ type DevMode = 'all' | 'desktop' | 'mobile';
 type RangePreset = 7 | 30 | 90;
 
 export default function PATMAnalyticsDashboard() {
+  const navigate = useNavigate();
   const [page, setPage] = useState<Page>('pgTraffic');
   const [dev, setDev] = useState<DevMode>('all');
   const [showPrev, setShowPrev] = useState(true);
@@ -1458,7 +1460,7 @@ export default function PATMAnalyticsDashboard() {
             <line x1="8" y1="3.5" x2="8" y2="16.5" />
           </svg>
         </button>
-        <button className="topbar-back" aria-label="Back">
+        <button className="topbar-back" aria-label="Back" onClick={() => navigate(-1)}>
           &#8592;
         </button>
         <span className="topbar-title">PATM Analytics</span>
@@ -1494,7 +1496,7 @@ export default function PATMAnalyticsDashboard() {
             </svg>
           )}
         </button>
-        <span className="badge-sample">PATM &middot; PTM-01</span>
+        <span className="badge-sample">PATM</span>
       </header>
 
       <div className={`shell${navCollapsed ? ' nav-collapsed' : ''}`}>

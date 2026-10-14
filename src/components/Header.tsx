@@ -17,6 +17,7 @@ import {
   Settings,
   Mail,
   Building2,
+  BarChart3,
   MessageSquare,
   CircleCheckBig,
   MessagesSquare,
@@ -1161,6 +1162,16 @@ export const Header = () => {
                       <User className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="font-medium">My Profile</span>
                     </DropdownMenuItem>
+                    {(isClubSite ||
+                      window.location.pathname.startsWith("/club-management")) && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/club-management/usage-dashboard")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={handleFmPosthog}
                       className="mx-2 my-1 rounded-md"
