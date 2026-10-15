@@ -12,8 +12,20 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { ChevronRight } from "lucide-react";
+import {
+  Trophy,
+  Users,
+  Building2,
+  Briefcase,
+  MapPin,
+  PieChart as PieChartIcon,
+  Award,
+  BarChart3,
+  Footprints,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import stepathonAPI, {
   TopEmployee,
   TopEmployeeInCompany,
@@ -43,72 +55,101 @@ const staticBarChartData = [
 // ─── Gender colour map ────────────────────────────────────────────────────────
 
 const GENDER_COLORS: Record<string, string> = {
-  male: "#c4b99d",
-  female: "#8b7355",
-  other: "#e5d5b5",
+  male: ANALYTICS_PALETTE[0],
+  female: ANALYTICS_PALETTE[1],
+  other: ANALYTICS_PALETTE[2],
 };
+
+// ─── Section Card (matches PO Details card pattern) ─────────────────────────
+
+interface SectionCardProps {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+}
+
+const SectionCard: React.FC<SectionCardProps> = ({ title, icon: Icon, children }) => (
+  <Card className="rounded-2xl shadow-sm border border-gray-200 h-full">
+    <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+        <Icon className="w-[18px] h-[18px]" />
+      </div>
+      <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{title}</h3>
+    </div>
+    <CardContent>{children}</CardContent>
+  </Card>
+);
 
 // ─── Scoreboard Card ─────────────────────────────────────────────────────────
 
 interface ScoreboardCardProps {
   title: string;
-  columns: { label: string; align?: "left" | "center" | "right" }[];
+  icon: React.ElementType;
+  columns: { label: string }[];
   rows: (string | number)[][];
   loading?: boolean;
 }
 
 const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
   title,
+  icon,
   columns,
   rows,
   loading,
-}) => (
-  <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100">
-    {/* Orange header */}
-    <div className="bg-[#c4b89d4a] flex items-center justify-between px-4 py-3">
-      <span className="text-black font-semibold text-sm">{title}</span>
-      {/* <ChevronRight className="w-5 h-5 text-black" /> */}
-    </div>
-    {/* Column headers */}
-    <div className="grid border-b border-gray-100 bg-white" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}>
-      {columns.map((col, i) => (
-        <div
-          key={i}
-          className={`px-3 py-2 text-xs font-bold text-gray-800 ${
-            i === 0 ? "text-left" : i === columns.length - 1 ? "text-right" : "text-center"
-          }`}
-        >
-          {col.label}
+}) => {
+  const lastIndex = columns.length - 1;
+  const cellAlign = (i: number) => (i === lastIndex ? "text-right" : "text-left");
+
+  return (
+    <SectionCard title={title} icon={icon}>
+      <div className="rounded-xl bg-[#F6F4EE] overflow-hidden">
+        <div className="max-h-[300px] overflow-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#D5DBDB]">
+                {columns.map((col, i) => (
+                  <th
+                    key={i}
+                    className={`px-4 py-2.5 text-xs font-semibold uppercase text-gray-500 ${cellAlign(i)}`}
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading || rows.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-gray-400">
+                    {loading ? "Loading…" : "No data available"}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row, ri) => (
+                  <tr
+                    key={ri}
+                    className="border-b border-[#D5DBDB] last:border-b-0 hover:bg-brand-selected transition-colors"
+                  >
+                    {row.map((cell, ci) => (
+                      <td
+                        key={ci}
+                        className={`px-4 py-2.5 text-sm ${cellAlign(ci)} ${
+                          ci === 0 ? "w-16 font-semibold text-brand" : "text-gray-900 font-medium"
+                        }`}
+                      >
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      ))}
-    </div>
-    {/* Rows */}
-    {loading ? (
-      <div className="py-8 text-center text-sm text-gray-400">Loading…</div>
-    ) : rows.length === 0 ? (
-      <div className="py-8 text-center text-sm text-gray-400">No data available</div>
-    ) : (
-      rows.map((row, ri) => (
-        <div
-          key={ri}
-          className="grid border-b border-gray-50 last:border-b-0"
-          style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}
-        >
-          {row.map((cell, ci) => (
-            <div
-              key={ci}
-              className={`px-3 py-2 text-sm text-gray-700 ${
-                ci === 0 ? "text-left font-semibold" : ci === columns.length - 1 ? "text-right" : "text-center"
-              }`}
-            >
-              {cell}
-            </div>
-          ))}
-        </div>
-      ))
-    )}
-  </div>
-);
+      </div>
+    </SectionCard>
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -196,56 +237,55 @@ export const StepathonPage: React.FC = () => {
   const pieData = genderData.map((d) => ({
     name: d.gender.charAt(0).toUpperCase() + d.gender.slice(1),
     value: d.user_count,
-    color: GENDER_COLORS[d.gender.toLowerCase()] ?? "#c4b99d",
+    color: GENDER_COLORS[d.gender.toLowerCase()] ?? ANALYTICS_PALETTE[3],
   }));
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="p-6 mx-auto bg-white min-h-screen">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Pulse Stepathon</h1>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500 mb-0.5">Select Start Date</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  title="Select Start Date"
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#C72030]"
-                />
-              </div>
-              <span className="text-gray-500 font-semibold mt-4">TO</span>
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500 mb-0.5">Select End Date</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  title="Select End Date"
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#C72030]"
-                />
-              </div>
-            </div>
-            <button
-              onClick={handleApply}
-              className="mt-4 bg-[#F2EEE9] hover:bg-[#e8e0d4] text-[#C72030] px-6 py-1.5 text-sm font-semibold transition-colors rounded"
-            >
-              Apply
-            </button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <h1 className="text-2xl font-semibold">Pulse Stepathon</h1>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col">
+            <label htmlFor="stepathon-start-date" className="text-xs text-gray-500 mb-1">
+              Start Date
+            </label>
+            <input
+              id="stepathon-start-date"
+              type="date"
+              value={startDate}
+              max={endDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-10 border border-gray-300 rounded-[8px] px-3 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand"
+            />
           </div>
+          <span className="text-sm text-gray-500 font-medium pb-2.5">to</span>
+          <div className="flex flex-col">
+            <label htmlFor="stepathon-end-date" className="text-xs text-gray-500 mb-1">
+              End Date
+            </label>
+            <input
+              id="stepathon-end-date"
+              type="date"
+              value={endDate}
+              min={startDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-10 border border-gray-300 rounded-[8px] px-3 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <Button size="sm" className="rounded-[8px]" onClick={handleApply} disabled={loading}>
+            Apply
+          </Button>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* ── Row 1: Scoreboards ──────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {/* Top Employees */}
           <ScoreboardCard
             title="Top Employees"
-            columns={[{ label: "Rank" }, { label: "Employees" }, { label: "Steps" }]}
+            icon={Trophy}
+            columns={[{ label: "Rank" }, { label: "Employee" }, { label: "Steps" }]}
             loading={loading}
             rows={topEmployees.map((e) => [
               `#${e.rank}`,
@@ -254,10 +294,10 @@ export const StepathonPage: React.FC = () => {
             ])}
           />
 
-          {/* Top Employees in my Company */}
           <ScoreboardCard
             title="Top Employees in my Company"
-            columns={[{ label: "Rank" }, { label: "Employees" }, { label: "Steps" }]}
+            icon={Users}
+            columns={[{ label: "Rank" }, { label: "Employee" }, { label: "Steps" }]}
             loading={loading}
             rows={topEmployeesInCompany.map((e) => [
               `#${e.rank}`,
@@ -266,10 +306,10 @@ export const StepathonPage: React.FC = () => {
             ])}
           />
 
-          {/* Top Companies in my Office Parks */}
           <ScoreboardCard
             title="Top Companies in my Office Parks"
-            columns={[{ label: "Rank" }, { label: "Employees" }, { label: "Steps" }]}
+            icon={Building2}
+            columns={[{ label: "Rank" }, { label: "Company" }, { label: "Steps" }]}
             loading={loading}
             rows={topCompaniesInOfficePark.map((c) => [
               `#${c.rank}`,
@@ -278,10 +318,10 @@ export const StepathonPage: React.FC = () => {
             ])}
           />
 
-          {/* Top Companies */}
           <ScoreboardCard
             title="Top Companies"
-            columns={[{ label: "Rank" }, { label: "Company Name" }, { label: "Steps" }]}
+            icon={Briefcase}
+            columns={[{ label: "Rank" }, { label: "Company" }, { label: "Steps" }]}
             loading={loading}
             rows={topCompanies.map((c) => [
               `#${c.rank}`,
@@ -290,9 +330,9 @@ export const StepathonPage: React.FC = () => {
             ])}
           />
 
-          {/* Top Office Parks */}
           <ScoreboardCard
             title="Top Office Parks"
+            icon={MapPin}
             columns={[{ label: "Rank" }, { label: "Site Name" }, { label: "Steps" }]}
             loading={loading}
             rows={topOfficeParks.map((o) => [
@@ -305,16 +345,12 @@ export const StepathonPage: React.FC = () => {
 
         {/* ── Row 2: Gender Chart + Site Achievers + Top 10 Sites ─────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Gender-wise Participants */}
-          <Card className="bg-white shadow-sm border border-gray-200">
-            <div className="bg-[#c4b89d4a] px-4 py-3 border-b border-gray-100">
-              <span className="text-sm font-semibold text-gray-800">Gender-wise Participants</span>
-            </div>
-            <CardContent className="pt-4">
-              {loading ? (
-                <div className="h-52 flex items-center justify-center text-sm text-gray-400">Loading…</div>
-              ) : pieData.length === 0 ? (
-                <div className="h-52 flex items-center justify-center text-sm text-gray-400">No data</div>
+          <SectionCard title="Gender-wise Participants" icon={PieChartIcon}>
+            <div className="rounded-xl bg-[#F6F4EE] p-4">
+              {loading || pieData.length === 0 ? (
+                <div className="h-52 flex items-center justify-center text-sm text-gray-400">
+                  {loading ? "Loading…" : "No data available"}
+                </div>
               ) : (
                 <>
                   <div className="h-52">
@@ -354,101 +390,42 @@ export const StepathonPage: React.FC = () => {
                   </div>
                 </>
               )}
-            </CardContent>
-          </Card>
-
-          {/* 20K Steps Achievers Count (site-wise) */}
-          <Card className="bg-white shadow-sm border border-gray-200 h-full">
-            <div className="bg-[#c4b89d4a] px-4 py-3 border-b border-gray-100">
-              <span className="text-sm font-semibold text-gray-800">20K Steps Achievers Count</span>
             </div>
-            <CardContent className="p-0">
-              <div className="overflow-auto max-h-[300px]">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-800 uppercase">Rank</th>
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-800 uppercase">Site Name</th>
-                      <th className="px-4 py-2 text-right text-xs font-bold text-gray-800 uppercase">User Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-400">Loading…</td></tr>
-                    ) : siteAchievers.length === 0 ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-400">No data available</td></tr>
-                    ) : (
-                      siteAchievers.map((row, i) => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-2 text-sm font-semibold text-gray-700">#{row.rank}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{row.site_name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700 text-right">{row.user_count}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          </SectionCard>
 
-          {/* Top 10 Site Level Ranking */}
-          <Card className="bg-white shadow-sm border border-gray-200 h-full">
-            <div className="bg-[#c4b89d4a] px-4 py-3 border-b border-gray-100">
-              <span className="text-sm font-semibold text-gray-800">Top 10 Site Level Ranking</span>
-            </div>
-            <CardContent className="p-0">
-              <div className="overflow-auto max-h-[300px]">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-800 uppercase">Rank</th>
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-800 uppercase">Site Name</th>
-                      <th className="px-4 py-2 text-right text-xs font-bold text-gray-800 uppercase">Avg Steps</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-400">Loading…</td></tr>
-                    ) : topSites.length === 0 ? (
-                      <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-400">No data available</td></tr>
-                    ) : (
-                      topSites.map((row, i) => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-2 text-sm font-semibold text-gray-700">#{row.rank}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{row.site_name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700 text-right">{row.average_steps.toLocaleString()}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          <ScoreboardCard
+            title="20K Steps Achievers Count"
+            icon={Award}
+            columns={[{ label: "Rank" }, { label: "Site Name" }, { label: "Users" }]}
+            loading={loading}
+            rows={siteAchievers.map((row) => [`#${row.rank}`, row.site_name, row.user_count])}
+          />
+
+          <ScoreboardCard
+            title="Top 10 Site Level Ranking"
+            icon={BarChart3}
+            columns={[{ label: "Rank" }, { label: "Site Name" }, { label: "Avg Steps" }]}
+            loading={loading}
+            rows={topSites.map((row) => [
+              `#${row.rank}`,
+              row.site_name,
+              row.average_steps.toLocaleString(),
+            ])}
+          />
         </div>
 
         {/* ── Organisation Daily Step Count ───────────────────────────────── */}
-        <Card className="bg-white shadow-sm border border-gray-200 max-w-xs">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#e5e0d3] flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-4 6l2 2-4.41 5H11v3h2v-3h2.5l-2.5-3 1-2L10.5 9H9a2 2 0 0 0-1.94 1.5L6 14h2l1.5-2.5z"
-                    fill="#c72030"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {loading ? "—" : dailyStepCount !== null ? dailyStepCount.toLocaleString() : "—"}
-                </p>
-                <p className="text-sm text-gray-600 font-medium">An Organisation's Daily Step Count</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-200 px-6 py-5 flex items-center gap-4 max-w-xs">
+          <div className="w-11 h-11 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
+            <Footprints className="w-5 h-5 text-brand" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-[#2C2C2C]">
+              {loading ? "—" : dailyStepCount !== null ? dailyStepCount.toLocaleString() : "—"}
+            </p>
+            <p className="text-sm text-gray-600 font-medium">Organisation's Daily Step Count</p>
+          </div>
+        </div>
 
         {/* ── Static Bar Chart ────────────────────────────────────────────── */}
        {/*  <Card className="bg-white shadow-sm border border-gray-200">

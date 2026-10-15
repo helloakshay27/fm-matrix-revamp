@@ -3,7 +3,7 @@ import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { isCMContextActive } from "@/utils/posthogHelpers";
 import { Button } from "@/components/ui/button"
-import { Switch } from "@mui/material"
+import { Switch } from "@/components/ui/switch"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import axios from "axios"
 import { Edit, Eye, Plus } from "lucide-react"
@@ -390,17 +390,8 @@ const Communtiy = () => {
                 return <div className="flex items-center gap-2">
                     <Switch
                         checked={!!item.active}
-                        onChange={() => handleStatusChange(item.id, item.active)}
+                        onCheckedChange={() => handleStatusChange(item.id, item.active)}
                         disabled={isToggling === item.id}
-                        size="small"
-                        sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                color: '#04A231',
-                            },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                backgroundColor: '#04A231',
-                            },
-                        }}
                     />
                     {item.active ? "Active" : "Inactive"}
                 </div>

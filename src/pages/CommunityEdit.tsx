@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { TextField, RadioGroup, FormControlLabel, Radio, Switch } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { FileText, File, Info, XCircle, ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,6 +17,17 @@ import {
 import axios from "axios";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { isCMContextActive } from "@/utils/posthogHelpers";
+
+const PULSE_CATEGORY_OPTIONS = [
+  { value: "play", label: "Play" },
+  { value: "panasche", label: "Panache" },
+  { value: "persuit", label: "Pursuit" },
+];
+
+const COMMUNITY_CATEGORY_OPTIONS = [
+  { value: "open", label: "Open to all" },
+  { value: "requestable", label: "Requestable" },
+];
 
 const CommunityEdit = () => {
   const navigate = useNavigate();
@@ -73,6 +87,13 @@ const CommunityEdit = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleRadioChange = (name: "category" | "communityCategory") => (value: string) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -186,213 +207,158 @@ const CommunityEdit = () => {
   };
 
   return (
-    <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
+    <div className="p-6 mx-auto bg-white min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0 mb-4 hover:bg-transparent">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
 
       <div className="space-y-6">
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
+        {/* Details Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                <FileText size={16} />
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                <FileText className="w-[18px] h-[18px]" />
               </div>
-              <span className="font-semibold text-lg text-gray-800">Details</span>
+              <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Details</h3>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <Switch
+                id="community-status"
                 checked={isActive}
-                onChange={() => handleStatusChange(Number(id), isActive)}
-                disabled={isToggling === Number(id)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#04A231',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#04A231',
-                  },
-                  '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                    color: '#C72030',
-                  },
-                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                    backgroundColor: 'rgba(199, 32, 48, 0.5)',
-                  },
-                }}
+                onCheckedChange={() => handleStatusChange(Number(id), isActive)}
+                disabled={isToggling === Number(id) || isLoading}
               />
-              <span className="ml-2 text-sm font-semibold">{isActive ? 'Active' : 'Inactive'}</span>
+              <Label htmlFor="community-status" className="text-sm font-medium text-gray-900 cursor-pointer">
+                {isActive ? "Active" : "Inactive"}
+              </Label>
             </div>
           </div>
 
-          <div className="p-6 bg-white">
-            {/* Community Name + Pulse Category */}
-            <div className="mb-6 flex items-center justify-between gap-5">
+          <div className="px-6 pb-6 pt-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Community Name */}
-              <div className="w-[320px]">
-                <TextField
-                  label={
-                    <>
-                      Community Name<span className="text-[#C72030]">*</span>
-                    </>
-                  }
+              <div>
+                <label
+                  htmlFor="communityName"
+                  className="mb-1.5 block text-[12px] font-semibold text-gray-700"
+                >
+                  Community Name <span className="text-red-500">*</span>
+                </label>
+                <Input
                   id="communityName"
                   name="communityName"
                   value={formData.communityName}
                   onChange={handleInputChange}
                   placeholder="Enter Community Name"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      backgroundColor: "#FAFAFA",
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#C72030",
-                      },
-                    },
-                  }}
+                  className="h-[42px] rounded-[8px] text-sm"
                 />
               </div>
 
               {/* Pulse Category */}
-              <div className="flex items-center gap-1">
-                <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
-                  Pulse Category:
+              <div>
+                <span className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Pulse Category
                 </span>
                 <RadioGroup
-                  row
-                  name="category"
                   value={formData.category}
-                  onChange={handleInputChange}
-                  className="flex flex-wrap items-center gap-y-1 text-sm"
+                  onValueChange={handleRadioChange("category")}
+                  className="flex flex-wrap items-center gap-x-6 gap-y-2 min-h-[42px]"
                 >
-                  <FormControlLabel
-                    value="play"
-                    control={
-                      <Radio
-                        size="small"
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                        }}
-                      />
-                    }
-                    label={<span className="text-[12px] text-gray-900">Play</span>}
-                  />
-                  <FormControlLabel
-                    value="panasche"
-                    control={
-                      <Radio
-                        size="small"
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                        }}
-                      />
-                    }
-                    label={<span className="text-[12px] text-gray-900">Panache</span>}
-                  />
-                  <FormControlLabel
-                    value="persuit"
-                    control={
-                      <Radio
-                        size="small"
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                        }}
-                      />
-                    }
-                    label={<span className="text-[12px] text-gray-900">Pursuit</span>}
-                  />
+                  {PULSE_CATEGORY_OPTIONS.map((option) => (
+                    <div key={option.value} className="flex items-center gap-2">
+                      <RadioGroupItem value={option.value} id={`category-${option.value}`} />
+                      <Label
+                        htmlFor={`category-${option.value}`}
+                        className="text-sm font-normal text-gray-900 cursor-pointer"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               </div>
 
-              <div className="flex items-center gap-1">
-                <span className="text-[12px] font-semibold text-gray-900 whitespace-nowrap">
-                  Community Category:
+              {/* Community Category */}
+              <div>
+                <span className="mb-1.5 block text-[12px] font-semibold text-gray-700">
+                  Community Category
                 </span>
                 <RadioGroup
-                  row
-                  name="communityCategory"
                   value={formData.communityCategory}
-                  onChange={handleInputChange}
-                  className="flex flex-wrap items-center gap-y-1 text-sm"
+                  onValueChange={handleRadioChange("communityCategory")}
+                  className="flex flex-wrap items-center gap-x-6 gap-y-2 min-h-[42px]"
                 >
-                  <FormControlLabel
-                    value="open"
-                    control={
-                      <Radio
-                        size="small"
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                        }}
-                      />
-                    }
-                    label={<span className="text-[12px] text-gray-900">Open to all</span>}
-                  />
-                  <FormControlLabel
-                    value="requestable"
-                    control={
-                      <Radio
-                        size="small"
-                        sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
-                        }}
-                      />
-                    }
-                    label={<span className="text-[12px] text-gray-900">Requestable</span>}
-                  />
+                  {COMMUNITY_CATEGORY_OPTIONS.map((option) => (
+                    <div key={option.value} className="flex items-center gap-2">
+                      <RadioGroupItem value={option.value} id={`community-category-${option.value}`} />
+                      <Label
+                        htmlFor={`community-category-${option.value}`}
+                        className="text-sm font-normal text-gray-900 cursor-pointer"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               </div>
             </div>
 
+            {/* Description */}
             <div>
-              <div className="relative w-full">
-                <label className="absolute -top-2 left-3 bg-white px-1 text-sm text-black pointer-events-none">
-                  Description (Optional)
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter Description"
-                  rows={8}
-                  className="w-full rounded-[5px] border border-gray-300 p-4 text-sm outline-none resize-none"
-                />
-              </div>
+              <label
+                htmlFor="description"
+                className="mb-1.5 block text-[12px] font-semibold text-gray-700"
+              >
+                Description (Optional)
+              </label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Enter Description"
+                rows={6}
+                className="rounded-[8px] text-sm resize-none"
+              />
             </div>
           </div>
         </div>
 
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <File size={16} />
+        {/* Attachment Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <File className="w-[18px] h-[18px]" />
             </div>
-            <span className="font-semibold text-lg text-gray-800">Attachment</span>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachment</h3>
           </div>
-          <div className="p-6 bg-white">
-            <Label className="text-sm font-bold text-gray-700 mb-4 block">
-              Upload Cover Image<span className="text-red-500">*</span>
-            </Label>
+
+          <div className="px-6 pb-6 pt-2">
+            <span className="mb-3 block text-[12px] font-semibold text-gray-700">
+              Upload Cover Image <span className="text-red-500">*</span>
+            </span>
 
             {formData.coverImage || coverImagePreview ? (
-              <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
-                <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+              <div className="relative rounded-xl bg-[#F6F4EE] w-full max-w-[200px] h-40 flex items-center justify-center">
+                <span className="absolute top-2 left-3 text-xs font-medium text-gray-700 truncate max-w-[75%]">
                   {formData.coverImage?.name || "Cover Image"}
                 </span>
                 <button
+                  type="button"
                   onClick={handleRemoveCoverImage}
-                  className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                  aria-label="Remove cover image"
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                  <XCircle size={20} />
+                  <XCircle size={18} />
                 </button>
                 {coverImagePreview ? (
-                  <img src={coverImagePreview} alt="Cover Preview" className="w-20 h-20 object-contain mt-6" />
+                  <img
+                    src={coverImagePreview}
+                    alt="Cover Preview"
+                    className="w-24 h-24 object-cover rounded-lg mt-6"
+                  />
                 ) : (
                   <File size={40} className="text-gray-400 mt-6" />
                 )}
@@ -400,13 +366,13 @@ const CommunityEdit = () => {
             ) : (
               <div
                 onClick={triggerCoverImageInput}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="border-2 border-dashed border-gray-300 rounded-xl p-6 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-brand-selected transition-colors"
               >
                 <div className="absolute top-2 right-2 text-gray-400">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Info size={18} />
+                        <Info size={16} />
                       </TooltipTrigger>
                       <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
                         <p>Upload a cover image for the community.</p>
@@ -423,10 +389,10 @@ const CommunityEdit = () => {
                   className="hidden"
                 />
 
-                <div className="text-center text-gray-500 text-sm">
+                <div className="text-center text-gray-500 text-xs">
                   Choose a file or<br />drag & drop it here
                 </div>
-                <Button type="button" className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8">
+                <Button type="button" variant="secondary" size="sm" className="rounded-[8px]">
                   Browse
                 </Button>
               </div>
@@ -434,21 +400,23 @@ const CommunityEdit = () => {
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 mt-8 pb-8">
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || isLoading}
-            className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
-          >
-            {isSubmitting ? "Submitting..." : "Update"}
-          </Button>
-          <Button
+        {/* Action Buttons */}
+        <div className="fm-action-bar pb-8">
+          <button
+            type="button"
             onClick={() => navigate(-1)}
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isLoading}
+            className="fm-action-primary"
+          >
+            {isSubmitting ? "Updating..." : "Update"}
+          </button>
         </div>
       </div>
     </div>

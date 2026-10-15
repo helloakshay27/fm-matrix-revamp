@@ -45,49 +45,51 @@ const CommunityDetails = () => {
     }, [id, detailViewed]);
 
     return (
-        <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
-            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4">
-                <Link to="/pulse/community">Community</Link>{" "}
-                <span className="font-normal">{">"}</span> Community Details
-            </h1>
+        <div className="p-6 mx-auto bg-white min-h-screen">
+            <p className="text-sm text-gray-500 mb-1">
+                <Link to="/pulse/community" className="hover:text-brand transition-colors">Community</Link>
+                <span className="mx-1.5">/</span>
+                <span className="text-gray-700">Community Details</span>
+            </p>
+            <h1 className="text-2xl font-semibold mb-4">Community Details</h1>
 
             <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
                 className="w-full"
             >
-                <TabsList className="grid w-full grid-cols-5 mb-6 bg-white border">
+                <TabsList className="grid w-full grid-cols-5 mb-6 bg-white border border-gray-200 rounded-xl">
                     <TabsTrigger
                         value="details"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Community Details
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="feed"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Community Feed
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="reports"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Reports
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="events"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Shared
                     </TabsTrigger>
 
                     <TabsTrigger
                         value="pending_requests"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Pending Request
                     </TabsTrigger>

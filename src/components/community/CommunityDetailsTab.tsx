@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Eye, Pencil, File } from "lucide-react";
-import { Switch } from "@mui/material";
+import { Eye, Pencil, Info, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -96,17 +97,15 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
 
     // Skeleton Loader Component
     const DetailsSkeleton = () => (
-        <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
-            <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-300"></div>
-                    <div className="h-5 bg-gray-300 rounded w-48"></div>
-                </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 animate-pulse">
+            <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                <div className="w-9 h-9 rounded-[10px] bg-gray-200"></div>
+                <div className="h-4 bg-gray-200 rounded w-48"></div>
             </div>
-            <div className="p-6 bg-white">
+            <div className="px-6 pb-6 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {/* Image Skeleton */}
-                    <div className="bg-gray-300 h-72 rounded-lg"></div>
+                    <div className="bg-gray-200 h-72 rounded-xl"></div>
                     {/* Description Skeleton */}
                     <div className="space-y-2">
                         <div className="h-4 bg-gray-300 rounded w-24 mb-4"></div>
@@ -141,12 +140,12 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
     );
 
     const TableSkeleton = () => (
-        <div className="border border-gray-200 rounded-lg overflow-hidden animate-pulse">
-            <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                <div className="w-8 h-8 rounded-full bg-gray-300"></div>
-                <div className="h-5 bg-gray-300 rounded w-56"></div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 animate-pulse">
+            <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                <div className="w-9 h-9 rounded-[10px] bg-gray-200"></div>
+                <div className="h-4 bg-gray-200 rounded w-56"></div>
             </div>
-            <div className="p-4 bg-white">
+            <div className="px-6 pb-6 pt-2">
                 {[1, 2, 3, 4, 5].map((index) => (
                     <div key={index} className="flex gap-4 py-4 border-b border-gray-200">
                         <div className="w-6 h-6 bg-gray-300 rounded"></div>
@@ -261,9 +260,12 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
             <div className="flex items-center justify-end">
                 <Button
                     variant="outline"
+                    size="sm"
+                    className="rounded-[8px]"
                     onClick={() => navigate(`/pulse/community/edit/${id}`)}
                 >
                     <Pencil className="w-4 h-4" />
+                    Edit
                 </Button>
             </div>
 
@@ -274,114 +276,88 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                 </>
             ) : (
                 <>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-3">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                    <File size={16} />
+                                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                    <Info className="w-[18px] h-[18px]" />
                                 </div>
-                                <span className="font-semibold text-lg text-gray-800">Community Details</span>
+                                <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Community Details</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Switch
+                                    id="community-details-status"
                                     checked={isActive}
-                                    onChange={() => handleStatusChange(Number(id), isActive)}
+                                    onCheckedChange={() => handleStatusChange(Number(id), isActive)}
                                     disabled={isToggling === Number(id)}
-                                    sx={{
-                                        '& .MuiSwitch-switchBase.Mui-checked': {
-                                            color: '#04A231',
-                                        },
-                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                            backgroundColor: '#04A231',
-                                        },
-                                        '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                                            color: '#C72030',
-                                        },
-                                        '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                                            backgroundColor: 'rgba(199, 32, 48, 0.5)',
-                                        },
-                                    }}
                                 />
-                                <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
+                                <Label htmlFor="community-details-status" className="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {isActive ? 'Active' : 'Inactive'}
+                                </Label>
                             </div>
                         </div>
 
-                        <div className="p-6 bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="px-6 pb-6 pt-2 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Community Image */}
-                                <div className="bg-gray-100 h-72">
-                                    <img
-                                        src={communityData.icon}
-                                        alt={communityData.name}
-                                        className="w-full h-full object-contain rounded-lg"
-                                    />
+                                <div className="bg-[#F6F4EE] h-72 rounded-xl overflow-hidden flex items-center justify-center">
+                                    {communityData.icon ? (
+                                        <img
+                                            src={communityData.icon}
+                                            alt={communityData.name}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-400">No image</span>
+                                    )}
                                 </div>
 
                                 {/* Description */}
                                 <div>
-                                    <h3 className="text-sm font-medium text-[rgba(26,26,26,0.5)] mb-2">Description</h3>
-                                    <p className="text-[16px] text-[#222222] leading-relaxed">
-                                        {communityData.description}
+                                    <p className="text-gray-500 mb-2">Description</p>
+                                    <p className="text-gray-900 font-medium leading-relaxed whitespace-pre-line">
+                                        {communityData.description || "-"}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Community Info Grid */}
-                            <div className="grid grid-cols-9">
-                                <div className="grid grid-cols-3 col-span-8 gap-6">
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-32 text-sm text-gray-500">Community Name</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {communityData.name}
-                                        </p>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 border-t border-gray-200 pt-6">
+                                {[
+                                    { label: "Community Name", value: communityData.name || "-" },
+                                    { label: "Members", value: communityData?.all_members?.length ?? 0 },
+                                    { label: "Pending Requests", value: 21 },
+                                    {
+                                        label: "Created On",
+                                        value: communityData.created_at
+                                            ? new Intl.DateTimeFormat("en-GB", {
+                                                day: "numeric",
+                                                month: "long",
+                                                year: "numeric",
+                                            }).format(new Date(communityData.created_at))
+                                            : "-",
+                                    },
+                                    { label: "Created By", value: communityData.created_by || "-" },
+                                ].map((field) => (
+                                    <div key={field.label} className="flex items-start">
+                                        <span className="text-gray-500 min-w-[140px]">{field.label}</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{field.value}</span>
                                     </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-32 text-sm text-gray-500">Members</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {communityData?.all_members?.length}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-32 text-sm text-gray-500">Pending Requests</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            21
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-32 text-sm text-gray-500">Created On</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {communityData.created_at
-                                                ? new Intl.DateTimeFormat("en-GB", {
-                                                    day: "numeric",
-                                                    month: "long",
-                                                    year: "numeric",
-                                                }).format(new Date(communityData.created_at))
-                                                : "-"}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <p className="w-32 text-sm text-gray-500">Created By</p>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {communityData.created_by}
-                                        </p>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>
 
                     {/* Community Member Details Section */}
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                <File size={16} />
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+                        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                                <Users className="w-[18px] h-[18px]" />
                             </div>
-                            <span className="font-semibold text-lg text-gray-800">Community Member Details</span>
+                            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Community Member Details</h3>
                         </div>
+                        <div className="px-6 pb-6">
 
                         <EnhancedTable
                             data={members}
@@ -414,6 +390,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                             selectedItems={selectedMemberIds}
                             getItemId={(item: any) => String(item.id)}
                         />
+                        </div>
                     </div>
                 </>
             )}
