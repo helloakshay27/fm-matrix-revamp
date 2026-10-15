@@ -1992,7 +1992,7 @@ export const PatrollingEditPage: React.FC = () => {
           {shifts.map((s, idx) => (
             <div
               key={s.id}
-              className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4"
+              className="relative rounded-lg border border-dashed border-gray-300 bg-white p-4"
             >
               {idx > 0 && (
                 <button
@@ -2109,7 +2109,7 @@ export const PatrollingEditPage: React.FC = () => {
           {checkpoints.map((c, idx) => (
             <div
               key={c.id}
-              className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4"
+              className="relative rounded-lg border border-dashed border-gray-300 bg-white p-4"
             >
               {idx > 0 && (
                 <button

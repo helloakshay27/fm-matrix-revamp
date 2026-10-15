@@ -10,7 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Check, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
+import { ArrowLeft, Check, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
+import { AttachmentDropzone } from '@/components/AttachmentDropzone';
 import { toast } from 'sonner';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 import { FMUser } from '@/store/slices/fmUserSlice';
@@ -884,14 +885,6 @@ export const AddTicketDashboard = () => {
     }
   };
 
-  // Handle file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      setAttachedFiles(prev => [...prev, ...Array.from(files)]);
-    }
-  };
-
   // Remove file from attachments
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
@@ -1284,18 +1277,38 @@ export const AddTicketDashboard = () => {
         </div>
       </div> */}
 
+      <style>{`
+        html body .asset-form-section-title {
+          font-size: 1.25rem !important;
+          font-weight: 600 !important;
+          line-height: 1.3 !important;
+          letter-spacing: 0.01em !important;
+          color: #111111 !important;
+        }
+        html body .asset-form-section-title > span:first-child {
+          width: 2.1rem !important;
+          height: 2.1rem !important;
+          min-width: 2.1rem !important;
+          border-radius: 9999px !important;
+          background: #E5E0D3 !important;
+          color: #111111 !important;
+        }
+        html body .asset-form-section-title > span:first-child svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+      `}</style>
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="ticket-create-form space-y-6">
         {/* Section 1: Requestor Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <User size={16} color="#C72030" />
-              </span>
-              Requestor Details
-            </h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="asset-form-section-title flex items-center gap-2 text-[#DA7756] font-semibold mb-6">
+            <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+            </span>
+            REQUESTOR DETAILS
           </div>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6">
             {/* Create Ticket On Behalf Of with Name and Department in same row */}
             <div className="grid grid-cols-3 gap-6">
               <FormControl
@@ -1373,19 +1386,19 @@ export const AddTicketDashboard = () => {
               </FormControl>
             )}
           </div>
+          </div>
         </div>
 
         {/* Section 2: Tickets Type */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Ticket size={16} color="#C72030" />
-              </span>
-              Tickets Type 
-            </h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="asset-form-section-title flex items-center gap-2 text-[#DA7756] font-semibold mb-6">
+            <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <Ticket className="w-3 h-3 sm:w-4 sm:h-4" />
+            </span>
+            TICKETS TYPE 
           </div>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6">
             {/* Radio buttons for ticket type and flags */}
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
@@ -1695,19 +1708,19 @@ export const AddTicketDashboard = () => {
               />
             </div>
           </div>
+          </div>
         </div>
 
         {/* Section 3: Location Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <MapPin size={16} color="#C72030" />
-              </span>
-              Location Details
-            </h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="asset-form-section-title flex items-center gap-2 text-[#DA7756] font-semibold mb-6">
+            <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+            </span>
+            LOCATION DETAILS
           </div>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Building */}
               <FormControl
@@ -1839,39 +1852,24 @@ export const AddTicketDashboard = () => {
               </FormControl>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Section 4: Add Attachments */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030" />
-                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3" />
-                </svg>
-              </span>
-              Add Attachments
-            </h2>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 bg-white">
+          <div className="asset-form-section-title flex items-center gap-2 text-[#DA7756] font-semibold mb-6">
+            <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+            </span>
+            ADD ATTACHMENTS
           </div>
-          <div className="p-6">
+          <div className="">
             <div className="space-y-4">
-              <input
-                type="file"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
+              <AttachmentDropzone
+                onFilesAdded={(files) => setAttachedFiles(prev => [...prev, ...files])}
+                fileCount={attachedFiles.length}
               />
-              <Button
-                type="button"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                variant="outline"
-                className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Files
-              </Button>
 
               {/* Display attached files */}
               {attachedFiles.length > 0 && (
@@ -1895,6 +1893,7 @@ export const AddTicketDashboard = () => {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </div>
 

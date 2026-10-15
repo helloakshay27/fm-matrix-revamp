@@ -204,9 +204,14 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const validTo = data?.pass_end_date ?? "-";
   const daysPermitted = data?.pass_details ?? "-";
   const locationTo = data?.visit_to ?? "-";
+  // Force black QR on white background when the API returns a qrserver URL
+  const normalizeQrColors = (url?: string | null) =>
+    url && url.includes("api.qrserver.com")
+      ? url.replace(/([?&])color=[^&]*/i, "$1color=000000").replace(/([?&])bgcolor=[^&]*/i, "$1bgcolor=ffffff")
+      : url;
   const qrCodeUrl =
-    data?.qr_code_url ??
-    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=ffffff&bgcolor=C72030`;
+    normalizeQrColors(data?.qr_code_url) ??
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=000000&bgcolor=ffffff`;
 
   // Prefer consent HTML from API; no local fallback
   const apiConsentHtml = data?.visitor_consent_form?.description ?? null;
@@ -227,7 +232,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
       <div className="w-full max-w-xs sm:max-w-sm">
         {/* Ticket header */}
         <div className="relative overflow-hidden rounded-t-md">
-          <div className="bg-[#C72030] text-white px-5 py-4 rounded-t-md relative overflow-hidden">
+          <div className="bg-white text-black border border-b-0 border-gray-200 px-5 py-4 rounded-t-md relative overflow-hidden">
             <div className="flex items-start justify-between">
               <div className="flex-1 flex flex-col items-start gap-2 min-w-0">
                 {/* small brand/logo on the top-left */}
@@ -254,7 +259,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
               </div>
 
               <div className="ml-3 flex-shrink-0">
-                <div className="w-28 h-28 bg-transparent rounded-sm flex items-center justify-center overflow-hidden">
+                <div className="w-28 h-28 bg-white rounded-sm flex items-center justify-center overflow-hidden">
                   {/* QR image from API (falls back to generated if missing) */}
                   <img
                     src={qrCodeUrl}
@@ -277,7 +282,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
         </div>
 
         {/* Details card */}
-        <div className="bg-[#F6F4EE] border border-gray-200 rounded-b-md py-2 px-3">
+        <div className="bg-white border border-gray-200 rounded-b-md py-2 px-3">
           <div className="flex items-center gap-2">
             <div className="w-16 h-16 rounded-full bg-[#f1f3f4] flex items-center justify-center p-1 overflow-hidden">
               {data?.image ? (
