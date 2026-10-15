@@ -77,6 +77,10 @@ const dualMetrics = [
   },
 ];
 
+// Local-time YYYY-MM-DD (toISOString would shift the date back a day in timezones ahead of UTC)
+const formatLocalDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const fmt = (val: number | undefined | null) => (val ?? 0).toLocaleString();
 
 const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
@@ -88,33 +92,44 @@ const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
-      const fromDate = startDate || "2020-01-01";
-      const toDate = endDate || new Date().toISOString().split("T")[0];
+  const fetchData = useCallback(
+    async (signal?: AbortSignal) => {
+      // siteIds is passed (even as "") by the dashboard; "" means the site list is still loading.
+      const siteId = siteIds ?? localStorage.getItem("selectedSiteId") ?? "";
+      if (siteIds !== undefined && !siteId) return;
 
-      const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
-      if (siteId) params.set("site_id", siteId);
+      setLoading(true);
+      setError(null);
+      try {
+        const fromDate = startDate || "2020-01-01";
+        const toDate = endDate || formatLocalDate(new Date());
 
-      const url = `${getFullUrl("/parking_dashboard/parking_statistics")}?${params.toString()}`;
-      const response = await fetch(url, getAuthenticatedFetchOptions());
+        const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
+        if (siteId) params.set("site_id", siteId);
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const url = `${getFullUrl("/parking_dashboard/parking_statistics")}?${params.toString()}`;
+        const response = await fetch(url, { ...getAuthenticatedFetchOptions(), signal });
 
-      const data: ApiResponse = await response.json();
-      setApiData(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }, [startDate, endDate, siteIds]);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data: ApiResponse = await response.json();
+        if (!data.success) throw new Error("Failed to load parking statistics");
+        setApiData(data);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Failed to load data");
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [startDate, endDate, siteIds]
+  );
 
   useEffect(() => {
-    fetchData();
+    // Abort the in-flight request when filters change so a stale response can't overwrite a newer one.
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
   }, [fetchData]);
 
   const stats = {
@@ -144,7 +159,7 @@ const ExecutiveParkingStatsCard: React.FC<ExecutiveParkingStatsCardProps> = ({
         </h3>
         <RefreshCw
           className={`w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors ${loading ? "animate-spin" : ""}`}
-          onClick={fetchData}
+          onClick={() => fetchData()}
         />
       </div>
 

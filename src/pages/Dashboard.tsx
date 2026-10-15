@@ -269,6 +269,9 @@ const SELF_FETCH_ENDPOINTS = new Set<string>([
   "body_injury_chart",
   "safety_metrics",
   "escalation_kpis",
+  "parking_statistics",
+  "top_management_total_amount",
+  "total_outstanding_amount_client_wise",
 ]);
 
 const buildAssetStatusChartData = (data: any) => {
@@ -3939,8 +3942,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3949,8 +3952,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountClientWiseCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3964,8 +3967,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3974,8 +3977,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3984,8 +3987,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseGoodsInwardCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3994,8 +3997,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <DeliveryVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4004,8 +4007,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateGoodsStaffCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4019,8 +4022,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <OccupancySummaryCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4034,8 +4037,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4947,8 +4950,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <PowerConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4957,8 +4960,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <WaterConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
