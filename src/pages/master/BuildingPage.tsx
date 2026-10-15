@@ -409,7 +409,7 @@ export function BuildingPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                  className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                  size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -419,7 +419,7 @@ export function BuildingPage() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                      className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-light [&_svg]:text-brand"
+                      size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Buildings
@@ -446,24 +446,26 @@ export function BuildingPage() {
                       onRemove={() => setImportFile(null)}
                       disabled={isImporting}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
+                    <div className="fm-action-bar">
+                      <button
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
                         }}
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImportBuildings}
                         disabled={!importFile || isImporting}
-                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
+                        className="fm-action-primary"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
@@ -472,7 +474,7 @@ export function BuildingPage() {
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>
                 {shouldShow("Building", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
+                    <Button size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium whitespace-nowrap">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Building
                     </Button>
@@ -648,16 +650,16 @@ export function BuildingPage() {
                         />
                       </div>
 
-                      <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={resetCreateForm}>
+                      <div className="fm-action-bar">
+                        <button type="button" className="fm-action-secondary" onClick={resetCreateForm}>
                           Cancel
-                        </Button>
-                        <Button type="submit" disabled={createForm.formState.isSubmitting} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white">
+                        </button>
+                        <button type="submit" disabled={createForm.formState.isSubmitting} className="fm-action-primary">
                           {createForm.formState.isSubmitting && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
                           Create Building
-                        </Button>
+                        </button>
                       </div>
                     </form>
                   </Form>
@@ -886,16 +888,16 @@ export function BuildingPage() {
                     )}
                   />
 
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={resetEditForm}>
+                  <div className="fm-action-bar">
+                    <button type="button" className="fm-action-secondary" onClick={resetEditForm}>
                       Cancel
-                    </Button>
-                    <Button type="submit" disabled={editForm.formState.isSubmitting} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white">
+                    </button>
+                    <button type="submit" disabled={editForm.formState.isSubmitting} className="fm-action-primary">
                       {editForm.formState.isSubmitting && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
                       Update Building
-                    </Button>
+                    </button>
                   </div>
                 </form>
               </Form>
@@ -928,7 +930,6 @@ export function BuildingPage() {
                         document.body.removeChild(link);
                         toast('QR Code downloaded successfully');
                       }}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download QR Code

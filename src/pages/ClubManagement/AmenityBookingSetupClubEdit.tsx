@@ -1600,7 +1600,7 @@ export const EditBookingSetupClubPage = () => {
                         <div>
                             <Button
                                 onClick={addSlot}
-                                className="bg-purple-600 hover:bg-purple-700 mb-4"
+                                className="mb-4"
                             >
                                 Add
                             </Button>
@@ -2067,7 +2067,6 @@ export const EditBookingSetupClubPage = () => {
                             </div>
                             <Button
                                 onClick={addBlockDay}
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
                                 size="sm"
                             >
                                 Add
@@ -2475,7 +2474,6 @@ export const EditBookingSetupClubPage = () => {
                             </div>
                             <Button
                                 onClick={handleGalleryModalOpen}
-                                className="bg-[#C72030] hover:bg-[#A01828] text-white"
                             >
                                 + Add
                             </Button>
@@ -2927,17 +2925,17 @@ export const EditBookingSetupClubPage = () => {
                         </div>
                     </div>
 
-                    <div className="flex gap-4 pt-6 border-t justify-center">
-                        <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6 border-t">
+                        <button onClick={handleClose} className="fm-action-secondary">
+                            Cancel
+                        </button>
+                        <button
                             onClick={handleSave}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            className="fm-action-primary"
                             disabled={isSubmitting}
                         >
                             Update
-                        </Button>
-                        <Button variant="outline" onClick={handleClose}>
-                            Cancel
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>

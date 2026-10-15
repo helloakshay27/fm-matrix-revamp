@@ -476,7 +476,6 @@ export const ClubEditOccupantUserPage: React.FC = () => {
                             <Button
                                 type='button'
                                 variant="outline"
-                                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
                                 onClick={() => setShowAdditional((s) => !s)}
                             >
                                 {showAdditional ? '− Additional Info' : '+ Additional Info'}
@@ -524,22 +523,22 @@ export const ClubEditOccupantUserPage: React.FC = () => {
             </Card>
 
             {/* Actions */}
-            <div className="flex justify-center gap-4 pt-2">
-                <Button
-                    onClick={handleSubmit}
-                    style={{ backgroundColor: '#C72030' }}
-                    className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium rounded-lg"
-                    disabled={loading}
-                >
-                    Update
-                </Button>
-                <Button
-                    variant="outline"
+            <div className="fm-action-bar pt-4 sm:pt-6">
+                <button
+                    type="button"
                     onClick={handleCancel}
-                    className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-8 py-3 text-base font-medium rounded-lg"
+                    className="fm-action-secondary"
                 >
                     Cancel
-                </Button>
+                </button>
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="fm-action-primary"
+                >
+                    Update
+                </button>
             </div>
         </div>
     );

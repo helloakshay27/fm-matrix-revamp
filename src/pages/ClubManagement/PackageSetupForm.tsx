@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { ArrowLeft, Package as PackageIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -461,22 +460,23 @@ export const PackageSetupForm = ({
         </div>
       </Section>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="fm-button-fix fm-button-brand px-8 py-2"
-        >
-          {isSubmitting ? submittingLabel : submitLabel}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </button>
       </div>
     </div>
   );

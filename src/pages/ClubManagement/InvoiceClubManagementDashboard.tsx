@@ -621,8 +621,8 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                 leftActions={(
                     <div className="flex items-center gap-2">
                         <Button
-                            // className='bg-primary text-primary-foreground hover:bg-primary/90'
-                            className='fm-button-fix fm-button-brand px-4 py-2'
+                            size="sm"
+                            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                             onClick={() => navigate('/club-management/invoice/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
@@ -639,14 +639,18 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                         {selectedRows.length > 0 && (
                             hasInvoiceApproval ? (
                                 <Button
-                                    className="bg-brand hover:bg-brand-hover text-white"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-9 px-4 text-sm font-medium"
                                     onClick={handleSubmitForApproval}
                                 >
                                     Submit for Approval
                                 </Button>
                             ) : (
                                 <Button
-                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-9 px-4 text-sm font-medium"
                                     onClick={handleMarkAsSent}
                                 >
                                     Mark as Sent
@@ -700,13 +704,14 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="px-5 py-3 border-t flex justify-end">
-                            <Button
-                                className="bg-brand hover:bg-brand-hover text-white px-6"
+                        <div className="px-5 py-3 border-t fm-action-bar">
+                            <button
+                                type="button"
+                                className="fm-action-primary"
                                 onClick={() => setErrorModal({ show: false, errors: [] })}
                             >
                                 OK
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -725,7 +730,7 @@ export const InvoiceClubManagementDashboard: React.FC = () => {
                             Are you sure you want to delete this invoice? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="fm-action-bar">
                         <AlertDialogCancel disabled={deleteLoading}>
                             Cancel
                         </AlertDialogCancel>

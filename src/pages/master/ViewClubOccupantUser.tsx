@@ -309,7 +309,6 @@ export const ViewClubOccupantUser = () => {
                             ) : (
                                 navigate(`/master/user/occupant-users/edit/${id}`)
                             )}
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
                         >
                             <Edit2 className="w-4 h-4 mr-2" />
                             Edit

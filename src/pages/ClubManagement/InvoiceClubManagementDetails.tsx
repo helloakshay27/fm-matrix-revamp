@@ -363,12 +363,12 @@ export const InvoiceClubManagementDetails = () => {
                             </Badge>
                         )}
                         {invoiceData.status && String(invoiceData.status).toLowerCase() !== "paid" && (
-                            <Button size="sm" variant="outline" onClick={() => setOpenPaymentModal(true)} className="gap-2">
+                            <Button variant="outline" onClick={() => setOpenPaymentModal(true)} className="gap-2">
                                 <CreditCard className="h-4 w-4" />
                                 Payment
                             </Button>
                         )}
-                        <Button size="sm" onClick={handleDownloadPdf} className="gap-2 fm-button-fix fm-button-brand">
+                        <Button onClick={handleDownloadPdf} className="gap-2">
                             <Download className="h-4 w-4" />
                             Download Invoice
                         </Button>
@@ -793,10 +793,10 @@ export const InvoiceClubManagementDetails = () => {
                             />
                         </div>
                     </div>
-                    <div className="mt-4 pt-2 flex justify-center gap-3">
-                        <Button onClick={handlePayment} disabled={paymentLoading} className="w-full fm-button-fix fm-button-brand">
+                    <div className="fm-action-bar mt-4 pt-2">
+                        <button type="button" onClick={handlePayment} disabled={paymentLoading} className="fm-action-primary">
                             {paymentLoading ? "Processing..." : "Submit Payment"}
-                        </Button>
+                        </button>
                     </div>
                 </MuiDialogContent>
             </MuiDialog>
@@ -810,10 +810,10 @@ export const InvoiceClubManagementDetails = () => {
                             Are you sure you want to delete this invoice? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex gap-3 justify-end mt-4">
-                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                    <div className="fm-action-bar mt-4">
+                        <button type="button" onClick={() => setShowDeleteDialog(false)} className="fm-action-secondary">
                             Cancel
-                        </Button>
+                        </button>
                         <Button
                             className="btn-delete-confirm"
                             onClick={handleDelete}

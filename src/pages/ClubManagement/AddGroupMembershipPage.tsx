@@ -1831,7 +1831,6 @@ export const AddGroupMembershipPage = () => {
                                         <Button
                                             onClick={handleAddMember}
                                             size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
                                             disabled={members.length >= userLimit}
                                         >
                                             <span className="mr-1">+</span> Add Member ({members.length}/{userLimit})
@@ -2260,7 +2259,6 @@ export const AddGroupMembershipPage = () => {
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => copyAddressFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                                     >
                                                         <Copy className="w-4 h-4 mr-1" /> Copy from Member {memberIndex}
                                                     </Button>
@@ -2869,12 +2867,12 @@ export const AddGroupMembershipPage = () => {
                                 ))}
 
                                 {/* Submit Buttons */}
-                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
-                                    <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
-                                    <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
-                                    <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                                <div className="fm-action-bar pt-4 sm:pt-6 border-t border-gray-200">
+                                    <button onClick={handleBackToStep1} className="fm-action-secondary">Back</button>
+                                    <button onClick={handleGoBack} disabled={isSubmitting} className="fm-action-secondary">Cancel</button>
+                                    <button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="fm-action-primary">
                                         {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                                    </Button>
+                                    </button>
                                 </div>
                             </>
                         )}
@@ -3233,19 +3231,19 @@ export const AddGroupMembershipPage = () => {
                                     </div>
                                 )}
                                 {/* Submit Button */}
-                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
-                                    <Button
-                                        variant="outline"
+                                <div className="fm-action-bar pt-4 sm:pt-6 border-t border-gray-200">
+                                    <button
                                         onClick={handleGoBack}
+                                        className="fm-action-secondary"
                                     >
                                         Cancel
-                                    </Button>
-                                    <Button
+                                    </button>
+                                    <button
                                         onClick={handleNext}
-                                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                        className="fm-action-primary"
                                     >
                                         Next
-                                    </Button>
+                                    </button>
                                 </div>
                             </>
                         )}

@@ -246,7 +246,7 @@ export const DebitNoteClubDetails = () => {
             </Button>
           </div> */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" onClick={handleDownloadPdf} className="gap-2 fm-button-fix fm-button-brand">
+            <Button onClick={handleDownloadPdf} className="gap-2">
               <Download className="h-4 w-4" />
               Download Debit Note
             </Button>
@@ -462,10 +462,10 @@ export const DebitNoteClubDetails = () => {
               Are you sure you want to delete this debit note? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-3 justify-end mt-4">
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading}>
+          <div className="fm-action-bar mt-4">
+            <button type="button" onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading} className="fm-action-secondary">
               Cancel
-            </Button>
+            </button>
             <Button className="btn-delete-confirm" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? "Deleting..." : "Delete"}
             </Button>

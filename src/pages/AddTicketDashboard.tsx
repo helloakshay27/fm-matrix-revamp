@@ -1898,23 +1898,21 @@ export const AddTicketDashboard = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-end pt-6">
-          <Button
-            type="submit"
-            variant="ghost"
-            disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand px-8 py-2"
-          >
-            {isSubmitting ? 'Creating...' : 'Create Tickets'}
-          </Button>
-          <Button
+        <div className="fm-action-bar pt-4 sm:pt-6">
+          <button
             type="button"
-            variant="outline"
             onClick={handleCancel}
-            className="fm-button-fix border-brand text-brand hover:bg-brand-selected px-8 py-2"
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="fm-action-primary"
+          >
+            {isSubmitting ? 'Creating...' : 'Create Tickets'}
+          </button>
         </div>
       </form>
     </div>

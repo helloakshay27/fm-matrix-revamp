@@ -548,7 +548,6 @@ export const AmenityBookingDetailsClubPage = () => {
             </div>
             <Button
               onClick={handleDownloadInvoice}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               <Download className="w-4 h-4 mr-2" />
               Download Invoice
@@ -858,7 +857,6 @@ export const AmenityBookingDetailsClubPage = () => {
             bookings?.current_status === 'Confirmed' && (
               <Button
                 variant="outline"
-                className="border-[#C72030] text-[#C72030] hover:bg-red-50"
                 onClick={handleSendInvoice}
                 disabled={sendingInvoice}
               >
@@ -869,8 +867,6 @@ export const AmenityBookingDetailsClubPage = () => {
           {/* {
             bookings?.current_status === 'Pending' && ( */}
           <Button
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-red-50"
             onClick={() => navigate(`/club-management/amenities-booking-club/${id}/edit`)}
           >
             <Edit className="w-4 h-4 mr-1" />
@@ -889,7 +885,6 @@ export const AmenityBookingDetailsClubPage = () => {
           {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
             <Button
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-red-50"
               onClick={() => setShowCancelModal(true)}
             >
               Cancel Booking
@@ -1078,10 +1073,10 @@ export const AmenityBookingDetailsClubPage = () => {
                 )}
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+            <DialogFooter className="fm-action-bar">
+              <button type="button" onClick={handlePayment} disabled={paymentLoading} className="fm-action-primary">
                 {paymentLoading ? 'Processing...' : 'Submit Payment'}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1106,10 +1101,10 @@ export const AmenityBookingDetailsClubPage = () => {
                 </div>
               )}
             </div>
-            <DialogFooter className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+            <DialogFooter className="fm-action-bar">
+              <button type="button" onClick={() => setShowCancelModal(false)} className="fm-action-secondary">
                 Go Back
-              </Button>
+              </button>
               <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
                 Cancel Booking
               </Button>

@@ -1604,14 +1604,14 @@ export const AmenityBookingEditPage = () => {
             </div>
           )}
 
-          <div className="flex justify-center">
-            <Button
+          <div className="fm-action-bar pt-4 sm:pt-6">
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="fm-action-primary"
             >
               {isSubmitting ? 'Saving...' : 'Update'}
-            </Button>
+            </button>
           </div>
 
           <div className="space-y-2 text-sm">
@@ -1651,7 +1651,6 @@ export const AmenityBookingEditPage = () => {
             <DialogActions>
               <Button
                 onClick={() => setOpenCancelPolicy(false)}
-                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
               >
                 Close
               </Button>
@@ -1676,7 +1675,6 @@ export const AmenityBookingEditPage = () => {
             <DialogActions>
               <Button
                 onClick={() => setOpenTerms(false)}
-                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
               >
                 Close
               </Button>

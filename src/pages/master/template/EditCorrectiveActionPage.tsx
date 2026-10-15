@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import { TextField } from '@mui/material';
 import { toast } from 'sonner';
 import { communicationTemplateService } from '@/services/communicationTemplateService';
@@ -134,18 +133,17 @@ const EditCorrectiveActionPage = () => {
                 )}
               />
             </div>
-            <div className="flex justify-center space-x-4 pt-4">
-              <Button type="submit" className="w-32">
-                Save
-              </Button>
-              <Button
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
                 type="button"
-                variant="outline"
-                className="w-32"
                 onClick={() => navigate(-1)}
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
+              </button>
+              <button type="submit" className="fm-action-primary">
+                Save
+              </button>
             </div>
           </form>
         </div>

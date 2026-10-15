@@ -127,18 +127,17 @@ const AddCommunicationTemplatePage = () => {
                 )}
               />
             </div>
-            <div className="flex justify-center space-x-4 pt-4">
-              <Button type="submit" className="w-32">
-                Save
-              </Button>
-              <Button
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
                 type="button"
-                variant="outline"
-                className="w-32"
+                className="fm-action-secondary"
                 onClick={() => navigate(-1)}
               >
                 Cancel
-              </Button>
+              </button>
+              <button type="submit" className="fm-action-primary">
+                Save
+              </button>
             </div>
           </form>
         </div>

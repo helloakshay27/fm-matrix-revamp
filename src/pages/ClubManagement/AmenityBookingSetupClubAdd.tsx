@@ -1387,7 +1387,7 @@ export const AddBookingSetupClubPage = () => {
             <div>
               <Button
                 onClick={addSlot}
-                className="bg-purple-600 hover:bg-purple-700 mb-4"
+                className="mb-4"
               >
                 Add
               </Button>
@@ -2148,7 +2148,6 @@ export const AddBookingSetupClubPage = () => {
               </div>
               <Button
                 onClick={handleGalleryModalOpen}
-                className="bg-[#C72030] hover:bg-[#A01828] text-white"
               >
                 + Add
               </Button>
@@ -2603,18 +2602,17 @@ export const AddBookingSetupClubPage = () => {
             </div>
           </div>
 
-          <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="fm-action-bar pt-4 sm:pt-6">
+            <button onClick={handleClose} className="fm-action-secondary">
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handleSave}
-              className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+              className="fm-action-primary"
               disabled={isSubmitting}
-              style={{ maxWidth: '90px' }}
             >
               Save
-            </Button>
+            </button>
           </div>
         </div>
       </div>

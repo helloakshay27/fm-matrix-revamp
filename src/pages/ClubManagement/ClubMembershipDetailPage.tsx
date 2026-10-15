@@ -532,8 +532,6 @@ export const ClubMembershipDetailPage = () => {
             </Select>
             <Button
               onClick={handleEdit}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit

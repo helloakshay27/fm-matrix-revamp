@@ -621,7 +621,7 @@ export const TrainerSetupForm = ({
             <Button
               type="button"
               onClick={addAvailabilitySlot}
-              className="bg-purple-600 hover:bg-purple-700 mb-4"
+              className="mb-4"
             >
               Add
             </Button>
@@ -1009,22 +1009,23 @@ export const TrainerSetupForm = ({
         </Section>
       </div>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="fm-button-fix fm-button-brand px-8 py-2"
-        >
-          {isSubmitting ? submittingLabel : submitLabel}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </button>
       </div>
     </div>
   );

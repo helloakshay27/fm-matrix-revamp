@@ -448,14 +448,12 @@ const Communtiy = () => {
                                     navigate('/pulse/notices/add');
                                 }
                             }}
-                            className="border-gray-300"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleContinue}
                             disabled={selectedRows.length === 0}
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white disabled:opacity-50"
                         >
                             Continue
                         </Button>

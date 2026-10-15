@@ -499,13 +499,13 @@ export const ClassSetupDetails = () => {
               ))}
             </MuiSelect>
           </FormControl>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setAddTrainerOpen(false)}>
+          <div className="fm-action-bar mt-4">
+            <button type="button" onClick={() => setAddTrainerOpen(false)} className="fm-action-secondary">
               Cancel
-            </Button>
-            <Button className="fm-button-fix fm-button-brand" onClick={handleAddTrainer}>
+            </button>
+            <button type="button" className="fm-action-primary" onClick={handleAddTrainer}>
               Add
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

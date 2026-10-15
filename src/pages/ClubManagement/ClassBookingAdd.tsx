@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, CalendarClock } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -375,18 +374,18 @@ export const ClassBookingAdd = () => {
         </div>
       </Section>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-8 py-2">
-          {isSubmitting ? "Creating..." : "Create Booking"}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={() => navigate("/club-management/class-booking")}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="fm-action-primary">
+          {isSubmitting ? "Creating..." : "Create Booking"}
+        </button>
       </div>
     </div>
   );

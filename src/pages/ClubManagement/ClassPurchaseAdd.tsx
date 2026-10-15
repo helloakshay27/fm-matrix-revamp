@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -367,18 +366,18 @@ export const ClassPurchaseAdd = () => {
         )}
       </Section>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button onClick={() => submit()} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-8 py-2">
-          {isSubmitting ? "Saving..." : "Create Purchase"}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={() => navigate("/club-management/class-purchase")}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button type="button" onClick={() => submit()} disabled={isSubmitting} className="fm-action-primary">
+          {isSubmitting ? "Saving..." : "Create Purchase"}
+        </button>
       </div>
     </div>
   );

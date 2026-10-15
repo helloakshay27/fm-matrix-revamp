@@ -2616,23 +2616,23 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 </Section> */}
             </div>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
-
-                <Button
-                    onClick={() => handleSubmit()}
-                    disabled={isSubmitting}
-                    className="fm-button-fix fm-button-brand px-8 py-2"
-                >
-                    {isSubmitting ? 'Updating...' : 'Update'}
-                </Button>
-                <Button
+            <div className="fm-action-bar pt-4 sm:pt-6">
+                <button
+                    type="button"
                     onClick={() => navigate('/club-management/debit-note')}
                     disabled={isSubmitting}
-                    variant="outline"
-                    className="fm-button-fix px-8 py-2"
+                    className="fm-action-secondary"
                 >
                     Cancel
-                </Button>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => handleSubmit()}
+                    disabled={isSubmitting}
+                    className="fm-action-primary"
+                >
+                    {isSubmitting ? 'Updating...' : 'Update'}
+                </button>
             </div>
 
             {/* Customer Details Drawer */}
@@ -2722,12 +2722,12 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                     Contact Persons
                                 </Typography>
                                 <Button
-                                    size="small"
-                                    startIcon={<Add />}
+                                    type="button"
+                                    size="sm"
                                     onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
+                                    variant="outline"
                                 >
+                                    <Add fontSize="small" />
                                     Add
                                 </Button>
                             </div>
@@ -2792,9 +2792,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                <DialogActions className="fm-action-bar">
+                    <button type="button" onClick={() => setAddUserDialogOpen(false)} className="fm-action-secondary">Cancel</button>
+                    <button type="button" onClick={handleAddExternalUser} className="fm-action-primary">Add</button>
                 </DialogActions>
             </Dialog>
 
@@ -2843,7 +2843,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                     <button type="button" className="text-[#DA7756] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
-                    <button type="button" onClick={() => setAddressListModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Close</button>
+                    <button type="button" onClick={() => setAddressListModalOpen(false)} className="fm-action-secondary">Close</button>
                 </DialogActions>
             </Dialog>
 
@@ -2922,15 +2922,15 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-center !px-6 !py-3">
-                    <button type="button" onClick={handleSaveAddressForm} className="fm-button-fix fm-button-brand px-8 py-2">Save</button>
+                <DialogActions className="fm-action-bar !px-6 !py-3">
                     <button
                         type="button"
                         onClick={() => setAddressFormModalOpen(false)}
-                        className="fm-button-fix px-8 py-2 border border-[#DA7756] text-[#DA7756] bg-transparent hover:border-[#C45F40] hover:bg-[#F2EEE9] hover:text-[#C45F40]"
+                        className="fm-action-secondary"
                     >
                         Cancel
                     </button>
+                    <button type="button" onClick={handleSaveAddressForm} className="fm-action-primary">Save</button>
                 </DialogActions>
             </Dialog>
 
@@ -2941,8 +2941,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         {gstTreatmentOptions.map((opt) => (<MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>))}
                     </TextField>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !pb-4">
-                    <button type="button" onClick={handleUpdateGstConfig} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Update</button>
+                <DialogActions className="fm-action-bar !px-6 !pb-4">
+                    <button type="button" onClick={handleUpdateGstConfig} className="fm-action-primary">Update</button>
                 </DialogActions>
             </Dialog>
 
@@ -2953,9 +2953,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 </DialogTitle>
                 <DialogContent className="!pt-4">
                     <div className="space-y-4">
-                        <button type="button" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">
+                        <Button type="button" variant="outline" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}>
                             Add New Tax Information
-                        </button>
+                        </Button>
                         {showNewGstForm && (
                             <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
@@ -2977,9 +2977,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                 </TextField>
                                 <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_legal_name: e.target.value }))} size="small" />
                                 <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_trade_name: e.target.value }))} size="small" />
-                                <div className="md:col-span-3 flex items-center gap-2">
-                                    <button type="button" onClick={handleSaveAndSelectGst} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
-                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
+                                <div className="md:col-span-3 fm-action-bar">
+                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="fm-action-secondary">Cancel</button>
+                                    <button type="button" onClick={handleSaveAndSelectGst} className="fm-action-primary">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
                                 </div>
                             </div>
                         )}
@@ -3008,8 +3008,8 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         </div>
                     </div>
                 </DialogContent>
-                <DialogActions className="!px-5 !pb-4">
-                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Close</button>
+                <DialogActions className="fm-action-bar !px-5 !pb-4">
+                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="fm-action-secondary">Close</button>
                 </DialogActions>
             </Dialog>
 
@@ -3114,9 +3114,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         </div>
                     </div>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
+                <DialogActions className="fm-action-bar">
+                    <button type="button" onClick={() => setContactPersonDialogOpen(false)} className="fm-action-secondary">Cancel</button>
+                    <button type="button" onClick={handleAddContactPerson} className="fm-action-primary">Save</button>
                 </DialogActions>
             </Dialog>
 
@@ -3147,15 +3147,17 @@ export const DebitNoteClubEditPage: React.FC = () => {
 
                 </DialogContent>
 
-                <DialogActions>
+                <DialogActions className="fm-action-bar">
                     <button
-                        className="bg-gray-200 px-4 py-2 rounded"
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => setExemptionModalOpen(false)}
                     >
                         Cancel
                     </button>
                     <button
-                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
+                        type="button"
+                        className="fm-action-primary"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);

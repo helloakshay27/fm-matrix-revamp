@@ -288,10 +288,11 @@ const AmenityBookingClubCalenderView = () => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <Button
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px]"
+                        size="sm"
+                        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                         onClick={handleAddBooking}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
 

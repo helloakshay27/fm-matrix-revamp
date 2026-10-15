@@ -305,7 +305,6 @@ export const ClassPurchaseDetails = () => {
             <Button
               onClick={handleStatusChange}
               disabled={actionBusy || nextStatus === purchase.status}
-              className="fm-button-fix fm-button-brand"
             >
               Update Status
             </Button>
@@ -315,7 +314,7 @@ export const ClassPurchaseDetails = () => {
 
       <div className="flex items-center gap-2 flex-wrap justify-center pt-2">
         {purchase.paymentStatus === "pending" && (
-          <Button onClick={handlePay} disabled={actionBusy} className="fm-button-fix fm-button-brand gap-2">
+          <Button onClick={handlePay} disabled={actionBusy} className="gap-2">
             <CheckCircle2 className="w-4 h-4" /> Mark as Paid
           </Button>
         )}
@@ -327,7 +326,7 @@ export const ClassPurchaseDetails = () => {
             variant="outline"
             onClick={() => setShowCancel(true)}
             disabled={actionBusy}
-            className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
+            className="gap-2"
           >
             <Ban className="w-4 h-4" /> Cancel Purchase
           </Button>
@@ -371,13 +370,13 @@ export const ClassPurchaseDetails = () => {
               <div className="mt-1 text-right text-xs text-gray-400">{extendReason.length}/500</div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExtend(false)}>
+          <DialogFooter className="fm-action-bar">
+            <button type="button" onClick={() => setShowExtend(false)} className="fm-action-secondary">
               Cancel
-            </Button>
-            <Button onClick={handleExtend} disabled={actionBusy} className="fm-button-fix fm-button-brand">
+            </button>
+            <button type="button" onClick={handleExtend} disabled={actionBusy} className="fm-action-primary">
               Extend
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -390,7 +389,7 @@ export const ClassPurchaseDetails = () => {
               Cancel this purchase? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="fm-action-bar">
             <AlertDialogCancel disabled={actionBusy}>No</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {

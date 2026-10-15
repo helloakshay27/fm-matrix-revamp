@@ -314,7 +314,6 @@ export const ViewGuestUserPage = () => {
                     <div className="flex items-center gap-3">
                         <Button
                             onClick={() => navigate(`/club-management/users/guest/edit/${id}`)}
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
                         >
                             <Edit2 className="w-4 h-4 mr-2" />
                             Edit

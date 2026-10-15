@@ -1877,14 +1877,14 @@ export const AddFacilityBookingClubPage = () => {
             )}
 
             {/* Submit Button */}
-            <div className="flex justify-center">
-              <Button
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-action-primary"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit'}
-              </Button>
+              </button>
             </div>
 
             {/* Footer Links with Dialogs */}
@@ -1932,7 +1932,6 @@ export const AddFacilityBookingClubPage = () => {
               <DialogActions>
                 <Button
                   onClick={() => setOpenCancelPolicy(false)}
-                  className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                 >
                   Close
                 </Button>
@@ -1964,7 +1963,6 @@ export const AddFacilityBookingClubPage = () => {
               <DialogActions>
                 <Button
                   onClick={() => setOpenTerms(false)}
-                  className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                 >
                   Close
                 </Button>

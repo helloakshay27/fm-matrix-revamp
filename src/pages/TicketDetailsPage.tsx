@@ -4460,14 +4460,12 @@ export const TicketDetailsPage = () => {
               <>
                 <Button
                   onClick={handleJobSheet}
-                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                 >
                   Job Sheet
                 </Button>
                 {isTicketClosed && (
                   <Button
                     onClick={() => setIsFeedbackModalOpen(true)}
-                    className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                   >
                     Add Feedback
                   </Button>
@@ -5727,7 +5725,7 @@ export const TicketDetailsPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                        className="h-8 px-3 text-[12px]"
                         onClick={handleTicketMgmtEdit}
                         disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
                       >
@@ -6371,23 +6369,22 @@ export const TicketDetailsPage = () => {
 
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingTicketMgmt(false)}
                             disabled={submittingTicketMgmt}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingTicketMgmt}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingTicketMgmt ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -6742,15 +6739,12 @@ export const TicketDetailsPage = () => {
                       </div>
 
                       {/* Submit Cost Approval Button */}
-                      <div className="flex justify-center mt-6">
+                      <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
                         <button
                           type="button"
                           onClick={handleSubmitCostApproval}
                           disabled={submittingCostApproval}
-                          className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-[#A01828]'
-                            }`}
+                          className="fm-action-primary"
                         >
                           {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
                         </button>
@@ -6898,7 +6892,7 @@ export const TicketDetailsPage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      className="h-8 px-3 text-[12px]"
                       onClick={handleTicketClosureEdit}
                       disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
@@ -7601,23 +7595,22 @@ export const TicketDetailsPage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingTicketClosure(false)}
                             disabled={submittingTicketClosure}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingTicketClosure}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -7639,7 +7632,7 @@ export const TicketDetailsPage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      className="h-8 px-3 text-[12px]"
                       onClick={handleLocationEdit}
                       disabled={isEditingLocation}
                     >
@@ -7829,23 +7822,22 @@ export const TicketDetailsPage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingLocation(false)}
                             disabled={submittingLocation}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingLocation}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingLocation ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -9235,7 +9227,7 @@ export const TicketDetailsPage = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                    className="h-8 px-3 text-[12px]"
                     onClick={handleTicketMgmtEdit}
                     disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
                   >
@@ -9874,23 +9866,22 @@ export const TicketDetailsPage = () => {
 
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 justify-end mt-6">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingTicketMgmt(false)}
                         disabled={submittingTicketMgmt}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingTicketMgmt}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingTicketMgmt ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -10245,15 +10236,12 @@ export const TicketDetailsPage = () => {
                   </div>
 
                   {/* Submit Cost Approval Button */}
-                  <div className="flex justify-center mt-6">
+                  <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
                     <button
                       type="button"
                       onClick={handleSubmitCostApproval}
                       disabled={submittingCostApproval}
-                      className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-[#A01828]'
-                        }`}
+                      className="fm-action-primary"
                     >
                       {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
                     </button>
@@ -10399,7 +10387,7 @@ export const TicketDetailsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  className="h-8 px-3 text-[12px]"
                   onClick={handleTicketClosureEdit}
                   disabled={isEditingTicketClosure || loadingResponsiblePersons}
                 >
@@ -11101,23 +11089,22 @@ export const TicketDetailsPage = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 justify-end mt-6">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingTicketClosure(false)}
                         disabled={submittingTicketClosure}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingTicketClosure}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -11141,7 +11128,7 @@ export const TicketDetailsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  className="h-8 px-3 text-[12px]"
                   onClick={handleLocationEdit}
                   disabled={isEditingLocation}
                 >
@@ -11330,23 +11317,22 @@ export const TicketDetailsPage = () => {
                       </FormControl>
                     </div>
 
-                    <div className="flex items-center gap-3 justify-end">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingLocation(false)}
                         disabled={submittingLocation}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingLocation}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingLocation ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -11828,17 +11814,14 @@ export const TicketDetailsPage = () => {
 
                 {/* Submit Comment Button (centered) */}
                 <div className="flex justify-center mt-6 pb-6">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleSubmitComment}
                     disabled={submittingComment}
-                    className={`bg-brand text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-[#A01828]'
-                      }`}
+                    className="text-[12px] font-medium px-6 py-2"
                   >
                     {submittingComment ? 'Submitting...' : 'Submit Comment'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -12536,7 +12519,7 @@ export const TicketDetailsPage = () => {
                       {isTicketClosed && (
                         <Button
                           onClick={() => setIsFeedbackModalOpen(true)}
-                          className="mt-3 bg-brand hover:bg-brand-hover text-white"
+                          className="mt-3"
                           size="sm"
                         >
                           Add Feedback
@@ -13005,25 +12988,24 @@ export const TicketDetailsPage = () => {
                 </p>
               </div>
 
-              <div className="flex justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancelCostApproval}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors"
-                >
-                  Yes
-                </button>
+              <div className="fm-action-bar">
                 <button
                   type="button"
                   onClick={() => {
                     setCancelModalOpen(false);
                     setCancelRequestId('');
                   }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
+                  className="fm-action-secondary"
                 >
                   No
                 </button>
-
+                <button
+                  type="button"
+                  onClick={handleCancelCostApproval}
+                  className="inline-flex items-center justify-center h-[42px] px-[22px] rounded-lg bg-red-600 text-white text-[13px] font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Yes
+                </button>
               </div>
             </div>
           </div>
@@ -13099,21 +13081,22 @@ export const TicketDetailsPage = () => {
             />
 
             {/* Actions */}
-            <div className="flex justify-center gap-3">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
-                className="px-6 border-gray-300"
+                className="fm-action-secondary"
               >
                 Skip
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleFeedbackSubmit}
                 disabled={isSubmittingFeedback}
-                className="px-6 bg-brand hover:bg-brand-hover text-white"
+                className="fm-action-primary"
               >
                 {isSubmittingFeedback ? 'Submitting...' : 'Submit Rating'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

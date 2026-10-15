@@ -1290,6 +1290,7 @@ export const TicketDashboard = () => {
     <div className="flex gap-3">
       {shouldShow("Ticket", "create") && (
         <Button
+          size="sm"
           onClick={handleAddButton}
           className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
         >
@@ -1314,15 +1315,17 @@ export const TicketDashboard = () => {
   const renderRightActions = () => (
     <div className="flex gap-2">
       <Button
+        size="sm"
         variant="outline"
-        className="border-brand text-brand hover:bg-brand-selected"
+        className="h-9 px-4 text-sm font-medium"
         onClick={() => setIsFilterOpen(true)}
       >
         <Filter className="w-4 h-4" />
       </Button>
       <Button
+        size="sm"
         variant="outline"
-        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+        className="h-9 px-4 text-sm font-medium"
       >
         <Settings className="w-4 h-4" />
       </Button>
@@ -1622,7 +1625,7 @@ export const TicketDashboard = () => {
 
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
-                className="fm-button-fix fm-button-brand flex items-center gap-2"
+                className="flex items-center gap-2"
               >
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm font-medium">

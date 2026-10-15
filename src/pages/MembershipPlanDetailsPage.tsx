@@ -232,7 +232,6 @@ export const MembershipPlanDetailsPage = () => {
               <Button
                 variant="outline"
                 onClick={handleEditClick}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 Edit
               </Button>

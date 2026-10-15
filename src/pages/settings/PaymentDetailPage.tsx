@@ -370,7 +370,6 @@ export const PaymentDetailPage = () => {
             <Button
               variant="outline"
               onClick={handleDownloadReceipt}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
             >
               <Download className="w-4 h-4 mr-2" />
               Download
@@ -378,7 +377,6 @@ export const PaymentDetailPage = () => {
             <Button
               variant="outline"
               onClick={() => fetchPaymentDetails(id!)}
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh

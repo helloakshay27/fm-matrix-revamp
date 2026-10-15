@@ -790,10 +790,11 @@ const AmenityBookingListClubDashboard = () => {
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button
-              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              size="sm"
+              className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
               onClick={() => setShowActionPanel(true)}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-2" />
               Action
             </Button>
           </div>
@@ -923,21 +924,22 @@ const AmenityBookingListClubDashboard = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <Button
+              <div className="fm-action-bar pt-4">
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="fm-action-secondary"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
                   onClick={handleApplyFilters}
-                  className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+                  className="fm-action-primary"
                   disabled={isFiltering}
                 >
                   Apply
-                </Button>
-                <Button
-                  onClick={handleResetFilters}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Reset
-                </Button>
+                </button>
               </div>
             </div>
           </ThemeProvider>

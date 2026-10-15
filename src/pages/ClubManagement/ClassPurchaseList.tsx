@@ -257,7 +257,7 @@ export const ClassPurchaseList = () => {
               <MenuItem value="cancelled">Cancelled</MenuItem>
             </MuiSelect>
           </FormControl>
-          <Button variant="outline" onClick={() => load(1)}>
+          <Button size="sm" variant="outline" className="h-9 px-4 text-sm font-medium" onClick={() => load(1)}>
             Search
           </Button>
         </div>
@@ -282,7 +282,8 @@ export const ClassPurchaseList = () => {
         onPageChange={setCurrentPage}
         leftActions={
           <Button
-            className="fm-button-fix fm-button-brand px-6"
+            size="sm"
+            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
             onClick={() => navigate("/club-management/class-purchase/add")}
           >
             <Plus className="w-4 h-4 mr-2" /> New Purchase
@@ -306,7 +307,7 @@ export const ClassPurchaseList = () => {
               want to delete {deleteTarget?.userName || "this purchase"}'s purchase?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="fm-action-bar">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {

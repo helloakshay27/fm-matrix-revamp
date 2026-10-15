@@ -694,11 +694,11 @@ export const RosterDetailPage: React.FC = () => {
 
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2 border-t border-gray-200">
-        <Button onClick={handleEdit} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
+        <Button onClick={handleEdit}>
           <Edit className="w-4 h-4 mr-2" />
           Edit Template
         </Button>
-        <Button onClick={() => navigate('/roster')} variant="outline" className="px-8 rounded-lg border border-[rgba(26,26,24,0.15)] text-[#1a1a18] bg-white hover:bg-[#f7f6f2]">
+        <Button onClick={() => navigate('/roster')} variant="outline">
           Back to Roster List
         </Button>
       </div>

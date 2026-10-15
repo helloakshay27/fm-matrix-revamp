@@ -1779,12 +1779,6 @@ const FieldLabel: React.FC<{ htmlFor?: string; required?: boolean; children: Rea
   </label>
 );
 
-// Footer actions: readable at rest. Primary is ink with a white label; secondary is the
-// neutral outlined shell. Both 42px high, 0 22px padding, 13px/600, 8px radius.
-const footerPrimaryClass =
-  'inline-flex items-center justify-center gap-2 h-[42px] px-[22px] rounded-[8px] bg-[#1A1A18] text-white text-[13px] font-semibold hover:bg-[#12100E] active:bg-[#000000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors';
-const footerSecondaryClass =
-  'inline-flex items-center justify-center gap-2 h-[42px] px-[22px] rounded-[8px] bg-white border border-[rgba(26,26,24,0.12)] text-[#1A1A18] text-[13px] font-semibold hover:border-[rgba(26,26,24,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:text-[rgba(26,26,24,0.48)] disabled:bg-[#F7F6F2] disabled:cursor-not-allowed transition-colors';
 
 const VENDOR_FORM_CSS = `
 .vendor-add-page .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.08)!important}
@@ -2886,18 +2880,16 @@ export const AddVendorPage = () => {
         {getStepContent(activeStep)}
       </div>
 
-      <div className="flex justify-end gap-4 mt-8">
-        {/* Plain <button>s: the shared fm-button-fix/fm-button-brand classes force the
-            brand fill with !important and left these labels unreadable at rest. */}
-        <button type="button" className={footerSecondaryClass} disabled={activeStep === 0} onClick={handleBack}>
+      <div className="fm-action-bar mt-8 pt-4 sm:pt-6">
+        <button type="button" className="fm-action-secondary" disabled={activeStep === 0} onClick={handleBack}>
           Back
         </button>
         {activeStep === steps.length - 1 ? (
-          <button type="button" className={footerPrimaryClass} onClick={handleSave} disabled={isSubmitting}>
+          <button type="button" className="fm-action-primary" onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
           </button>
         ) : (
-          <button type="button" className={footerPrimaryClass} onClick={handleNext}>
+          <button type="button" className="fm-action-primary" onClick={handleNext}>
             Next
           </button>
         )}

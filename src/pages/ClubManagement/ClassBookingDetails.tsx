@@ -210,7 +210,7 @@ export const ClassBookingDetails = () => {
               variant="outline"
               onClick={() => setShowCancel(true)}
               disabled={actionBusy}
-              className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
+              className="gap-2"
             >
               <Ban className="w-4 h-4" /> Cancel Booking
             </Button>
@@ -286,13 +286,13 @@ export const ClassBookingDetails = () => {
               {loadingSlots && <p className="text-sm text-gray-500 mt-2">Loading slots...</p>}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReschedule(false)}>
+          <DialogFooter className="fm-action-bar">
+            <button type="button" onClick={() => setShowReschedule(false)} className="fm-action-secondary">
               Cancel
-            </Button>
-            <Button onClick={handleReschedule} disabled={actionBusy} className="fm-button-fix fm-button-brand">
+            </button>
+            <button type="button" onClick={handleReschedule} disabled={actionBusy} className="fm-action-primary">
               Reschedule
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -320,7 +320,7 @@ export const ClassBookingDetails = () => {
             </div>
             <div className="mt-1 text-right text-xs text-gray-400">{cancelReason.length}/500</div>
           </div>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="fm-action-bar">
             <AlertDialogCancel disabled={actionBusy}>No</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {

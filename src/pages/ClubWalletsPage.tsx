@@ -383,7 +383,7 @@ export const ClubWalletsPage: React.FC = () => {
                   <Button
                     onClick={handleVerifyAndContinue}
                     disabled={isVerifying || !canVerify}
-                    className="fm-button-fix fm-button-brand w-full"
+                    className="w-full"
                   >
                     {isVerifying ? "Verifying..." : "Verify & continue"}
                   </Button>
