@@ -1,3 +1,4 @@
+import { DetailCard } from "@/components/ui/detail-card";
 import { useState, useEffect } from "react";
 import { Eye, Pencil, Info, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -276,15 +277,11 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                 </>
             ) : (
                 <>
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
-                                    <Info className="w-[18px] h-[18px]" />
-                                </div>
-                                <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Community Details</h3>
-                            </div>
-                            <div className="flex items-center gap-2">
+                    <DetailCard
+                        title="Community Details"
+                        icon={<Info className="w-[18px] h-[18px] text-gray-500" />}
+                        headerActions={
+                            <>
                                 <Switch
                                     id="community-details-status"
                                     checked={isActive}
@@ -294,10 +291,10 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                                 <Label htmlFor="community-details-status" className="text-sm font-medium text-gray-900 cursor-pointer">
                                     {isActive ? 'Active' : 'Inactive'}
                                 </Label>
-                            </div>
-                        </div>
-
-                        <div className="px-6 pb-6 pt-2 space-y-6">
+                            </>
+                        }
+                    >
+                        <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Community Image */}
                                 <div className="bg-[#F6F4EE] h-72 rounded-xl overflow-hidden flex items-center justify-center">
@@ -347,24 +344,21 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                                 ))}
                             </div>
                         </div>
-                    </div>
+                    </DetailCard>
 
                     {/* Community Member Details Section */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-                        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
-                                <Users className="w-[18px] h-[18px]" />
-                            </div>
-                            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Community Member Details</h3>
-                        </div>
-                        <div className="px-6 pb-6">
+                    <DetailCard
+                        title="Community Member Details"
+                        icon={<Users className="w-[18px] h-[18px] text-gray-500" />}
+                    >
+                        <div>
 
                         <EnhancedTable
                             data={members}
                             columns={memberColumns}
                             renderCell={renderMemberCell}
                             hideColumnsButton={true}
-                            hideTableSearch={true}
+                            hideTableSearch={false}
                             selectable={true}
                             enableSelection={true}
                             onSelectItem={(itemId: string, checked: boolean) => {
@@ -391,7 +385,7 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                             getItemId={(item: any) => String(item.id)}
                         />
                         </div>
-                    </div>
+                    </DetailCard>
                 </>
             )}
 

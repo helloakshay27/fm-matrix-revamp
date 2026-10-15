@@ -2,39 +2,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Building2, MapPin } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { DetailCard } from "@/components/ui/detail-card";
 import { useSupplierDetailQuery } from "../hooks/useSupplierDetailQuery";
 import { getApiErrorMessage } from "@/features/pulse_notifications/utils/apiErrorMessage";
 
 const SUPPLIER_LIST_PATH = "/pulse/supplier-setup";
-
-function SectionCard({
-    icon: Icon,
-    title,
-    subtitle,
-    children,
-}: {
-    icon: typeof Building2;
-    title: string;
-    subtitle: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-brand-bg p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-brand" />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-                        <p className="text-xs text-gray-500">{subtitle}</p>
-                    </div>
-                </div>
-            </div>
-            <div className="p-6">{children}</div>
-        </div>
-    );
-}
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -116,10 +88,9 @@ const SupplierDetailsPage = () => {
             </div>
 
             <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-6">
-                <SectionCard
-                    icon={Building2}
+                <DetailCard
+                    icon={<Building2 className="w-[18px] h-[18px] text-gray-500" />}
                     title="Supplier Details"
-                    subtitle="Basic and contact information"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Field label="Company Name" value={supplier.company_name} />
@@ -151,9 +122,9 @@ const SupplierDetailsPage = () => {
                             }
                         />
                     </div>
-                </SectionCard>
+                </DetailCard>
 
-                <SectionCard icon={MapPin} title="Address" subtitle="Location details">
+                <DetailCard icon={<MapPin className="w-[18px] h-[18px] text-gray-500" />} title="Address">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Field label="Address" value={supplier.address} />
                         <Field label="Address 2" value={supplier.address2} />
@@ -162,7 +133,7 @@ const SupplierDetailsPage = () => {
                         <Field label="City" value={supplier.city} />
                         <Field label="Pincode" value={supplier.pincode} />
                     </div>
-                </SectionCard>
+                </DetailCard>
             </div>
         </div>
     );

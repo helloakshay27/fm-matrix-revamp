@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 import CommunityDetailsTab from "@/components/community/CommunityDetailsTab";
 import CommunityFeedTab from "@/components/community/CommunityFeedTab";
 import CommunityReportsTab from "@/components/community/CommunityReportsTab";
@@ -58,42 +59,37 @@ const CommunityDetails = () => {
                 onValueChange={handleTabChange}
                 className="w-full"
             >
-                <TabsList className="grid w-full grid-cols-5 mb-6 bg-white border border-gray-200 rounded-xl">
-                    <TabsTrigger
+                <AssetTabsList className="grid grid-cols-5 mb-6">
+                    <AssetTabsTrigger
                         value="details"
-                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Community Details
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="feed"
-                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Community Feed
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="reports"
-                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Reports
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="events"
-                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Shared
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="pending_requests"
-                        className="data-[state=active]:bg-brand-light data-[state=active]:text-brand"
                     >
                         Pending Request
-                    </TabsTrigger>
-                </TabsList>
+                    </AssetTabsTrigger>
+                </AssetTabsList>
 
                 <TabsContent value="details">
                     <CommunityDetailsTab

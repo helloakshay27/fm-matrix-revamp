@@ -95,7 +95,7 @@ const SosFilterModal: React.FC<FilterModalProps> = ({
     <>
       <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={onClose} />
       <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col border-l-[6px] border-[#C72030]">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col border-l-[6px] border-brand">
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold text-gray-900 tracking-wide">FILTER BY</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -167,7 +167,7 @@ const SosFilterModal: React.FC<FilterModalProps> = ({
             <Button variant="outline" onClick={handleReset} className="px-8">
               Reset
             </Button>
-            <Button onClick={handleApply} className="bg-[#C72030] hover:bg-[#A01020] text-white px-8">
+            <Button onClick={handleApply} className="bg-brand hover:bg-brand-hover text-white px-8">
               Apply
             </Button>
           </div>

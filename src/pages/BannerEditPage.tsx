@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, Trash2 } from 'lucide-react';
+import { FormSection, FormActionBar, assetFieldStyles } from '@/components/common/FormSection';
+import { AttachmentUpload } from '@/components/common/AttachmentUpload';
+import { ArrowLeft, Trash2, FileText, Image as ImageIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { editBanner, fetchBannersById } from '@/store/slices/bannerSlice';
@@ -24,12 +24,6 @@ interface UploadedImage {
     isExisting?: boolean; // Flag to identify existing vs new images
 }
 
-const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    "& .MuiInputBase-input": {
-        padding: { xs: "8px", sm: "10px", md: "12px" },
-    },
-};
 
 const BannerEditPage = () => {
     const { id } = useParams();
@@ -202,7 +196,7 @@ const BannerEditPage = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div>
             </div>
         );
     }
@@ -210,23 +204,26 @@ const BannerEditPage = () => {
     return (
         <div className="p-[30px]">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
                 <button
-                    onClick={() => navigate('/pulse/community-modules/banner-list')}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  type="button"
+                  onClick={() => navigate('/pulse/community-modules/banner-list')}
+                  className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+                  aria-label="Go back"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4 text-gray-600" />
                 </button>
-                <h1 className="text-2xl font-semibold">Edit Banner</h1>
+                <span>Banner List</span>
+                <span>{">"}</span>
+                <span className="text-gray-900 font-medium">Edit Banner</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT BANNER</h1>
             </div>
 
-            <form onSubmit={handleSubmit}>
-                {/* Basic Information Card */}
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Basic Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                {/* Basic Information */}
+                <FormSection title="BASIC INFORMATION" icon={FileText}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <TextField
                                 label="Title"
@@ -237,7 +234,7 @@ const BannerEditPage = () => {
                                 value={formData.title}
                                 onChange={handleFormChange}
                                 InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
+                                InputProps={{ sx: assetFieldStyles }}
                                 required
                             />
 
@@ -250,7 +247,7 @@ const BannerEditPage = () => {
                                 value={formData.bannerUrl}
                                 onChange={handleFormChange}
                                 InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
+                                InputProps={{ sx: assetFieldStyles }}
                             /> */}
 
                             {/* <TextField
@@ -262,7 +259,7 @@ const BannerEditPage = () => {
                                 value={formData.projectId}
                                 onChange={handleFormChange}
                                 InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
+                                InputProps={{ sx: assetFieldStyles }}
                                 disabled={loadingProjects}
                             >
                                 <MenuItem value="">
@@ -275,26 +272,23 @@ const BannerEditPage = () => {
                                 ))}
                             </TextField> */}
                         </div>
-                    </CardContent>
-                </Card>
+                </FormSection>
 
-                {/* Banner Images Card */}
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Banner Images <span className="text-red-500">*</span></CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                {/* Banner Images */}
+                <FormSection title="BANNER IMAGES *" icon={ImageIcon}>
                         <div className="space-y-4">
-                            {/* Upload Button */}
-                            <div
-                                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                onClick={() => setShowGalleryUpload(true)}
-                            >
-                                <Upload className="mx-auto mb-2 text-gray-400 w-8 h-8" />
-                                <p className="text-gray-600 text-sm">
-                                    Click to upload banners (1:1, 9:16, 16:9, 3:2)
-                                </p>
-                            </div>
+                            {/* Upload — shared attachment input; click par ratio/crop modal khulta hai */}
+                            <AttachmentUpload
+                                chooseText="Choose Banner"
+                                uploadText="Upload Banner"
+                                emptyText="No banner chosen (1:1, 9:16, 16:9, 3:2)"
+                                accept="image/*"
+                                multiple
+                                files={uploadedImages.map((image) => image.file ?? new File([], image.name))}
+                                onFilesSelected={() => setShowGalleryUpload(true)}
+                                onRemove={(index) => handleRemoveImage(uploadedImages[index].id)}
+                                onBrowse={() => setShowGalleryUpload(true)}
+                            />
 
                             {/* Uploaded Images Preview */}
                             {uploadedImages.length > 0 && (
@@ -327,27 +321,15 @@ const BannerEditPage = () => {
                                 </div>
                             )}
                         </div>
-                    </CardContent>
-                </Card>
+                </FormSection>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 justify-end">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate('/pulse/community-modules/banner-list')}
-                        disabled={submitting}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        className="bg-[#C72030] hover:bg-[#A01020]"
-                        disabled={submitting}
-                    >
-                        {submitting ? 'Updating...' : 'Update Banner'}
-                    </Button>
-                </div>
+                <FormActionBar
+                    onCancel={() => navigate('/pulse/community-modules/banner-list')}
+                    submitLabel="Update Banner"
+                    isSubmitting={submitting}
+                    submitAsFormSubmit
+                />
             </form>
 
             {/* Gallery Upload Modal */}

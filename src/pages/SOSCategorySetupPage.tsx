@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus, Tags } from "lucide-react";
+import { FormSection } from "@/components/common/FormSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -129,12 +130,7 @@ const SOSCategorySetupPage = () => {
     };
 
     const leftActions = (
-        <Button
-            onClick={() => setIsAddModalOpen(true)}
-        >
-            <Plus size={18} />
-            Add Category
-        </Button>
+        <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setIsAddModalOpen(true)}><Plus className="w-4 h-4 mr-2" />Add Category</Button>
     )
 
     return (
@@ -148,7 +144,7 @@ const SOSCategorySetupPage = () => {
                 emptyMessage="No categories found"
                 pagination={true}
                 pageSize={10}
-                hideTableSearch={true}
+                hideTableSearch={false}
                 hideColumnsButton={true}
                 getItemId={(item: SOSCategory) => String(item.id)}
             />
@@ -159,7 +155,8 @@ const SOSCategorySetupPage = () => {
                     <DialogHeader>
                         <DialogTitle>Add New Category</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="py-4">
+                        <FormSection title="CATEGORY DETAILS" icon={Tags} collapsible={false}>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">
                                 Category Name <span className="text-red-500">*</span>
@@ -175,6 +172,7 @@ const SOSCategorySetupPage = () => {
                                 }}
                             />
                         </div>
+                        </FormSection>
                     </div>
                     <DialogFooter className="flex gap-2 justify-end">
                         <Button
@@ -189,7 +187,7 @@ const SOSCategorySetupPage = () => {
                         <Button
                             onClick={handleAddCategory}
                             disabled={isSubmitting}
-                            className="!bg-[#C72030] hover:bg-[#d0606e] !text-white"
+                            className="bg-brand hover:bg-brand-hover text-white"
                         >
                             {isSubmitting ? "Adding..." : "Add"}
                         </Button>

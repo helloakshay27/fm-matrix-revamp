@@ -19,6 +19,8 @@ interface AttachmentUploadProps {
   onFilesSelected: (files: File[]) => void;
   onRemove?: (index: number) => void;
   disabled?: boolean;
+  /** Diya ho to native file picker ki jagah ye chalega (e.g. crop/ratio modal kholna) */
+  onBrowse?: () => void;
 }
 
 export const AttachmentUpload = ({
@@ -32,6 +34,7 @@ export const AttachmentUpload = ({
   onFilesSelected,
   onRemove,
   disabled = false,
+  onBrowse,
 }: AttachmentUploadProps) => {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,7 +60,18 @@ export const AttachmentUpload = ({
           className="hidden"
           disabled={disabled}
         />
-        <label htmlFor={inputId} className="cursor-pointer block">
+        <label
+          htmlFor={inputId}
+          className="cursor-pointer block"
+          onClick={
+            onBrowse
+              ? (e) => {
+                  e.preventDefault();
+                  if (!disabled) onBrowse();
+                }
+              : undefined
+          }
+        >
           <div className="flex items-center justify-center space-x-2 mb-2">
             <span className="text-brand font-medium text-xs sm:text-sm">{chooseText}</span>
             <span className="text-gray-500 text-xs sm:text-sm">
@@ -92,7 +106,7 @@ export const AttachmentUpload = ({
         <div className="mt-2">
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={() => (onBrowse ? onBrowse() : inputRef.current?.click())}
             disabled={disabled}
             className="text-xs sm:text-sm bg-[var(--color-bg)] text-brand px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-brand-selected flex items-center mx-auto"
           >

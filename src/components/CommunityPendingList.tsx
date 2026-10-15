@@ -200,7 +200,7 @@ const CommunityPendingList = ({ communityId }: { communityId: string }) => {
                     columns={columns}
                     renderCell={renderCell}
                     hideColumnsButton={true}
-                    hideTableSearch={true}
+                    hideTableSearch={false}
                     selectable={true}
                     enableSelection={true}
                     selectedItems={selectedItems}

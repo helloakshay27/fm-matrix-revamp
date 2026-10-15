@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit, Eye, Plus } from "lucide-react";
+import { Plus, Edit, Eye } from "lucide-react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Button } from "@/components/ui/button";
@@ -195,12 +195,7 @@ const PulseSuppliers = () => {
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 leftActions={
-                    <Button
-                        className="bg-brand hover:bg-brand-hover text-white"
-                        onClick={() => navigate("/pulse/supplier-setup/add")}
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> Add
-                    </Button>
+                    <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/supplier-setup/add")}><Plus className="w-4 h-4 mr-2" />Add</Button>
                 }
             />
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, X } from "lucide-react";
+import { Plus, Edit, X, Car, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   TextField,
   FormControl,
@@ -24,6 +25,7 @@ import {
   toggleVehicleModelActive,
 } from "@/services/vehicleConfigApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { FormSection, assetFieldStyles } from "@/components/common/FormSection";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -50,16 +52,6 @@ const getApiErrorMessage = (error: unknown, fallback: string): string => {
     if (typeof flat.error === "string") return flat.error;
   }
   return fallback;
-};
-
-const fieldStyles = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "6px",
-    "& fieldset": { borderColor: "#E0E0E0" },
-    "&:hover fieldset": { borderColor: "#1A1A1A" },
-    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)", borderWidth: 2 },
-  },
-  "& .MuiInputLabel-root.Mui-focused": { color: "var(--color-primary)" },
 };
 
 export const VehicleModelsTab = () => {
@@ -178,17 +170,11 @@ export const VehicleModelsTab = () => {
     }
     if (columnKey === "status") {
       return (
-        <button
-          type="button"
-          onClick={() => handleToggleStatus(item)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-brand" : "bg-gray-300"
-            }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
-              }`}
-          />
-        </button>
+        <Switch
+          checked={!!item.active}
+          onCheckedChange={() => handleToggleStatus(item)}
+          onClick={(e) => e.stopPropagation()}
+        />
       );
     }
     return item[columnKey as keyof VehicleModel] ?? "-";
@@ -200,12 +186,7 @@ export const VehicleModelsTab = () => {
     </Button>
   );
 
-  const leftActions = (
-    <Button className="bg-brand hover:bg-brand-hover text-white" onClick={openAddModal}>
-      <Plus size={18} className="mr-2" />
-      Add Model
-    </Button>
-  );
+  const leftActions = <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={openAddModal}><Plus className="w-4 h-4 mr-2" />Add Model</Button>;
 
   return (
     <div>
@@ -234,8 +215,9 @@ export const VehicleModelsTab = () => {
               <X size={20} className="text-gray-500" />
             </button>
           </div>
-          <div className="space-y-4 py-2">
-            <FormControl fullWidth sx={fieldStyles}>
+          <FormSection title="MODEL DETAILS" icon={Car}>
+            <div className="space-y-4">
+            <FormControl fullWidth sx={{ '& .MuiInputBase-root': assetFieldStyles }}>
               <InputLabel shrink>
                 Brand<span style={{ color: "var(--color-error)" }}> *</span>
               </InputLabel>
@@ -270,7 +252,7 @@ export const VehicleModelsTab = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
               }}
-              sx={fieldStyles}
+              InputProps={{ sx: assetFieldStyles }}
             />
             <TextField
               fullWidth
@@ -293,15 +275,17 @@ export const VehicleModelsTab = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
               }}
-              sx={fieldStyles}
+              InputProps={{ sx: assetFieldStyles }}
             />
-          </div>
+            </div>
+          </FormSection>
           <div className="flex justify-center gap-3 pt-4">
             <Button
               onClick={handleSubmit}
               disabled={submitting}
               className="bg-brand hover:bg-brand-hover text-white min-w-[100px]"
             >
+              <Save className="w-4 h-4 mr-2" />
               {submitting ? "Saving..." : editingModel ? "Update" : "Add"}
             </Button>
             <Button variant="outline" onClick={() => setIsModalOpen(false)} className="min-w-[100px]">
