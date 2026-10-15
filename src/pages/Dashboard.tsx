@@ -993,6 +993,34 @@ export const Dashboard = () => {
       } catch (e) {
         console.error("❌ Failed to parse saved analytics", e);
       }
+    } else if (isExecutiveDashboard) {
+      // First visit to the executive dashboard: preselect the Asset Management cards
+      // so it doesn't open empty. Once the user changes the selection it is saved
+      // to localStorage and this default no longer applies.
+      const defaultAssetCardIds = [
+        "am_company_asset_overview",
+        "am_center_assets_downtime",
+        "am_highest_maintenance_assets",
+        "assets_status",
+        "assets_statistics",
+        "assets_group_wise",
+        "assets_category_wise",
+      ];
+      const defaultAnalytics = defaultAssetCardIds
+        .filter((id) => analyticsCatalogById[id])
+        .map((id) => ({
+          id,
+          module: analyticsCatalogById[id].module,
+          endpoint: analyticsCatalogById[id].endpoint,
+          title: analyticsCatalogById[id].title,
+        })) as SelectedAnalytic[];
+      setSelectedAnalytics(defaultAnalytics);
+      const initLoadingMap: Record<string, Record<string, boolean>> = {};
+      defaultAnalytics.forEach((a) => {
+        initLoadingMap[a.module] = initLoadingMap[a.module] || {};
+        initLoadingMap[a.module][a.endpoint] = true;
+      });
+      setLoadingMap(initLoadingMap);
     }
     // If site_id or access_token are present in the URL, persist them to localStorage
     // so the dashboard's own site selection (a dedicated key, since the shared
