@@ -5,6 +5,7 @@
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 // import { Label } from '@/components/ui/label';
 // import { Textarea } from '@/components/ui/textarea';
+import { RCA_WORD_LIMIT, countWords, limitWords } from '@/utils/wordLimit';
 // import { X } from 'lucide-react';
 // import ReactSelect from 'react-select';
 // import { apiClient } from '@/utils/apiClient';
@@ -446,6 +447,7 @@ export const EditStatusDialog = ({
   onOpenChange,
   complaintId,
   currentStatusId,
+  currentStatus,
   onSuccess
 }: EditStatusDialogProps) => {
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -538,6 +540,15 @@ export const EditStatusDialog = ({
         toast.error('Preventive Action is mandatory when closing the ticket');
         return;
       }
+      const overLimit = [
+        ['Root Cause Analysis', rcaText],
+        ['Corrective Action', correctiveActionText],
+        ['Preventive Action', preventiveActionText],
+      ].find(([, text]) => countWords(text) > RCA_WORD_LIMIT);
+      if (overLimit) {
+        toast.error(`${overLimit[0]} cannot exceed ${RCA_WORD_LIMIT} words`);
+        return;
+      }
     }
 
     setLoading(true);
@@ -586,12 +597,17 @@ export const EditStatusDialog = ({
       // PostHog — Ticket Status Changed, fired only after the status-update API succeeds,
       // using the established business-lifecycle helper. Route-aware: flows originating from
       // the Club Management helpdesk report CM-01/P-238, FM flows stay FM-01/P-223.
-      const toStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
-      helpdeskEvents.onTicketStatusChanged(complaintId, {
-        from_status: currentStatus ?? null,
-        to_status: toStatusObj?.name ?? null,
-        changed_by_role: localStorage.getItem('role') || null,
-      });
+      // Analytics must never turn a saved update into a "Failed to update status" toast.
+      try {
+        const toStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
+        helpdeskEvents.onTicketStatusChanged(complaintId, {
+          from_status: currentStatus ?? null,
+          to_status: toStatusObj?.name ?? null,
+          changed_by_role: localStorage.getItem('role') || null,
+        });
+      } catch (analyticsError) {
+        console.error('Ticket status analytics failed', analyticsError);
+      }
     } catch {
       toast.error('Failed to update status');
     } finally {
@@ -667,30 +683,39 @@ export const EditStatusDialog = ({
                 <Label>Root Cause Analysis <span className="text-red-500">*</span></Label>
                 <Textarea
                   value={rcaText}
-                  onChange={(e) => setRcaText(e.target.value)}
+                  onChange={(e) => setRcaText(limitWords(e.target.value))}
                   placeholder="Enter Root Cause Analysis"
                   className="mt-1 min-h-[80px]"
                 />
+                <div className="mt-1 text-right text-xs text-gray-400">
+                  {countWords(rcaText)}/{RCA_WORD_LIMIT} words
+                </div>
               </div>
 
               <div>
                 <Label>Corrective Action <span className="text-red-500">*</span></Label>
                 <Textarea
                   value={correctiveActionText}
-                  onChange={(e) => setCorrectiveActionText(e.target.value)}
+                  onChange={(e) => setCorrectiveActionText(limitWords(e.target.value))}
                   placeholder="Enter Corrective Action"
                   className="mt-1 min-h-[80px]"
                 />
+                <div className="mt-1 text-right text-xs text-gray-400">
+                  {countWords(correctiveActionText)}/{RCA_WORD_LIMIT} words
+                </div>
               </div>
 
               <div>
                 <Label>Preventive Action <span className="text-red-500">*</span></Label>
                 <Textarea
                   value={preventiveActionText}
-                  onChange={(e) => setPreventiveActionText(e.target.value)}
+                  onChange={(e) => setPreventiveActionText(limitWords(e.target.value))}
                   placeholder="Enter Preventive Action"
                   className="mt-1 min-h-[80px]"
                 />
+                <div className="mt-1 text-right text-xs text-gray-400">
+                  {countWords(preventiveActionText)}/{RCA_WORD_LIMIT} words
+                </div>
               </div>
             </>
           )}
