@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 const TaxSummaryReport: React.FC = () => {
+    useAccountingReportViewed("tax_summary");
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -130,6 +132,7 @@ const TaxSummaryReport: React.FC = () => {
             alert('Please select From Date and To Date');
             return;
         }
+        accountingEvents.onReportGenerated("tax_summary", { from_date: filters.fromDate, to_date: filters.toDate });
         fetchTaxSummary();
     };
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 
@@ -141,6 +142,7 @@ import {
 export const EditPaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: paymentId = "" } = useParams<{ id: string }>();
+  useAccountingFormOpened("payment_made", "edit", paymentId);
   const [lockAccountId, setLockAccountId] = useState(
     () => localStorage.getItem("lock_account_id") || ""
   );
@@ -750,12 +752,17 @@ export const EditPaymentPage: React.FC = () => {
         payload
       );
       sonnerToast.success("Payment updated successfully!");
+      accountingEvents.onRecordUpdated("payment_made", paymentId, {
+        amount: paidAmount,
+        item_count: lock_bill_payments_attributes.length,
+      });
       navigate("/accounting/payments-made");
     } catch (err: unknown) {
       console.error("Error updating payment:", err);
       const msg =
         err instanceof Error ? err.message : "Failed to update payment. Please try again.";
       sonnerToast.error(msg);
+      accountingEvents.onSaveFailed("payment_made", "update", err, { record_id: paymentId });
     } finally {
       setIsSaving(false);
     }

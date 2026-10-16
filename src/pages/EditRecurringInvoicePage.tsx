@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -310,6 +311,7 @@ export const EditRecurringInvoicePage: React.FC = () => {
     };
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    useAccountingFormOpened('recurring_invoice', 'edit', id);
     const [loading, setLoading] = useState(true);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -1534,11 +1536,17 @@ export const EditRecurringInvoicePage: React.FC = () => {
                 body: formData
             });
 
+            accountingEvents.onRecordUpdated('recurring_invoice', id, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'submit',
+            });
             // alert(`Recurring Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/recurring-invoices');
         } catch (error) {
             console.error('Error submitting invoice:', error);
             alert('Failed to create invoice');
+            accountingEvents.onSaveFailed('recurring_invoice', 'update', error, { record_id: id });
         } finally {
             setIsSubmitting(false);
         }

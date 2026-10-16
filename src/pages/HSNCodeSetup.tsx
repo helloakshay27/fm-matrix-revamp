@@ -182,8 +182,8 @@ const HSNCodeSetup = () => {
     };
 
     const leftActions = (
-        <Button onClick={() => handleOpenModal()}>
-            <Plus className="w-4 h-4" />
+        <Button size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => handleOpenModal()}>
+            <Plus className="w-4 h-4 mr-2" />
             Add HSN Code
         </Button>
     )
@@ -221,14 +221,11 @@ const HSNCodeSetup = () => {
                                 required
                             />
                         </div>
-                        <DialogFooter className="gap-2 sm:gap-0">
-                            <Button type="button" variant="outline" onClick={handleCloseModal}>Cancel</Button>
-                            <Button type="submit" 
-                            // className="bg-red-600 hover:bg-red-700 text-white"
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                            >
+                        <DialogFooter className="fm-action-bar">
+                            <button type="button" onClick={handleCloseModal} className="fm-action-secondary">Cancel</button>
+                            <button type="submit" className="fm-action-primary">
                                 {editingHsn ? 'Update' : 'Add'} HSN Code
-                            </Button>
+                            </button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

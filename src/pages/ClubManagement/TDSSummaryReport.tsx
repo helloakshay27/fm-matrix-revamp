@@ -3,6 +3,7 @@ import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 
 type TdsSummaryRow = {
@@ -44,6 +45,7 @@ const formatAmount = (value: number) =>
   }).format(value);
 
 const TDSSummaryReport: React.FC = () => {
+  useAccountingReportViewed("tds_summary");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   // const [reportRows] = useState<TdsSummaryRow[]>([]);
@@ -130,6 +132,7 @@ useEffect(() => {
     return;
   }
 
+  accountingEvents.onReportGenerated("tds_summary", { from_date: filters.fromDate, to_date: filters.toDate });
   fetchTDSSummary();
 };
 

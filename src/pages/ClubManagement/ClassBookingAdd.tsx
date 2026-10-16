@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, CalendarClock } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -17,41 +16,8 @@ import {
   type TrainerOption,
   type UserOption,
 } from "./classPurchaseApi";
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
-const Section = ({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <section className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-        {icon}
-      </div>
-      <span className="font-semibold text-lg text-gray-800">{title}</span>
-    </div>
-    <div className="p-6 bg-white">{children}</div>
-  </section>
-);
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-  "& .MuiInputLabel-root": { "&.Mui-focused": { color: "#C72030" } },
-};
-
-const requiredLabelSx = { "& .MuiFormLabel-asterisk": { color: "#DA7756" } };
 
 export const ClassBookingAdd = () => {
   const navigate = useNavigate();
@@ -182,7 +148,7 @@ export const ClassBookingAdd = () => {
         <h1 className="text-2xl font-bold text-black">New Booking</h1>
       </header>
 
-      <Section title="Booking Details" icon={<CalendarClock className="w-5 h-5" />}>
+      <ClassFormSection title="Booking Details" icon={<CalendarClock />}>
         <div className="mb-6">
           <RadioGroup value={userType} onValueChange={(val) => setUserType(val as typeof userType)} className="flex gap-6">
             <div className="flex items-center space-x-2">
@@ -201,8 +167,10 @@ export const ClassBookingAdd = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <FormControl fullWidth variant="outlined" required sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}>
-            <InputLabel shrink>Member</InputLabel>
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
+            <InputLabel shrink>
+              <RequiredLabel>Member</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
@@ -225,11 +193,12 @@ export const ClassBookingAdd = () => {
           <FormControl
             fullWidth
             variant="outlined"
-            required
             disabled={!userId || loadingPurchases}
-            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            sx={{ "& .MuiInputBase-root": classFieldStyles }}
           >
-            <InputLabel shrink>Purchase</InputLabel>
+            <InputLabel shrink>
+              <RequiredLabel>Purchase</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={purchaseId}
               onChange={(e) => setPurchaseId(e.target.value)}
@@ -259,11 +228,13 @@ export const ClassBookingAdd = () => {
             variant="outlined"
             disabled
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
-          <FormControl fullWidth variant="outlined" required sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}>
-            <InputLabel shrink>Trainer</InputLabel>
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
+            <InputLabel shrink>
+              <RequiredLabel>Trainer</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={trainerId}
               onChange={(e) => setTrainerId(e.target.value)}
@@ -284,16 +255,14 @@ export const ClassBookingAdd = () => {
           </FormControl>
 
           <TextField
-            label="Date"
-            required
+            label={<RequiredLabel>Date</RequiredLabel>}
             type="date"
             value={bookingDate}
             onChange={(e) => setBookingDate(e.target.value)}
             fullWidth
             variant="outlined"
-            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
         </div>
 
@@ -301,7 +270,7 @@ export const ClassBookingAdd = () => {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">
-              Select Slot<span className="text-red-500"> *</span>
+              Select Slot<span className="ml-0.5">*</span>
             </h2>
             {slots.length > 0 && (
               <div className="flex items-center gap-2">
@@ -373,20 +342,20 @@ export const ClassBookingAdd = () => {
           )}
           {loadingSlots && <p className="text-sm text-gray-500 mt-2">Loading slots...</p>}
         </div>
-      </Section>
+      </ClassFormSection>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-8 py-2">
-          {isSubmitting ? "Creating..." : "Create Booking"}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={() => navigate("/club-management/class-booking")}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="fm-action-primary">
+          {isSubmitting ? "Creating..." : "Create Booking"}
+        </button>
       </div>
     </div>
   );

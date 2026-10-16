@@ -817,19 +817,18 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Table>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => setIsImportModalOpen(true)}
-                className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8"
+                className="fm-action-secondary"
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="w-4 h-4" />
                 Import
-              </Button>
-              <Button type="submit" variant="ghost" disabled={loading} className="fm-button-fix fm-button-brand px-4 py-2">
+              </button>
+              <button type="submit" disabled={loading} className="fm-action-primary">
                 {loading ? 'Creating...' : 'Submit'}
-              </Button>
+              </button>
             </div>
           </form>
         </CardContent>
@@ -859,10 +858,10 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Select>
             </div>
             <div className="flex space-x-2">
-              <Button onClick={handleFilter} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
+              <Button onClick={handleFilter}>
                 Apply
               </Button>
-              <Button onClick={handleResetFilter} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] font-semibold px-4">
+              <Button onClick={handleResetFilter} variant="outline">
                 Reset
               </Button>
             </div>
@@ -1047,7 +1046,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                 type="button"
                 onClick={handleImport}
                 disabled={isImporting || !importFile}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                className="flex-1"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {isImporting ? 'Importing...' : 'Import'}
@@ -1206,13 +1205,13 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Table>
             </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <div className="fm-action-bar">
+              <button type="button" onClick={() => setIsEditDialogOpen(false)} className="fm-action-secondary">
                 Cancel
-              </Button>
-              <Button type="submit" disabled={updateLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              </button>
+              <button type="submit" disabled={updateLoading} className="fm-action-primary">
                 {updateLoading ? 'Updating...' : 'Update'}
-              </Button>
+              </button>
             </div>
           </form>
         </DialogContent>

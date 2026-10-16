@@ -1277,15 +1277,15 @@ export const CategoryTypeTab: React.FC = () => {
                 ))}
               </div>
 
-              <div className="flex justify-end">
-                <Button 
+              <div className="fm-action-bar">
+                <button
+                  type="button"
                   onClick={handleCreateSubmit}
                   disabled={isSubmitting}
-                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+                  className="fm-action-primary"
                 >
                   {isSubmitting ? 'Saving...' : 'Submit'}
-                </Button>
+                </button>
               </div>
             </div>
           </Form>
@@ -1651,15 +1651,15 @@ export const CategoryTypeTab: React.FC = () => {
               </div>
 
               
-              <div className="flex justify-end pt-4">
-                <Button 
+              <div className="fm-action-bar pt-4">
+                <button
+                  type="button"
                   onClick={() => handleEditSubmit({})}
                   disabled={isSubmitting}
-                  className="fm-button-fix fm-button-brand px-4 py-2"
-                  variant="ghost"
+                  className="fm-action-primary"
                 >
                   {isSubmitting ? 'Updating...' : 'Submit'}
-                </Button>
+                </button>
               </div>
             </div>
           )}

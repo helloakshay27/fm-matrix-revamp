@@ -411,14 +411,17 @@ export const CreditNoteClubDashboard: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <Button
                             // className='bg-primary text-primary-foreground hover:bg-primary/90'
-                            className='fm-button-fix fm-button-brand px-8 py-2'
+                            size="sm"
+                            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                             onClick={() => navigate('/club-management/credit-note/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
                         {selectedRows.length > 0 && (
                             <Button
+                                size="sm"
                                 variant="outline"
+                                className="h-9 px-4 text-sm font-medium"
                                 onClick={() => {
                                     toast.success(`Printing ${selectedRows.length} credit note(s)...`);
                                     cmEvents.exported('Credit Note', 'print', selectedRows.length, 'credit_note_dashboard');
@@ -461,7 +464,7 @@ export const CreditNoteClubDashboard: React.FC = () => {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
 
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="fm-action-bar">
                         <AlertDialogCancel disabled={deleteLoading}>
                             Cancel
                         </AlertDialogCancel>

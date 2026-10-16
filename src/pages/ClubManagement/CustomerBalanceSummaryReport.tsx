@@ -7,6 +7,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 type CustomerBalanceRow = {
   id: string;
@@ -54,6 +55,7 @@ const columns: ColumnConfig[] = [
 
 const CustomerBalanceSummaryReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("customer_balance_summary");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<CustomerBalanceRow[]>([]);
@@ -190,7 +192,13 @@ const CustomerBalanceSummaryReport: React.FC = () => {
           <Button
             type="button"
             className="acc-btn h-[44px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("customer_balance_summary", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+              fetchData(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

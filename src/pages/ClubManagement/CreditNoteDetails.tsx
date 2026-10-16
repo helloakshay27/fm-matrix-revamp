@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -216,6 +217,7 @@ export const CreditNoteDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const reportRecordLoaded = useAccountingRecordViewed("credit_note");
 
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
@@ -238,6 +240,7 @@ export const CreditNoteDetails = () => {
           },
         });
         setSalesOrder(response.data);
+        reportRecordLoaded(id, response.data?.status ?? null);
       } catch (error) {
         sonnerToast.error("Failed to fetch credit note details");
       } finally {

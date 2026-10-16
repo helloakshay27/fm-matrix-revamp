@@ -3,7 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import RuleAlert from "@/components/RuleAlert";
 import RuleCreateForm from "@/components/RuleCreateForm";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -16,7 +16,7 @@ import {
 
 import axios from "axios";
 import { format } from "date-fns";
-import { ArrowLeft, Repeat, User, Wallet } from "lucide-react";
+import { Plus, ArrowLeft, Repeat, User, Wallet } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -234,7 +234,7 @@ const CRMWalletDetails = () => {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading wallet details...</p>
                 </div>
             </div>
@@ -254,20 +254,13 @@ const CRMWalletDetails = () => {
                 </button>
 
                 <Button
-                    className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
+                    className="bg-brand hover:bg-brand text-white cursor-not-allowed"
                     type="button"
                 >
                     Available Balance: {walletDetails.total_wallet_balance}
                 </Button>
             </div>
-            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
-                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><User className="w-[18px] h-[18px]" /></span>
-                        CUSTOMER DETAILS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 pt-0">
+            <DetailCard title="Customer Details" icon={<User className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -317,17 +310,9 @@ const CRMWalletDetails = () => {
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+            </DetailCard>
 
-            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
-                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Wallet className="w-[18px] h-[18px]" /></span>
-                        WALLET DETAILS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 pt-0">
+            <DetailCard title="Wallet Details" icon={<Wallet className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -427,28 +412,18 @@ const CRMWalletDetails = () => {
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+            </DetailCard>
 
-            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
-                <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
-                            <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Repeat className="w-[18px] h-[18px]" /></span>
-                            RECURRING RULE STATUS
-                        </CardTitle>
-
-                        {shouldShow("Wallet", "create") && (
-                        <Button
-                            onClick={() => setShowRuleCreateAlert(true)}
-                            className="!bg-[#DA7756] hover:!bg-[#C45F40]"
-                        >
-                            <span className="!text-white font-medium">+ Add</span>
-                        </Button>
-                        )}
-                    </div>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 pt-0">
+            <DetailCard
+                title="Recurring Rule Status"
+                icon={<Repeat className="w-[18px] h-[18px] text-gray-500" />}
+                headerActions={
+                    shouldShow("Wallet", "create") ? (
+                        <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setShowRuleCreateAlert(true)}><Plus className="w-4 h-4 mr-2" />Add</Button>
+                    ) : undefined
+                }
+                className="mb-6"
+            >
                     {recurringRules.length > 0 ? (
                         recurringRules.map((rule, index) => (
                             <Fragment key={rule.id}>
@@ -491,8 +466,7 @@ const CRMWalletDetails = () => {
                             No rules found
                         </div>
                     )}
-                </CardContent>
-            </Card>
+            </DetailCard>
 
             <EnhancedTable
                 data={transactionHistory}

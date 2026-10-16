@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, X } from "lucide-react";
+import { Plus, Edit, X, Save, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { TextField, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -13,22 +14,13 @@ import {
   toggleVehicleBrandActive,
 } from "@/services/vehicleConfigApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { FormSection, assetFieldStyles } from "@/components/common/FormSection";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
   { key: "name", label: "Brand Name", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: false, draggable: false },
 ];
-
-const fieldStyles = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "6px",
-    "& fieldset": { borderColor: "#E0E0E0" },
-    "&:hover fieldset": { borderColor: "#1A1A1A" },
-    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)", borderWidth: 2 },
-  },
-  "& .MuiInputLabel-root.Mui-focused": { color: "var(--color-primary)" },
-};
 
 export const VehicleBrandsTab = () => {
   const pulseEvents = usePulseEvents();
@@ -112,19 +104,11 @@ export const VehicleBrandsTab = () => {
   const renderCell = (item: VehicleBrand, columnKey: string) => {
     if (columnKey === "status") {
       return (
-        <button
-          type="button"
-          onClick={() => handleToggleStatus(item)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            item.active ? "bg-brand" : "bg-gray-300"
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              item.active ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
-        </button>
+        <Switch
+          checked={!!item.active}
+          onCheckedChange={() => handleToggleStatus(item)}
+          onClick={(e) => e.stopPropagation()}
+        />
       );
     }
     return item[columnKey as keyof VehicleBrand] ?? "-";
@@ -136,12 +120,7 @@ export const VehicleBrandsTab = () => {
     </Button>
   );
 
-  const leftActions = (
-    <Button className="bg-brand hover:bg-brand-hover text-white" onClick={openAddModal}>
-      <Plus size={18} className="mr-2" />
-      Add Brand
-    </Button>
-  );
+  const leftActions = <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={openAddModal}><Plus className="w-4 h-4 mr-2" />Add Brand</Button>;
 
   return (
     <div>
@@ -170,7 +149,7 @@ export const VehicleBrandsTab = () => {
               <X size={20} className="text-gray-500" />
             </button>
           </div>
-          <div className="space-y-4 py-2">
+          <FormSection title="BRAND DETAILS" icon={Tags}>
             <TextField
               fullWidth
               label={
@@ -185,15 +164,16 @@ export const VehicleBrandsTab = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
               }}
-              sx={fieldStyles}
+              InputProps={{ sx: assetFieldStyles }}
             />
-          </div>
+          </FormSection>
           <div className="flex justify-center gap-3 pt-4">
             <Button
               onClick={handleSubmit}
               disabled={submitting}
               className="bg-brand hover:bg-brand-hover text-white min-w-[100px]"
             >
+              <Save className="w-4 h-4 mr-2" />
               {submitting ? "Saving..." : editingBrand ? "Update" : "Add"}
             </Button>
             <Button variant="outline" onClick={() => setIsModalOpen(false)} className="min-w-[100px]">

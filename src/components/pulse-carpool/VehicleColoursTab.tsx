@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, X } from "lucide-react";
+import { Plus, Edit, X, Palette, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { TextField, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -13,6 +14,7 @@ import {
   toggleVehicleColourActive,
 } from "@/services/vehicleConfigApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { FormSection, assetFieldStyles } from "@/components/common/FormSection";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "Id", sortable: true, draggable: true },
@@ -22,16 +24,6 @@ const columns: ColumnConfig[] = [
 ];
 
 const DEFAULT_HEX = "#000000";
-
-const fieldStyles = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "6px",
-    "& fieldset": { borderColor: "#E0E0E0" },
-    "&:hover fieldset": { borderColor: "#1A1A1A" },
-    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)", borderWidth: 2 },
-  },
-  "& .MuiInputLabel-root.Mui-focused": { color: "var(--color-primary)" },
-};
 
 export const VehicleColoursTab = () => {
   const pulseEvents = usePulseEvents();
@@ -134,19 +126,11 @@ export const VehicleColoursTab = () => {
     }
     if (columnKey === "status") {
       return (
-        <button
-          type="button"
-          onClick={() => handleToggleStatus(item)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            item.active ? "bg-brand" : "bg-gray-300"
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              item.active ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
-        </button>
+        <Switch
+          checked={!!item.active}
+          onCheckedChange={() => handleToggleStatus(item)}
+          onClick={(e) => e.stopPropagation()}
+        />
       );
     }
     return item[columnKey as keyof VehicleColour] ?? "-";
@@ -158,12 +142,7 @@ export const VehicleColoursTab = () => {
     </Button>
   );
 
-  const leftActions = (
-    <Button className="bg-brand hover:bg-brand-hover text-white" onClick={openAddModal}>
-      <Plus size={18} className="mr-2" />
-      Add Colour
-    </Button>
-  );
+  const leftActions = <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={openAddModal}><Plus className="w-4 h-4 mr-2" />Add Colour</Button>;
 
   return (
     <div>
@@ -192,7 +171,8 @@ export const VehicleColoursTab = () => {
               <X size={20} className="text-gray-500" />
             </button>
           </div>
-          <div className="space-y-4 py-2">
+          <FormSection title="COLOUR DETAILS" icon={Palette}>
+            <div className="space-y-4">
             <TextField
               fullWidth
               label={
@@ -207,7 +187,7 @@ export const VehicleColoursTab = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();
               }}
-              sx={fieldStyles}
+              InputProps={{ sx: assetFieldStyles }}
             />
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
@@ -225,17 +205,20 @@ export const VehicleColoursTab = () => {
                   onChange={(e) => setHexCode(e.target.value)}
                   placeholder="#000000"
                   InputLabelProps={{ shrink: true }}
-                  sx={{ ...fieldStyles, maxWidth: 140 }}
+                  InputProps={{ sx: assetFieldStyles }}
+                  sx={{ maxWidth: 140 }}
                 />
               </div>
             </div>
-          </div>
+            </div>
+          </FormSection>
           <div className="flex justify-center gap-3 pt-4">
             <Button
               onClick={handleSubmit}
               disabled={submitting}
               className="bg-brand hover:bg-brand-hover text-white min-w-[100px]"
             >
+              <Save className="w-4 h-4 mr-2" />
               {submitting ? "Saving..." : editingColour ? "Update" : "Add"}
             </Button>
             <Button variant="outline" onClick={() => setIsModalOpen(false)} className="min-w-[100px]">

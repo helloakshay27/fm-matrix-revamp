@@ -189,6 +189,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 // Formats a date-like cell value (ISO yyyy-MM-dd, or dd-MM-yyyy) to dd/MM/yyyy for display.
 // Non-date values (amounts, entry numbers, etc.) are passed through unchanged.
@@ -209,6 +210,7 @@ const formatCellDate = (value: any): any => {
 };
 
 const GSTR3BSummaryDetails: React.FC = () => {
+  useAccountingReportViewed("gstr_3b_summary_details");
   const [columns, setColumns] = useState<string[]>([]);
   const [rows, setRows] = useState<any[][]>([]);
   const [totals, setTotals] = useState<any>({});

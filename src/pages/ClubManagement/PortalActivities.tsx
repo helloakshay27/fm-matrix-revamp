@@ -4,6 +4,7 @@ import { LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface PortalActivityRow {
   id: string;
@@ -56,6 +57,7 @@ const formatDateTime = (iso: string) => {
 const MOCK_ROWS: PortalActivityRow[] = [];
 
 const PortalActivities: React.FC = () => {
+  useAccountingReportViewed("portal_activities");
   const defaultFrom = "2026-03-01";
   const defaultTo = "2026-03-31";
 
@@ -131,12 +133,13 @@ const PortalActivities: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
+              accountingEvents.onReportGenerated("portal_activities", { from_date: filters.fromDate, to_date: filters.toDate });
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+            }}
           >
             View
           </Button>

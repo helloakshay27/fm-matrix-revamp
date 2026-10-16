@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
+import { DetailCard } from "@/components/ui/detail-card";
 import { FileText, FileCheck, AlertCircle, Star, Eye, Loader2, X } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
@@ -290,20 +292,18 @@ export const UserDetail = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-white border">
-          <TabsTrigger
+        <AssetTabsList className="grid grid-cols-2 mb-6">
+          <AssetTabsTrigger
             value="User's Detail"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             User's Detail
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="Ride History"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             Ride History
-          </TabsTrigger>
-        </TabsList>
+          </AssetTabsTrigger>
+        </AssetTabsList>
 
         {/* ── User's Detail Tab ── */}
         <TabsContent value="User's Detail">
@@ -323,14 +323,8 @@ export const UserDetail = () => {
           {!passengerLoading && passengerDetail && (
             <>
               {/* User Detail card */}
-              <div className="border border-gray-200 mb-6">
-                <div className="bg-[#F9F7F4] px-6 py-4 flex items-center gap-3 border-b border-gray-200">
-                  <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-[#E91E63]" />
-                  </div>
-                  <h2 className="font-semibold text-base">User Detail</h2>
-                </div>
-                <div className="px-8 py-6 flex gap-8">
+              <DetailCard title="User Detail" icon={<FileText className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
+                <div className="flex gap-8">
                   {/* Profile image */}
                   {/* {passengerDetail.profile_image_url && (
                     <div className="flex-shrink-0">
@@ -357,14 +351,14 @@ export const UserDetail = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </DetailCard>
 
               {/* Aadhaar Card Documents */}
               {passengerDetail.aadhar_documents.length > 0 && (
-                <Section
+                <DetailCard
                   title="Aadhaar Card"
-                  icon={<FileCheck />}
-                  right={
+                  icon={<FileCheck className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     passengerDetail.aadhar_documents[0].verified === 1 ? (
                       <Badge className="bg-[#E8F5E9] text-[#2E7D32] border-0 flex items-center gap-1.5 px-3 py-1.5">
                         <div className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center">
@@ -378,6 +372,7 @@ export const UserDetail = () => {
                       <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5">Pending</Badge>
                     )
                   }
+                  className="mb-5"
                 >
                   <div className="grid grid-cols-4 gap-4">
                     {passengerDetail.aadhar_documents.map((doc) => (
@@ -398,15 +393,15 @@ export const UserDetail = () => {
                       </button>
                     ))}
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Driving License Documents */}
               {passengerDetail.driving_licenses.length > 0 && (
-                <Section
+                <DetailCard
                   title="Driving License"
-                  icon={<FileCheck />}
-                  right={
+                  icon={<FileCheck className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     passengerDetail.driving_licenses[0].verified === 1 ? (
                       <Badge className="bg-[#E8F5E9] text-[#2E7D32] border-0 flex items-center gap-1.5 px-3 py-1.5">
                         <div className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center">
@@ -420,6 +415,7 @@ export const UserDetail = () => {
                       <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5">Pending</Badge>
                     )
                   }
+                  className="mb-5"
                 >
                   <div className="grid grid-cols-4 gap-4">
                     {passengerDetail.driving_licenses.map((doc) => (
@@ -440,20 +436,21 @@ export const UserDetail = () => {
                       </button>
                     ))}
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Reports */}
               {passengerDetail.reports_count > 0 && (
-                <Section
+                <DetailCard
                   title="Reports"
-                  icon={<AlertCircle />}
-                  right={
+                  icon={<AlertCircle className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5 flex items-center gap-1.5">
                       <AlertCircle className="w-3.5 h-3.5" />
                       {passengerDetail.reports[0]?.status ?? "Under Review"}
                     </Badge>
                   }
+                  className="mb-5"
                 >
                   <div>
                     <p className="text-sm text-gray-500 mb-2">Report:</p>
@@ -467,11 +464,11 @@ export const UserDetail = () => {
                       </p>
                     )}
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Reviews */}
-              <Section title="Reviews" icon={<Star />} right={undefined}>
+              <DetailCard title="Reviews" icon={<Star className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
                 <div>
                   <p className="text-sm text-gray-500 mb-3">Reviews:</p>
                   {passengerDetail.reviews_count > 0 ? (
@@ -505,7 +502,7 @@ export const UserDetail = () => {
                     </button>
                   )}
                 </div>
-              </Section>
+              </DetailCard>
             </>
           )}
         </TabsContent>
@@ -616,24 +613,3 @@ const InfoField: React.FC<{ label: string; value: string }> = ({
   </div>
 );
 
-const Section: React.FC<{
-  title: string;
-  icon: React.ReactNode;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}> = ({ title, icon, right, children }) => (
-  <div className="border border-gray-200 mb-6">
-    <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center text-[#E91E63]">
-          {icon}
-        </div>
-        <h3 className="font-semibold text-base">{title}</h3>
-      </div>
-      {right}
-    </div>
-    <div className="bg-white px-6 py-6">
-      {children}
-    </div>
-  </div>
-);

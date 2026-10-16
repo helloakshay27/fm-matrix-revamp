@@ -16,6 +16,7 @@ import {
   type ClassSetup,
   type ClassAttachment,
 } from "./classSetupMockData";
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
 interface TrainerOption {
   id: string;
@@ -25,76 +26,28 @@ interface TrainerOption {
 // The native <input type="time"> picker's popup (hour/minute/AM-PM wheel columns) is
 // browser/OS chrome and can't be recolored via CSS - swapping to MUI X's TimePicker
 // renders that popup in React instead, so its selected-state highlight (and the clock
-// toggle icon) can actually be themed to the brand orange.
+// toggle icon) can actually be themed to the brand ink.
 const timePickerSlotProps = {
   textField: { fullWidth: true as const, variant: "outlined" as const },
-  openPickerButton: { sx: { color: "#DA7756" } },
+  openPickerButton: { sx: { color: "rgba(26,26,24,0.68)" } },
   digitalClockSectionItem: {
     // The section item carries two separately-generated classes (this slot's override,
     // and MuiMenuItem's own default `.Mui-selected` blue) with equal specificity - source
     // order decides the tie, and MenuItem's tends to win. `!important` forces this one through.
     sx: {
       "&.Mui-selected": {
-        backgroundColor: "#DA7756 !important",
+        backgroundColor: "#1A1A18 !important",
         color: "#fff !important",
       },
       "&.Mui-selected:hover, &.Mui-selected:focus": {
-        backgroundColor: "#c9673f !important",
+        backgroundColor: "rgba(26,26,24,0.85) !important",
       },
-    },
-  },
-};
-
-// Matches the Section pattern used by CreditNoteClubAdd/Edit (bg-[#F6F4EE] header bar,
-// circular bg-[#E5E0D3] icon badge in the brand red) so Class Setup's Add/Edit pages look
-// consistent with the rest of Club Management's create/edit flows.
-const Section = ({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <section className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-        {icon}
-      </div>
-      <span className="font-semibold text-lg text-gray-800">{title}</span>
-    </div>
-    <div className="p-6 bg-white">{children}</div>
-  </section>
-);
-
-// Matches AddTicketDashboard's fieldStyles: fixed 45px height, white background, brand-red
-// border on hover/focus - the shared MUI look for create/edit forms across the app.
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": {
-      borderColor: "#ddd",
-    },
-    "&:hover fieldset": {
-      borderColor: "#C72030",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#C72030",
-    },
-  },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": {
-      color: "#C72030",
     },
   },
 };
 
 // TimePicker's field renders as MuiPickersOutlinedInput/MuiPickersInputBase, a different
-// component from the plain OutlinedInput `fieldStyles` above targets. Its `InputProps.sx`
+// component from the plain OutlinedInput `classFieldStyles` targets. Its `InputProps.sx`
 // scopes directly onto that root element itself, so these rules stay top-level (`&...`) -
 // nesting them under another "& .MuiPickersOutlinedInput-root" selector (as fieldStyles
 // briefly did) asks for a descendant with that class, which doesn't exist since the class
@@ -107,19 +60,19 @@ const timePickerFieldSx = {
     borderColor: "#ddd",
   },
   "&:hover .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#DA7756",
+    borderColor: "#1A1A18",
   },
   // MUI ships its own focus rule for this outline scoped to `.Mui-focused:not(.Mui-error)`,
   // which is one specificity unit ahead of a plain `.Mui-focused` override (the `:not()`
   // counts same as a class) and wins the cascade regardless of source order - `!important`
-  // is the only way to reliably beat it. Using the brand orange directly (not the legacy
-  // #C72030 red) since this class isn't caught by theme.css's global #C72030->orange remap.
+  // is the only way to reliably beat it. Uses the brand ink directly since this class
+  // isn't caught by theme.css's global remaps.
   "&.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#DA7756 !important",
+    borderColor: "#1A1A18 !important",
   },
   // The blue ring on focus isn't the fieldset border above - it's the browser's native
   // a11y focus outline on the sections container (a [role="group"] with tabIndex), which
-  // MUI leaves unstyled. The orange fieldset border already shows focus state, so drop it.
+  // MUI leaves unstyled. The ink fieldset border already shows focus state, so drop it.
   "&.Mui-focused": {
     outline: "none",
   },
@@ -133,15 +86,6 @@ const timePickerFieldSx = {
     '&[aria-valuetext="Empty"]': {
       color: "rgba(0, 0, 0, 0.42)",
     },
-  },
-};
-
-// The required-field asterisk is a sibling of the input inside the same FormControl/TextField
-// root, not a descendant of the input itself - so this has to go on the component's own top-level
-// `sx`, not nested inside `InputProps.sx` (which only scopes to the input root).
-const requiredLabelSx = {
-  "& .MuiFormLabel-asterisk": {
-    color: "#DA7756",
   },
 };
 
@@ -356,27 +300,26 @@ export const ClassSetupForm = ({
       </header>
 
       <div className="space-y-6">
-        <Section title="Class Details" icon={<ClipboardList className="w-5 h-5" />}>
+        <ClassFormSection title="Class Details" icon={<ClipboardList />}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
-              label="Class Name"
-              required
+              label={<RequiredLabel>Class Name</RequiredLabel>}
               placeholder="Enter Title"
               value={form.className}
               onChange={(e) => setField("className", e.target.value)}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <FormControl
               fullWidth
               variant="outlined"
-              required
-              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+              sx={{ "& .MuiInputBase-root": classFieldStyles }}
             >
-              <InputLabel shrink>Class Type</InputLabel>
+              <InputLabel shrink>
+                <RequiredLabel>Class Type</RequiredLabel>
+              </InputLabel>
               <MuiSelect
                 value={form.classType}
                 onChange={(e) => setField("classType", e.target.value)}
@@ -398,10 +341,11 @@ export const ClassSetupForm = ({
             <FormControl
               fullWidth
               variant="outlined"
-              required
-              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+              sx={{ "& .MuiInputBase-root": classFieldStyles }}
             >
-              <InputLabel shrink>Activity Type</InputLabel>
+              <InputLabel shrink>
+                <RequiredLabel>Activity Type</RequiredLabel>
+              </InputLabel>
               <MuiSelect
                 value={form.activityType}
                 onChange={(e) => setField("activityType", e.target.value)}
@@ -431,8 +375,7 @@ export const ClassSetupForm = ({
               InputProps={{ sx: fieldStyles }}
             /> */}
             <TextField
-              label="Minimum person"
-              required
+              label={<RequiredLabel>Minimum person</RequiredLabel>}
               type="number"
               placeholder="Enter minimum"
               value={form.minParticipants}
@@ -443,14 +386,12 @@ export const ClassSetupForm = ({
               inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
 
             <TextField
-              label="Maximum person"
-              required
+              label={<RequiredLabel>Maximum person</RequiredLabel>}
               type="number"
               placeholder="Enter maximum"
               value={form.maxCapacity}
@@ -461,9 +402,8 @@ export const ClassSetupForm = ({
               inputProps={{ min: 0, step: 1 }}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
               label="Location"
@@ -473,7 +413,7 @@ export const ClassSetupForm = ({
               fullWidth
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
               label="Duration"
@@ -487,10 +427,10 @@ export const ClassSetupForm = ({
               fullWidth
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
 
-            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
               <InputLabel shrink>Trainer</InputLabel>
               <MuiSelect
                 multiple
@@ -513,13 +453,13 @@ export const ClassSetupForm = ({
               >
                 {trainers.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    <Checkbox checked={form.trainer.includes(t.id)} sx={{ color: "#DA7756", "&.Mui-checked": { color: "#DA7756" } }} />
+                    <Checkbox checked={form.trainer.includes(t.id)} sx={{ color: "#1A1A18", "&.Mui-checked": { color: "#1A1A18" } }} />
                     <ListItemText primary={t.name} />
                   </MenuItem>
                 ))}
               </MuiSelect>
             </FormControl>
-            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
               <InputLabel shrink>Status</InputLabel>
               <MuiSelect
                 value={form.status}
@@ -584,7 +524,7 @@ export const ClassSetupForm = ({
             <div className="md:col-span-3">
               <div className="relative">
                 <textarea
-                  className="peer w-full rounded-md border border-gray-300 p-3 focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756] resize-y"
+                  className="peer w-full rounded-md border border-gray-300 p-3 focus:border-[#1A1A18] focus:outline-none focus:ring-1 focus:ring-[#1A1A18] resize-y"
                   rows={4}
                   value={form.description}
                   onChange={(e) => {
@@ -593,18 +533,18 @@ export const ClassSetupForm = ({
                   placeholder="Enter Description"
                   maxLength={500}
                 />
-                <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-normal text-black/60 peer-focus:text-[#DA7756]">
-                  Class Description<span className="text-[#DA7756]">*</span>
+                <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-normal text-black/60 peer-focus:text-[#1A1A18]">
+                  Class Description<span className="ml-0.5">*</span>
                 </label>
               </div>
               <div className="mt-1 text-right text-xs text-gray-400">{form.description.length}/500</div>
             </div>
           </div>
-        </Section>
+        </ClassFormSection>
 
         {/* Attachment - large "Upload Image" dropzone matching the Figma (dashed box,
             upload icon, "Choose a file or drag & drop it here", centered Browse button). */}
-        <Section title="Attachment" icon={<Paperclip className="w-4 h-4" />}>
+        <ClassFormSection title="Attachment" icon={<Paperclip />}>
           {form.existingAttachments.length > 0 && (
             <div className="space-y-2 mb-4">
               <div className="text-sm font-medium">Existing Attachments</div>
@@ -669,25 +609,26 @@ export const ClassSetupForm = ({
               ))}
             </div>
           )}
-        </Section>
+        </ClassFormSection>
       </div>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="fm-button-fix fm-button-brand px-8 py-2"
-        >
-          {isSubmitting ? submittingLabel : submitLabel}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </button>
       </div>
     </div>
     </LocalizationProvider>

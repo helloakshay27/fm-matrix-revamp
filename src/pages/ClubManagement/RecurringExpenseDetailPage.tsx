@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import {
   bankMasterListUrl,
   getBankMasterApiConfig,
@@ -124,6 +125,7 @@ const resolveApiConfig = (propBaseUrl?: string, propToken?: string) => {
 const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, token: propToken }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const reportRecordLoaded = useAccountingRecordViewed("recurring_expense");
 
   const [item, setItem] = useState<RecurringExpenseAPI | null>(null);
   const [bankDetail, setBankDetail] = useState<any>(null);
@@ -169,6 +171,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
 
         const data: RecurringExpenseAPI = await response.json();
         setItem(data);
+        reportRecordLoaded(id, (data as any)?.status ?? null);
       } catch (err: any) {
         console.error("Failed to fetch recurring expense:", err);
         setError(err.message || "Failed to load recurring expense.");
@@ -245,9 +248,11 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       handleMenuClose();
       const statusMsg = active ? "Recurring expense resumed" : "Recurring expense stopped";
       toast.success(statusMsg);
+      accountingEvents.onActionPerformed("recurring_expense", active ? "resume_recurring" : "stop_recurring", id);
     } catch (err: any) {
       console.error("Failed to update recurring expense:", err);
       toast.error(err.message || "Failed to update recurring expense status");
+      accountingEvents.onSaveFailed("recurring_expense", "action", err, { action: active ? "resume_recurring" : "stop_recurring", record_id: id });
     } finally {
       setIsUpdating(false);
     }
@@ -296,10 +301,12 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
       }
 
       toast.success("Recurring expense deleted successfully");
+      accountingEvents.onRecordDeleted("recurring_expense", id);
       navigate("/accounting/recurring-expenses");
     } catch (err: any) {
       console.error("Failed to delete recurring expense:", err);
       toast.error(err.message || "Failed to delete recurring expense");
+      accountingEvents.onSaveFailed("recurring_expense", "delete", err, { record_id: id });
     } finally {
       setIsUpdating(false);
     }

@@ -4,6 +4,7 @@ import { NotepadText } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface Ledger {
   ledger_id: number;
@@ -61,6 +62,7 @@ const CashFlowStatementReport: React.FC = () => {
   const [pnlData, setPnlData] = useState<CashFlowResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  useAccountingReportViewed("cash_flow_statement");
 
   const GroupTable = ({ pnlData }: { pnlData: any }) => {
 
@@ -249,7 +251,13 @@ const CashFlowStatementReport: React.FC = () => {
           <Button
             type="button"
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
-            onClick={fetchPnlData}
+            onClick={() => {
+              accountingEvents.onReportGenerated("cash_flow_statement", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+              fetchPnlData();
+            }}
             disabled={loading}
           >
             {loading ? "Loading..." : "View"}

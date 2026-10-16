@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import axios from 'axios';
 import {
   AlertDialog,
@@ -117,6 +118,8 @@ export const VendorCreditsListPage: React.FC = () => {
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+    const reportListLoaded = useAccountingListViewed('vendor_credit');
+    useAccountingSearchTracking('vendor_credit', searchTerm);
     const [appliedFilters, setAppliedFilters] = useState<VendorCreditFilters>({});
     const [vendorCreditData, setVendorCreditData] = useState<VendorCredit[]>([]);
     const [loading, setLoading] = useState(false);
@@ -163,6 +166,7 @@ export const VendorCreditsListPage: React.FC = () => {
             const bills: VendorCredit[] = apiData?.data || apiData || [];
 
             setVendorCreditData(apiData);
+            reportListLoaded(Array.isArray(bills) ? bills.length : undefined, apiData?.total_count);
 
             setPagination({
                 current_page: apiData?.current_page || page,
@@ -229,6 +233,7 @@ export const VendorCreditsListPage: React.FC = () => {
             );
 
             toast.success('Vendor credit deleted successfully!');
+            accountingEvents.onRecordDeleted('vendor_credit', deleteTarget.id);
             setShowDeleteModal(false);
             setDeleteTarget(null);
             fetchVendorCreditData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
@@ -236,6 +241,7 @@ export const VendorCreditsListPage: React.FC = () => {
             console.error('Error deleting vendor credit:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             toast.error(`Failed to delete vendor credit: ${errorMessage}`);
+            accountingEvents.onSaveFailed('vendor_credit', 'delete', error, { record_id: deleteTarget.id });
         } finally {
             setDeleteLoading(false);
             setLoading(false);

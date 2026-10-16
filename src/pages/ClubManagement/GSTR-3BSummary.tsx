@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, NotepadText } from "lucide-react";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface Supply {
   taxable_amount_formatted: string;
@@ -42,6 +43,7 @@ const GSTR3BSummary: React.FC = () => {
   const [data, setData] = useState<GSTR3BResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  useAccountingReportViewed("gstr_3b_summary");
   const [selectedFilter, setSelectedFilter] = useState("This Month");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -128,6 +130,7 @@ const GSTR3BSummary: React.FC = () => {
     } else {
       setShowCustom(false);
       calculateDates(option);
+      accountingEvents.onReportGenerated("gstr_3b_summary", { filter_keys: ["period"] });
     }
   };
 
@@ -267,7 +270,17 @@ const GSTR3BSummary: React.FC = () => {
             onChange={(e) => setEndDate(e.target.value)}
             placeholder="End Date"
           />
-          <Button onClick={fetchData}>Apply</Button>
+          <Button
+            onClick={() => {
+              accountingEvents.onReportGenerated("gstr_3b_summary", {
+                from_date: startDate,
+                to_date: endDate,
+              });
+              fetchData();
+            }}
+          >
+            Apply
+          </Button>
         </div>
       )}
 

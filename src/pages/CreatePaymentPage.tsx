@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 
@@ -140,6 +141,7 @@ import {
 
 export const CreatePaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened("payment_made", "create");
   const [lockAccountId, setLockAccountId] = useState(
     () => localStorage.getItem("lock_account_id") || ""
   );
@@ -663,6 +665,11 @@ export const CreatePaymentPage: React.FC = () => {
       );
       sonnerToast.success("Payment saved successfully!");
       const newId = res.data?.id || res.data?.lock_payment?.id;
+      accountingEvents.onRecordCreated("payment_made", newId, {
+        amount: paidAmount,
+        item_count: lock_bill_payments_attributes.length,
+        status: isPaid ? "paid" : "draft",
+      });
       if (newId) {
         navigate(`/accounting/payments-made?paymentId=${newId}&view=detail`);
       } else {
@@ -675,6 +682,7 @@ export const CreatePaymentPage: React.FC = () => {
           ? err.message
           : "Failed to save payment. Please try again.";
       sonnerToast.error(msg);
+      accountingEvents.onSaveFailed("payment_made", "create", err);
     } finally {
       setIsSaving(false);
     }

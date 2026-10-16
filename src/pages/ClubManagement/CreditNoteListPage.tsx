@@ -8,6 +8,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -115,6 +116,8 @@ export const CreditNoteListPage: React.FC = () => {
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+    const reportListLoaded = useAccountingListViewed('credit_note');
+    useAccountingSearchTracking('credit_note', searchTerm);
     const [appliedFilters, setAppliedFilters] = useState<CreditNoteFilters>({});
     const [creditNoteData, setCreditNoteData] = useState<CreditNote[]>([]);
     const [loading, setLoading] = useState(false);
@@ -163,6 +166,7 @@ export const CreditNoteListPage: React.FC = () => {
                     const bills: CreditNote[] = apiData?.data || apiData || [];
         
                     setCreditNoteData(apiData);
+                    reportListLoaded(bills.length, apiData?.total_count);
         
                     setPagination({
                         current_page: apiData?.current_page || page,
@@ -301,11 +305,13 @@ export const CreditNoteListPage: React.FC = () => {
             );
 
             toast.success('Credit note deleted successfully!');
+            accountingEvents.onRecordDeleted('credit_note', deleteTarget.id);
             setShowDeleteModal(false);
             setDeleteTarget(null);
             fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error: unknown) {
             console.error('Error deleting credit note:', error);
+            accountingEvents.onSaveFailed('credit_note', 'delete', error, { record_id: deleteTarget.id });
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             toast.error(`Failed to delete credit note: ${errorMessage}`);
         } finally {

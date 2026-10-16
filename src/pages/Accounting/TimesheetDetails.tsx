@@ -8,6 +8,7 @@ import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import { useAppSelector } from "@/store/hooks";
 
 interface TimesheetRow {
@@ -101,6 +102,7 @@ const TimesheetDetails: React.FC = () => {
     toDate: defaultTo,
     projectId: "all",
   });
+  useAccountingReportViewed("timesheet_details");
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -220,13 +222,14 @@ const TimesheetDetails: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
+              accountingEvents.onReportGenerated("timesheet_details", { from_date: filters.fromDate, to_date: filters.toDate, filter_keys: filters.projectId !== "all" ? ["project_id"] : [] });
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
                 projectId: filters.projectId,
-              })
-            }
+              });
+            }}
           >
             View
           </Button>

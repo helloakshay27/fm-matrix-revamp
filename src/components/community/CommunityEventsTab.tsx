@@ -7,9 +7,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import Switch from "@mui/material/Switch";
+import { Switch } from "@/components/ui/switch";
 import { useAppDispatch } from "@/store/hooks";
 import { updateBroadcast } from "@/store/slices/broadcastSlice";
+import { DetailCard } from "@/components/ui/detail-card";
 import { updateEvent } from "@/store/slices/eventSlice";
 
 interface CommunityEventsTabProps {
@@ -825,25 +826,10 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         <div className="flex items-center gap-2">
           <Switch
             checked={isChecked}
-            onChange={(e) =>
-              handleDocumentStatusChange(document, e.target.checked)
+            onCheckedChange={(checked) =>
+              handleDocumentStatusChange(document, checked)
             }
             disabled={updatingStatus[`doc_${document.id}`]}
-            size="small"
-            sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": {
-                color: "#04A231",
-              },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                backgroundColor: "#04A231",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-                color: "#C72030",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": {
-                backgroundColor: "rgba(199, 32, 48, 0.5)",
-              },
-            }}
           />
           {isChecked ? "Active" : "Inactive"}
         </div>
@@ -883,23 +869,8 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         <div className="flex items-center gap-2">
           <Switch
             checked={isChecked}
-            onChange={(e) => handleNoticeStatusChange(notice, e.target.checked)}
+            onCheckedChange={(checked) => handleNoticeStatusChange(notice, checked)}
             disabled={updatingStatus[notice.id]}
-            size="small"
-            sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": {
-                color: "#04A231",
-              },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                backgroundColor: "#04A231",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-                color: "#C72030",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": {
-                backgroundColor: "rgba(199, 32, 48, 0.5)",
-              },
-            }}
           />
           {isChecked ? "Active" : "Inactive"}
         </div>
@@ -911,25 +882,10 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         <div className="flex items-center gap-2">
           <Switch
             checked={isShowOnHomeScreenChecked}
-            onChange={(e) =>
-              handleShowOnHomeScreenChange(notice, e.target.checked)
+            onCheckedChange={(checked) =>
+              handleShowOnHomeScreenChange(notice, checked)
             }
             disabled={updatingStatus[`home_${notice.id}`]}
-            size="small"
-            sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": {
-                color: "#04A231",
-              },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                backgroundColor: "#04A231",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-                color: "#C72030",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": {
-                backgroundColor: "rgba(199, 32, 48, 0.5)",
-              },
-            }}
           />
           {isShowOnHomeScreenChecked ? "Active" : "Inactive"}
         </div>
@@ -941,25 +897,10 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         <div className="flex items-center gap-2">
           <Switch
             checked={isVisibleAfterExpireChecked}
-            onChange={(e) =>
-              handleVisibleAfterExpireChange(notice, e.target.checked)
+            onCheckedChange={(checked) =>
+              handleVisibleAfterExpireChange(notice, checked)
             }
             disabled={updatingStatus[`expire_${notice.id}`]}
-            size="small"
-            sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": {
-                color: "#04A231",
-              },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                backgroundColor: "#04A231",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-                color: "#C72030",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": {
-                backgroundColor: "rgba(199, 32, 48, 0.5)",
-              },
-            }}
           />
           {isVisibleAfterExpireChecked ? "Active" : "Inactive"}
         </div>
@@ -995,23 +936,8 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
         <div className="flex items-center gap-2">
           <Switch
             checked={isChecked}
-            onChange={(e) => handleEventStatusChange(event, e.target.checked)}
+            onCheckedChange={(checked) => handleEventStatusChange(event, checked)}
             disabled={updatingStatus[`event_${event.id}`]}
-            size="small"
-            sx={{
-              "& .MuiSwitch-switchBase.Mui-checked": {
-                color: "#04A231",
-              },
-              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                backgroundColor: "#04A231",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-                color: "#C72030",
-              },
-              "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": {
-                backgroundColor: "rgba(199, 32, 48, 0.5)",
-              },
-            }}
           />
           {isChecked ? "Active" : "Inactive"}
         </div>
@@ -1023,20 +949,16 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
   return (
     <div className="space-y-6">
       {/* Events Section */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <File size={16} />
-          </div>
-          <span className="font-semibold text-lg text-gray-800">Events</span>
-        </div>
-
-        <EnhancedTable
+      <DetailCard
+          title="Events"
+          icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+      >
+          <EnhancedTable
           data={events}
           columns={eventColumns}
           renderCell={renderEventCell}
           hideColumnsButton={true}
-          hideTableSearch={true}
+          hideTableSearch={false}
           selectable={true}
           enableSelection={true}
           storageKey="community_events"
@@ -1057,23 +979,19 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
           selectedItems={selectedEvents}
           getItemId={(item: any) => String(item.id)}
         />
-      </div>
+      </DetailCard>
 
       {/* Documents Section */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <File size={16} />
-          </div>
-          <span className="font-semibold text-lg text-gray-800">Documents</span>
-        </div>
-
-        <EnhancedTable
+      <DetailCard
+          title="Documents"
+          icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+      >
+          <EnhancedTable
           data={documents}
           columns={documentColumns}
           renderCell={renderDocumentCell}
           hideColumnsButton={true}
-          hideTableSearch={true}
+          hideTableSearch={false}
           selectable={true}
           enableSelection={true}
           storageKey="community_documents"
@@ -1096,23 +1014,19 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
           selectedItems={selectedDocuments}
           getItemId={(item: any) => String(item.id)}
         />
-      </div>
+      </DetailCard>
 
       {/* Notices Section */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <File size={16} />
-          </div>
-          <span className="font-semibold text-lg text-gray-800">Notices</span>
-        </div>
-
-        <EnhancedTable
+      <DetailCard
+          title="Notices"
+          icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+      >
+          <EnhancedTable
           data={notices}
           columns={noticeColumns}
           renderCell={renderNoticeCell}
           hideColumnsButton={true}
-          hideTableSearch={true}
+          hideTableSearch={false}
           selectable={true}
           enableSelection={true}
           storageKey="community_notices"
@@ -1133,7 +1047,7 @@ const CommunityEventsTab = ({ communityId }: CommunityEventsTabProps) => {
           selectedItems={selectedNotices}
           getItemId={(item: any) => String(item.id)}
         />
-      </div>
+      </DetailCard>
 
       {/* Document Selection Panel */}
       {selectedDocuments.length > 0 && (

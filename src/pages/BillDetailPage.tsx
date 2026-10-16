@@ -38,6 +38,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 
 // Types
@@ -164,6 +165,14 @@ export const BillDetailPage = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const reportRecordLoaded = useAccountingRecordViewed("bill");
+
+    // No detail API on this page yet (mock data) — report the view on mount.
+    useEffect(() => {
+        reportRecordLoaded(id, null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
 
     const selectMenuProps = {
         PaperProps: {

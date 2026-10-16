@@ -45,6 +45,7 @@ import ItemSearchInput from '@/components/ItemSearchInput';
 
 import { useAppDispatch } from '@/store/hooks';
 import axios from 'axios';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import {
     BankRecord,
     bankMasterListUrl,
@@ -144,6 +145,7 @@ interface BulkItemModalProps {
 
 export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
+    useAccountingFormOpened('purchase_order', 'create');
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -1538,13 +1540,21 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
             if (response.status === 200 || response.status === 201) {
                 toast.success(`Purchase order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+                accountingEvents.onRecordCreated('purchase_order', response.data?.id ?? response.data?.purchase_order?.id, {
+                    amount: totalAmount,
+                    item_count: items.filter(item => item.name).length,
+                    status: saveAsDraft ? 'draft' : 'sent',
+                });
                 navigate('/accounting/purchase-order');
             } else {
                 toast.error('Failed to create purchase order');
+                accountingEvents.onSaveFailed('purchase_order', 'create', new Error(`HTTP ${response.status}`));
             }
         } catch (error) {
             console.error('Error submitting purchase order:', error);
             toast.error('Failed to create purchase order');
+            accountingEvents.onSaveFailed('purchase_order', 'create', error);
+
         } finally {
             setIsSubmitting(false);
         }

@@ -1020,22 +1020,22 @@ export const AddFMUserPage = () => {
               </div>
             </Box>
             {/* Action Buttons */}
-            <div className="flex justify-center gap-4 pt-6">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
+                type="button"
                 onClick={handleCancel}
-                className="fm-button-fix px-8 py-3 text-base font-medium"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 disabled={loadingSubmitting}
                 onClick={handleSubmit}
-                variant="ghost"
-                className="fm-button-fix fm-button-brand px-8 py-3 text-base font-medium"
+                className="fm-action-primary"
               >
                 Submit
-              </Button>
+              </button>
             </div>
       </div>
 

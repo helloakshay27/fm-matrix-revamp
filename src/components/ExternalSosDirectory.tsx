@@ -1,6 +1,6 @@
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Button } from "./ui/button"
-import { Edit, Eye, Plus } from "lucide-react"
+import { Plus, Edit, Eye } from "lucide-react"
 import { Switch } from "./ui/switch"
 import { EnhancedTable } from "./enhanced-table/EnhancedTable"
 import { useNavigate } from "react-router-dom"
@@ -132,13 +132,7 @@ const ExternalSosDirectory = ({
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => navigate("/pulse/sos-directory/add?type=external")}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/sos-directory/add?type=external")}><Plus className="w-4 h-4 mr-2" />Add</Button>
         </>
     );
 

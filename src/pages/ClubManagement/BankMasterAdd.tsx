@@ -23,6 +23,7 @@ import {
   validateBankField,
   validateBankRecord,
 } from './bankMasterUtils';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 const SANITIZERS: Partial<Record<keyof BankRecord, (value: string) => string>> = {
   beneficiaryName: sanitizeNameLikeInput,
@@ -43,6 +44,7 @@ const BankMasterAdd = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [existingAccountNumbers, setExistingAccountNumbers] = useState<string[]>([]);
+  useAccountingFormOpened('bank', 'create');
 
   useEffect(() => {
     const loadExistingBanks = async () => {
@@ -143,15 +145,19 @@ const BankMasterAdd = () => {
     try {
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
 
-      await axios.post(
+      const response = await axios.post(
         bankMasterListUrl(baseUrl, lockAccountId),
         buildBankMastersPayload(normalizedRows),
         { headers }
       );
 
       toast.success(`${normalizedRows.length} bank detail${normalizedRows.length > 1 ? 's' : ''} added successfully`);
+      accountingEvents.onRecordCreated('bank', response.data?.id ?? response.data?.bank_master?.id, {
+        item_count: normalizedRows.length,
+      });
       navigate('/accounting/bank-master');
     } catch (error) {
+      accountingEvents.onSaveFailed('bank', 'create', error);
       const rowErrors = parseBankMasterApiErrors(error);
 
       if (rowErrors.length > 0) {

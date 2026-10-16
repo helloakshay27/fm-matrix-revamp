@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const PaymentMadeTemplateEditPage: React.FC = () => (
+export const PaymentMadeTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="payment_made"
     moduleLabel="Payment Made"
@@ -10,6 +13,7 @@ export const PaymentMadeTemplateEditPage: React.FC = () => (
     backRoute="/accounting/payments-made"
     detailsRoutePrefix="/accounting/payments-made"
   />
-);
+  );
+};
 
 export default PaymentMadeTemplateEditPage;

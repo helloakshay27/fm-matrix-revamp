@@ -43,6 +43,10 @@ const HEADERS = [
   "Outstanding %",
 ];
 
+// Local-time YYYY-MM-DD (toISOString would shift the date back a day in timezones ahead of UTC)
+const formatLocalDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
   startDate,
   endDate,
@@ -52,13 +56,16 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (signal?: AbortSignal) => {
+    // siteIds is passed (even as "") by the dashboard; "" means the site list is still loading.
+    const siteId = siteIds ?? localStorage.getItem("selectedSiteId") ?? "";
+    if (siteIds !== undefined && !siteId) return;
+
     setLoading(true);
     setError(null);
     try {
-      const siteId = siteIds || localStorage.getItem("selectedSiteId") || "";
       const fromDate = startDate || "2020-01-01";
-      const toDate = endDate || new Date().toISOString().split("T")[0];
+      const toDate = endDate || formatLocalDate(new Date());
 
       const params = new URLSearchParams({
         from_date: fromDate,
@@ -68,19 +75,23 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
       if (siteId) params.set("site_id", siteId);
 
       const url = `${getFullUrl("/pms/account_setups/total_outstanding_amount_client_wise")}?${params.toString()}`;
-      const response = await fetch(url, getAuthenticatedFetchOptions());
+      const response = await fetch(url, { ...getAuthenticatedFetchOptions(), signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: ApiResponse = await response.json();
       setRows(Array.isArray(data.client_outstanding) ? data.client_outstanding : []);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [startDate, endDate, siteIds]);
 
   useEffect(() => {
-    fetchData();
+    // Abort the in-flight request when filters change so a stale response can't overwrite a newer one.
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
   }, [fetchData]);
 
   return (
@@ -99,7 +110,7 @@ const AmountClientWiseCard: React.FC<AmountClientWiseCardProps> = ({
         </h3>
         <RefreshCw
           className={`w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors ${loading ? "animate-spin" : ""}`}
-          onClick={fetchData}
+          onClick={() => fetchData()}
         />
       </div>
 

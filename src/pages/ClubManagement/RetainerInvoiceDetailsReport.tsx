@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface RawRetainerItem {
   status?: string;
@@ -73,6 +74,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const RetainerInvoiceDetailsReport: React.FC = () => {
+  useAccountingReportViewed("retainer_invoice_details");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<RetainerInvoiceRow[]>([]);
@@ -149,6 +151,7 @@ const RetainerInvoiceDetailsReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
+    accountingEvents.onReportGenerated("retainer_invoice_details", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchRetainerInvoiceDetails();
   };
 

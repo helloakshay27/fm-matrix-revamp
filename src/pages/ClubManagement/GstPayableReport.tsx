@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { User, FileCog, NotepadText, Heading1 } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 
 // const taxSummaryData = [
@@ -87,6 +88,7 @@ const GstPayableReport: React.FC = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
+    useAccountingReportViewed("gst_payable");
 
     const [gstData, setGstData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -389,7 +391,13 @@ const GstPayableReport: React.FC = () => {
                     {/* VIEW BUTTON */}
                     <Button
                         // onClick={handleView}
-                        onClick={fetchTaxSummary}
+                        onClick={() => {
+                            accountingEvents.onReportGenerated("gst_payable", {
+                                from_date: filters.fromDate,
+                                to_date: filters.toDate,
+                            });
+                            fetchTaxSummary();
+                        }}
                         className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
                     >
                         View

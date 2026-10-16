@@ -5,6 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import { Button } from "@/components/ui/button";
 
 // ─── TYPES ─────────────────────────────────────────
@@ -102,6 +103,7 @@ const ARAgingSummaryReport: React.FC = () => {
   const [rows, setRows] = useState<ARAgingRow[]>([]);
   const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("ar_aging_summary");
 
   const [detailView, setDetailView] = useState<{
     bucket: string;
@@ -513,7 +515,10 @@ const ARAgingSummaryReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={fetchARAging}
+            onClick={() => {
+              accountingEvents.onReportGenerated("ar_aging_summary", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchARAging();
+            }}
           >
             View
           </Button>

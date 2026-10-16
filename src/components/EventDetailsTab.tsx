@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchEventById, updateEvent } from "@/store/slices/eventSlice";
+import { ClassFormSection } from "@/pages/ClubManagement/ClassFormSection";
 import { format } from "date-fns";
 
 
@@ -126,7 +127,7 @@ export const EventDetailsTab = () => {
     return (
       <div className="p-6 bg-[#F6F7F7] min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-700">Loading event details...</p>
         </div>
       </div>
@@ -156,19 +157,11 @@ export const EventDetailsTab = () => {
       </div>
 
       {/* Main Content Card: Event Details */}
-      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
-        {/* Card Header */}
-        <div className="px-6 pt-6 pb-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
-                <Info className="w-[18px] h-[18px]" />
-              </div>
-              <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
-                EVENT DETAILS
-              </h2>
-            </div>
-
+      <div className="mb-6">
+      <ClassFormSection
+        title="Event Details"
+        icon={<Info />}
+        actions={
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Seat's Remaining</span>
@@ -187,11 +180,9 @@ export const EventDetailsTab = () => {
                 </span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Card Body */}
-        <div className="p-6 bg-white border-b border-gray-200">
+        }
+      >
+        <div>
           <div className="flex flex-col lg:flex-row gap-8 mb-8">
             {/* Banner Image Carousel */}
             <div className="lg:w-1/2 aspect-[16/6] relative rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
@@ -316,23 +307,19 @@ export const EventDetailsTab = () => {
             />
           </div>
         </div>
+      </ClassFormSection>
       </div>
 
       {/* Share Section Card */}
-      <div className="border border-gray-200 overflow-hidden mb-6 bg-white rounded-2xl shadow-sm">
-        <div className="px-6 pt-6 pb-0 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
-            <Share2 className="w-[18px] h-[18px]" />
-          </div>
-          <span className="text-sm font-semibold uppercase text-[#1A1A1A]">Share</span>
-        </div>
-
-        <div className="px-6 pb-6 pt-3 bg-white">
+      <div className="mb-6">
+      <ClassFormSection title="Share" icon={<Share2 />}>
+        <div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="flex items-center gap-8">
+            <div className="flex items-start">
               <span className="text-sm text-gray-500 min-w-[160px]">
                 Share With
               </span>
+              <span className="text-sm text-gray-500 mx-2">:</span>
               <span className="text-sm font-medium text-gray-900">
                 {eventData.share_with === "all"
                   ? "All Tech Parks"
@@ -342,10 +329,11 @@ export const EventDetailsTab = () => {
               </span>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-start">
               <span className="text-sm text-gray-500 min-w-[160px]">
                 Share With Communities
               </span>
+              <span className="text-sm text-gray-500 mx-2">:</span>
               <span className="text-sm font-medium text-gray-900">
                 {eventData.communities && eventData.communities.length > 0
                   ? eventData.communities.map((c) => c.name).join(", ")
@@ -354,6 +342,7 @@ export const EventDetailsTab = () => {
             </div>
           </div>
         </div>
+      </ClassFormSection>
       </div>
     </div>
   );
@@ -367,10 +356,11 @@ const DetailItem = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="flex items-center gap-8">
+  <div className="flex items-start">
     <span className="text-sm text-gray-500 min-w-[140px] md:min-w-[160px]">
       {label}
     </span>
+    <span className="text-sm text-gray-500 mx-2">:</span>
     <span className="text-sm font-medium text-gray-900">{value ?? "-"}</span>
   </div>
 );

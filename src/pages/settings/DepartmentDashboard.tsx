@@ -217,7 +217,8 @@ export const DepartmentDashboard = () => {
 
   const leftActions = shouldShow("Department", "create") ? (
     <Button
-      className="bg-[#1a1a18] hover:bg-[#12100e] text-white h-9 px-4 text-sm font-medium"
+      size="sm"
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       onClick={() => setIsDialogOpen(true)}
     >
       <Plus className="w-4 h-4 mr-2" />
@@ -295,20 +296,21 @@ export const DepartmentDashboard = () => {
                 className="mt-1"
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={() => setIsDialogOpen(false)}
-                className="rounded-lg"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleSubmit}
-                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
+                className="fm-action-primary"
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -333,20 +335,21 @@ export const DepartmentDashboard = () => {
                 className="mt-1"
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="rounded-lg"
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleEditSubmit}
-                className="bg-[#1a1a18] hover:bg-[#12100e] text-white rounded-lg"
+                className="fm-action-primary"
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

@@ -148,7 +148,7 @@ const CommunityReportsTab = ({ communityId }: CommunityReportsTabProps) => {
                 data={reports}
                 columns={columns}
                 renderCell={renderCell}
-                hideTableSearch={true}
+                hideTableSearch={false}
                 hideColumnsButton={true}
                 getItemId={(item: any) => String(item.id)}
             />

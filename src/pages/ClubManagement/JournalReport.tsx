@@ -6,6 +6,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface JournalRecord {
   id?: number;
@@ -146,6 +147,7 @@ const JournalReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lockAccountId = localStorage.getItem("lock_account_id");
+  useAccountingReportViewed("journal");
 
   const defaultRange = useMemo(() => getDefaultRange(), []);
   const [filters, setFilters] = useState({
@@ -411,7 +413,14 @@ const JournalReport: React.FC = () => {
           </TextField>
           <Button
             type="button"
-            onClick={fetchJournalReport}
+            onClick={() => {
+              accountingEvents.onReportGenerated("journal", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+                filter_keys: ["basis"],
+              });
+              fetchJournalReport();
+            }}
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
           >
             View

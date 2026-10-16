@@ -25,6 +25,7 @@ import {
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
 import { Receipt, FileText, Landmark, ArrowLeft } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import {
   BankRecord,
   bankMasterListUrl,
@@ -186,6 +187,7 @@ const getApiUrl = (): string => {
 // ── Component ────────────────────────────────────────────────────────────────
 export const ExpenseCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened('expense', 'create');
 
   useEffect(() => {
     document.title = 'New Expense';
@@ -789,14 +791,20 @@ export const ExpenseCreatePage: React.FC = () => {
 
       if (res.ok) {
         sonnerToast.success('Expense created successfully!');
+        accountingEvents.onRecordCreated('expense', null, {
+          amount: payload.expense.amount,
+          item_count: expenseAccountsAttributes.length,
+        });
         navigate('/accounting/expense');
       } else {
         const err = await res.json();
         sonnerToast.error(err.message || 'Failed to create expense');
+        accountingEvents.onSaveFailed('expense', 'create', err);
       }
     } catch (err) {
       console.error('Error creating expense:', err);
       sonnerToast.error('Network error. Please try again.');
+      accountingEvents.onSaveFailed('expense', 'create', err);
     } finally {
       setIsSubmitting(false);
     }

@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { accountingToast as toast } from '@/lib/accountingToast';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import '@/styles/accounting.css';
 import { format, parseISO } from 'date-fns';
 import {
@@ -264,6 +265,7 @@ export const SalesOrderCreatePage: React.FC = () => {
     );
     const navigate = useNavigate();
     const location = useLocation();
+    useAccountingFormOpened('sales_order', 'create');
 
     useEffect(() => {
         document.title = 'New Sales Order';
@@ -1472,11 +1474,17 @@ export const SalesOrderCreatePage: React.FC = () => {
                 body: formData
             });
 
+            accountingEvents.onRecordCreated('sales_order', null, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'confirmed',
+            });
             toast.success(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/sales-order');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             toast.error('Failed to create sales order');
+            accountingEvents.onSaveFailed('sales_order', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

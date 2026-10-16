@@ -22,6 +22,9 @@ import { useSelector } from 'react-redux';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
+import { AttachmentDropzone } from '@/components/AttachmentDropzone';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface AttachmentFile {
   id: string;
@@ -81,7 +84,6 @@ export const AddGatePassInwardPage = () => {
   const location = useLocation();
   const gatePassEvents = useGatePassEvents();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // PostHog: form funnel tracking (F1 · Inward Pass Creation)
   const formOpenedAtRef = useRef<number>(Date.now());
@@ -285,16 +287,15 @@ export const AddGatePassInwardPage = () => {
   };
   console.log("itemCategoryOptions:----", itemCategoryOptions);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map(file => ({
-        id: `${file.name}-${Date.now()}`,
-        file: file,
-        name: file.name,
-        url: URL.createObjectURL(file),
-      }));
-      setAttachments(prev => [...prev, ...newFiles]);
-    }
+  const addAttachmentFiles = (files: File[]) => {
+    if (!files.length) return;
+    const newFiles = files.map(file => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      file,
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }));
+    setAttachments(prev => [...prev, ...newFiles]);
   };
 
   const handleRemoveAttachment = (id: string) => {
@@ -541,6 +542,176 @@ export const AddGatePassInwardPage = () => {
   const handleGoBack = () => {
     captureFormAbandoned();
     navigate('/security/gate-pass/inwards');
+  };
+
+  const itemColumns: ColumnConfig[] = [
+    { key: 'srNo', label: 'Sr.No.', defaultVisible: true, hideable: false },
+    { key: 'itemType', label: 'Item Type', defaultVisible: true, hideable: false },
+    { key: 'itemCategory', label: 'Item Category', defaultVisible: true, hideable: false },
+    { key: 'itemName', label: 'Item Name', defaultVisible: true, hideable: false },
+    { key: 'quantity', label: 'Quantity', defaultVisible: true, hideable: false },
+    { key: 'unit', label: 'Unit', defaultVisible: true, hideable: false },
+    { key: 'description', label: 'Description', defaultVisible: true, hideable: false },
+  ];
+
+  const renderItemCell = (row: MaterialRow, columnKey: string): React.ReactNode => {
+    const index = materialRows.findIndex(r => r.id === row.id);
+    switch (columnKey) {
+      case 'srNo':
+        return index + 1;
+      case 'itemType':
+        return (
+          <FormControl fullWidth variant="outlined" size="small">
+                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <MuiSelect
+                          label="Item Type"
+                          notched
+                          displayEmpty
+                          value={row.itemTypeId || ''}
+                          onChange={e => handleRowChange(row.id, 'itemTypeId', e.target.value)}
+                        >
+                          <MenuItem value="">Select Type</MenuItem>
+                          {itemTypeOptions.map((option) => (
+                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+        );
+      case 'itemCategory':
+        return (
+          <FormControl fullWidth variant="outlined" size="small">
+                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <MuiSelect
+                          label="Item Category"
+                          notched
+                          displayEmpty
+                          value={
+                            row.itemCategoryId !== null && row.itemCategoryId !== undefined
+                              ? String(row.itemCategoryId)
+                              : ''
+                          }
+                          onChange={e => {
+                            const value = e.target.value;
+                            // If "Other" is selected, set itemCategoryId to -1 (number)
+                            // If a valid option is selected, set itemCategoryId to its id (string or number)
+                            // If empty, set to null
+                            if (value === String(-1)) {
+                              handleRowChange(row.id, 'itemCategoryId', -1);
+                            } else if (value === '') {
+                              handleRowChange(row.id, 'itemCategoryId', null);
+                            } else {
+                              // If not "Other", set to the id (convert to number if possible)
+                              const numVal = Number(value);
+                              handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
+                            }
+                          }}
+                          disabled={!row.itemTypeId}
+                        >
+                          <MenuItem value="">Select Category</MenuItem>
+                          {(itemCategoryOptions[row.id] || [])
+                            .filter(option => option.id !== "" && option.name !== "")
+                            .map((option) => (
+                              <MenuItem key={option.id} value={String(option.id)}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  maxWidth: 180,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {option.name}
+                                </span>
+                              </MenuItem>
+                            ))}
+                          <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+        );
+      case 'itemName':
+        return (
+          <>
+          {/* If "Other" is selected, show input, else dropdown */}
+                      {row.itemCategoryId === -1 ? (
+                        <TextField
+                          variant="outlined"
+                          size="small"
+                          placeholder="Enter Item Name"
+                          value={row.otherMaterialName || ''}
+                          onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
+                          required
+
+                        />
+                      ) : (
+                        <FormControl fullWidth variant="outlined" size="small">
+                          <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
+                          <MuiSelect
+                            label="Item Name"
+                            notched
+                            displayEmpty
+                            value={row.itemNameId || ''}
+                            onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+                            disabled={!row.itemCategoryId}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxWidth: 200,
+                                },
+                              },
+                            }}
+                          >
+                            <MenuItem value="">Select Item</MenuItem>
+                            {(itemNameOptions[row.id] || []).map((option) => (
+                              <MenuItem key={option.id} value={option.id}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  maxWidth: 180,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {option.name}
+                                </span>
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
+          </>
+        );
+      case 'quantity':
+        return (
+          <TextField
+                        variant="outlined"
+                        size="small"
+                        type="number"
+                        value={row.quantity}
+
+                        label="Quantity" InputLabelProps={{ shrink: true }} placeholder='Quantity'
+                        onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
+                      />
+        );
+      case 'unit':
+        return (
+          <TextField
+                        variant="outlined"
+                        size="small"
+                        label="Unit" InputLabelProps={{ shrink: true }} placeholder="Unit"
+
+                        value={row.unit}
+                        onChange={e => {
+                          const value = e.target.value;
+                          if (/^[a-zA-Z ]*$/.test(value)) handleRowChange(row.id, 'unit', value);
+                        }}
+                        inputProps={{ maxLength: 20, pattern: '[a-zA-Z ]*' }}
+                      />
+        );
+      case 'description':
+        return (
+          <TextField variant="outlined" size="small" label="Description" InputLabelProps={{ shrink: true }} placeholder='Enter Description' value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} />
+        );
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -883,175 +1054,23 @@ export const AddGatePassInwardPage = () => {
                 Add Item
               </Button>
             </div>
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500">
-              <thead className="text-xs text-white uppercase bg-[#C72030]">
-                <tr>
-                  <th scope="col" className="px-4 py-3" style={{ width: '30px' }}>Sr.No.</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Type</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Category</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Name</th>
-                  <th scope="col" className="px-4 py-3">Quantity</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '80px' }}>Unit</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Description</th>
-                  {/* <th scope="col" className="px-4 py-3 sticky right-0 bg-white z-10" style={{ width: '120px' }}>Attachments</th> */}
-                  <th scope="col" className="px-4 py-3" style={{ width: '80px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materialRows.map((row, index) => (
-                  <tr key={row.id} className="bg-white border-b">
-                    <td className="px-4 py-2 pt-4" style={{ width: '30px' }}>{index + 1}</td>
-                    <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small">
-                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Type"
-                          notched
-                          displayEmpty
-                          value={row.itemTypeId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemTypeId', e.target.value)}
-                        >
-                          <MenuItem value="">Select Type</MenuItem>
-                          {itemTypeOptions.map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small">
-                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Category"
-                          notched
-                          displayEmpty
-                          value={
-                            row.itemCategoryId !== null && row.itemCategoryId !== undefined
-                              ? String(row.itemCategoryId)
-                              : ''
-                          }
-                          onChange={e => {
-                            const value = e.target.value;
-                            // If "Other" is selected, set itemCategoryId to -1 (number)
-                            // If a valid option is selected, set itemCategoryId to its id (string or number)
-                            // If empty, set to null
-                            if (value === String(-1)) {
-                              handleRowChange(row.id, 'itemCategoryId', -1);
-                            } else if (value === '') {
-                              handleRowChange(row.id, 'itemCategoryId', null);
-                            } else {
-                              // If not "Other", set to the id (convert to number if possible)
-                              const numVal = Number(value);
-                              handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
-                            }
-                          }}
-                          disabled={!row.itemTypeId}
-                        >
-                          <MenuItem value="">Select Category</MenuItem>
-                          {(itemCategoryOptions[row.id] || [])
-                            .filter(option => option.id !== "" && option.name !== "")
-                            .map((option) => (
-                              <MenuItem key={option.id} value={String(option.id)}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  maxWidth: 180,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  {option.name}
-                                </span>
-                              </MenuItem>
-                            ))}
-                          <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      {/* If "Other" is selected, show input, else dropdown */}
-                      {row.itemCategoryId === -1 ? (
-                        <TextField
-                          variant="outlined"
-                          size="small"
-                          placeholder="Enter Item Name"
-                          value={row.otherMaterialName || ''}
-                          onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
-                          required
-
-                        />
-                      ) : (
-                        <FormControl fullWidth variant="outlined" size="small">
-                          <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
-                          <MuiSelect
-                            label="Item Name"
-                            notched
-                            displayEmpty
-                            value={row.itemNameId || ''}
-                            onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
-                            disabled={!row.itemCategoryId}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  maxWidth: 200,
-                                },
-                              },
-                            }}
-                          >
-                            <MenuItem value="">Select Item</MenuItem>
-                            {(itemNameOptions[row.id] || []).map((option) => (
-                              <MenuItem key={option.id} value={option.id}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  maxWidth: 180,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  {option.name}
-                                </span>
-                              </MenuItem>
-                            ))}
-                          </MuiSelect>
-                        </FormControl>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 pt-4">
-                      <TextField
-                        variant="outlined"
-                        size="small"
-                        type="number"
-                        value={row.quantity}
-
-                        placeholder='Quantity'
-                        onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 pt-4">
-                      <TextField
-                        variant="outlined"
-                        size="small"
-                        placeholder="Unit"
-
-                        value={row.unit}
-                        onChange={e => {
-                          const value = e.target.value;
-                          if (/^[a-zA-Z ]*$/.test(value)) handleRowChange(row.id, 'unit', value);
-                        }}
-                        inputProps={{ maxLength: 20, pattern: '[a-zA-Z ]*' }}
-                      />
-                    </td>
-                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" placeholder='Enter Description' value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
-                    <td className="px-4 py-2 pt-4" style={{ width: '80px' }}>
-                      <button type="button" onClick={() => handleDeleteRow(row.id)}>
-                        <Trash2 className="w-4 h-4 text-black" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
+            <EnhancedTable
+              data={materialRows}
+              columns={itemColumns}
+              getItemId={(row: MaterialRow) => String(row.id)}
+              renderCell={renderItemCell}
+              renderActions={(row: MaterialRow) => (
+                <button type="button" onClick={() => handleDeleteRow(row.id)}>
+                  <Trash2 className="w-4 h-4 text-black" />
+                </button>
+              )}
+              storageKey="gate-pass-inward-items-table"
+              hideTableSearch
+              hideTableExport
+              hideColumnsButton
+              pagination={false}
+              emptyMessage="No items added"
+            />
           </div>
         </div>
 
@@ -1144,34 +1163,7 @@ export const AddGatePassInwardPage = () => {
               })}
               </div>
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <MuiButton
-                variant="outlined"
-                onClick={() => fileInputRef.current?.click()}
-                sx={{
-                  borderColor: '#C72030',
-                  color: '#C72030',
-                  textTransform: 'none',
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 500,
-                  borderRadius: '0',
-                  padding: '8px 16px',
-                  '&:hover': {
-                    borderColor: '#B8252F',
-                    backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                  },
-                }}
-              >
-                Add Attachment
-              </MuiButton>
-              <input
-                type="file"
-                ref={fileInputRef}
-                multiple
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </Box>
+            <AttachmentDropzone onFilesAdded={addAttachmentFiles} fileCount={attachments.length} />
           </div>
         </div>
 

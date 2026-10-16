@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface TransactionRow {
   date?: string;
@@ -115,6 +116,7 @@ const formatValue = (value?: number) => {
 
 const AccountTypeTransactionsReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("account_type_transactions");
 
   const openDetails = (
     sectionTitle: string,

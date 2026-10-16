@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 const getClosingStockRows = (payload: any): any[] => {
     if (Array.isArray(payload)) return payload;
@@ -37,6 +38,7 @@ const getTransactionRoute = (transactionType: string, transactionId: any): strin
 export const BalanceSheetDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    useAccountingReportViewed("balance_sheet_details");
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");

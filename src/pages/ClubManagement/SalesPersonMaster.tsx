@@ -7,6 +7,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { Dialog, DialogContent, TextField } from '@mui/material';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingListViewed } from '@/components/PostHogAccountingEvents';
 
 interface SalesPerson {
     id: number;
@@ -63,6 +64,7 @@ export const SalesPersonMaster: React.FC = () => {
     });
 
     const [submitting, setSubmitting] = useState(false);
+    const reportListLoaded = useAccountingListViewed('sales_person');
 	 const lock_account_id = localStorage.getItem("lock_account_id");
     const LOCK_ACCOUNT_ID = 1; // Hardcoded as per requirement
 
@@ -82,6 +84,7 @@ export const SalesPersonMaster: React.FC = () => {
 
             setSalesPersons(data);
             setTotalRecords(data.length);
+            reportListLoaded(data.length, data.length);
         } catch (error) {
             toast.error('Failed to load sales persons');
         } finally {
@@ -150,6 +153,7 @@ export const SalesPersonMaster: React.FC = () => {
             }
 
             toast.success('Salesperson added successfully');
+            accountingEvents.onRecordCreated('sales_person', null);
 
             setAddModalOpen(false);
             setFormData({ id: 0, name: '', email: '', active: true });
@@ -157,6 +161,7 @@ export const SalesPersonMaster: React.FC = () => {
             fetchSalesPersons();
         } catch (error) {
             toast.error('Failed to add salesperson');
+            accountingEvents.onSaveFailed('sales_person', 'create', error);
         } finally {
             setSubmitting(false);
         }
@@ -190,10 +195,12 @@ export const SalesPersonMaster: React.FC = () => {
             if (!response.ok) throw new Error('Failed to update');
 
             toast.success('Salesperson updated successfully');
+            accountingEvents.onRecordUpdated('sales_person', formData.id);
             setEditModalOpen(false);
             fetchSalesPersons();
         } catch (error) {
             toast.error('Failed to update salesperson');
+            accountingEvents.onSaveFailed('sales_person', 'update', error, { record_id: formData.id });
         } finally {
             setSubmitting(false);
         }
@@ -229,9 +236,11 @@ export const SalesPersonMaster: React.FC = () => {
             );
 
             toast.success('Status updated successfully');
+            accountingEvents.onActionPerformed('sales_person', 'status_change', sp.id, { active: !sp.active });
             fetchSalesPersons();
-        } catch {
+        } catch (error) {
             toast.error('Failed to update status');
+            accountingEvents.onSaveFailed('sales_person', 'action', error, { action: 'status_change', record_id: sp.id });
         }
     };
     // ================= RENDER ROW =================
@@ -315,10 +324,12 @@ export const SalesPersonMaster: React.FC = () => {
             if (!response.ok) throw new Error("Delete failed");
 
             toast.success("Salesperson deleted successfully");
+            accountingEvents.onRecordDeleted('sales_person', sp.id);
 
             fetchSalesPersons();
-        } catch {
+        } catch (error) {
             toast.error("Failed to delete salesperson");
+            accountingEvents.onSaveFailed('sales_person', 'delete', error, { record_id: sp.id });
         }
     };
 

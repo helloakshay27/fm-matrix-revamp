@@ -13,6 +13,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import { API_CONFIG } from '@/config/apiConfig';
 import axios from 'axios';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TaxSetup from "./TaxSetup";
 import TaxSetupMaster from "./TaxSetupMaster";
@@ -114,6 +115,7 @@ const TaxSetupTabView: React.FC = () => {
 
    const [activeTab, setActiveTab] = useState("indirect");
 const [gstApplicable, setGstApplicable] = useState(false);
+  useAccountingFormOpened('tax_setup', 'edit');
   // ── Fetch existing GST settings on mount ──────────────────────────────────
   useEffect(() => {
     const fetchGstSettings = async () => {

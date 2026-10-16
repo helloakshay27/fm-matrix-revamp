@@ -50,10 +50,6 @@ async function fetchMsafeTrainingJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;

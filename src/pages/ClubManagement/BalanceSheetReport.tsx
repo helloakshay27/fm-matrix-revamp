@@ -5,6 +5,7 @@ import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { accountingEvents, useAccountingReportViewed } from '@/components/PostHogAccountingEvents';
 
 // TypeScript Interfaces for API Response
 interface Ledger {
@@ -48,6 +49,7 @@ const BalanceSheetReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
   const navigate = useNavigate();
+  useAccountingReportViewed("balance_sheet");
   const [balanceSheetData, setBalanceSheetData] =
     useState<BalanceSheetResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -97,6 +99,10 @@ const BalanceSheetReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
+    accountingEvents.onReportGenerated("balance_sheet", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     fetchBalanceSheet();
   };
 

@@ -366,7 +366,8 @@ export const PaymentManagementDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        size="sm"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
         onClick={() => navigate('/settings/payment-management/add')}
       >
         <Plus className="w-4 h-4 mr-2" />
@@ -379,9 +380,10 @@ export const PaymentManagementDashboard = () => {
   const renderRightActions = () => (
     <div className="flex gap-2">
       <Button
+        size="sm"
         variant="outline"
         onClick={handleExport}
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        className="h-9 px-4 text-sm font-medium"
       >
         <Download className="w-4 h-4 mr-2" />
         Export

@@ -43,6 +43,7 @@ import { accountingToast as sonnerToast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 // import html2canvas from "html2canvas";
 // import jsPDF from "jspdf";
 // import PurchaseOrderPdfTemplate from "./ClubManagement/PurchaseOrderPdfTemplate";
@@ -212,6 +213,7 @@ export const PurchaseOrderDetailPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [bankDetail, setBankDetail] = useState<any>(null);
+  const reportRecordLoaded = useAccountingRecordViewed("purchase_order");
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -266,6 +268,7 @@ export const PurchaseOrderDetailPage = () => {
 
       if (data && data.id) {
         setPurchaseOrder(data);
+        reportRecordLoaded(id, data.status ?? null);
       } else {
         setError("Invalid purchase order data received.");
       }
@@ -348,13 +351,16 @@ export const PurchaseOrderDetailPage = () => {
           ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
           : message || "Failed to update status";
         sonnerToast.error(msg);
+        accountingEvents.onSaveFailed("purchase_order", "action", new Error(msg), { action: "status_change", record_id: id });
         return;
       }
       sonnerToast.success(`Purchase order ${status.replace("_", " ")} successfully`);
+      accountingEvents.onActionPerformed("purchase_order", "status_change", id, { status });
       // fetchSalesOrder();
       fetchPurchaseOrderDetail();
     } catch (error) {
       sonnerToast.error("Failed to update status");
+      accountingEvents.onSaveFailed("purchase_order", "action", error, { action: "status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -369,10 +375,12 @@ export const PurchaseOrderDetailPage = () => {
         { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
       );
       sonnerToast.success(`Purchase order ${status.replace("_", " ")} successfully`);
+      accountingEvents.onActionPerformed("purchase_order", status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", id, { status });
       // fetchSalesOrder();
       fetchPurchaseOrderDetail();
     } catch (error) {
       sonnerToast.error("Failed to update approval status");
+      accountingEvents.onSaveFailed("purchase_order", "action", error, { action: status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -414,8 +422,11 @@ export const PurchaseOrderDetailPage = () => {
       }
 
       sonnerToast.success("Purchase order deleted successfully");
+      accountingEvents.onRecordDeleted("purchase_order", id);
       navigate("/accounting/purchase-order");
     } catch (error: unknown) {
+      accountingEvents.onSaveFailed("purchase_order", "delete", error, { record_id: id });
+
       sonnerToast.error(getErrorMessage(error, "Failed to delete purchase order"));
     } finally {
       setDeleting(false);

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SalesSummaryItem {
   date: string;
@@ -16,6 +17,7 @@ interface SalesSummaryItem {
 }
 
 const SalesSummaryReport = () => {
+  useAccountingReportViewed("sales_summary");
   const [salesSummaryData, setSalesSummaryData] = useState<SalesSummaryItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -89,6 +91,7 @@ const SalesSummaryReport = () => {
     const fromDateFormatted = formatDate(filters.fromDate);
     const toDateFormatted = formatDate(filters.toDate);
 
+    accountingEvents.onReportGenerated("sales_summary", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchSalesSummary(fromDateFormatted, toDateFormatted);
   };
 

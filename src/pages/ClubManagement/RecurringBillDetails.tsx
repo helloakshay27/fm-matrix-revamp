@@ -53,6 +53,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import PurchaseDocumentPdf from "./purchasepdftamplate";
 import {
   bankMasterListUrl,
@@ -238,6 +239,7 @@ export const RecurringBillDetails = () => {
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
   const [bankDetail, setBankDetail] = useState<any>(null);
   const recurringBillPdfRef = useRef<HTMLDivElement | null>(null);
+  const reportRecordLoaded = useAccountingRecordViewed("recurring_bill");
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
@@ -255,6 +257,8 @@ export const RecurringBillDetails = () => {
           },
         });
         setSalesOrder(response.data);
+        reportRecordLoaded(id, response.data?.status ?? null);
+
 
         // Extract transaction_records from lock_account_transactions
         if (response.data?.lock_account_transactions?.length > 0) {

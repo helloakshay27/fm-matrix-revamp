@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, FileSignature, Save } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import { accountingEvents } from '@/components/PostHogAccountingEvents';
 import { DocumentTemplateEditor } from '@/components/DocumentTemplateEditor';
 import { DocumentTemplatePreview } from '@/components/DocumentTemplatePreview';
 import {
@@ -53,6 +54,7 @@ export const DocumentTemplateEditPage: React.FC<DocumentTemplateEditPageProps> =
     setSaving(true);
     try {
       saveDocumentTemplateSettings(documentType, settings);
+      accountingEvents.onRecordUpdated('template', null, { template_type: documentType, source_record_id: recordId ?? null });
       sonnerToast.success('Template saved');
       if (recordId) {
         navigate(`${detailsRoutePrefix}/${recordId}`, { state: { tab: pdfTabValue } });
