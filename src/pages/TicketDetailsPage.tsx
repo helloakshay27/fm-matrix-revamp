@@ -27,6 +27,7 @@ import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useHelpdeskEvents, useCMHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
+import { RCA_WORD_LIMIT, countWords, limitWords } from "@/utils/wordLimit";
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -586,6 +587,10 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
     return 0;
   }
 };
+
+// Ticket statuses whose fixed state ends the ticket. "complete" behaves like "closed"
+// (same rule as EditStatusDialog), e.g. for the org 63 RCA / corrective / preventive fields.
+const isClosingFixedState = (state?: string | null) => state === 'closed' || state === 'complete';
 
 export const TicketDetailsPage = () => {
   const { id } = useParams();
@@ -2601,6 +2606,11 @@ export const TicketDetailsPage = () => {
   };
 
   // Update the handleTicketMgmtEdit function
+  // Closed tickets can no longer be edited from the Ticket Management section.
+  const isTicketMgmtLocked =
+    complaintStatus.find(s => s.name === ticketData?.issue_status)?.fixed_state === 'closed' ||
+    ticketData?.issue_status?.toLowerCase() === 'closed';
+
   const handleTicketMgmtEdit = () => {
     console.log('=== Form Initialization Debug ===');
     console.log('ticketData:', ticketData);
@@ -2858,7 +2868,7 @@ export const TicketDetailsPage = () => {
         }
 
         // Mandatory RCA, Corrective Action, Preventive Action validation when closing ticket for org_id 63
-        if (selectedFixedState === 'closed') {
+        if (isClosingFixedState(selectedFixedState)) {
           // For org 63: validate text inputs (not selectors)
           if (!ticketMgmtFormData.rca_text?.trim()) {
             toast.error('Root Cause Analysis is mandatory when closing the ticket');
@@ -2872,6 +2882,16 @@ export const TicketDetailsPage = () => {
           }
           if (!ticketMgmtFormData.preventive_action_text?.trim()) {
             toast.error('Preventive Action is mandatory when closing the ticket');
+            setSubmittingTicketMgmt(false);
+            return;
+          }
+          const mgmtOverLimit = ([
+            ['Root Cause Analysis', ticketMgmtFormData.rca_text],
+            ['Corrective Action', ticketMgmtFormData.corrective_action_text],
+            ['Preventive Action', ticketMgmtFormData.preventive_action_text],
+          ] as const).find(([, text]) => countWords(text) > RCA_WORD_LIMIT);
+          if (mgmtOverLimit) {
+            toast.error(`${mgmtOverLimit[0]} cannot exceed ${RCA_WORD_LIMIT} words`);
             setSubmittingTicketMgmt(false);
             return;
           }
@@ -2972,7 +2992,7 @@ export const TicketDetailsPage = () => {
       // Add Root Cause Analysis, Corrective Action, Preventive Action
       // For org_id 63 + closed: send text values; for others: send template IDs
       const selectedStatusObjForApi = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-      const isClosedForApi = selectedStatusObjForApi?.fixed_state === 'closed';
+      const isClosedForApi = isClosingFixedState(selectedStatusObjForApi?.fixed_state);
 
       if (orgId === 63 && isClosedForApi) {
         // For org 63: send text values
@@ -3050,7 +3070,7 @@ export const TicketDetailsPage = () => {
           changed_by_role: changedByRole,
         });
         // Ticket Resolution Recorded — reached a completed/closed state
-        if (toFixedState === 'closed' || toFixedState === 'completed') {
+        if (isClosingFixedState(toFixedState) || toFixedState === 'completed') {
           helpdeskEvents.onTicketResolutionRecorded(id, {
             resolution_outcome: toStatus,
             closure_completeness_score: null,
@@ -3224,7 +3244,7 @@ export const TicketDetailsPage = () => {
       // Mandatory validation for org_id 63 when ticket status is closed
       if (orgId === 63) {
         const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status || s.id.toString() === ticketMgmtFormData?.selectedStatus);
-        const isClosedStatus = currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+        const isClosedStatus = isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
         
         if (isClosedStatus) {
           // For org 63: validate text inputs (not selectors)
@@ -3235,6 +3255,15 @@ export const TicketDetailsPage = () => {
           }
           if (!ticketClosureFormData.preventive_action_text?.trim()) {
             toast.error('Preventive Action is mandatory when ticket is closed');
+            setSubmittingTicketClosure(false);
+            return;
+          }
+          const closureOverLimit = ([
+            ['Corrective Action', ticketClosureFormData.corrective_action_text],
+            ['Preventive Action', ticketClosureFormData.preventive_action_text],
+          ] as const).find(([, text]) => countWords(text) > RCA_WORD_LIMIT);
+          if (closureOverLimit) {
+            toast.error(`${closureOverLimit[0]} cannot exceed ${RCA_WORD_LIMIT} words`);
             setSubmittingTicketClosure(false);
             return;
           }
@@ -3249,7 +3278,7 @@ export const TicketDetailsPage = () => {
 
       // Determine if org 63 + closed for API submission
       const closureStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status || s.id.toString() === ticketMgmtFormData?.selectedStatus);
-      const isClosedForClosure = closureStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+      const isClosedForClosure = isClosingFixedState(closureStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
 
       if (orgId === 63 && isClosedForClosure) {
         // For org 63: send text values for preventive and corrective action
@@ -5721,7 +5750,7 @@ export const TicketDetailsPage = () => {
                           </svg>
                         </button>
                       )}
-                      {shouldShow("Ticket", "update") && (
+                      {shouldShow("Ticket", "update") && !isTicketMgmtLocked && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -5794,7 +5823,7 @@ export const TicketDetailsPage = () => {
                                 const isOrg63 = orgId === 63;
                                 const isClosedStatus = (() => {
                                   const statusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return statusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(statusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })();
                                 // For org 63 non-closed, hide RCA/Corrective/Preventive entirely
                                 if (isOrg63 && !isClosedStatus) return null;
@@ -6183,7 +6212,7 @@ export const TicketDetailsPage = () => {
                             {/* Root Cause Analysis - Show only for org_id 63 when closed status, or always for other orgs */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               const shouldShowRca = orgId === 63 ? isClosedStatus : true;
                               if (!shouldShowRca) return null;
 
@@ -6194,12 +6223,17 @@ export const TicketDetailsPage = () => {
                                     <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                       Root Cause Analysis<span className="text-red-500"> *</span>
                                     </label>
-                                    <textarea
-                                      value={ticketMgmtFormData.rca_text || ''}
-                                      onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
-                                      placeholder="Enter Root Cause Analysis"
-                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                    />
+                                    <>
+                                      <textarea
+                                        value={ticketMgmtFormData.rca_text || ''}
+                                        onChange={(e) => handleTicketMgmtInputChange('rca_text', limitWords(e.target.value))}
+                                        placeholder="Enter Root Cause Analysis"
+                                        className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                      />
+                                      <div className="mt-1 text-right text-xs text-gray-400">
+                                        {countWords(ticketMgmtFormData.rca_text)}/{RCA_WORD_LIMIT} words
+                                      </div>
+                                    </>
                                   </div>
                                 );
                               }
@@ -6275,7 +6309,7 @@ export const TicketDetailsPage = () => {
                             {/* Corrective Action - Show only for org_id 63 when closed status */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               if (!(orgId === 63 && isClosedStatus)) return null;
 
                               // For org 63: show TEXT INPUT
@@ -6284,12 +6318,17 @@ export const TicketDetailsPage = () => {
                                   <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                     Corrective Action<span className="text-red-500"> *</span>
                                   </label>
-                                  <textarea
-                                    value={ticketMgmtFormData.corrective_action_text || ''}
-                                    onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
-                                    placeholder="Enter Corrective Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                  />
+                                  <>
+                                    <textarea
+                                      value={ticketMgmtFormData.corrective_action_text || ''}
+                                      onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', limitWords(e.target.value))}
+                                      placeholder="Enter Corrective Action"
+                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                    />
+                                    <div className="mt-1 text-right text-xs text-gray-400">
+                                      {countWords(ticketMgmtFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
+                                    </div>
+                                  </>
                                 </div>
                               );
                             })()}
@@ -6297,7 +6336,7 @@ export const TicketDetailsPage = () => {
                             {/* Preventive Action - Show only for org_id 63 when closed status */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               if (!(orgId === 63 && isClosedStatus)) return null;
 
                               // For org 63: show TEXT INPUT
@@ -6306,12 +6345,17 @@ export const TicketDetailsPage = () => {
                                   <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                     Preventive Action<span className="text-red-500"> *</span>
                                   </label>
-                                  <textarea
-                                    value={ticketMgmtFormData.preventive_action_text || ''}
-                                    onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
-                                    placeholder="Enter Preventive Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                  />
+                                  <>
+                                    <textarea
+                                      value={ticketMgmtFormData.preventive_action_text || ''}
+                                      onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', limitWords(e.target.value))}
+                                      placeholder="Enter Preventive Action"
+                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                    />
+                                    <div className="mt-1 text-right text-xs text-gray-400">
+                                      {countWords(ticketMgmtFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
+                                    </div>
+                                  </>
                                 </div>
                               );
                             })()}
@@ -7175,21 +7219,26 @@ export const TicketDetailsPage = () => {
                               >
                                 Preventive Action{orgId === 63 && (() => {
                                   const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })() && <span style={{ color: 'red' }}> *</span>}
                               </label>
 
                               {/* For org 63 + closed: show TEXT INPUT; for others: show Select */}
                               {orgId === 63 && (() => {
                                 const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                               })() ? (
-                                <textarea
-                                  value={ticketClosureFormData.preventive_action_text || ''}
-                                  onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                                  placeholder="Enter Preventive Action"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                />
+                                <>
+                                  <textarea
+                                    value={ticketClosureFormData.preventive_action_text || ''}
+                                    onChange={(e) => handleTicketClosureInputChange('preventive_action_text', limitWords(e.target.value))}
+                                    placeholder="Enter Preventive Action"
+                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                  />
+                                  <div className="mt-1 text-right text-xs text-gray-400">
+                                    {countWords(ticketClosureFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
+                                  </div>
+                                </>
                               ) : (
                                 <Select
                                   value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
@@ -7215,7 +7264,7 @@ export const TicketDetailsPage = () => {
                             {/* Show template descriptions only for non-org-63 (selector mode) */}
                             {!(orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })()) && (
                             <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                               {(() => {
@@ -7335,21 +7384,26 @@ export const TicketDetailsPage = () => {
                               >
                                 Corrective Action{orgId === 63 && (() => {
                                   const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })() && <span style={{ color: 'red' }}> *</span>}
                               </label>
 
                               {/* React Select or Textarea */}
                               {orgId === 63 && (() => {
                                 const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                               })() ? (
-                                <textarea
-                                  className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                                  placeholder="Enter Corrective Action"
-                                  value={ticketClosureFormData.corrective_action_text || ''}
-                                  onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                                />
+                                <>
+                                  <textarea
+                                    className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                    placeholder="Enter Corrective Action"
+                                    value={ticketClosureFormData.corrective_action_text || ''}
+                                    onChange={(e) => handleTicketClosureInputChange('corrective_action_text', limitWords(e.target.value))}
+                                  />
+                                  <div className="mt-1 text-right text-xs text-gray-400">
+                                    {countWords(ticketClosureFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
+                                  </div>
+                                </>
                               ) : (
                                 <Select
                                   value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
@@ -7374,7 +7428,7 @@ export const TicketDetailsPage = () => {
 
                             {!(orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })()) && (
                             <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                               {(() => {
@@ -9223,7 +9277,7 @@ export const TicketDetailsPage = () => {
                       </svg>
                     </button>
                   )}
-                  {shouldShow("Ticket", "update") && (
+                  {shouldShow("Ticket", "update") && !isTicketMgmtLocked && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -9296,7 +9350,7 @@ export const TicketDetailsPage = () => {
                             const isOrg63 = orgId === 63;
                             const isClosedStatus = (() => {
                               const statusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return statusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(statusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })();
                             // For org 63 non-closed, hide RCA/Corrective/Preventive entirely
                             if (isOrg63 && !isClosedStatus) return null;
@@ -9685,7 +9739,7 @@ export const TicketDetailsPage = () => {
                         {/* Root Cause Analysis - Show only for org_id 63 when closed status, or always for other orgs */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           const shouldShowRca = orgId === 63 ? isClosedStatus : true;
                           if (!shouldShowRca) return null;
 
@@ -9696,12 +9750,17 @@ export const TicketDetailsPage = () => {
                                 <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                   Root Cause Analysis<span className="text-red-500"> *</span>
                                 </label>
-                                <textarea
-                                  value={ticketMgmtFormData.rca_text || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
-                                  placeholder="Enter Root Cause Analysis"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                />
+                                <>
+                                  <textarea
+                                    value={ticketMgmtFormData.rca_text || ''}
+                                    onChange={(e) => handleTicketMgmtInputChange('rca_text', limitWords(e.target.value))}
+                                    placeholder="Enter Root Cause Analysis"
+                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                  />
+                                  <div className="mt-1 text-right text-xs text-gray-400">
+                                    {countWords(ticketMgmtFormData.rca_text)}/{RCA_WORD_LIMIT} words
+                                  </div>
+                                </>
                               </div>
                             );
                           }
@@ -9772,7 +9831,7 @@ export const TicketDetailsPage = () => {
                         {/* Corrective Action - Show only for org_id 63 when closed status */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           if (!(orgId === 63 && isClosedStatus)) return null;
 
                           // For org 63: show TEXT INPUT
@@ -9781,12 +9840,17 @@ export const TicketDetailsPage = () => {
                               <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                 Corrective Action<span className="text-red-500"> *</span>
                               </label>
-                              <textarea
-                                value={ticketMgmtFormData.corrective_action_text || ''}
-                                onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
-                                placeholder="Enter Corrective Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                              />
+                              <>
+                                <textarea
+                                  value={ticketMgmtFormData.corrective_action_text || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', limitWords(e.target.value))}
+                                  placeholder="Enter Corrective Action"
+                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                />
+                                <div className="mt-1 text-right text-xs text-gray-400">
+                                  {countWords(ticketMgmtFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
+                                </div>
+                              </>
                             </div>
                           );
                         })()}
@@ -9794,7 +9858,7 @@ export const TicketDetailsPage = () => {
                         {/* Preventive Action - Show only for org_id 63 when closed status */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           if (!(orgId === 63 && isClosedStatus)) return null;
 
                           // For org 63: show TEXT INPUT
@@ -9803,12 +9867,17 @@ export const TicketDetailsPage = () => {
                               <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                 Preventive Action<span className="text-red-500"> *</span>
                               </label>
-                              <textarea
-                                value={ticketMgmtFormData.preventive_action_text || ''}
-                                onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
-                                placeholder="Enter Preventive Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                              />
+                              <>
+                                <textarea
+                                  value={ticketMgmtFormData.preventive_action_text || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', limitWords(e.target.value))}
+                                  placeholder="Enter Preventive Action"
+                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                />
+                                <div className="mt-1 text-right text-xs text-gray-400">
+                                  {countWords(ticketMgmtFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
+                                </div>
+                              </>
                             </div>
                           );
                         })()}
@@ -10670,21 +10739,26 @@ export const TicketDetailsPage = () => {
                           >
                             Preventive Action{orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })() && <span style={{ color: 'red' }}> *</span>}
                           </label>
 
                           {/* React Select or Textarea */}
                           {orgId === 63 && (() => {
                             const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                           })() ? (
-                            <textarea
-                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                              placeholder="Enter Preventive Action"
-                              value={ticketClosureFormData.preventive_action_text || ''}
-                              onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                            />
+                            <>
+                              <textarea
+                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                placeholder="Enter Preventive Action"
+                                value={ticketClosureFormData.preventive_action_text || ''}
+                                onChange={(e) => handleTicketClosureInputChange('preventive_action_text', limitWords(e.target.value))}
+                              />
+                              <div className="mt-1 text-right text-xs text-gray-400">
+                                {countWords(ticketClosureFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
+                              </div>
+                            </>
                           ) : (
                             <Select
                               value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
@@ -10709,7 +10783,7 @@ export const TicketDetailsPage = () => {
 
                         {!(orgId === 63 && (() => {
                           const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                         })()) && (
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
@@ -10829,21 +10903,26 @@ export const TicketDetailsPage = () => {
                           >
                             Corrective Action{orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })() && <span style={{ color: 'red' }}> *</span>}
                           </label>
 
                           {/* React Select or Textarea */}
                           {orgId === 63 && (() => {
                             const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                           })() ? (
-                            <textarea
-                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                              placeholder="Enter Corrective Action"
-                              value={ticketClosureFormData.corrective_action_text || ''}
-                              onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                            />
+                            <>
+                              <textarea
+                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                placeholder="Enter Corrective Action"
+                                value={ticketClosureFormData.corrective_action_text || ''}
+                                onChange={(e) => handleTicketClosureInputChange('corrective_action_text', limitWords(e.target.value))}
+                              />
+                              <div className="mt-1 text-right text-xs text-gray-400">
+                                {countWords(ticketClosureFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
+                              </div>
+                            </>
                           ) : (
                             <Select
                               value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
@@ -10868,7 +10947,7 @@ export const TicketDetailsPage = () => {
 
                         {!(orgId === 63 && (() => {
                           const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                         })()) && (
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
