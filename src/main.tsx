@@ -48,16 +48,17 @@ function removeLegacyPostHogCookie(token: string) {
     const existing = document.cookie
       .split("; ")
       .find((entry) => entry.startsWith(`${cookieName}=`));
-    if (!existing) return;
 
-    try {
-      if (!localStorage.getItem(cookieName)) {
-        const value = decodeURIComponent(existing.slice(cookieName.length + 1));
-        JSON.parse(value); // only migrate a well-formed PostHog payload
-        localStorage.setItem(cookieName, value);
+    if (existing) {
+      try {
+        if (!localStorage.getItem(cookieName)) {
+          const value = decodeURIComponent(existing.slice(cookieName.length + 1));
+          JSON.parse(value); // only migrate a well-formed PostHog payload
+          localStorage.setItem(cookieName, value);
+        }
+      } catch {
+        // Unreadable cookie or storage unavailable - fall through and just delete it.
       }
-    } catch {
-      // Unreadable cookie or storage unavailable - fall through and just delete it.
     }
 
     // A cookie can only be removed with the domain it was set on. PostHog sets it on the
