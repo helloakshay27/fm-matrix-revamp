@@ -820,7 +820,11 @@ const modulesByPackage = {
         { name: "PO", href: "/finance/po", color: "text-[#1a1a1a]" },
         { name: "WO", href: "/finance/wo", color: "text-[#1a1a1a]" },
         { name: "GRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
-        { name: "Invoices/SES", href: "finance/invoices", color: "text-[#1a1a1a]" },
+        {
+          name: "Invoices/SES",
+          href: "finance/invoices",
+          color: "text-[#1a1a1a]",
+        },
 
         {
           name: "Auto Saved PR",
@@ -1350,6 +1354,10 @@ const modulesByPackage = {
           href: "/settings/visitor-management/setup",
           subItems: [
             { name: "Setup", href: "/settings/visitor-management/setup" },
+            {
+              name: "App Configuration",
+              href: "/settings/visitor-management/app-configuration",
+            },
             {
               name: "Visiting Purpose",
               href: "/settings/visitor-management/visiting-purpose",
@@ -1996,25 +2004,38 @@ export const StacticSidebar = () => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
-  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number | null>(null);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     const doFetch = () => {
       const baseUrl = localStorage.getItem("baseUrl");
       const token = localStorage.getItem("token");
       if (!baseUrl || !token) return false;
-      fetch(`https://${baseUrl}/pms/purchase_orders/pending_approvals_count.json`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      fetch(
+        `https://${baseUrl}/pms/purchase_orders/pending_approvals_count.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
         .then((r) => r.json())
-        .then((data) => { if (typeof data?.count === "number") setPendingApprovalsCount(data.count); })
-        .catch(() => { });
+        .then((data) => {
+          if (typeof data?.count === "number")
+            setPendingApprovalsCount(data.count);
+        })
+        .catch(() => {});
       return true;
     };
 
     let retryInterval: ReturnType<typeof setInterval> | null = null;
     if (!doFetch()) {
-      retryInterval = setInterval(() => { if (doFetch()) { clearInterval(retryInterval!); retryInterval = null; } }, 1000);
+      retryInterval = setInterval(() => {
+        if (doFetch()) {
+          clearInterval(retryInterval!);
+          retryInterval = null;
+        }
+      }, 1000);
     }
 
     const handler = () => doFetch();
@@ -2312,8 +2333,9 @@ export const StacticSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2329,8 +2351,9 @@ export const StacticSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2341,7 +2364,9 @@ export const StacticSidebar = () => {
                           pendingApprovalsCount !== null &&
                           pendingApprovalsCount > 0 && (
                             <span className="ml-2 min-w-[20px] h-5 px-1 rounded-full bg-[#C72030] text-white text-[10px] font-bold flex items-center justify-center">
-                              {pendingApprovalsCount > 99 ? "99+" : pendingApprovalsCount}
+                              {pendingApprovalsCount > 99
+                                ? "99+"
+                                : pendingApprovalsCount}
                             </span>
                           )}
                       </span>
@@ -2361,8 +2386,9 @@ export const StacticSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -2441,10 +2467,11 @@ export const StacticSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-            }`}
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -2452,13 +2479,15 @@ export const StacticSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -2477,8 +2506,9 @@ export const StacticSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -2535,20 +2565,22 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href, "prefix")
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                    }`}
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href, "prefix")
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                      }`}
+                    }`}
                   />
                 </button>
               ))}
