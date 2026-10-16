@@ -14,6 +14,7 @@ import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
 import { API_CONFIG } from '@/config/apiConfig';
 import { accountingToast as toast } from '@/lib/accountingToast';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import '@/styles/accounting.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from "dayjs";
@@ -31,6 +32,7 @@ const initialRow = { account: '', description: '', contact: '', debit: '', credi
 const ManualJournalAdd = () => {
 	const [date, setDate] = useState('');
 	const navigate = useNavigate();
+	useAccountingFormOpened('manual_journal', 'create');
 	const [journalNo, setJournalNo] = useState('');
 	const [reference, setReference] = useState('');
 	const [notes, setNotes] = useState('');
@@ -304,11 +306,15 @@ const ManualJournalAdd = () => {
 				},
 			});
 			console.log('API response:', response.data);
+			accountingEvents.onRecordCreated('manual_journal', response.data?.id ?? response.data?.lock_account_transaction?.id, {
+				item_count: rows.length,
+			});
 			navigate('/accounting/manual-journal');
 			// Optionally show success message or redirect
 		} catch (error) {
 			console.error('Error submitting journal entry:', error);
 			toast.error('Failed to create journal entry');
+			accountingEvents.onSaveFailed('manual_journal', 'create', error);
 			// Optionally show error message
 		}
 	};

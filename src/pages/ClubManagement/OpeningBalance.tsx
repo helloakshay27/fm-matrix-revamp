@@ -6,6 +6,7 @@ import { API_CONFIG } from '@/config/apiConfig';
 import { Search, X } from "lucide-react";
 import { accountingToast as toast } from '@/lib/accountingToast';
 import '@/styles/accounting.css';
+import { accountingEvents, useAccountingFormOpened, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { useNavigate } from "react-router-dom";
 interface AccountOption {
   id: number;
@@ -33,6 +34,8 @@ const OpeningBalance = () => {
   const [accountValues, setAccountValues] = useState<Record<string, { debit: string; credit: string }>>({});
   const lock_account_id = localStorage.getItem("lock_account_id");
   const [search, setSearch] = useState("");
+  useAccountingFormOpened('opening_balance', 'create');
+  useAccountingSearchTracking('opening_balance', search);
   const [entityAccountIds, setEntityAccountIds] = useState<Set<number>>(new Set());
 
 
@@ -252,12 +255,16 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
+      accountingEvents.onRecordCreated('opening_balance', response.data?.id ?? response.data?.lock_account_transaction?.id, {
+        item_count: records.length,
+      });
       // Optionally show success message or redirect
       alert('Opening balance submitted successfully!');
         // reload latest balances
   await fetchAccounts();
     } catch (error) {
       console.error('Error submitting opening balance:', error);
+      accountingEvents.onSaveFailed('opening_balance', 'create', error);
       alert('Failed to submit opening balance');
     }
   };

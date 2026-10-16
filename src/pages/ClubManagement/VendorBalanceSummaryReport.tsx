@@ -5,6 +5,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SupplierBalanceAPI {
   id?: number | string;
@@ -59,6 +60,7 @@ const formatAmount = (value: number) =>
 const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
 const VendorBalanceSummaryReport: React.FC = () => {
+  useAccountingReportViewed("vendor_balance_summary");
    const defaultRange = useMemo(() => {
       const today = new Date();
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -230,7 +232,7 @@ const VendorBalanceSummaryReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("vendor_balance_summary", { from_date: filters.fromDate, to_date: filters.toDate }); fetchData(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

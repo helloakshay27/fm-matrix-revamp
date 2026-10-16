@@ -22,6 +22,7 @@ import {
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
 import { Receipt, FileText, ArrowLeft, Landmark } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import {
   BankRecord,
   bankMasterListUrl,
@@ -139,6 +140,7 @@ export const ExpenseEditPage: React.FC = () => {
   const navigate = useNavigate();
   // Get route id from params — e.g. /accounting/expense/:id
   const { id } = useParams<{ id: string }>();
+  useAccountingFormOpened('expense', 'edit', id);
 
   useEffect(() => {
     document.title = 'Edit Expense';
@@ -695,15 +697,21 @@ export const ExpenseEditPage: React.FC = () => {
 
       if (res.ok) {
         sonnerToast.success('Expense updated successfully!');
+        accountingEvents.onRecordUpdated('expense', id, {
+          amount: payload.expense.amount,
+          item_count: expenseAccountsAttributes.length,
+        });
         // Navigate back to expense details or list
         navigate(`/accounting/expense/${id}`);
       } else {
         const err = await res.json();
         sonnerToast.error(err.message || 'Failed to update expense');
+        accountingEvents.onSaveFailed('expense', 'update', err, { record_id: id });
       }
     } catch (err) {
       console.error('Error updating expense:', err);
       sonnerToast.error('Network error. Please try again.');
+      accountingEvents.onSaveFailed('expense', 'update', err, { record_id: id });
     } finally {
       setIsSubmitting(false);
     }

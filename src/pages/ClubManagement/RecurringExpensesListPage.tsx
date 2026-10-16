@@ -7,6 +7,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { toast as sonnerToast } from "sonner";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 interface RecurringExpense {
   id: string | number;
@@ -98,6 +99,8 @@ const RecurringExpensesListPage: React.FC = () => {
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 800);
+  const reportListLoaded = useAccountingListViewed("recurring_expense");
+  useAccountingSearchTracking("recurring_expense", searchTerm);
 
   const [recurringExpenseData, setRecurringExpenseData] = useState<
     RecurringExpense[]
@@ -195,6 +198,7 @@ const RecurringExpensesListPage: React.FC = () => {
       const paginatedItems = items.slice(start, start + perPage);
 
       setRecurringExpenseData(paginatedItems);
+      reportListLoaded(paginatedItems.length, total);
       setPagination({
         current_page: currentPage,
         per_page: perPage,
@@ -256,10 +260,12 @@ const RecurringExpensesListPage: React.FC = () => {
       }
 
       sonnerToast.success("Recurring expense deleted successfully");
+      accountingEvents.onRecordDeleted("recurring_expense", item.id);
       loadData(debouncedSearchQuery);
     } catch (error: any) {
       console.error("Failed to delete recurring expense:", error);
       sonnerToast.error(error.message || "Failed to delete recurring expense");
+      accountingEvents.onSaveFailed("recurring_expense", "delete", error, { record_id: item.id });
     } finally {
       setDeletingId(null);
     }
@@ -298,10 +304,12 @@ const RecurringExpensesListPage: React.FC = () => {
 
       const newStatus = item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
       sonnerToast.success(`Recurring expense marked as ${newStatus}`);
+      accountingEvents.onActionPerformed("recurring_expense", "status_change", item.id, { status: newStatus });
       loadData(debouncedSearchQuery);
     } catch (error: any) {
       console.error("Failed to toggle recurring expense status:", error);
       sonnerToast.error(error.message || "Failed to update status");
+      accountingEvents.onSaveFailed("recurring_expense", "action", error, { action: "status_change", record_id: item.id });
     } finally {
       setDeletingId(null);
     }

@@ -6,6 +6,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface InvoiceDetailRow {
   id: string;
@@ -52,6 +53,7 @@ const formatCurrency = (value: number): string => {
 
 const InvoiceDetailsReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("invoice_details");
   const [rows, setRows] = useState<InvoiceDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -549,7 +551,13 @@ const totalsRow: InvoiceDetailRow = {
 
           {/* BUTTON */}
           <Button
-            onClick={fetchInvoices}
+            onClick={() => {
+              accountingEvents.onReportGenerated("invoice_details", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+              fetchInvoices();
+            }}
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View

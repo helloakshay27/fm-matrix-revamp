@@ -7,6 +7,7 @@
 import React from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import {
   ArrowLeft,
   Edit2,
@@ -238,6 +239,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
   const { id } = useParams();
   const location = useLocation();
   const detailsId = id;
+  const reportRecordLoaded = useAccountingRecordViewed("payment_made");
   // selectedPaymentId || 
 
   const pdfRef = React.useRef<HTMLDivElement>(null);
@@ -362,6 +364,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
         });
 
         setBillPayments(normalizeBillPayments(data));
+        reportRecordLoaded(detailsId, data.payment_status ?? null);
 
         const journalRows = normalizeJournalEntries(data);
         setJournalEntries(journalRows);

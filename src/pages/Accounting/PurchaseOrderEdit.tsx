@@ -42,6 +42,7 @@ import { accountingToast as toast } from '@/lib/accountingToast';
 import '@/styles/accounting.css';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import axios from 'axios';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import {
     BankRecord,
     bankMasterListUrl,
@@ -254,6 +255,7 @@ const BulkItemModal: React.FC<BulkItemModalProps> = ({ open, onClose, itemOption
 export const PurchaseOrderEditPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    useAccountingFormOpened('purchase_order', 'edit', id);
 
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -1272,13 +1274,20 @@ export const PurchaseOrderEditPage: React.FC = () => {
 
             if (response.status === 200 || response.status === 201) {
                 toast.success(`Purchase order ${saveAsDraft ? 'saved as draft' : 'updated'} successfully!`);
+                accountingEvents.onRecordUpdated('purchase_order', id, {
+                    item_count: items.filter(item => item.name).length,
+                    status: saveAsDraft ? 'draft' : null,
+                });
                 navigate('/accounting/purchase-order');
             } else {
                 toast.error('Failed to update purchase order');
+                accountingEvents.onSaveFailed('purchase_order', 'update', new Error(`HTTP ${response.status}`), { record_id: id });
             }
         } catch (error) {
             console.error('Error updating purchase order:', error);
             toast.error('Failed to update purchase order');
+            accountingEvents.onSaveFailed('purchase_order', 'update', error, { record_id: id });
+
         } finally {
             setIsSubmitting(false);
         }

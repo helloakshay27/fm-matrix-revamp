@@ -7,6 +7,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingListViewed } from '@/components/PostHogAccountingEvents';
 
 interface Section {
   id: number;
@@ -71,6 +72,7 @@ export const SectionMaster: React.FC = () => {
   const [editErrors, setEditErrors] = useState<{ name?: string; tax_type?: string; group_name?: string }>({});
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed('section');
 
   // Fetch all sections
   const fetchSections = useCallback(async () => {
@@ -83,6 +85,7 @@ export const SectionMaster: React.FC = () => {
       const data: Section[] = await response.json();
       setSections(data);
       setTotalRecords(data.length);
+      reportListLoaded(data.length, data.length);
       setTotalPages(Math.ceil(data.length / perPage));
     } catch (error) {
       console.error('Error fetching sections:', error);
@@ -148,12 +151,14 @@ export const SectionMaster: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       toast.success('Section added successfully');
+      accountingEvents.onRecordCreated('section', null);
       setAddModalOpen(false);
       setAddForm({ name: '', tax_type: 'tds', group_name: '' });
       fetchSections();
     } catch (error) {
       console.error('Error creating section:', error);
       toast.error('Failed to add section');
+      accountingEvents.onSaveFailed('section', 'create', error);
     } finally {
       setAddSubmitting(false);
     }
@@ -183,11 +188,13 @@ export const SectionMaster: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       toast.success('Section updated successfully');
+      accountingEvents.onRecordUpdated('section', editForm.id);
       setEditModalOpen(false);
       fetchSections();
     } catch (error) {
       console.error('Error updating section:', error);
       toast.error('Failed to update section');
+      accountingEvents.onSaveFailed('section', 'update', error, { record_id: editForm.id });
     } finally {
       setEditSubmitting(false);
     }

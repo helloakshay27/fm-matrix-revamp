@@ -15,6 +15,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, ArrowLeft } from 'lucide-react';
@@ -127,6 +128,7 @@ interface Customer {
 const ItemsEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    useAccountingFormOpened("item", "edit", id);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
@@ -584,9 +586,11 @@ const ItemsEdit = () => {
                 }
             );
             toast.success("Item updated successfully!");
+            accountingEvents.onRecordUpdated("item", id);
             navigate("/accounting/items");
         } catch (err: any) {
             console.error("Item update error:", err);
+            accountingEvents.onSaveFailed("item", "update", err, { record_id: id });
             const errors = err?.response?.data;
             if (errors && typeof errors === 'object') {
                 const messages = Object.entries(errors)

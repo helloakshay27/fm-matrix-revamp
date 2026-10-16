@@ -5,6 +5,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface VendorCreditApi {
   id?: number | string;
@@ -83,6 +84,7 @@ const statusBadgeMap: Record<string, string> = {
 };
 
 const VendorCreditsDetailsReport: React.FC = () => {
+  useAccountingReportViewed("vendor_credits_details");
   // const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   // const [filters, setFilters] = useState(defaultRange);
   const [filters, setFilters] = useState({
@@ -251,7 +253,7 @@ const VendorCreditsDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchVendorCreditDetails(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("vendor_credits_details", { from_date: filters.fromDate, to_date: filters.toDate }); fetchVendorCreditDetails(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

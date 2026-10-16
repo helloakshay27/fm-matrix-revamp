@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import TextField from "@mui/material/TextField";
 import { Dialog, DialogContent, DialogTitle, CircularProgress } from "@mui/material";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ const statusBadge = (status: string) => {
 };
 
 const RecurringInvoiceDetailsReport: React.FC = () => {
+  useAccountingReportViewed("recurring_invoice_details");
   const [rows, setRows] = useState<RecurringInvoiceRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -235,7 +237,7 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchRecurringInvoices(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("recurring_invoice_details", { from_date: filters.fromDate, to_date: filters.toDate }); fetchRecurringInvoices(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

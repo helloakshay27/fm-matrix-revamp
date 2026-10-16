@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { ArrowLeft, Edit2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
@@ -165,6 +166,7 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
+  const reportRecordLoaded = useAccountingRecordViewed("payment_received");
   const pdfRef = React.useRef<HTMLDivElement>(null);
   const lock_account_id = localStorage.getItem("lock_account_id");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -191,6 +193,7 @@ const [activeTab, setActiveTab] = React.useState((location.state as any)?.tab ==
         const data: LockPaymentAPI = res.data.lock_payment || res.data || {};
         const mapped = mapLockPayment(data);
         setPayment(mapped);
+        reportRecordLoaded(id, mapped.status ?? null);
 
         // Store bill_payments from API
         if (data.bill_payments && data.bill_payments.length > 0) {

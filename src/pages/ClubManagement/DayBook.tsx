@@ -4,6 +4,7 @@ import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface DayBookRow {
   id: string;
@@ -87,6 +88,7 @@ const initialRows: DayBookRow[] = [
 ];
 
 const DayBook: React.FC = () => {
+  useAccountingReportViewed("day_book");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows] = useState<DayBookRow[]>(initialRows);
@@ -97,6 +99,10 @@ const DayBook: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("day_book", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     // In production: fetch filtered data from API
   };
 

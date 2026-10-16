@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface BillableExpenseRow {
   id: string;
@@ -72,6 +73,7 @@ const BillableExpenseDetails: React.FC = () => {
 });
   const [rows, setRows] = useState<BillableExpenseRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("billable_expense_details");
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -246,7 +248,10 @@ const BillableExpenseDetails: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("billable_expense_details", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchData(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

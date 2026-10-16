@@ -7,6 +7,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 
 interface Tax {
   id: number;
@@ -94,6 +95,7 @@ export const DefaultTaxPreferencesPage: React.FC = () => {
   const [taxes, setTaxes] = useState<Tax[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  useAccountingFormOpened("tax_preference", "edit");
 
 const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
 const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
@@ -288,12 +290,15 @@ const fetchInitialData = async () => {
 
       if (response.ok) {
         toast.success("Default Tax Preferences saved successfully!");
+        accountingEvents.onRecordUpdated("tax_preference", null);
       } else {
         toast.error("Failed to save tax preferences.");
+        accountingEvents.onSaveFailed("tax_preference", "update", `HTTP ${response.status}`);
       }
     } catch (error) {
       console.error("Error saving tax preferences:", error);
       toast.error("An error occurred while saving.");
+      accountingEvents.onSaveFailed("tax_preference", "update", error);
     } finally {
       setSaving(false);
     }

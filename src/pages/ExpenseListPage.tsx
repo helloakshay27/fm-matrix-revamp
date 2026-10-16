@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 
 // Type definitions for Expense
 interface Expense {
@@ -129,6 +130,8 @@ export const ExpenseListPage: React.FC = () => {
     const [perPage, setPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+    const reportListLoaded = useAccountingListViewed('expense');
+    useAccountingSearchTracking('expense', searchTerm);
     const [appliedFilters, setAppliedFilters] = useState<ExpenseFilters>({});
     const [expenseData, setExpenseData] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(false);
@@ -291,6 +294,7 @@ export const ExpenseListPage: React.FC = () => {
                 const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
 
                 setExpenseData(paginatedData);
+                reportListLoaded(paginatedData.length, totalCount);
                 setPagination({
                     current_page: page,
                     per_page,
@@ -463,6 +467,7 @@ export const ExpenseListPage: React.FC = () => {
 
             if (response.ok) {
                 sonnerToast.success('Expense deleted successfully');
+                accountingEvents.onRecordDeleted('expense', deletingExpenseId);
                 setDeleteConfirmOpen(false);
                 setDeletingExpenseId(null);
                 // Refresh the list
@@ -470,10 +475,12 @@ export const ExpenseListPage: React.FC = () => {
                 fetchExpenseData(newPage, perPage, debouncedSearchQuery, appliedFilters);
             } else {
                 sonnerToast.error('Failed to delete expense');
+                accountingEvents.onSaveFailed('expense', 'delete', `HTTP ${response.status}`, { record_id: deletingExpenseId });
             }
         } catch (error) {
             console.error('Error deleting expense:', error);
             sonnerToast.error('Error deleting expense');
+            accountingEvents.onSaveFailed('expense', 'delete', error, { record_id: deletingExpenseId });
         } finally {
             setDeleting(false);
         }

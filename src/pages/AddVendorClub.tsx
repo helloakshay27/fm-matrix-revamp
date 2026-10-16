@@ -35,6 +35,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { useApiData } from '@/hooks/useApiData';
 
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
@@ -267,6 +268,7 @@ const initialContactPerson = {
 
 export const AddVendorClub = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened('vendor', 'create');
   const { suppliers, services, loading } = useApiData();
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -643,10 +645,13 @@ export const AddVendorClub = () => {
     }
 
     try {
-      await vendorService.createVendor(apiFormData);
+      const createdVendor = await vendorService.createVendor(apiFormData);
       toast.success('Vendor created successfully!');
+      accountingEvents.onRecordCreated('vendor', createdVendor?.id ?? createdVendor?.pms_supplier?.id);
       navigate('/accounting/vendor');
     } catch (error: any) {
+      accountingEvents.onSaveFailed('vendor', 'create', error);
+
       // Handle 422 Unprocessable Entity (validation errors)
       if (error.status === 422 && error.validationErrors) {
         const validationErrors = error.validationErrors;

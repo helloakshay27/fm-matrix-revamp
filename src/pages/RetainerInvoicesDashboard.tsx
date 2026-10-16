@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import "@/styles/accounting.css";
@@ -40,6 +40,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
+import { useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 interface RetainerInvoice {
   id: number;
@@ -165,6 +166,12 @@ export const RetainerInvoicesDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed("retainer_invoice");
+  useAccountingSearchTracking("retainer_invoice", searchTerm);
+
+  useEffect(() => {
+    reportListLoaded(mockData.length);
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusTones: Record<string, string> = {

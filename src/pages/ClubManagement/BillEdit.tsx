@@ -234,6 +234,7 @@ import {
     mapApiBankRecord,
 } from './bankMasterUtils';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
@@ -514,6 +515,7 @@ export const BillEdit: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('bill', 'edit', billId);
 
     useEffect(() => {
         document.title = 'Edit Bill';
@@ -1797,10 +1799,16 @@ export const BillEdit: React.FC = () => {
             });
 
             alert('Bill updated successfully!');
+            accountingEvents.onRecordUpdated('bill', billId, {
+                amount: totalAmount,
+                item_count: items.length,
+            });
             navigate('/accounting/bills');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             alert('Failed to update Bill');
+            accountingEvents.onSaveFailed('bill', 'update', error, { record_id: billId });
+
         } finally {
             setIsSubmitting(false);
         }

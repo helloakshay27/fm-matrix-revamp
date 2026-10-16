@@ -4,6 +4,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SelfInvoiceRow {
   id: string;
@@ -55,6 +56,7 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const SelfInvoiceSummary: React.FC = () => {
+  useAccountingReportViewed("self_invoice_summary");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows] = useState<SelfInvoiceRow[]>([]);
@@ -68,6 +70,7 @@ const SelfInvoiceSummary: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("self_invoice_summary", { from_date: filters.fromDate, to_date: filters.toDate });
     return;
   };
 

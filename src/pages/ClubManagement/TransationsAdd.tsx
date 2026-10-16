@@ -16,6 +16,7 @@ import InputLabel from '@mui/material/InputLabel';
 import { API_CONFIG } from '@/config/apiConfig';
 import { accountingToast as toast } from '@/lib/accountingToast';
 import '@/styles/accounting.css';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 
@@ -26,6 +27,7 @@ const initialRow = { account: '', description: '', contact: '', debit: '', credi
 const TransactionsAdd = () => {
     const [date, setDate] = useState('');
     const navigate = useNavigate();
+    useAccountingFormOpened('transaction', 'create');
     const [journalNo, setJournalNo] = useState('');
     const [reference, setReference] = useState('');
     const [notes, setNotes] = useState('');
@@ -198,10 +200,14 @@ const TransactionsAdd = () => {
                 },
             });
             console.log('API response:', response.data);
+            accountingEvents.onRecordCreated('transaction', response.data?.id ?? response.data?.lock_account_transaction?.id, {
+                item_count: rows.length,
+            });
             navigate('/accounting/transactions');
         } catch (error) {
             console.error('Error submitting journal entry:', error);
             toast.error('Failed to create journal entry');
+            accountingEvents.onSaveFailed('transaction', 'create', error);
         }
     };
 

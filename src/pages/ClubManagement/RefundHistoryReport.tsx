@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
@@ -69,6 +70,7 @@ const toNumber = (value?: string | number) => {
 };
 
 const RefundHistoryReport: React.FC = () => {
+  useAccountingReportViewed("refund_history");
   const [rows, setRows] = useState<RefundRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -186,7 +188,7 @@ const RefundHistoryReport: React.FC = () => {
             />
 
             <Button
-              onClick={() => fetchRefundHistory(filters.fromDate, filters.toDate)}
+              onClick={() => { accountingEvents.onReportGenerated("refund_history", { from_date: filters.fromDate, to_date: filters.toDate }); fetchRefundHistory(filters.fromDate, filters.toDate); }}
               className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
             >
               View

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
+import { useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 interface PaymentLink {
   id: number;
@@ -149,6 +150,11 @@ export const PaymentLinksDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed("payment_link");
+  useAccountingSearchTracking("payment_link", searchTerm);
+  useEffect(() => {
+    reportListLoaded(mockData.length);
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusTones: Record<string, string> = {

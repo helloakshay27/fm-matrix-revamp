@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Button } from "@/components/ui/button";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ARAgingDetailRow {
   id: string;
@@ -77,6 +78,7 @@ const ARAgingDetailsReport: React.FC = () => {
   const navigate = useNavigate();
   const [allRows, setAllRows] = useState<ARAgingDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("ar_aging_details");
 
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
@@ -313,7 +315,10 @@ const ARAgingDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchAgingDetails(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("ar_aging_details", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchAgingDetails(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

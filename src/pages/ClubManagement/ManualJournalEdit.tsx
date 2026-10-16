@@ -14,6 +14,7 @@ import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
 import { API_CONFIG } from '@/config/apiConfig';
 import { accountingToast as toast } from '@/lib/accountingToast';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import '@/styles/accounting.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from "dayjs";
@@ -32,6 +33,7 @@ const ManualJournalEdit = () => {
     const [date, setDate] = useState('');
     const navigate = useNavigate();
     const { id } = useParams();
+    useAccountingFormOpened('manual_journal', 'edit', id);
     const [journalNo, setJournalNo] = useState('');
     const [reference, setReference] = useState('');
     const [notes, setNotes] = useState('');
@@ -413,11 +415,13 @@ const ManualJournalEdit = () => {
             });
             console.log('API response:', response.data);
             toast.success('Manual journal updated successfully');
+            accountingEvents.onRecordUpdated('manual_journal', id, { item_count: rows.length });
             navigate('/accounting/manual-journal');
             // Optionally show success message or redirect
         } catch (error) {
             console.error('Error submitting journal entry:', error);
             toast.error('Failed to update journal entry');
+            accountingEvents.onSaveFailed('manual_journal', 'update', error, { record_id: id });
             // Optionally show error message
         } finally {
             setLoading(false);

@@ -70,6 +70,7 @@ import {
   mapApiBankRecord,
 } from './bankMasterUtils';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { Button as ShadButton } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
@@ -360,6 +361,7 @@ console.log("Editing bill with ID:", billId)
     term.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const navigate = useNavigate();
+  useAccountingFormOpened('recurring_bill', 'edit', billId);
 
   useEffect(() => {
     document.title = 'New Sales Order';
@@ -1328,10 +1330,16 @@ if (!profileName || profileName.trim() === "") {
         body: formData,
       });
       toast.success('Recurring bill updated successfully');
+      accountingEvents.onRecordUpdated('recurring_bill', billId, {
+        amount: totalAmount,
+        item_count: items.length,
+      });
       navigate('/accounting/recurring-bills');
     } catch (error) {
       console.error('Error updating bill:', error);
       toast.error('Failed to update bill');
+      accountingEvents.onSaveFailed('recurring_bill', 'update', error, { record_id: billId });
+
     } finally {
       setIsSubmitting(false);
     }

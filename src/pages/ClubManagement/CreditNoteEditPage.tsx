@@ -24,6 +24,7 @@ import { ArrowLeft, Calendar, FileText, Package } from 'lucide-react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <section className="bg-card rounded-lg border border-border shadow-sm">
@@ -94,6 +95,7 @@ const emptyItem = (): Item => ({
 export const CreditNoteEditPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    useAccountingFormOpened('credit_note', 'edit', id);
 
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -701,10 +703,12 @@ export const CreditNoteEditPage: React.FC = () => {
 
             if (!response.ok) throw new Error(`Update failed (${response.status})`);
             toast.success('Credit note updated successfully');
+            accountingEvents.onRecordUpdated('credit_note', id, { amount: totalAmount, item_count: items.length });
             navigate('/accounting/credit-note');
         } catch (error) {
             console.error('Error updating credit note:', error);
             toast.error('Failed to update credit note');
+            accountingEvents.onSaveFailed('credit_note', 'update', error, { record_id: id });
         } finally {
             setIsSubmitting(false);
         }

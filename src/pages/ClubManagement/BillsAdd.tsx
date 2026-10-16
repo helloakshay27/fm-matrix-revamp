@@ -165,6 +165,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
@@ -449,6 +450,7 @@ export const BillsAdd: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('bill', 'create');
 
     useEffect(() => {
         document.title = 'New Bill';
@@ -1672,10 +1674,17 @@ export const BillsAdd: React.FC = () => {
             });
 
             alert(`Bill ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            accountingEvents.onRecordCreated('bill', null, {
+                amount: totalAmount,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'open',
+            });
             navigate('/accounting/bills');
         } catch (error) {
             console.error('Error submitting sales order:', error);
             alert('Failed to create Bill');
+            accountingEvents.onSaveFailed('bill', 'create', error);
+
         } finally {
             setIsSubmitting(false);
         }

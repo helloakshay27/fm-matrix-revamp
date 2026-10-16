@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { accountingToast as toast } from '@/lib/accountingToast';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import '@/styles/accounting.css';
 import { format, parseISO } from 'date-fns';
 import {
@@ -194,6 +195,7 @@ interface ExternalUser {
 export const EditSalesOrderPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    useAccountingFormOpened('sales_order', 'edit', id);
 
     const lock_account_id = localStorage.getItem("lock_account_id");
     const baseUrl = localStorage.getItem('baseUrl');
@@ -1317,11 +1319,17 @@ export const EditSalesOrderPage: React.FC = () => {
                 }
             });
 
+            accountingEvents.onRecordUpdated('sales_order', id, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'confirmed',
+            });
             toast.success(`Sales order updated successfully!`);
             navigate(`/accounting/sales-order/${id}`);
         } catch (error) {
             console.error('Error submitting sales order edit:', error);
             toast.error('Failed to update sales order');
+            accountingEvents.onSaveFailed('sales_order', 'update', error, { record_id: id });
         } finally {
             setIsSubmitting(false);
         }

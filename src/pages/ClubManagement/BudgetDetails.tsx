@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 
 /* ================= TYPES ================= */
 
@@ -115,6 +116,11 @@ const cashFlowData: Section[] = [
 /* ================= COMPONENT ================= */
 
 export default function BudgetDetails() {
+  const reportRecordLoaded = useAccountingRecordViewed("budget");
+  useEffect(() => {
+    // Static screen (no detail API yet) — report the view once on mount.
+    reportRecordLoaded(null);
+  }, []);
   const [activeTab, setActiveTab] = useState<"PL" | "BS" | "CF">("CF");
   const [data, setData] = useState<Record<string, Section[]>>({
     PL: profitLossData,

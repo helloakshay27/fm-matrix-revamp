@@ -5,6 +5,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface TaxRate {
   id?: number | string;
@@ -215,6 +216,7 @@ const calculateDistanceFromExpense = (expense: ExpenseApi) => {
 const ExpensesByEmployeeReport: React.FC = () => {
   const [rows, setRows] = useState<ExpensesByEmployeeRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("expenses_by_employee");
 
   const defaultDateRange = useMemo(() => {
     const today = new Date();
@@ -391,7 +393,10 @@ const ExpensesByEmployeeReport: React.FC = () => {
             />
 
             <Button
-              onClick={() => fetchExpensesByEmployee(filters.fromDate, filters.toDate)}
+              onClick={() => {
+                accountingEvents.onReportGenerated("expenses_by_employee", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+                fetchExpensesByEmployee(filters.fromDate, filters.toDate);
+              }}
               className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
             >
               View

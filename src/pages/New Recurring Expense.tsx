@@ -1148,6 +1148,7 @@ import { Button } from "@/components/ui/button";
 import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
 import { Receipt, Calendar, FileText, CreditCard, Landmark, ArrowLeft } from "lucide-react";
 import { accountingToast as sonnerToast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1314,6 +1315,7 @@ const NewRecurringExpensePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
+  useAccountingFormOpened("recurring_expense", isEditMode ? "edit" : "create", id);
   const [existingActive, setExistingActive] = useState(true);
   const [existingLineItemId, setExistingLineItemId] = useState<number | null>(null);
   const [fetchingExisting, setFetchingExisting] = useState(isEditMode);
@@ -1904,15 +1906,22 @@ const NewRecurringExpensePage: React.FC = () => {
         sonnerToast.success(
           isEditMode ? "Recurring expense updated successfully!" : "Recurring expense created successfully!"
         );
+        if (isEditMode) {
+          accountingEvents.onRecordUpdated("recurring_expense", id, { amount: payload.recurring_expense.amount, item_count: expenseAccountsAttributes.length });
+        } else {
+          accountingEvents.onRecordCreated("recurring_expense", null, { amount: payload.recurring_expense.amount, item_count: expenseAccountsAttributes.length });
+        }
         navigate(-1);
       } else {
         const err = await res.json().catch(() => ({}));
         sonnerToast.error(
           err?.message || err?.error || (isEditMode ? "Failed to update recurring expense" : "Failed to create recurring expense")
         );
+        accountingEvents.onSaveFailed("recurring_expense", isEditMode ? "update" : "create", err, { record_id: id });
       }
-    } catch {
+    } catch (error) {
       sonnerToast.error("Network error. Please try again.");
+      accountingEvents.onSaveFailed("recurring_expense", isEditMode ? "update" : "create", error, { record_id: id });
     } finally {
       setIsSubmitting(false);
     }

@@ -24,6 +24,7 @@ import {
   getBankMasterApiConfig,
   mapApiBankRecord,
 } from './bankMasterUtils';
+import { accountingEvents, useAccountingListViewed } from '@/components/PostHogAccountingEvents';
 
 const bankColumns: ColumnConfig[] = [
   { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
@@ -45,6 +46,7 @@ const BankMaster = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteBank, setSelectedDeleteBank] = useState<BankRecord | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed('bank');
 
   const fetchBanks = useCallback(async () => {
     setLoading(true);
@@ -53,6 +55,7 @@ const BankMaster = () => {
       const res = await axios.get(bankMasterListUrl(baseUrl, lockAccountId), { headers });
       const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
       setBanks(data.map(mapApiBankRecord));
+      reportListLoaded(data.length);
     } catch {
       toast.error('Failed to load bank details');
     } finally {
@@ -76,11 +79,13 @@ const BankMaster = () => {
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
       await axios.delete(bankMasterDetailUrl(baseUrl, lockAccountId, selectedDeleteBank.id), { headers });
       toast.success('Bank detail deleted successfully');
+      accountingEvents.onRecordDeleted('bank', selectedDeleteBank.id);
       setDeleteDialogOpen(false);
       setSelectedDeleteBank(null);
       fetchBanks();
-    } catch {
+    } catch (error) {
       toast.error('Failed to delete bank detail');
+      accountingEvents.onSaveFailed('bank', 'delete', error, { record_id: selectedDeleteBank.id });
     } finally {
       setDeleteLoading(false);
     }
@@ -91,9 +96,11 @@ const BankMaster = () => {
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
       await axios.patch(bankMasterToggleActiveUrl(baseUrl, lockAccountId, bank.id), null, { headers });
       toast.success('Status updated successfully');
+      accountingEvents.onActionPerformed('bank', 'status_change', bank.id, { active: !bank.active });
       fetchBanks();
-    } catch {
+    } catch (error) {
       toast.error('Failed to update status');
+      accountingEvents.onSaveFailed('bank', 'action', error, { action: 'status_change', record_id: bank.id });
     }
   };
 

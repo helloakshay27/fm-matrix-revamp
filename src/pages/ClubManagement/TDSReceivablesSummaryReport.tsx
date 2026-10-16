@@ -4,6 +4,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 type TdsReceivablesSummaryRow = {
   sectionCode: string;
@@ -45,6 +46,7 @@ const formatAmount = (value: number) =>
   }).format(value);
 
 const TDSReceivablesSummaryReport: React.FC = () => {
+  useAccountingReportViewed("tds_receivables_summary");
   const navigate = useNavigate();
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
@@ -147,6 +149,7 @@ const TDSReceivablesSummaryReport: React.FC = () => {
       return;
     }
 
+    accountingEvents.onReportGenerated("tds_receivables_summary", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchTDSReceivableSummary();
   };
 

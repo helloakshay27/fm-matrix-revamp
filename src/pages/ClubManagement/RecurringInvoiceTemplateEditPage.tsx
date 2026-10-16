@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const RecurringInvoiceTemplateEditPage: React.FC = () => (
+export const RecurringInvoiceTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="recurring_invoice"
     moduleLabel="Recurring Invoice"
@@ -10,6 +13,7 @@ export const RecurringInvoiceTemplateEditPage: React.FC = () => (
     backRoute="/accounting/recurring-invoices"
     detailsRoutePrefix="/accounting/recurring-invoices/details"
   />
-);
+  );
+};
 
 export default RecurringInvoiceTemplateEditPage;

@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -442,6 +443,7 @@ export const QuotesAdd: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('quote', 'create');
 
     useEffect(() => {
         document.title = 'New Sales Order';
@@ -1672,7 +1674,7 @@ export const QuotesAdd: React.FC = () => {
                 formData.append(`lock_account_quote[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await axios.post(
+            const response = await axios.post(
                 `https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`,
                 formData,
                 {
@@ -1683,11 +1685,17 @@ export const QuotesAdd: React.FC = () => {
                 }
             );
 
+            accountingEvents.onRecordCreated('quote', response.data?.id ?? response.data?.lock_account_quote?.id, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'sent',
+            });
             toast.success(saveAsDraft ? 'Quote saved as draft successfully' : 'Quote created successfully');
             navigate('/accounting/quotes');
         } catch (error) {
             console.error('Error submitting quote:', error);
             toast.error('Failed to save quote');
+            accountingEvents.onSaveFailed('quote', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

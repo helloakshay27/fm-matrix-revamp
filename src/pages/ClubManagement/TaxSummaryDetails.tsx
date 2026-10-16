@@ -3,10 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 export const TaxSummaryDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    useAccountingReportViewed("tax_summary_details");
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");

@@ -10,6 +10,7 @@ import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import VendorStatementPdf from './VendorStatementTemplate';
+import { useAccountingRecordViewed } from '@/components/PostHogAccountingEvents';
 import { ClassFormSection } from '@/pages/ClubManagement/ClassFormSection';
 
 // Define the types for the vendor data based on the provided JSON
@@ -180,6 +181,7 @@ const DetailVendorClub = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [statementDownloading, setStatementDownloading] = useState(false);
     const statementPdfRef = React.useRef<HTMLDivElement | null>(null);
+    const reportRecordLoaded = useAccountingRecordViewed('vendor');
 
     useEffect(() => {
         const fetchVendorDetails = async () => {
@@ -195,6 +197,8 @@ const DetailVendorClub = () => {
                 console.log(`Fetched vendor details: ${JSON.stringify(vendorData)}`, vendorData);
 
                 setVendor(vendorData);
+                reportRecordLoaded(id, null);
+
 
                 // Consolidate all attachments into a single array
                 const consolidatedAttachments: Attachment[] = [];

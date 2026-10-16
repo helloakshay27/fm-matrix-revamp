@@ -9,6 +9,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 interface Vendor {
   id: number;
   company_name: string;
@@ -45,6 +46,8 @@ export const VendorClubDashboard = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const reportListLoaded = useAccountingListViewed('vendor');
+  useAccountingSearchTracking('vendor', searchTerm);
 
   const fetchVendors = useCallback(async (page: number, search: string) => {
     setLoading(true);
@@ -54,6 +57,7 @@ export const VendorClubDashboard = () => {
       const data = await vendorService.getVendors(page, search);
       if (data && data.pms_suppliers) {
         setVendors(data.pms_suppliers);
+        reportListLoaded(data.pms_suppliers.length, data.pagination?.total_count);
         if (data.pagination) {
           setCurrentPage(data.pagination.current_page);
           setTotalPages(data.pagination.total_pages);
@@ -65,6 +69,7 @@ export const VendorClubDashboard = () => {
         }
       } else {
         setVendors([]);
+        reportListLoaded(0, 0);
         setTotalPages(1);
         setTotalCount(0);
       }
@@ -148,6 +153,7 @@ export const VendorClubDashboard = () => {
       // Check for different possible success indicators
       if (result.success === true || result.status === 'success' || response.status === 200) {
         toast.success(result.message || 'Suppliers imported successfully!');
+        accountingEvents.onActionPerformed('vendor', 'import', null);
         // Refresh the vendor list to show imported data
         fetchVendors(currentPage, searchTerm);
         setShowImportModal(false);
@@ -158,6 +164,8 @@ export const VendorClubDashboard = () => {
     } catch (error) {
       toast.dismiss('import-loading');
       console.error('Import error:', error);
+      accountingEvents.onSaveFailed('vendor', 'import', error);
+
       toast.error('Failed to import suppliers. Please try again.');
     } finally {
       setIsImporting(false);

@@ -18,6 +18,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
+import { accountingEvents, useAccountingFormOpened, useAccountingListViewed } from "@/components/PostHogAccountingEvents";
 
 // ─────────────────────────── MUI theme ───────────────────────────────────────
 const muiTheme = createTheme({
@@ -142,6 +143,7 @@ const TaxRatesTable: React.FC = () => {
   const [currentForm, setCurrentForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formBusy, setFormBusy] = useState(false);
+  const reportListLoaded = useAccountingListViewed("tax_rate");
 
   // ── fetch list ──────────────────────────────────────────────────────────
   const fetchTaxes = useCallback(async () => {
@@ -151,6 +153,7 @@ const TaxRatesTable: React.FC = () => {
       const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
       const list: TaxRate[] = Array.isArray(res.data) ? res.data : [];
       setTaxes(list);
+      reportListLoaded(list.length, list.length);
       setTotalRecords(list.length);
       setTotalPages(Math.ceil(list.length / perPage) || 1);
     } catch (err) {
@@ -248,6 +251,7 @@ const TaxRatesTable: React.FC = () => {
           { headers: authHeaders() }
         );
         toast.success("Tax rate updated successfully!");
+        accountingEvents.onRecordUpdated("tax_rate", editingTax.id);
       } else {
         // POST – create
         const payload = {
@@ -263,11 +267,13 @@ const TaxRatesTable: React.FC = () => {
           { headers: authHeaders() }
         );
         toast.success("Tax rate created successfully!");
+        accountingEvents.onRecordCreated("tax_rate", null);
       }
       closePanel();
       fetchTaxes();
     } catch (err: unknown) {
       toast.error(extractErrorMsg(err, "Failed to save tax rate."));
+      accountingEvents.onSaveFailed("tax_rate", editingTax ? "update" : "create", err, { record_id: editingTax?.id });
     } finally {
       setFormBusy(false);
     }
@@ -640,6 +646,7 @@ const GroupTaxTab: React.FC = () => {
           { headers: authHeaders() }
         );
         toast.success('Tax group updated successfully!');
+        accountingEvents.onRecordUpdated('tax_rate', editingGroup.id, { kind: 'tax_group', item_count: selectedIds.length });
       } else {
         await axios.post(
           `${getBaseUrl()}/lock_accounts/${lock_account_id}/create_tax_group.json`,
@@ -647,11 +654,13 @@ const GroupTaxTab: React.FC = () => {
           { headers: authHeaders() }
         );
         toast.success('Tax group created successfully!');
+        accountingEvents.onRecordCreated('tax_rate', null, { kind: 'tax_group', item_count: selectedIds.length });
       }
       closePanel();
       fetchGroups();
     } catch (err: unknown) {
       toast.error(extractErrorMsg(err, 'Failed to save tax group.'));
+      accountingEvents.onSaveFailed('tax_rate', editingGroup ? 'update' : 'create', err, { record_id: editingGroup?.id });
     } finally {
       setSaving(false);
     }
@@ -925,6 +934,7 @@ export const AddTaxGroupPage: React.FC = () => {
   const [orderedRates, setOrderedRates] = useState<TaxRate[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  useAccountingFormOpened("tax_rate", "create");
 
   const dragItem = useRef<number | null>(null);
   const dragOver = useRef<number | null>(null);
@@ -1025,9 +1035,11 @@ export const AddTaxGroupPage: React.FC = () => {
         { headers: authHeaders() }
       );
       toast.success("Tax group created!");
+      accountingEvents.onRecordCreated("tax_rate", null, { kind: "tax_group", item_count: selectedIds.length });
       navigate("/accounting/tax-rates-setup");
     } catch (err: unknown) {
       toast.error(extractErrorMsg(err, "Failed to save tax group."));
+      accountingEvents.onSaveFailed("tax_rate", "create", err);
     } finally {
       setSaving(false);
     }

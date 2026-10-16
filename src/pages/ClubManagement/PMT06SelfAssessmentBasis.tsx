@@ -3,8 +3,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, NotepadText } from "lucide-react";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 const PMT06SelfAssessmentBasis: React.FC = () => {
+  useAccountingReportViewed("pmt_06_self_assessment_basis");
   const [selectedFilter, setSelectedFilter] = useState("This Month");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -87,6 +89,7 @@ const PMT06SelfAssessmentBasis: React.FC = () => {
     } else {
       setShowCustom(false);
       calculateDates(option);
+      accountingEvents.onReportGenerated("pmt_06_self_assessment_basis", { filter_keys: ["period"] });
     }
   };
 
@@ -162,7 +165,17 @@ const PMT06SelfAssessmentBasis: React.FC = () => {
             onChange={(e) => setEndDate(e.target.value)}
             placeholder="End Date"
           />
-          <Button onClick={() => setShowCustom(false)}>Apply</Button>
+          <Button
+            onClick={() => {
+              setShowCustom(false);
+              accountingEvents.onReportGenerated("pmt_06_self_assessment_basis", {
+                from_date: startDate,
+                to_date: endDate,
+              });
+            }}
+          >
+            Apply
+          </Button>
         </div>
       )}
 

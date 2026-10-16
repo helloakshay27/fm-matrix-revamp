@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface Transaction {
     id: number;
@@ -27,6 +28,7 @@ interface SalesCustomer {
 }
 
 const SalesByCustomerReport: React.FC = () => {
+    useAccountingReportViewed("sales_by_customer");
     const navigate = useNavigate();
     const [salesByCustomerData, setSalesByCustomerData] = useState<SalesCustomer[]>([]);
     const [loading, setLoading] = useState(false);
@@ -175,6 +177,7 @@ const SalesByCustomerReport: React.FC = () => {
         };
         const fromDate = formatDate(filters.fromDate);
         const toDate = formatDate(filters.toDate);
+        accountingEvents.onReportGenerated("sales_by_customer", { from_date: filters.fromDate, to_date: filters.toDate });
         fetchSalesData(fromDate, toDate);
     };
 

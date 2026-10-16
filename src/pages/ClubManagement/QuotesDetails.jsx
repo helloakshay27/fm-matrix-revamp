@@ -53,6 +53,7 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import {
     Accordion,
     AccordionItem,
@@ -70,6 +71,7 @@ import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
 export const QuotesDetails = () => {
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("quote");
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -137,6 +139,7 @@ export const QuotesDetails = () => {
                 { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
             );
             setQuoteData(response.data);
+            reportRecordLoaded(id, response.data?.status ?? null);
         } catch (error) {
             console.error("Error fetching quote details:", error);
             sonnerToast.error("Failed to fetch quote details");
@@ -168,9 +171,11 @@ export const QuotesDetails = () => {
                 { lock_account_quote: { status } },
                 { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
             );
+            accountingEvents.onActionPerformed("quote", "status_change", id, { status });
             sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
             fetchQuoteDetails();
         } catch (error) {
+            accountingEvents.onSaveFailed("quote", "action", error, { action: "status_change", record_id: id });
             const errors = error?.response?.data?.errors;
             if (Array.isArray(errors) && errors.length > 0) {
                 errors.forEach((e) => sonnerToast.error(`${e.id}: ${e.message}`));
@@ -192,10 +197,12 @@ export const QuotesDetails = () => {
                 { status, comment: "" },
                 { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
             );
+            accountingEvents.onActionPerformed("quote", status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", id, { status });
             sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
             fetchQuoteDetails();
         } catch (error) {
             sonnerToast.error("Failed to update approval status");
+            accountingEvents.onSaveFailed("quote", "action", error, { action: status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", record_id: id });
         } finally {
             setActionLoading(false);
         }
@@ -250,11 +257,13 @@ export const QuotesDetails = () => {
                     },
                 }
             );
+            accountingEvents.onRecordDeleted("quote", id);
             sonnerToast.success("Quote deleted successfully");
             navigate("/accounting/quotes");
         } catch (error) {
             console.error("Error deleting quote:", error);
             sonnerToast.error("Failed to delete quote");
+            accountingEvents.onSaveFailed("quote", "delete", error, { record_id: id });
         }
         setShowDeleteDialog(false);
     };

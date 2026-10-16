@@ -35,6 +35,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { useApiData } from '@/hooks/useApiData';
 
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
@@ -268,6 +269,7 @@ const initialContactPerson = {
 export const EditVendorPage = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    useAccountingFormOpened('vendor', 'edit', id);
     const { suppliers, services, loading } = useApiData();
     const [activeStep, setActiveStep] = useState(0);
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -749,8 +751,11 @@ export const EditVendorPage = () => {
         try {
             await vendorService.updateVendor(id, apiFormData);
             toast.success('Vendor updated successfully!');
+            accountingEvents.onRecordUpdated('vendor', id);
             navigate('/accounting/vendor');
         } catch (error: any) {
+            accountingEvents.onSaveFailed('vendor', 'update', error, { record_id: id });
+
             if (error.status === 422 && error.validationErrors) {
                 const validationErrors = error.validationErrors;
                 const companyInfoFields = ['company_name', 'email', 'mobile1', 'mobile2', 'pan_number', 'gstin_number'];
