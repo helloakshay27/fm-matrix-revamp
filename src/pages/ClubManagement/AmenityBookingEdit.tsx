@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { RequiredLabel } from "./ClassFormSection";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
@@ -846,7 +847,7 @@ export const AmenityBookingEditPage = () => {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#C72030]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand" />
       </div>
     );
   }
@@ -865,10 +866,10 @@ export const AmenityBookingEditPage = () => {
             </button>
           </div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-              <CheckCircle className="text-white w-5 h-5" />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f5f4f0' }}>
+              <CheckCircle className="text-[rgba(26,26,24,0.68)] w-5 h-5" />
             </div>
-            <h1 className="text-xl font-semibold" style={{ color: '#C72030' }}>Edit Facility Booking</h1>
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--color-primary)' }}>Edit Facility Booking</h1>
           </div>
         </div>
 
@@ -894,15 +895,13 @@ export const AmenityBookingEditPage = () => {
             <div className="space-y-2">
               <TextField
                 select
-                required
-                label="User"
+                label={<RequiredLabel>User</RequiredLabel>}
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 variant="outlined"
                 fullWidth
                 SelectProps={{ displayEmpty: true }}
                 InputLabelProps={{
-                  classes: { asterisk: "text-red-500" },
                   shrink: true
                 }}
                 sx={fieldStyles}
@@ -952,15 +951,13 @@ export const AmenityBookingEditPage = () => {
             <div className="space-y-2">
               <TextField
                 select
-                required
-                label="Facility"
+                label={<RequiredLabel>Facility</RequiredLabel>}
                 value={selectedFacility}
                 onChange={(e) => handleFacilityChange(e.target.value)}
                 variant="outlined"
                 fullWidth
                 SelectProps={{ displayEmpty: true }}
                 InputLabelProps={{
-                  classes: { asterisk: "text-red-500" },
                   shrink: true
                 }}
                 sx={fieldStyles}
@@ -988,15 +985,13 @@ export const AmenityBookingEditPage = () => {
             <div className="space-y-2">
               <TextField
                 type="date"
-                label="Date"
-                required
+                label={<RequiredLabel>Date</RequiredLabel>}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 variant="outlined"
                 fullWidth
                 disabled
                 InputLabelProps={{
-                  classes: { asterisk: "text-red-500" },
                   shrink: true
                 }}
                 inputProps={{
@@ -1043,7 +1038,7 @@ export const AmenityBookingEditPage = () => {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Select Slot<span className="text-red-500"> *</span></h2>
+              <h2 className="text-lg font-semibold">Select Slot<span className="ml-0.5">*</span></h2>
               {slots.length > 0 && (
                 <div className="flex items-center gap-2">
                   <input
@@ -1116,7 +1111,7 @@ export const AmenityBookingEditPage = () => {
                             </span>
                           )}
                           {slot.is_premium && slot.premium_percentage && !isBooked && (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                                 <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                               </svg>
@@ -1200,7 +1195,7 @@ export const AmenityBookingEditPage = () => {
           )}
 
           <div>
-            <h2 className="text-lg font-semibold mb-4">Payment Method<span className="text-red-500"> *</span></h2>
+            <h2 className="text-lg font-semibold mb-4">Payment Method<span className="ml-0.5">*</span></h2>
             {facilityDetails && (
               <RadioGroup value={paymentMethod} onValueChange={(val) => setPaymentMethod(val)} className="space-y-3">
                 {facilityDetails.postpaid === 1 && (
@@ -1235,14 +1230,12 @@ export const AmenityBookingEditPage = () => {
             {paymentMethod === 'complementary' && (
               <div className="mt-4">
                 <TextField
-                  label="Reason"
-                  required
+                  label={<RequiredLabel>Reason</RequiredLabel>}
                   value={complementaryReason}
                   onChange={(e) => setComplementaryReason(e.target.value)}
                   variant="outlined"
                   fullWidth
                   InputLabelProps={{
-                    classes: { asterisk: "text-red-500" },
                     shrink: true
                   }}
                   sx={fieldStyles}
@@ -1258,7 +1251,7 @@ export const AmenityBookingEditPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-[#E5E0D3]">
+                    <tr className="bg-[#f5f4f0]">
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User Type</th>
                       <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Charge</th>
@@ -1375,7 +1368,7 @@ export const AmenityBookingEditPage = () => {
                             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
                               <div>
                                 <p className="text-sm text-gray-600 italic">This is a complimentary booking</p>
-                                <p className="text-lg font-bold mt-2" style={{ color: '#8B4B8C' }}>Grand Total: ₹0</p>
+                                <p className="text-lg font-bold mt-2" style={{ color: 'var(--color-primary)' }}>Grand Total: ₹0</p>
                               </div>
                             </div>
                           </>
@@ -1414,7 +1407,7 @@ export const AmenityBookingEditPage = () => {
                                               <tr key={idx}>
                                                 <td className="border px-2 py-1">{s.slotLabel}</td>
                                                 <td className="border px-2 py-1">+{s.slotPremiumPercent || 0}%</td>
-                                                <td className="border px-2 py-1 text-purple-700">₹{s.memberPremium.toFixed(2)}</td>
+                                                <td className="border px-2 py-1 text-gray-900">₹{s.memberPremium.toFixed(2)}</td>
                                                 <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
                                               </tr>
                                             );
@@ -1590,9 +1583,9 @@ export const AmenityBookingEditPage = () => {
                               </div>
                             )}
 
-                            <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                              <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
-                              <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                            <div className="flex justify-between items-center py-3 bg-[#f5f4f0] px-4 rounded-lg mt-2">
+                              <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>Grand Total</span>
+                              <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>₹{grandTotal.toFixed(2)}</span>
                             </div>
                           </>
                         )}
@@ -1617,7 +1610,7 @@ export const AmenityBookingEditPage = () => {
           <div className="space-y-2 text-sm">
             <div
               className="flex items-center gap-2 cursor-pointer hover:underline"
-              style={{ color: '#C72030' }}
+              style={{ color: 'var(--color-primary)' }}
               onClick={() => setOpenCancelPolicy(true)}
             >
               <FileText className="w-4 h-4" />
@@ -1625,7 +1618,7 @@ export const AmenityBookingEditPage = () => {
             </div>
             <div
               className="flex items-center gap-2 cursor-pointer hover:underline"
-              style={{ color: '#C72030' }}
+              style={{ color: 'var(--color-primary)' }}
               onClick={() => setOpenTerms(true)}
             >
               <Shield className="w-4 h-4" />

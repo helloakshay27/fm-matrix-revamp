@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassFormSection } from "./ClassFormSection";
 import { Badge } from "@/components/ui/badge";
 import {
     Table,
@@ -252,16 +252,8 @@ export const CreditNoteClubDetails = () => {
                 </div>
 
                 {/* Credit Note Information — mirrors the credit_note fields sent on creation */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <FileText className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Credit Note Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Credit Note Information" icon={<FileText />}>
+                    <div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Credit Note Number</p>
@@ -321,20 +313,12 @@ export const CreditNoteClubDetails = () => {
                                 </p>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </ClassFormSection>
 
                 {/* Line Items — mirrors the line_items array sent on creation */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <Package className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Line Items
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Line Items" icon={<Package />}>
+                    <div>
                         {lineItems.length > 0 ? (
                             <>
                                 <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -403,8 +387,8 @@ export const CreditNoteClubDetails = () => {
                         ) : (
                             <p className="text-center text-muted-foreground py-8">No items found</p>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </ClassFormSection>
 
                 {/* Attachments */}
                 {/* <Card>

@@ -76,7 +76,7 @@ const AddRootCauseAnalysisPage = () => {
                     {...field}
                     label={
                       <span>
-                        Field Value <span style={{ color: '#da7756' }}>*</span>
+                        Field Value<span className="ml-0.5">*</span>
                       </span>
                     }
                     placeholder="Enter field value"

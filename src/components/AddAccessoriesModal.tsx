@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { isCMContextActive } from "@/utils/posthogHelpers";
+import { RequiredLabel } from "@/pages/ClubManagement/ClassFormSection";
 
 const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
@@ -167,19 +168,18 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                 <TextField
                     fullWidth
                     margin="normal"
-                    label="Accessory Name"
+                    label={<RequiredLabel>Accessory Name</RequiredLabel>}
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    required
                 />
 
                 <div className="flex items-center justify-between gap-4">
                     <TextField
                         fullWidth
                         margin="normal"
-                        label="Quantity"
+                        label={<RequiredLabel>Quantity</RequiredLabel>}
                         type="number"
                         name="quantity"
                         value={formData.quantity}
@@ -197,7 +197,6 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                             min: 0,
                             step: '0.01'
                         }}
-                        required
                     />
 
                     <FormControl fullWidth margin="normal">
@@ -218,7 +217,7 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                     <TextField
                         fullWidth
                         margin="normal"
-                        label="Maximum Stock Level"
+                        label={<RequiredLabel>Maximum Stock Level</RequiredLabel>}
                         type="number"
                         name="maxStockLevel"
                         value={formData.maxStockLevel}
@@ -235,13 +234,12 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                             pattern: '[0-9]*',
                             min: 0
                         }}
-                        required
                     />
 
                     <TextField
                         fullWidth
                         margin="normal"
-                        label="Cost Per Unit"
+                        label={<RequiredLabel>Cost Per Unit</RequiredLabel>}
                         type="number"
                         name="costPerUnit"
                         value={formData.costPerUnit}
@@ -258,7 +256,6 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                             pattern: '[0-9]*',
                             min: 0
                         }}
-                        required
                     />
                 </div>
 

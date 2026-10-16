@@ -11,7 +11,7 @@ import {
     DialogContent as MuiDialogContent,
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassFormSection } from "./ClassFormSection";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -389,16 +389,8 @@ export const InvoiceClubManagementDetails = () => {
                 </div>
 
                 {/* Invoice Information — mirrors the bill_booking fields sent on creation */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <FileText className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Invoice Information
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Invoice Information" icon={<FileText />}>
+                    <div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Invoice To</p>
@@ -460,20 +452,12 @@ export const InvoiceClubManagementDetails = () => {
                                 </p>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </ClassFormSection>
 
                 {/* Address & GST — mirrors address_detail_attributes sent on creation */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <User className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Address
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Address" icon={<User />}>
+                    <div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground mb-1">Billing Address</p>
@@ -516,21 +500,13 @@ export const InvoiceClubManagementDetails = () => {
                                 )}
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </ClassFormSection>
 
                 {/* Bank Details */}
                 {/* {bankDetail && (
-                    <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                        <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                                <User className="h-4 w-4" />
-                            </div>
-                            <CardTitle className="text-lg font-semibold text-gray-800">
-                                Bank Details
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ClassFormSection title="Bank Details" icon={<User />}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
                                 <p className="text-sm mt-1">{bankDetail.bankName}</p>
@@ -557,21 +533,13 @@ export const InvoiceClubManagementDetails = () => {
                                 <p className="text-sm font-medium text-muted-foreground">Branch</p>
                                 <p className="text-sm mt-1">{bankDetail.branch}</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </ClassFormSection>
                 )} */}
 
                 {/* Line Items — mirrors the line_items array sent on creation */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <Package className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Line Items
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Line Items" icon={<Package />}>
+                    <div>
                         {lineItems.length > 0 ? (
                             <>
                                 <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -655,20 +623,12 @@ export const InvoiceClubManagementDetails = () => {
                         ) : (
                             <p className="text-center text-muted-foreground py-8">No items found</p>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </ClassFormSection>
 
                 {/* Attachments */}
-                <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-                    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                            <Paperclip className="h-4 w-4" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-800">
-                            Attachments
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 bg-white">
+                <ClassFormSection title="Attachments" icon={<Paperclip />}>
+                    <div>
                         {invoiceData.attachments?.length > 0 ? (
                             <div className="space-y-2">
                                 {invoiceData.attachments.map((file, idx) => (
@@ -697,8 +657,8 @@ export const InvoiceClubManagementDetails = () => {
                         ) : (
                             <p className="text-center text-muted-foreground py-4">No attachments</p>
                         )}
-                    </CardContent>
-                    </Card>
+                    </div>
+                    </ClassFormSection>
             </div>
 
             {/* Payment Modal — uses MUI's own Dialog (like AddChartofAccountModal), not the Radix

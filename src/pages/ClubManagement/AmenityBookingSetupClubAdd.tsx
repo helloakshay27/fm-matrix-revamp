@@ -19,6 +19,7 @@ import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { RequiredLabel } from "./ClassFormSection";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -906,7 +907,7 @@ export const AddBookingSetupClubPage = () => {
             <div className="space-y-6 py-2">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <TextField
-                  label="Facility Name"
+                  label={<RequiredLabel>Facility Name</RequiredLabel>}
                   placeholder="Enter Facility Name"
                   value={formData.facilityName}
                   onChange={(e) => {
@@ -917,11 +918,7 @@ export const AddBookingSetupClubPage = () => {
                     // }
                   }}
                   variant="outlined"
-                  required
                   InputLabelProps={{
-                    classes: {
-                      asterisk: "text-red-500", // Tailwind class for red color
-                    },
                     shrink: true,
                   }}
                 />
@@ -2274,7 +2271,7 @@ export const AddBookingSetupClubPage = () => {
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <MessageSquareX className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY*</h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY<span className="ml-0.5">*</span></h3>
               </div>
 
               <div>
@@ -2404,7 +2401,7 @@ export const AddBookingSetupClubPage = () => {
 
             <div className="space-y-3">
               <div className="font-medium text-gray-700">
-                Cancellation Policy <span>*</span>
+                Cancellation Policy<span className="ml-0.5">*</span>
               </div>
               <div
                 ref={cancellationQuillRef}

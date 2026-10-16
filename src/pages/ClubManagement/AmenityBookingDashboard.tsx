@@ -49,7 +49,7 @@ const muiTheme = createTheme({
               borderColor: '#1A1A1A',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#8B4B8C',
+              borderColor: 'var(--color-primary)',
               borderWidth: 2,
             },
           },
@@ -59,7 +59,7 @@ const muiTheme = createTheme({
             fontSize: { xs: '12px', sm: '14px' },
           },
           '& .MuiInputLabel-root.Mui-focused': {
-            color: '#8B4B8C',
+            color: 'var(--color-primary)',
           },
           '& .MuiInputLabel-shrink': {
             transform: 'translate(14px, -9px) scale(0.75)',

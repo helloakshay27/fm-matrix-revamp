@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { vendorService } from '@/services/vendorService';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextField } from '@mui/material';
@@ -11,6 +10,7 @@ import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import VendorStatementPdf from './VendorStatementTemplate';
+import { ClassFormSection } from '@/pages/ClubManagement/ClassFormSection';
 
 // Define the types for the vendor data based on the provided JSON
 interface Contact {
@@ -393,86 +393,77 @@ const DetailVendorClub = () => {
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div>
                 <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
-                    <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+                    <TabsList className="w-full mb-6 bg-white border border-gray-200">
                         <TabsTrigger
                             value="basic"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Basic Information
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="contacts"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Contact Persons
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="bank"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Bank Information
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="audits"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Audits
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="attachments"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Attachments
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="statement"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Statement
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="openingBalance"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Opening Balance
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="financial"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Financial Summary
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="approval"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
+                            className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                         >
                             Approval Status
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="basic" className="p-4 sm:p-6">
+                    <TabsContent value="basic">
                         {/* Basic Information */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Building className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Basic Information</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <ClassFormSection title="Basic Information" icon={<Building />}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Company Name</span>
                                         <span className="text-gray-500 mx-2">:</span>
@@ -656,27 +647,17 @@ const DetailVendorClub = () => {
                                         </div>
                                     )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="contacts" className="p-4 sm:p-6">
+                    <TabsContent value="contacts">
                         {/* Contact Persons */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <User className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Contact Persons</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                        <ClassFormSection title="Contact Persons" icon={<User />}>
                                 <div className="overflow-x-auto">
                                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                                         <Table className="border-separate">
                                             <TableHeader>
-                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#f5f4f0' }}>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Name</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Email(s)</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Phone(s)</TableHead>
@@ -703,23 +684,13 @@ const DetailVendorClub = () => {
                                         </Table>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="bank" className="p-4 sm:p-6">
+                    <TabsContent value="bank">
                         {/* Bank Information */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Landmark className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Bank Information</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <ClassFormSection title="Bank Information" icon={<Landmark />}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Account Name</span>
                                         <span className="text-gray-500 mx-2">:</span>
@@ -741,27 +712,17 @@ const DetailVendorClub = () => {
                                         <span className="text-gray-900 font-medium">{vendor?.ifsc_code || '-'}</span>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="audits" className="p-4 sm:p-6">
+                    <TabsContent value="audits">
                         {/* Audits Conducted */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <ShieldCheck className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Audits Conducted</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                        <ClassFormSection title="Audits Conducted" icon={<ShieldCheck />}>
                                 <div className="overflow-x-auto">
                                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                                         <Table className="border-separate">
                                             <TableHeader>
-                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#f5f4f0' }}>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Report</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>ID</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Vendor Name</TableHead>
@@ -795,27 +756,17 @@ const DetailVendorClub = () => {
                                         </Table>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="attachments" className="p-4 sm:p-6">
+                    <TabsContent value="attachments">
                         {/* Attachments */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <FileText className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Attachments</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                        <ClassFormSection title="Attachments" icon={<FileText />}>
                                 <div className="overflow-x-auto">
                                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                                         <Table className="border-separate">
                                             <TableHeader>
-                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#f5f4f0' }}>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Category</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Document Name</TableHead>
                                                     <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Size</TableHead>
@@ -875,54 +826,44 @@ const DetailVendorClub = () => {
                                         </Table>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="statement" className="p-4 sm:p-6">
+                    <TabsContent value="statement">
                         {/* Vendor Statement */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                            <FileText className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                        </div>
-                                        <span className="uppercase tracking-wide">Vendor Statement</span>
-                                    </div>
+                        <ClassFormSection
+                            title="Vendor Statement"
+                            icon={<FileText />}
+                            actions={
                                     <div className="flex flex-wrap items-center gap-2">
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
                                             onClick={handlePrintStatement}
                                         >
-                                            <Printer className="h-4 w-4 mr-2" color="#DA7756" />
+                                            <Printer className="h-4 w-4 mr-2" />
                                             Print Statement
                                         </Button>
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
                                             onClick={() => navigate("/accounting/vendor/template", { state: { recordId: id } })}
                                         >
-                                            <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
+                                            <Settings2 className="h-4 w-4 mr-2" />
                                             Template Edit
                                         </Button>
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
                                             onClick={handleDownloadStatement}
                                             disabled={statementDownloading}
                                         >
-                                            <Download className="h-4 w-4 mr-2" color="#DA7756" />
+                                            <Download className="h-4 w-4 mr-2" />
                                             {statementDownloading ? 'Downloading...' : 'Download Statement'}
                                         </Button>
                                     </div>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                            }
+                        >
                                 <div className="overflow-x-auto">
                                     <div ref={statementPdfRef} className="inline-block min-w-full">
                                         <VendorStatementPdf
@@ -941,28 +882,18 @@ const DetailVendorClub = () => {
                                         />
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="openingBalance" className="p-4 sm:p-6">
+                    <TabsContent value="openingBalance">
                         {/* Opening Balance */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <FileSpreadsheet className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Opening Balance</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                        <ClassFormSection title="Opening Balance" icon={<FileSpreadsheet />}>
                                 {vendor?.opening_balances && vendor.opening_balances.length > 0 ? (
                                     <div className="overflow-x-auto">
                                         <div className="rounded-lg border border-gray-200 overflow-hidden">
                                             <Table className="border-separate">
                                                 <TableHeader>
-                                                    <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                    <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#f5f4f0' }}>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill No</TableHead>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill Date</TableHead>
                                                         <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Due Date</TableHead>
@@ -997,23 +928,13 @@ const DetailVendorClub = () => {
                                         <div className="text-gray-500 text-sm">No opening balance records found</div>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="financial" className="p-4 sm:p-6">
+                    <TabsContent value="financial">
                         {/* Financial Summary */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Landmark className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Financial Summary</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <ClassFormSection title="Financial Summary" icon={<Landmark />}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">PO Total Amount</span>
                                         <span className="text-gray-500 mx-2">:</span>
@@ -1054,7 +975,7 @@ const DetailVendorClub = () => {
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">₹{vendor?.financial_summary?.bills_outstanding_amount || 0}</span>
                                     </div>
-                                    <div className="flex items-start col-span-2 p-4 bg-gray-50 rounded-lg border-l-4 border-[#DA7756]">
+                                    <div className="flex items-start col-span-2 p-4 bg-[#f5f4f0] rounded-lg border-l-4 border-[#1A1A18]">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
                                             <div className="flex flex-col">
                                                 <span className="text-gray-500 text-xs uppercase tracking-wide">Total Amount</span>
@@ -1071,24 +992,14 @@ const DetailVendorClub = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
 
-                    <TabsContent value="approval" className="p-4 sm:p-6">
+                    <TabsContent value="approval">
                         {/* Approval Status */}
-                        <Card className="w-full">
-                            <CardHeader className="pb-4 lg:pb-6">
-                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <ShieldCheck className="w-6 h-6" style={{ color: '#DA7756' }} />
-                                    </div>
-                                    <span className="uppercase tracking-wide">Approval Status</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
+                        <ClassFormSection title="Approval Status" icon={<ShieldCheck />}>
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                         <div className="flex items-start">
                                             <span className="text-gray-500 min-w-[140px]">Approval Required</span>
                                             <span className="text-gray-500 mx-2">:</span>
@@ -1106,7 +1017,7 @@ const DetailVendorClub = () => {
                                             <div className="rounded-lg border border-gray-200 overflow-hidden">
                                                 <Table className="border-separate">
                                                     <TableHeader>
-                                                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#f5f4f0' }}>
                                                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Level</TableHead>
                                                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Order</TableHead>
                                                             <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Status</TableHead>
@@ -1133,8 +1044,7 @@ const DetailVendorClub = () => {
                                         </div>
                                     )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </ClassFormSection>
                     </TabsContent>
                 </Tabs>
             </div>

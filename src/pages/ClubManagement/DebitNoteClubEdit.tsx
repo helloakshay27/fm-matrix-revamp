@@ -42,18 +42,13 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { ClassFormSection } from "./ClassFormSection";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                {icon}
-            </div>
-            <span className="font-semibold text-lg text-gray-800">{title}</span>
-        </div>
-        <div className="p-6 bg-white">{children}</div>
-    </section>
+    <ClassFormSection title={title} icon={icon}>
+        {children}
+    </ClassFormSection>
 );
 
 interface Customer {
@@ -2014,7 +2009,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                 {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -2059,7 +2054,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                 {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -2124,7 +2119,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                 Subject
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                                 rows={3}
                                 maxLength={500}
                                 value={subject}
@@ -2366,9 +2361,9 @@ export const DebitNoteClubEditPage: React.FC = () => {
                                                         onClick={() => removeItem(index)}
                                                         disabled={items.length === 1}
                                                         sx={{
-                                                            color: '#DA7756',
-                                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
-                                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                                            color: 'rgba(26,26,24,0.68)',
+                                                            '&:hover': { backgroundColor: 'rgba(26,26,24,0.05)' },
+                                                            '&.Mui-disabled': { color: 'rgba(26,26,24,0.28)' },
                                                         }}
                                                     >
                                                         <Delete fontSize="small" />
@@ -2455,7 +2450,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                         rows={3}
                         maxLength={500}
                         value={customerNotes}
@@ -2468,7 +2463,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                         rows={4}
                         maxLength={500}
                         value={termsAndConditions}
@@ -2668,7 +2663,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                         <Divider />
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-orange-50 rounded-lg p-4 text-center">
+                            <div className="bg-[#f5f4f0] rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
                                     {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
                                 </Typography>
@@ -2808,7 +2803,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#DA7756] bg-red-50'
+                                    ? 'border-[#1A1A18] bg-[#f5f4f0]'
                                     : 'border-gray-200 hover:border-gray-300'}`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
@@ -2840,7 +2835,7 @@ export const DebitNoteClubEditPage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-between !px-4">
-                    <button type="button" className="text-[#DA7756] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
+                    <button type="button" className="text-[#1A1A18] text-sm font-medium underline-offset-2 hover:underline" onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
                     <button type="button" onClick={() => setAddressListModalOpen(false)} className="fm-action-secondary">Close</button>

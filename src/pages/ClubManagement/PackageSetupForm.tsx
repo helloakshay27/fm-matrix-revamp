@@ -9,45 +9,7 @@ import {
   type ClubClassOption,
   type PricingTier,
 } from "./packageSetupMockData";
-
-const Section = ({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <section className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-        {icon}
-      </div>
-      <span className="font-semibold text-lg text-gray-800">{title}</span>
-    </div>
-    <div className="p-6 bg-white">{children}</div>
-  </section>
-);
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": { color: "#C72030" },
-  },
-};
-
-const requiredLabelSx = {
-  "& .MuiFormLabel-asterisk": { color: "#DA7756" },
-};
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
 // Blocks typing/pasting the "-" sign so number fields can't go negative
 // (the `min: 0` attribute alone only affects the spinner, not typed input).
@@ -239,15 +201,16 @@ export const PackageSetupForm = ({
         <h1 className="text-2xl font-bold text-black">{pageTitle}</h1>
       </header>
 
-      <Section title="Package Details" icon={<PackageIcon className="w-5 h-5" />}>
+      <ClassFormSection title="Package Details" icon={<PackageIcon />}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <FormControl
             fullWidth
             variant="outlined"
-            required
-            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            sx={{ "& .MuiInputBase-root": classFieldStyles }}
           >
-            <InputLabel shrink>Select Class</InputLabel>
+            <InputLabel shrink>
+              <RequiredLabel>Select Class</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={classActivity}
               onChange={(e) => setClassActivity(e.target.value)}
@@ -272,25 +235,24 @@ export const PackageSetupForm = ({
           </FormControl>
 
           <TextField
-            label="Package"
+            label={<RequiredLabel>Package</RequiredLabel>}
             placeholder="Enter package name"
             value={tier.label}
             onChange={(e) => patchTier({ label: e.target.value })}
-            required
             fullWidth
             variant="outlined"
-            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
           <FormControl
             fullWidth
             variant="outlined"
-            required
-            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            sx={{ "& .MuiInputBase-root": classFieldStyles }}
           >
-            <InputLabel shrink>Package Type</InputLabel>
+            <InputLabel shrink>
+              <RequiredLabel>Package Type</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={tier.packageType}
               onChange={(e) => patchTier({ packageType: e.target.value as string })}
@@ -315,17 +277,15 @@ export const PackageSetupForm = ({
           </FormControl>
 
           <TextField
-            label="No. of Classes"
+            label={<RequiredLabel>No. of Classes</RequiredLabel>}
             type="number"
             placeholder="Enter number of classes"
             value={tier.credits}
             onChange={handleNumberChange("credits")}
-            required
             fullWidth
             variant="outlined"
-            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
 
@@ -338,7 +298,7 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
 
@@ -351,7 +311,7 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
 
@@ -364,7 +324,7 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
 
@@ -377,7 +337,7 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
 
@@ -390,7 +350,7 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, max: 100, onKeyDown: blockNegativeKey }}
           />
 
@@ -403,30 +363,28 @@ export const PackageSetupForm = ({
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, max: 100, onKeyDown: blockNegativeKey }}
           />
 
           <TextField
-            label="HSN Code"
+            label={hsnRequired ? <RequiredLabel>HSN Code</RequiredLabel> : "HSN Code"}
             placeholder="Enter HSN code"
             value={tier.hsnCode}
             onChange={(e) => patchTier({ hsnCode: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-            required={hsnRequired}
             error={!!tier.hsnCode && !isValidHsn(tier.hsnCode)}
             helperText={tier.hsnCode && !isValidHsn(tier.hsnCode) ? "HSN code must be 4, 6 or 8 digits" : undefined}
             fullWidth
             variant="outlined"
             sx={{
-              ...requiredLabelSx,
               "& .MuiFormHelperText-root.Mui-error, & .MuiInputLabel-root.Mui-error": { color: "var(--color-primary)" },
               "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: "var(--color-primary)" },
             }}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
-          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
             <InputLabel shrink>Extension Allowed</InputLabel>
             <MuiSelect
               value={extensionAllowed ? "yes" : "no"}
@@ -440,7 +398,7 @@ export const PackageSetupForm = ({
           </FormControl>
 
           <TextField
-            label="Max Extension Days"
+            label={extensionAllowed ? <RequiredLabel>Max Extension Days</RequiredLabel> : "Max Extension Days"}
             type="number"
             placeholder="Enter max extension days"
             value={maxExtensionDays}
@@ -449,16 +407,14 @@ export const PackageSetupForm = ({
               setMaxExtensionDays(raw === "" ? "" : toNonNegative(raw));
             }}
             disabled={!extensionAllowed}
-            required={extensionAllowed}
             fullWidth
             variant="outlined"
-            sx={requiredLabelSx}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
             inputProps={{ min: 0, onKeyDown: blockNegativeKey }}
           />
         </div>
-      </Section>
+      </ClassFormSection>
 
       <div className="fm-action-bar pt-4 sm:pt-6">
         <button

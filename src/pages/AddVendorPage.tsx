@@ -763,7 +763,7 @@
 //               <Box p={3}>
 //                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 //                   <TextField
-//                     label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+//                     label={<span>Company Name<span className="ml-0.5">*</span></span>}
 //                     fullWidth
 //                     value={formData.companyName}
 //                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
@@ -788,7 +788,7 @@
 //                     helperText={errors.secondaryPhone}
 //                   />
 //                   <TextField
-//                     label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+//                     label={<span>Email<span className="ml-0.5">*</span></span>}
 //                     type="email"
 //                     fullWidth
 //                     value={formData.email}
@@ -924,7 +924,7 @@
 //                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
 //                   {/* GST Treatment - Dropdown */}
 //                   <TextField
-//                     label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
+//                     label={<span>GST Treatment<span className="ml-0.5">*</span></span>}
 //                     select
 //                     fullWidth
 //                     value={formData.gstTreatment}
@@ -1161,7 +1161,7 @@
 //                   </div>
 //                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
 //                     <TextField
-//                       label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Country<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={billingAddress.country}
 //                       onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
@@ -1171,7 +1171,7 @@
 //                       placeholder="e.g., India"
 //                     />
 //                     <TextField
-//                       label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>State<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={billingAddress.state}
 //                       onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
@@ -1181,7 +1181,7 @@
 //                       placeholder="e.g., Maharashtra"
 //                     />
 //                     <TextField
-//                       label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>City<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={billingAddress.city}
 //                       onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
@@ -1202,7 +1202,7 @@
 //                   </div>
 //                   <div className="grid grid-cols-1 gap-4">
 //                     <TextField
-//                       label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Address Line 1<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={billingAddress.addressLine1}
 //                       onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
@@ -1225,7 +1225,7 @@
 //                   </div>
 //                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
 //                     <TextField
-//                       label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Country<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={shippingAddress.country}
 //                       onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
@@ -1235,7 +1235,7 @@
 //                       placeholder="e.g., India"
 //                     />
 //                     <TextField
-//                       label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>State<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={shippingAddress.state}
 //                       onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
@@ -1245,7 +1245,7 @@
 //                       placeholder="e.g., Maharashtra"
 //                     />
 //                     <TextField
-//                       label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>City<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={shippingAddress.city}
 //                       onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
@@ -1266,7 +1266,7 @@
 //                   </div>
 //                   <div className="grid grid-cols-1 gap-4">
 //                     <TextField
-//                       label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Address Line 1<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={shippingAddress.addressLine1}
 //                       onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
@@ -1363,7 +1363,7 @@
 //                       </div>
 //                     )}
 //                     <TextField
-//                       label={<span>First Name <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>First Name<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={contact.firstName}
 //                       onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
@@ -1371,7 +1371,7 @@
 //                       helperText={errors[`contact_${index}_firstName`]}
 //                     />
 //                     <TextField
-//                       label={<span>Last Name <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Last Name<span className="ml-0.5">*</span></span>}
 //                       fullWidth
 //                       value={contact.lastName}
 //                       onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
@@ -1379,7 +1379,7 @@
 //                       helperText={errors[`contact_${index}_lastName`]}
 //                     />
 //                     <TextField
-//                       label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
+//                       label={<span>Primary Email<span className="ml-0.5">*</span></span>}
 //                       type="email"
 //                       fullWidth
 //                       value={contact.primaryEmail}
@@ -1454,7 +1454,7 @@
 //                 <TextField
 //                   label={
 //                     <span>
-//                       Start Date <span style={{ color: 'red' }}>*</span>
+//                       Start Date<span className="ml-0.5">*</span>
 //                     </span>
 //                   }
 //                   id="startFrom"
@@ -1775,7 +1775,7 @@ const FieldLabel: React.FC<{ htmlFor?: string; required?: boolean; children: Rea
 }) => (
   <label htmlFor={htmlFor} className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
     {children}
-    {required && <span className="text-[#E5484D]"> *</span>}
+    {required && <span className="ml-0.5">*</span>}
   </label>
 );
 
@@ -1784,12 +1784,11 @@ const VENDOR_FORM_CSS = `
 .vendor-add-page .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.08)!important}
 .vendor-add-page .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.28)!important}
 .vendor-add-page .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{border-color:#1A1A18!important;border-width:1px!important}
-.vendor-add-page .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline{border-color:#E5484D!important}
+html body .vendor-add-page .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline{border-color:#1A1A18!important}
 .vendor-add-page .MuiInputLabel-root{color:rgba(26,26,24,.48)!important}
 .vendor-add-page .MuiInputLabel-root.Mui-focused{color:#1A1A18!important}
-.vendor-add-page .MuiInputLabel-root.Mui-error{color:#A32126!important}
-.vendor-add-page .MuiInputLabel-root span[style*="red"]{color:#E5484D!important}
-.vendor-add-page .MuiFormHelperText-root.Mui-error{color:#E5484D!important}
+html body .vendor-add-page .MuiFormControl-root > .MuiInputLabel-root.MuiInputLabel-outlined.Mui-error,html body .vendor-add-page .MuiInputLabel-root.Mui-error{color:#1A1A18!important}
+html body .vendor-add-page .MuiFormHelperText-root.Mui-error{color:#1A1A18!important}
 .vendor-add-page .MuiInputBase-input,.vendor-add-page .MuiSelect-select{color:#1A1A18!important}
 .vendor-add-page .MuiInputBase-input::placeholder,.vendor-add-page textarea::placeholder{color:rgba(26,26,24,.3)!important;opacity:1}
 .vendor-add-page .MuiSelect-icon,.vendor-add-page .MuiSvgIcon-root{color:rgba(26,26,24,.48)}
@@ -2510,7 +2509,7 @@ export const AddVendorPage = () => {
             <Box p={3}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <TextField
-                  label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                  label={<span>Country<span className="ml-0.5">*</span></span>}
                   fullWidth
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
@@ -2525,7 +2524,7 @@ export const AddVendorPage = () => {
                   placeholder="e.g., India"
                 />
                 <TextField
-                  label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                  label={<span>State<span className="ml-0.5">*</span></span>}
                   fullWidth
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
@@ -2540,7 +2539,7 @@ export const AddVendorPage = () => {
                   placeholder="e.g., Maharashtra"
                 />
                 <TextField
-                  label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                  label={<span>City<span className="ml-0.5">*</span></span>}
                   fullWidth
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -2565,7 +2564,7 @@ export const AddVendorPage = () => {
                 />
                 <div className="lg:col-span-2">
                   <TextField
-                    label={<span>Address Line1 <span style={{ color: 'red' }}>*</span></span>}
+                    label={<span>Address Line1<span className="ml-0.5">*</span></span>}
                     fullWidth
                     value={formData.addressLine1}
                     onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
@@ -2658,11 +2657,11 @@ export const AddVendorPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
-                        <p className="text-[#E5484D] text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                        <p className="text-[#1A1A18] text-sm mt-1">{errors[`contact_${index}_general`]}</p>
                       </div>
                     )}
                     <TextField
-                      label={<span>First Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>First Name<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={contact.firstName}
                       onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
@@ -2670,7 +2669,7 @@ export const AddVendorPage = () => {
                       helperText={errors[`contact_${index}_firstName`]}
                     />
                     <TextField
-                      label={<span>Last Name <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Last Name<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={contact.lastName}
                       onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
@@ -2678,7 +2677,7 @@ export const AddVendorPage = () => {
                       helperText={errors[`contact_${index}_lastName`]}
                     />
                     <TextField
-                      label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
+                      label={<span>Primary Email<span className="ml-0.5">*</span></span>}
                       type="email"
                       fullWidth
                       value={contact.primaryEmail}
@@ -2753,7 +2752,7 @@ export const AddVendorPage = () => {
                 <TextField
                   label={
                     <span>
-                      Start Date <span style={{ color: 'red' }}>*</span>
+                      Start Date<span className="ml-0.5">*</span>
                     </span>
                   }
                   id="startFrom"

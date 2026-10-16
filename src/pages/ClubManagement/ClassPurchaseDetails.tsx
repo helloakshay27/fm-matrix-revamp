@@ -32,19 +32,7 @@ import {
   type ClassPurchaseDetail,
   type PurchaseStatus,
 } from "./classPurchaseApi";
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-  "& .MuiInputLabel-root": { "&.Mui-focused": { color: "#C72030" } },
-};
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
 const menuProps = {
   anchorOrigin: { vertical: "bottom" as const, horizontal: "left" as const },
@@ -225,14 +213,8 @@ export const ClassPurchaseDetails = () => {
         </div>
       </div>
 
-      <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <ShoppingCart className="w-4 h-4" />
-          </div>
-          <span className="font-semibold text-lg text-gray-800">Purchase Details</span>
-        </div>
-        <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <ClassFormSection title="Purchase Details" icon={<ShoppingCart />}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <InfoRow label="Member" value={purchase.userName} />
           <InfoRow label="Class / Package" value={`${purchase.className} - ${purchase.packageName}`} />
           <InfoRow label="Credits" value={`${purchase.remainingSessions} of ${purchase.totalSessions} left`} />
@@ -244,16 +226,12 @@ export const ClassPurchaseDetails = () => {
           <InfoRow label={`SGST (${purchase.sgstRate}%)`} value={`₹${purchase.sgst.toLocaleString("en-IN")}`} />
           <InfoRow label="Total" value={<span className="text-[#C72030] font-bold">₹{purchase.total.toLocaleString("en-IN")}</span>} />
         </div>
-      </section>
+      </ClassFormSection>
 
-      <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center justify-between gap-3 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <Users className="w-4 h-4" />
-            </div>
-            <span className="font-semibold text-lg text-gray-800">Members</span>
-          </div>
+      <ClassFormSection
+        title="Members"
+        icon={<Users />}
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -261,8 +239,9 @@ export const ClassPurchaseDetails = () => {
           >
             View Bookings
           </Button>
-        </div>
-        <div className="p-4 bg-white space-y-4">
+        }
+      >
+        <div className="space-y-4">
          
 
           {purchase.members.length === 0 ? (
@@ -281,14 +260,14 @@ export const ClassPurchaseDetails = () => {
            <div className="flex flex-wrap items-end gap-3">
             <FormControl variant="outlined" sx={{ minWidth: 220 }}>
               <InputLabel shrink sx={{ backgroundColor: "white", px: 1 }}>
-                Status <span style={{ color: "#C72030" }}>*</span>
+                <RequiredLabel>Status</RequiredLabel>
               </InputLabel>
               <Select
                 value={nextStatus}
                 onChange={(e) => setNextStatus(e.target.value as PurchaseStatus)}
                 displayEmpty
                 label="Status *"
-                sx={fieldStyles}
+                sx={classFieldStyles}
                 MenuProps={{
                   ...menuProps,
                   PaperProps: {
@@ -310,7 +289,7 @@ export const ClassPurchaseDetails = () => {
             </Button>
           </div>
         </div>
-      </section>
+      </ClassFormSection>
 
       <div className="flex items-center gap-2 flex-wrap justify-center pt-2">
         {purchase.paymentStatus === "pending" && (
@@ -343,7 +322,7 @@ export const ClassPurchaseDetails = () => {
           </DialogHeader>
           <div className="space-y-4">
             <TextField
-              label="New validity end date"
+              label={<RequiredLabel>New validity end date</RequiredLabel>}
               type="date"
               value={newTill}
               onChange={(e) => setNewTill(e.target.value)}

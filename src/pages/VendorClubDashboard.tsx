@@ -299,8 +299,9 @@ export const VendorClubDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button
+        size="sm"
         onClick={() => setShowActionPanel((prev) => !prev)}
-        className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
@@ -421,7 +422,7 @@ export const VendorClubDashboard = () => {
               </p>
               <p className="text-xs text-gray-500">Supports: CSV, Excel (.xlsx, .xls)</p>
               {selectedFile && (
-                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="mt-4 p-3 bg-[#f5f4f0] border border-[rgba(26,26,24,0.09)] rounded-lg">
                   <p className="text-sm font-medium text-brand">Selected file:</p>
                   <p className="text-xs text-brand">{selectedFile.name}</p>
                 </div>

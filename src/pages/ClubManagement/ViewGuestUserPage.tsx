@@ -7,12 +7,12 @@ import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Edit2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Edit2, User } from 'lucide-react';
+import { ClassFormSection } from './ClassFormSection';
 import { useAppSelector } from '@/store/hooks';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
@@ -51,6 +51,14 @@ interface FormData {
     membership_number: string;
     access_card_id: string;
 }
+
+const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+    <div className="flex items-start">
+        <span className="text-gray-500 min-w-[160px]">{label}</span>
+        <span className="text-gray-500 mx-2">:</span>
+        <span className="text-gray-900 font-medium">{value ?? "-"}</span>
+    </div>
+);
 
 export const ViewGuestUserPage = () => {
     const baseUrl = localStorage.getItem('baseUrl');
@@ -288,12 +296,8 @@ export const ViewGuestUserPage = () => {
                                     className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                                 />
                             ) : (
-                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center border-2 border-gray-200">
-                                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-                                        <svg className="w-10 h-10 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                        </svg>
-                                    </div>
+                                <div className="w-20 h-20 rounded-full bg-[#f5f4f0] flex items-center justify-center border border-[rgba(26,26,24,0.09)]">
+                                    <User className="w-10 h-10 text-[rgba(26,26,24,0.68)]" />
                                 </div>
                             )}
                         </div>
@@ -327,153 +331,42 @@ export const ViewGuestUserPage = () => {
                 {/* Left Column - Main Details */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Personal Information */}
-                    <Card className="w-full bg-transparent shadow-none border-none">
-                        <div className="figma-card-header">
-                            <div className="flex items-center gap-3">
-                                <div className="figma-card-icon-wrapper">
-                                    <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                    </svg>
-                                </div>
-                                <h3 className="figma-card-title">Personal Information</h3>
-                            </div>
+                    <ClassFormSection title="Personal Information" icon={<User />}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <InfoRow label="First Name" value={formData.firstname || '-'} />
+                            <InfoRow label="Last Name" value={formData.lastname || '-'} />
+                            <InfoRow label="Gender" value={formData.gender || '-'} />
+                            <InfoRow label="Mobile" value={formData.mobile || '-'} />
+                            <InfoRow label="Email" value={formData.email || '-'} />
                         </div>
-                        <div className="figma-card-content">
-                            <div className="task-info-enhanced">
-                                <div className="task-info-row">
-                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                        First Name
-                                    </span>
-                                    <span className="task-info-separator-enhanced">:</span>
-                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                        {formData.firstname || '-'}
-                                    </span>
-                                </div>
-
-                                <div className="task-info-row">
-                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                        Last Name
-                                    </span>
-                                    <span className="task-info-separator-enhanced">:</span>
-                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                        {formData.lastname || '-'}
-                                    </span>
-                                </div>
-
-                                <div className="task-info-row">
-                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                        Gender
-                                    </span>
-                                    <span className="task-info-separator-enhanced">:</span>
-                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                        {formData.gender || '-'}
-                                    </span>
-                                </div>
-
-                                <div className="task-info-row">
-                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                        Mobile
-                                    </span>
-                                    <span className="task-info-separator-enhanced">:</span>
-                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                        {formData.mobile || '-'}
-                                    </span>
-                                </div>
-
-                                <div className="task-info-row">
-                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                        Email
-                                    </span>
-                                    <span className="task-info-separator-enhanced">:</span>
-                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                        {formData.email || '-'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                    </ClassFormSection>
 
                     {/* Club Member Details */}
                     {formData.membership_number && (
-                        <Card className="w-full bg-transparent shadow-none border-none">
-                            <div className="figma-card-header">
-                                <div className="flex items-center gap-3">
-                                    <div className="figma-card-icon-wrapper">
-                                        <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="figma-card-title">Club Member Details</h3>
-                                </div>
+                        <ClassFormSection title="Club Member Details" icon={<CreditCard />}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <InfoRow
+                                    label="Club Member"
+                                    value={
+                                        <Badge variant={formData.club_member_enabled ? "default" : "secondary"}>
+                                            {formData.club_member_enabled ? 'Enabled' : 'Disabled'}
+                                        </Badge>
+                                    }
+                                />
+                                <InfoRow
+                                    label="Access Card"
+                                    value={
+                                        <Badge variant={formData.access_card_enabled ? "default" : "secondary"}>
+                                            {formData.access_card_enabled ? 'Enabled' : 'Disabled'}
+                                        </Badge>
+                                    }
+                                />
+                                <InfoRow label="Start Date" value={formData.start_date ? new Date(formData.start_date).toLocaleDateString('en-GB') : '-'} />
+                                <InfoRow label="End Date" value={formData.end_date ? new Date(formData.end_date).toLocaleDateString('en-GB') : '-'} />
+                                <InfoRow label="Membership Number" value={formData.membership_number || '-'} />
+                                <InfoRow label="Access Card ID" value={formData.access_card_id || '-'} />
                             </div>
-                            <div className="figma-card-content">
-                                <div className="task-info-enhanced">
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            Club Member
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            <Badge variant={formData.club_member_enabled ? "default" : "secondary"}>
-                                                {formData.club_member_enabled ? 'Enabled' : 'Disabled'}
-                                            </Badge>
-                                        </span>
-                                    </div>
-
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            Access Card
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            <Badge variant={formData.access_card_enabled ? "default" : "secondary"}>
-                                                {formData.access_card_enabled ? 'Enabled' : 'Disabled'}
-                                            </Badge>
-                                        </span>
-                                    </div>
-
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            Start Date
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            {formData.start_date ? new Date(formData.start_date).toLocaleDateString('en-GB') : '-'}
-                                        </span>
-                                    </div>
-
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            End Date
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            {formData.end_date ? new Date(formData.end_date).toLocaleDateString('en-GB') : '-'}
-                                        </span>
-                                    </div>
-
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            Membership Number
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            {formData.membership_number || '-'}
-                                        </span>
-                                    </div>
-
-                                    <div className="task-info-row">
-                                        <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                                            Access Card ID
-                                        </span>
-                                        <span className="task-info-separator-enhanced">:</span>
-                                        <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                                            {formData.access_card_id || '-'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
+                        </ClassFormSection>
                     )}
 
                     {/* User Details */}

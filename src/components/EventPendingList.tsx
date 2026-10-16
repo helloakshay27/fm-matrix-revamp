@@ -212,20 +212,20 @@ const EventPendingList = () => {
     };
 
     return (
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <FileText size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Requestor Details</span>
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold uppercase">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+                        <FileText size={14} />
+                    </span>
+                    <span>Requestor Details</span>
                 </div>
                 {
                     data.length > 0 && (
                         <div className="flex gap-4">
                             <Button
                                 variant="outline"
-                                className="border-[#C72030] !text-black hover:!text-white px-8 h-10 disabled:opacity-50"
+                                className="px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
                                 disabled={selectedItems.length === 0 || isUpdating}
                             >
@@ -247,7 +247,7 @@ const EventPendingList = () => {
 
             {loading ? (
                 <div className="flex items-center justify-center p-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand" />
                 </div>
             ) : (
                 <EnhancedTable

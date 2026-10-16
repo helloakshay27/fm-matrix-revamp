@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, Lock, ShieldCheck } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Eye, Lock, ShieldCheck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   InputOTP,
@@ -442,21 +442,32 @@ export const ClubWalletsPage: React.FC = () => {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <p className="text-xs text-gray-500 uppercase">Balance</p>
-                  <p className="text-lg font-semibold">{formatCurrency(detail.balance)}</p>
+                <div className="relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <Wallet className="w-6 h-6 text-brand" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{formatCurrency(detail.balance)}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">Balance</div>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <p className="text-xs text-gray-500 uppercase">Credited</p>
-                  <p className="text-lg font-semibold text-[#798c5e]">
-                    {formatCurrency(detail.total_credited)}
-                  </p>
+                <div className="relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <ArrowDownLeft className="w-6 h-6 text-brand" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{formatCurrency(detail.total_credited)}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">Credited</div>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <p className="text-xs text-gray-500 uppercase">Debited</p>
-                  <p className="text-lg font-semibold text-[#C72030]">
-                    {formatCurrency(detail.total_debited)}
-                  </p>
+                <div className="relative bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <ArrowUpRight className="w-6 h-6 text-brand" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{formatCurrency(detail.total_debited)}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">Debited</div>
+                  </div>
                 </div>
               </div>
 

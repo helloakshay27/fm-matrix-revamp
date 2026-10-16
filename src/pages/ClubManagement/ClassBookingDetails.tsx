@@ -23,6 +23,7 @@ import {
   type ClassBookingDetail,
   type SlotTimeOption,
 } from "./classPurchaseApi";
+import { ClassFormSection, RequiredLabel } from "./ClassFormSection";
 
 const statusBadgeClass = (status: string) =>
   status === "booked"
@@ -177,14 +178,8 @@ export const ClassBookingDetails = () => {
         </div>
       </div>
 
-      <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-            <CalendarClock className="w-4 h-4" />
-          </div>
-          <span className="font-semibold text-lg text-gray-800">Booking Details</span>
-        </div>
-        <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <ClassFormSection title="Booking Details" icon={<CalendarClock />}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <InfoRow label="Member" value={booking.userName} />
           <InfoRow label="Class" value={booking.className} />
           <InfoRow label="Trainer" value={booking.trainerName} />
@@ -201,7 +196,7 @@ export const ClassBookingDetails = () => {
             </>
           )}
         </div>
-      </section>
+      </ClassFormSection>
 
       <div className="flex items-center gap-2 justify-center pt-2">
         {booking.status === "booked" && (
@@ -228,7 +223,7 @@ export const ClassBookingDetails = () => {
           </DialogHeader>
           <div className="space-y-4">
             <TextField
-              label="New date"
+              label={<RequiredLabel>New date</RequiredLabel>}
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
@@ -238,7 +233,7 @@ export const ClassBookingDetails = () => {
             />
             <div>
               <h2 className="text-sm font-semibold mb-2">
-                New Slot<span className="text-red-500"> *</span>
+                New Slot<span className="ml-0.5">*</span>
               </h2>
               {slots.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -250,14 +245,14 @@ export const ClassBookingDetails = () => {
                         key={slot.id}
                         className={`flex items-center space-x-2 p-3 border rounded-lg ${
                           isFull ? "bg-red-50 opacity-60 border-red-300" : "hover:bg-gray-50"
-                        } ${isSelected ? "border-[#C72030] ring-1 ring-[#C72030]" : ""}`}
+                        } ${isSelected ? "border-brand ring-1 ring-brand" : ""}`}
                       >
                         <input
                           type="checkbox"
                           id={`reschedule-slot-${slot.id}`}
                           checked={isSelected}
                           onChange={() => setNewSlotId(isSelected ? "" : slot.id)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 accent-brand text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand"
                           disabled={isFull}
                         />
                         <Label

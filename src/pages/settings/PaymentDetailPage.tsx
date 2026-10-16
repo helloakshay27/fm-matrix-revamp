@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { ClassFormSection } from "@/pages/ClubManagement/ClassFormSection";
 import { API_CONFIG } from "@/config/apiConfig";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 
@@ -324,7 +324,7 @@ export const PaymentDetailPage = () => {
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div>
             <p className="text-gray-600">Loading payment details...</p>
           </div>
         </div>
@@ -388,492 +388,420 @@ export const PaymentDetailPage = () => {
       {/* Main Content */}
       <div className="space-y-6">
         {/* Basic Information */}
-        <Card className="w-full bg-transparent shadow-none border-none">
-          <div className="figma-card-header">
-            <div className="flex items-center gap-3">
-              <div className="figma-card-icon-wrapper">
-                <FileText className="figma-card-icon" />
-              </div>
-              <h3 className="figma-card-title">Basic Information</h3>
-            </div>
-          </div>
-          <div className="figma-card-content">
-            <div className="task-info-enhanced">
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Order Number</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced font-medium">
+        <ClassFormSection title="Basic Information" icon={<FileText />}>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Order Number</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.order_number}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Payment Type</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Payment Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.payment_of}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Payment Of ID</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Payment Of ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.payment_of_id}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Resource Type</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Resource Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.resource_type}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Resource ID</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Resource ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.resource_id}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Status</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {renderPaymentStatusBadge(payment.payment_status)}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </ClassFormSection>
 
         {/* User Details */}
         {payment.user && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">User Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Name</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+          <ClassFormSection title="User Details" icon={<User />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.user.firstname} {payment.user.lastname}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Email</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Email</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.user.email}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Mobile</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Mobile</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.user.mobile}
                   </span>
                 </div>
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Booking Details */}
         {payment.facility_booking && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Calendar className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Booking Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">
+          <ClassFormSection title="Booking Details" icon={<Calendar />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">
                     Booking Number
                   </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking.booking_number}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Facility</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Facility</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking.facility_name}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Start Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Start Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {formatDate(payment.facility_booking.startdate)}
                   </span>
                 </div>
                 {payment.facility_booking.enddate && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">End Date</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">End Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {formatDate(payment.facility_booking.enddate)}
                     </span>
                   </div>
                 )}
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Status</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking.status}
                   </span>
                 </div>
                 {payment.facility_booking.comment && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Comment</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Comment</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.facility_booking.comment}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Facility Booking User Details */}
         {payment.facility_booking_user_details && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">User Information</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Name</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+          <ClassFormSection title="User Information" icon={<User />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_user_details.full_name}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Email</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Email</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_user_details.email}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Mobile</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Mobile</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_user_details.mobile}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">User Type</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">User Type</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_user_details.user_type}
                   </span>
                 </div>
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Facility Booking Details */}
         {payment.facility_booking_details && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Calendar className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Facility Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Facility Name</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+          <ClassFormSection title="Facility Details" icon={<Calendar />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Facility Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_details.facility_name}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_details.startdate}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Schedule</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Schedule</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_details.schedule_text}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Status</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.facility_booking_details.current_status}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Payment Method</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced capitalize">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Payment Method</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium capitalize">
                     {payment.facility_booking_details.payment_method}
                   </span>
                 </div>
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Club Member Payee Details */}
         {payment.club_member_payee_details && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Member Payee Information</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Name</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+          <ClassFormSection title="Member Payee Information" icon={<User />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_payee_details.full_name}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Email</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Email</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_payee_details.email}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Mobile</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Mobile</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_payee_details.mobile}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Gender</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced capitalize">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Gender</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium capitalize">
                     {payment.club_member_payee_details.gender}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">User Type</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced capitalize">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">User Type</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium capitalize">
                     {payment?.club_member_payee_details.user_type?.replace(/_/g, " ")}
                   </span>
                 </div>
                 {payment.club_member_payee_details.flat && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Flat</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Flat</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.club_member_payee_details.flat}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Club Member Allocation Details */}
         {payment.club_member_allocation_details && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Calendar className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Membership Allocation Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Membership Plan</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-medium">
+          <ClassFormSection title="Membership Allocation Details" icon={<Calendar />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Membership Plan</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_allocation_details.membership_plan_name}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Status</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced capitalize">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium capitalize">
                     {payment.club_member_allocation_details.status}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Start Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Start Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_allocation_details.start_date}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">End Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">End Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_allocation_details.end_date}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Preferred Start Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Preferred Start Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.club_member_allocation_details.preferred_start_date}
                   </span>
                 </div>
                 {payment.club_member_allocation_details.emergency_contact_name && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Emergency Contact</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Emergency Contact</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.club_member_allocation_details.emergency_contact_name}
                     </span>
                   </div>
                 )}
                 {payment.club_member_allocation_details.referred_by && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Referred By</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Referred By</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.club_member_allocation_details.referred_by}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Amount Details */}
-        <Card className="w-full bg-transparent shadow-none border-none">
-          <div className="figma-card-header">
-            <div className="flex items-center gap-3">
-              <div className="figma-card-icon-wrapper">
-                <DollarSign className="figma-card-icon" />
-              </div>
-              <h3 className="figma-card-title">Amount Details</h3>
-            </div>
-          </div>
-          <div className="figma-card-content">
-            <div className="task-info-enhanced">
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Sub Total</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+        <ClassFormSection title="Amount Details" icon={<DollarSign />}>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Sub Total</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatAmount(payment.sub_total)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">GST</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatAmount(payment.gst)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">SGST</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">SGST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatAmount(payment.sgst)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Discount</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Discount</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.club_member_allocation_details?.payment_detail?.discount
                     ? `₹${parseFloat(payment.club_member_allocation_details.payment_detail.discount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
                     : formatAmount(payment.discount)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   Convenience Charge
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatAmount(payment.convenience_charge)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced font-semibold">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px] font-semibold">
                   Total Amount
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced font-bold text-lg">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium font-bold text-lg">
                   {payment.club_member_allocation_details?.payment_detail?.landed_amount
                     ? `₹${parseFloat(payment.club_member_allocation_details.payment_detail.landed_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
                     : formatAmount(payment.total_amount)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced font-semibold">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px] font-semibold">
                   Paid Amount
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced font-semibold text-green-600">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="font-semibold text-green-600">
                   {formatAmount(payment.paid_amount)}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </ClassFormSection>
 
         {/* Attachments */}
         {payment.attachments && payment.attachments.length > 0 && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Paperclip className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Attachments</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
+          <ClassFormSection title="Attachments" icon={<Paperclip />}>
+            <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {payment.attachments.map((attachment) => (
                   <div
                     key={attachment.id}
-                    className="flex flex-col border border-gray-200 rounded-lg overflow-hidden bg-white hover:border-[#C72030] transition-colors group"
+                    className="flex flex-col border border-gray-200 rounded-lg overflow-hidden bg-white hover:border-brand transition-colors group"
                   >
                     {attachment.document_content_type.startsWith("image/") ? (
                       <div className="h-32 bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -900,7 +828,7 @@ export const PaymentDetailPage = () => {
                           href={attachment.attachment_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-[#C72030] transition-colors"
+                          className="p-1.5 rounded-full hover:bg-gray-100 text-brand transition-colors"
                           title="View Attachment"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -911,305 +839,265 @@ export const PaymentDetailPage = () => {
                 ))}
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Payment Method Details */}
-        <Card className="w-full bg-transparent shadow-none border-none">
-          <div className="figma-card-header">
-            <div className="flex items-center gap-3">
-              <div className="figma-card-icon-wrapper">
-                <CreditCard className="figma-card-icon" />
-              </div>
-              <h3 className="figma-card-title">Payment Method</h3>
-            </div>
-          </div>
-          <div className="figma-card-content">
-            <div className="task-info-enhanced">
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Payment Method</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+        <ClassFormSection title="Payment Method" icon={<CreditCard />}>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Payment Method</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.payment_method || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Payment Mode</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Payment Mode</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.payment_mode || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   Payment Gateway
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.payment_gateway || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Card Type</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Card Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.card_type || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Receipt Number</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Receipt Number</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.receipt_number || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   PG Transaction ID
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced font-mono text-sm">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium font-mono text-sm">
                   {payment.pg_transaction_id || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   PG Response Code
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.pg_response_code || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   PG Response Message
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.pg_response_msg || "-"}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </ClassFormSection>
 
         {/* Bank Details (if applicable) */}
         {(payment.cheque_number ||
           payment.bank_name ||
           payment.neft_reference) && (
-            <Card className="w-full bg-transparent shadow-none border-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <Building2 className="figma-card-icon" />
-                  </div>
-                  <h3 className="figma-card-title">Bank Details</h3>
-                </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="task-info-enhanced">
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Bank Name</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+            <ClassFormSection title="Bank Details" icon={<Building2 />}>
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Bank Name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.bank_name || "-"}
                     </span>
                   </div>
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">IFSC Code</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">IFSC Code</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.ifsc || "-"}
                     </span>
                   </div>
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Branch</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Branch</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.branch || "-"}
                     </span>
                   </div>
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">
                       Cheque Number
                     </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.cheque_number || "-"}
                     </span>
                   </div>
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Cheque Date</span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Cheque Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {formatDate(payment.cheque_date)}
                     </span>
                   </div>
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">
                       NEFT Reference
                     </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.neft_reference || "-"}
                     </span>
                   </div>
                 </div>
               </div>
-            </Card>
+            </ClassFormSection>
           )}
 
         {/* Refund Details (if applicable) */}
         {payment.refunded_amount && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <RefreshCcw className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Refund Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced font-semibold">
+          <ClassFormSection title="Refund Details" icon={<RefreshCcw />}>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px] font-semibold">
                     Refunded Amount
                   </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced font-semibold text-red-600">
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="font-semibold text-red-600">
                     {formatAmount(payment.refunded_amount)}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Refund Mode</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Refund Mode</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.refund_mode || "-"}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">
                     Refund Transaction No
                   </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.refund_transaction_no || "-"}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Refunded By</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Refunded By</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {payment.refunded_by || "-"}
                   </span>
                 </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Refunded On</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[160px]">Refunded On</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
                     {formatDate(payment.refunded_on)}
                   </span>
                 </div>
                 {payment.refund_note && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">
                       Refund Note
                     </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       {payment.refund_note}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
 
         {/* Reconciliation & Timestamps */}
-        <Card className="w-full bg-transparent shadow-none border-none">
-          <div className="figma-card-header">
-            <div className="flex items-center gap-3">
-              <div className="figma-card-icon-wrapper">
-                <Clock className="figma-card-icon" />
-              </div>
-              <h3 className="figma-card-title">Reconciliation & Timestamps</h3>
-            </div>
-          </div>
-          <div className="figma-card-content">
-            <div className="task-info-enhanced">
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">
+        <ClassFormSection title="Reconciliation & Timestamps" icon={<Clock />}>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">
                   Reconciliation Status
                 </span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.recon_status || "Not Reconciled"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Reconciled By</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Reconciled By</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.reconciled_by || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Reconciled On</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Reconciled On</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatDate(payment.reconciled_on)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Created At</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Created At</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatDate(payment.created_at)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Updated At</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Updated At</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {formatDate(payment.updated_at)}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">Created By ID</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">Created By ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.created_by_id || "-"}
                 </span>
               </div>
-              <div className="task-info-row">
-                <span className="task-info-label-enhanced">User ID</span>
-                <span className="task-info-separator-enhanced">:</span>
-                <span className="task-info-value-enhanced">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[160px]">User ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
                   {payment.user_id || "-"}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </ClassFormSection>
 
         {/* Notes (if applicable) */}
         {payment.notes && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <FileText className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Notes</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
+          <ClassFormSection title="Notes" icon={<FileText />}>
+            <div>
               <p className="text-base text-gray-900">{payment.notes}</p>
             </div>
-          </Card>
+          </ClassFormSection>
         )}
       </div>
     </div>

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -35,6 +34,7 @@ import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { resolveAttachmentUrl, type ClassAttachment } from "./classSetupMockData";
 import { apiClient } from "@/utils/apiClient";
+import { ClassFormSection } from "./ClassFormSection";
 
 interface TrainerOption {
   id: string;
@@ -360,14 +360,8 @@ export const ClassSetupDetails = () => {
           </div> */}
         </div>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <ClipboardList className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Class Details</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-white space-y-6">
+        <ClassFormSection title="Class Details" icon={<ClipboardList />}>
+          <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <InfoCard icon={<ClipboardList className="w-4 h-4" />} label="Class Type" value={cls.classType || "-"} />
               <InfoCard icon={<ClipboardList className="w-4 h-4" />} label="Activity Type" value={cls.activityType || "-"} />
@@ -376,17 +370,11 @@ export const ClassSetupDetails = () => {
               <InfoCard icon={<Timer className="w-4 h-4" />} label="Duration" value={`${cls.durationMinutes} min`} />
               <InfoCard icon={<MapPin className="w-4 h-4" />} label="Location" value={cls.location || "-"} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <Paperclip className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Attachments</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 bg-white">
+        <ClassFormSection title="Attachments" icon={<Paperclip />}>
+          <div>
             {cls.attachments.length > 0 ? (
               <div className="space-y-2">
                 {cls.attachments.map((attachment) => (
@@ -400,7 +388,7 @@ export const ClassSetupDetails = () => {
                       },
                       attachment.name || "class-attachment"
                     )}
-                    className="flex w-full items-center justify-between text-left text-sm p-2 bg-[#F6F4EE] rounded border border-gray-200 hover:border-brand transition-colors"
+                    className="flex w-full items-center justify-between text-left text-sm p-2 bg-[#f5f4f0] rounded border border-gray-200 hover:border-brand transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <Paperclip className="w-4 h-4 text-gray-500 shrink-0" />
@@ -413,17 +401,14 @@ export const ClassSetupDetails = () => {
             ) : (
               <div className="text-sm text-gray-500">No attachments</div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center justify-between gap-3 space-y-0 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-                <GraduationCap className="h-4 w-4" />
-              </div>
-              <CardTitle className="text-lg font-semibold text-gray-800">Assigned Trainers</CardTitle>
-            </div>
+        <ClassFormSection
+          title="Assigned Trainers"
+          icon={<GraduationCap />}
+          actions={
+            <>
             {/* <Button
               size="sm"
               className="fm-button-fix fm-button-brand"
@@ -432,8 +417,10 @@ export const ClassSetupDetails = () => {
               <Plus className="w-4 h-4 mr-1" />
               Add Trainer
             </Button> */}
-          </CardHeader>
-          <CardContent className="p-4 bg-white">
+            </>
+          }
+        >
+          <div>
             <EnhancedTaskTable
               data={assignedTrainers}
               columns={trainerColumns}
@@ -444,7 +431,7 @@ export const ClassSetupDetails = () => {
               renderRow={(trainer: AssignedTrainer) => ({
                 trainerName: (
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#F2EEE9] flex items-center justify-center text-xs font-medium text-gray-600">
+                    <div className="w-8 h-8 rounded-full bg-[#f5f4f0] flex items-center justify-center text-xs font-medium text-gray-600">
                       {trainer.name.slice(0, 1)}
                     </div>
                     <div className="font-medium text-gray-900">{trainer.name}</div>
@@ -471,8 +458,8 @@ export const ClassSetupDetails = () => {
                 ),
               })}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
       </div>
 
       <Dialog open={addTrainerOpen} onOpenChange={setAddTrainerOpen}>
@@ -515,7 +502,7 @@ export const ClassSetupDetails = () => {
 
 const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="border border-gray-200 rounded-md p-4 flex items-start gap-3">
-    <div className="w-8 h-8 rounded-md bg-[#F6F4EE] text-brand flex items-center justify-center shrink-0">{icon}</div>
+    <div className="w-8 h-8 rounded-md bg-[#f5f4f0] text-[rgba(26,26,24,0.68)] flex items-center justify-center shrink-0">{icon}</div>
     <div>
       <div className="text-[10px] uppercase tracking-wide text-gray-400">{label}</div>
       <div className="font-semibold text-gray-900">{value}</div>

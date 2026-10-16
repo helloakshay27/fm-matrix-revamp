@@ -47,18 +47,13 @@ import {
     getBankMasterApiConfig,
     mapApiBankRecord,
 } from './bankMasterUtils';
+import { ClassFormSection } from './ClassFormSection';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                {icon}
-            </div>
-            <span className="font-semibold text-lg text-gray-800">{title}</span>
-        </div>
-        <div className="p-6 bg-white">{children}</div>
-    </section>
+    <ClassFormSection title={title} icon={icon}>
+        {children}
+    </ClassFormSection>
 );
 
 interface Customer {
@@ -2023,7 +2018,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => openAddressFormModal('new', 'billing')}
-                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block"
                                         >
                                             New Address
                                         </button>
@@ -2092,7 +2087,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => openAddressFormModal('new', 'shipping')}
-                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block"
                                         >
                                             New Address
                                         </button>
@@ -2129,7 +2124,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                                 rows={4}
                                 value={billingAddress}
                                 onChange={(e) => {
@@ -2148,7 +2143,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
                                 value={shippingAddress}
                                 onChange={(e) => {
@@ -2244,7 +2239,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                             Subject
                         </label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                             rows={4}
                             value={subject}
                             onChange={(e) => {
@@ -2482,9 +2477,9 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                                         }}
                                         disabled={items.length === 1}
                                         sx={{
-                                            color: '#DA7756',
-                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
-                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                            color: 'rgba(26,26,24,0.68)',
+                                            '&:hover': { backgroundColor: 'rgba(26,26,24,0.05)' },
+                                            '&.Mui-disabled': { color: 'rgba(26,26,24,0.28)' },
                                         }}
                                     >
                                         <Delete fontSize="small" />
@@ -2581,7 +2576,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     {/* Customer Notes */ }
     <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
             rows={3}
             value={customerNotes}
             onChange={(e) => {
@@ -2637,7 +2632,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     {/* Terms & Conditions */ }
     <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
             rows={4}
             value={termsAndConditions}
             onChange={(e) => {

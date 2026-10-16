@@ -91,7 +91,7 @@ const EditCommunicationTemplatePage = () => {
                 render={({ field }) => (
                   <FormControl fullWidth variant="outlined" error={!!errors.identifier}>
                     <InputLabel shrink>
-                      Dropdown <span style={{ color: 'red' }}>*</span>
+                      Dropdown<span className="ml-0.5">*</span>
                     </InputLabel>
                     <Select
                       {...field}
@@ -118,7 +118,7 @@ const EditCommunicationTemplatePage = () => {
                     {...field}
                     label={
                       <span>
-                        Field Value <span style={{ color: 'red' }}>*</span>
+                        Field Value<span className="ml-0.5">*</span>
                       </span>
                     }
                     placeholder="Enter field value"
