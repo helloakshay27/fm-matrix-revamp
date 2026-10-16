@@ -61,6 +61,45 @@ initColorPatch();
 const posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
 
+// VAPT (cookie not HttpOnly / far-future expiry): builds before the localStorage-only
+// persistence below left a `ph_<token>_posthog` cookie (1-year expiry, JS-set so never
+// HttpOnly) in users' browsers. Remove it on load. The identity it holds is copied into
+// localStorage first (only when localStorage has none), so existing users keep the same
+// PostHog distinct_id instead of being split into a new anonymous person.
+function removeLegacyPostHogCookie(token: string) {
+  try {
+    const cookieName = `ph_${token}_posthog`;
+    const existing = document.cookie
+      .split("; ")
+      .find((entry) => entry.startsWith(`${cookieName}=`));
+    if (!existing) return;
+
+    try {
+      if (!localStorage.getItem(cookieName)) {
+        const value = decodeURIComponent(existing.slice(cookieName.length + 1));
+        JSON.parse(value); // only migrate a well-formed PostHog payload
+        localStorage.setItem(cookieName, value);
+      }
+    } catch {
+      // Unreadable cookie or storage unavailable - fall through and just delete it.
+    }
+
+    // A cookie can only be removed with the domain it was set on. PostHog sets it on the
+    // host or on a parent domain (e.g. .gophygital.work), so expire it on every candidate.
+    // slice(0, -1) skips the bare TLD, which browsers reject as a cookie domain.
+    const hostParts = window.location.hostname.split(".");
+    const domains = [
+      "", // host-only cookie
+      ...hostParts.slice(0, -1).map((_, i) => `; domain=.${hostParts.slice(i).join(".")}`),
+    ];
+    domains.forEach((domain) => {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`;
+    });
+  } catch {
+    // Never let analytics cleanup block the app from rendering.
+  }
+}
+
 // posthog.init(undefined) does not throw — it returns a client that silently
 // drops every capture(). That failure mode is indistinguishable from "the
 // instrumentation is broken", so say so loudly instead of guessing later.
@@ -71,6 +110,8 @@ if (!posthogToken || posthogToken === "phc_replace_me") {
       "(Vite inlines VITE_* at build time)."
   );
 } else {
+  removeLegacyPostHogCookie(posthogToken);
+
   posthog.init(posthogToken, {
     api_host: posthogHost,
     autocapture: false,

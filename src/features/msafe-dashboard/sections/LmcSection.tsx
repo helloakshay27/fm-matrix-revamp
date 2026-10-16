@@ -74,10 +74,6 @@ async function fetchMsafeLmcJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraQuery });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_lmc_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
