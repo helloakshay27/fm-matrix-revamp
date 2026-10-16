@@ -291,7 +291,7 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work")
+  hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isViUatSite = hostname === "vi-uat.gophygital.work";
 
@@ -302,7 +302,7 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com" || hostname === "localhost";
+  hostname === "fm-matrix.lockated.com"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 

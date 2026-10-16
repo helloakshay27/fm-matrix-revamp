@@ -3846,6 +3846,9 @@ const TransportSuppliersPage = lazy(
 const TransportSupplierDetailsPage = lazy(
   () => import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
 );
+const VisitorAppConfiguration = lazy(
+  () => import("./features/visitor-app-configuration/pages/VisitorAppConfiguration")
+);
 const GateIntegrationPage = lazy(
   () => import("./features/gate-integration/pages/GateIntegration")
 );
@@ -8656,6 +8659,10 @@ function App() {
                             <Route
                               path="/settings/visitor-management/setup/edit/:id"
                               element={<EditVisitorGatePage />}
+                            />
+                            <Route
+                              path="/settings/visitor-management/app-configuration"
+                              element={<VisitorAppConfiguration />}
                             />
                             <Route
                               path="/settings/visitor-management/support-staff"
