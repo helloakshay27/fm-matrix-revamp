@@ -9,6 +9,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -171,6 +172,8 @@ export const SalesOrderListPage: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+    const reportListLoaded = useAccountingListViewed('sales_order');
+    useAccountingSearchTracking('sales_order', debouncedSearchQuery);
 
     const lock_account_id = localStorage.getItem("lock_account_id");
 
@@ -204,6 +207,7 @@ export const SalesOrderListPage: React.FC = () => {
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
             setSalesOrderData(Array.isArray(data) ? data : []);
+            reportListLoaded((Array.isArray(data) ? data : []).length, data?.pagination?.total_count);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -432,6 +436,7 @@ export const SalesOrderListPage: React.FC = () => {
                     }
                 }
             );
+            accountingEvents.onRecordDeleted('sales_order', selectedDeleteId);
             toast.success('Sales order deleted successfully!', { duration: 3000 });
             setDeleteDialogOpen(false);
             setSelectedDeleteId(null);
@@ -439,6 +444,7 @@ export const SalesOrderListPage: React.FC = () => {
         } catch (error) {
             console.error("Delete error:", error);
             toast.error("Failed to delete sales order");
+            accountingEvents.onSaveFailed('sales_order', 'delete', error, { record_id: selectedDeleteId });
         } finally {
             setDeleteLoading(false);
         }
@@ -461,11 +467,13 @@ export const SalesOrderListPage: React.FC = () => {
                 }
             );
 
+            accountingEvents.onActionPerformed('sales_order', 'toggle_active', order.id);
             toast.success(response?.data?.message || "Status updated successfully");
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error("Toggle status error:", error);
             toast.error("Failed to update status");
+            accountingEvents.onSaveFailed('sales_order', 'action', error, { action: 'toggle_active', record_id: order.id });
         }
     };
 
@@ -492,15 +500,18 @@ export const SalesOrderListPage: React.FC = () => {
                 } else {
                     setErrorModal({ show: true, errors: [{ id: '-', message: message || failMsg }] });
                 }
+                accountingEvents.onSaveFailed('sales_order', 'action', message || failMsg, { action: status === 'confirmed' ? 'mark_as_confirmed' : 'submit_for_approval' });
                 return;
             }
 
+            accountingEvents.onActionPerformed('sales_order', status === 'confirmed' ? 'mark_as_confirmed' : 'submit_for_approval', null, { bulk_count: selectedRows.length });
             toast.success(successMsg);
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error(error);
             toast.error(failMsg);
+            accountingEvents.onSaveFailed('sales_order', 'action', error, { action: status === 'confirmed' ? 'mark_as_confirmed' : 'submit_for_approval' });
         }
     };
 
@@ -522,13 +533,16 @@ export const SalesOrderListPage: React.FC = () => {
                 const { message, errors } = response.data;
                 if (Array.isArray(errors) && errors.length > 0) { setErrorModal({ show: true, errors }); }
                 else { setErrorModal({ show: true, errors: [{ id: '-', message: message || 'Failed to mark as fulfilled' }] }); }
+                accountingEvents.onSaveFailed('sales_order', 'action', message || 'Failed to mark as fulfilled', { action: 'mark_as_fulfilled' });
                 return;
             }
+            accountingEvents.onActionPerformed('sales_order', 'mark_as_fulfilled', null, { bulk_count: selectedRows.length });
             toast.success('Sales orders marked as fulfilled');
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             toast.error('Failed to mark as fulfilled');
+            accountingEvents.onSaveFailed('sales_order', 'action', error, { action: 'mark_as_fulfilled' });
         }
     };
 

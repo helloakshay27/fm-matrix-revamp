@@ -881,20 +881,18 @@ export const ResponseEscalationTab: React.FC = () => {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-center gap-2">
-          <Button
+        <div className="fm-action-bar pt-4 sm:pt-6">
+          <button
             type="button"
-            variant="outline"
             onClick={() => setIsImportModalOpen(true)}
-            className="border-[#C72030] text-[#C72030] hover:bg-red-50 font-semibold px-8 py-2"
+            className="fm-action-secondary"
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="w-4 h-4" />
             Import
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
-            className="fm-button-fix fm-button-brand px-4 py-2"
-            variant="ghost"
+            className="fm-action-primary"
             disabled={submissionLoading || categoriesLoading || loadingUsers}
           >
             {submissionLoading ? (
@@ -905,7 +903,7 @@ export const ResponseEscalationTab: React.FC = () => {
             ) : (
               "Submit"
             )}
-          </Button>
+          </button>
         </div>
       </form>
 
@@ -956,9 +954,8 @@ export const ResponseEscalationTab: React.FC = () => {
                 </MuiFormControl>
               </div>
               <Button
-                variant="ghost"
                 size="sm"
-                className="fm-button-fix fm-button-brand px-4 py-2"
+                className="h-9 px-4"
                 onClick={() => setSelectedCategoryFilter("all")}
               >
                 Apply
@@ -966,7 +963,7 @@ export const ResponseEscalationTab: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] font-semibold px-4"
+                className="h-9 px-4"
                 onClick={() => setSelectedCategoryFilter("all")}
               >
                 Reset
@@ -1138,7 +1135,7 @@ export const ResponseEscalationTab: React.FC = () => {
                 type="button"
                 onClick={handleImport}
                 disabled={isImporting || !importFile}
-                className="flex-1 bg-[#C72030] hover:bg-[#A61B29] text-white"
+                className="flex-1"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {isImporting ? "Importing..." : "Import"}
@@ -1242,15 +1239,15 @@ export const ResponseEscalationTab: React.FC = () => {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-2">
-              <Button
+            <div className="fm-action-bar">
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
+                className="fm-action-secondary"
               >
                 Cancel
-              </Button>
-              <Button type="submit" disabled={updateLoading}>
+              </button>
+              <button type="submit" disabled={updateLoading} className="fm-action-primary">
                 {updateLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1259,7 +1256,7 @@ export const ResponseEscalationTab: React.FC = () => {
                 ) : (
                   "Update Rule"
                 )}
-              </Button>
+              </button>
             </div>
           </form>
         </DialogContent>

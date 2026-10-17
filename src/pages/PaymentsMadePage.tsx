@@ -13,6 +13,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { API_CONFIG } from "@/config/apiConfig";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 import { Eye, Edit, Trash2 } from "lucide-react";
 // API shape returned by lock_payments.json
 interface LockPayment {
@@ -218,10 +219,12 @@ export const PaymentsMadePage: React.FC = () => {
       }
 
       sonnerToast.success("Payment deleted successfully");
+      accountingEvents.onRecordDeleted("payment_made", payment.id);
       fetchPayments(currentPage);
     } catch (error: any) {
       console.error("Failed to delete payment:", error);
       sonnerToast.error(error.message || "Failed to delete payment");
+      accountingEvents.onSaveFailed("payment_made", "delete", error, { record_id: payment.id });
     } finally {
       setDeletingId(null);
     }
@@ -237,6 +240,8 @@ export const PaymentsMadePage: React.FC = () => {
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const reportListLoaded = useAccountingListViewed("payment_made");
+  useAccountingSearchTracking("payment_made", searchTerm);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -289,6 +294,7 @@ export const PaymentsMadePage: React.FC = () => {
         const data = await response.json();
         const list: LockPayment[] = data.lock_payments || [];
         setPayments(list.map(mapLockPayment));
+        reportListLoaded(list.length, data.pagination?.total_count ?? list.length);
 
         if (data.pagination) {
           setPagination((prev) => ({

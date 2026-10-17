@@ -16,7 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
+import { DetailCard } from "@/components/ui/detail-card";
 import { useCustomNotificationDetailQuery } from "../hooks/useCustomNotificationDetailQuery";
 import { useSubmitForApprovalMutation } from "../hooks/useSubmitForApprovalMutation";
 import { useApproveCustomNotificationMutation } from "../hooks/useApproveCustomNotificationMutation";
@@ -44,35 +46,6 @@ import {
   formatNotificationStatusLabel,
   formatNotificationTypeLabel,
 } from "../utils/notificationFormatters";
-
-function SectionCard({
-  icon: Icon,
-  title,
-  subtitle,
-  children,
-}: {
-  icon: typeof Bell;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-brand-bg p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-            <Icon className="w-5 h-5 text-brand" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            <p className="text-xs text-gray-500">{subtitle}</p>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  );
-}
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -367,27 +340,16 @@ const ViewCustomNotificationPage = () => {
 
       <div className="flex-1 w-full mx-auto px-6 pb-6">
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="w-full bg-white border border-gray-200">
-            <TabsTrigger
-              value="details"
-              className="group w-full flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
-              Details
-            </TabsTrigger>
-            <TabsTrigger
-              value="audience"
-              className="group w-full flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
-              Audience
-            </TabsTrigger>
-          </TabsList>
+          <AssetTabsList>
+            <AssetTabsTrigger value="details">Details</AssetTabsTrigger>
+            <AssetTabsTrigger value="audience">Audience</AssetTabsTrigger>
+          </AssetTabsList>
 
           <TabsContent value="details" className="space-y-6 pt-4">
             {/* Details */}
-            <SectionCard
-              icon={Bell}
+            <DetailCard
+              icon={<Bell className="w-[18px] h-[18px] text-gray-500" />}
               title="Details"
-              subtitle="Basic information shown to the recipient"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
@@ -422,14 +384,13 @@ const ViewCustomNotificationPage = () => {
                   value={formatNotificationDate(notification.created_at)}
                 />
               </div>
-            </SectionCard>
+            </DetailCard>
 
             {/* Redirection */}
             {(notification.deep_link_type || notification.deep_link_value) && (
-              <SectionCard
-                icon={Link2}
+              <DetailCard
+                icon={<Link2 className="w-[18px] h-[18px] text-gray-500" />}
                 title="Redirection"
-                subtitle="Where tapping this notification takes the user"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Field
@@ -441,14 +402,13 @@ const ViewCustomNotificationPage = () => {
                     value={notification.deep_link_value}
                   />
                 </div>
-              </SectionCard>
+              </DetailCard>
             )}
 
             {/* Delivery Stats */}
-            <SectionCard
-              icon={BarChart3}
+            <DetailCard
+              icon={<BarChart3 className="w-[18px] h-[18px] text-gray-500" />}
               title="Delivery"
-              subtitle="Recipient and delivery tracking"
             >
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <Field
@@ -481,13 +441,12 @@ const ViewCustomNotificationPage = () => {
                   }
                 />
               </div>
-            </SectionCard>
+            </DetailCard>
 
             {/* Approval History */}
-            <SectionCard
-              icon={History}
+            <DetailCard
+              icon={<History className="w-[18px] h-[18px] text-gray-500" />}
               title="Approval History"
-              subtitle="Submission, approval, and rejection trail"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Field
@@ -545,15 +504,14 @@ const ViewCustomNotificationPage = () => {
                   }
                 />
               </div>
-            </SectionCard>
+            </DetailCard>
           </TabsContent>
 
           <TabsContent value="audience" className="space-y-6 pt-4">
             {/* Audience */}
-            <SectionCard
-              icon={Share2}
+            <DetailCard
+              icon={<Share2 className="w-[18px] h-[18px] text-gray-500" />}
               title="Audience"
-              subtitle="Who receives this notification"
             >
               <div className="space-y-4">
                 <Field
@@ -622,24 +580,19 @@ const ViewCustomNotificationPage = () => {
                   </div>
                 )}
               </div>
-            </SectionCard>
+            </DetailCard>
 
             {/* Dynamic: Audience Preview (not yet sent) vs Recipients (sent) */}
-            <SectionCard
-              icon={Users}
+            <DetailCard
+              icon={<Users className="w-[18px] h-[18px] text-gray-500" />}
               title={notification.sent_at ? "Recipients" : "Audience Preview"}
-              subtitle={
-                notification.sent_at
-                  ? "Delivery status for each recipient"
-                  : "Estimated recipients based on the current audience selection"
-              }
             >
               {notification.sent_at ? (
                 <NotificationRecipientsPanel notificationId={notificationId} />
               ) : (
                 <AudiencePreviewPanel notification={notification} />
               )}
-            </SectionCard>
+            </DetailCard>
           </TabsContent>
         </Tabs>
       </div>

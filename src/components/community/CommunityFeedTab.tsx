@@ -17,12 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import {
+import { Plus,
     Heart,
     Pin,
     EyeOff,
     Trash2,
-    Plus,
     X,
     MessageSquare,
     MoreVertical,
@@ -35,6 +34,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ImageCarouselModal } from "./ImageCarouselModal";
 import { ReactionsModal } from "./ReactionsModal";
+import { AttachmentUpload } from "@/components/common/AttachmentUpload";
 import { format } from "date-fns";
 
 interface CommunityFeedTabProps {
@@ -447,13 +447,6 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
         fetchData()
         fetchPosts()
     }, [])
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const filesArray = Array.from(e.target.files);
-            setSelectedFiles(prev => [...prev, ...filesArray]);
-        }
-    };
 
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -1193,10 +1186,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
             <div className="flex justify-end">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button>
-                            <Plus className="w-4 h-4 mr-2" color="white" />
-                            Create Post
-                        </Button>
+                        <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"><Plus className="w-4 h-4 mr-2" />Create Post</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="min-w-[9.1rem]">
                         <DropdownMenuItem className="font-medium justify-center" onClick={() => setCreatePostOpen(true)}>
@@ -1254,8 +1244,25 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                             <label className="block text-sm font-semibold text-gray-900 mb-2">
                                 Add Media
                             </label>
-                            {(selectedFiles.length > 0 || existingAttachments.length > 0) ? (
-                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px]">
+                            <div
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                    className={`rounded-lg transition-shadow ${isDragging ? 'ring-2 ring-brand' : ''}`}
+                                >
+                                    <AttachmentUpload
+                                        chooseText="Choose Media"
+                                        uploadText="Upload Media"
+                                        emptyText="No media chosen"
+                                        accept="image/*,video/*"
+                                        multiple
+                                        files={selectedFiles}
+                                        onFilesSelected={(files) => setSelectedFiles(prev => [...prev, ...files])}
+                                    />
+                                </div>
+                                {(selectedFiles.length > 0 || existingAttachments.length > 0) && (
+                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px] mt-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         {/* Display existing attachments */}
                                         {existingAttachments.map((attachment) => (
@@ -1313,53 +1320,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                             </div>
                                         ))}
                                     </div>
-                                    {/* Add more files button */}
-                                    <div className="mt-4">
-                                        <input
-                                            type="file"
-                                            id="file-upload-more"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                            accept="image/*,video/*"
-                                            multiple
-                                        />
-                                        <label
-                                            htmlFor="file-upload-more"
-                                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Add More Files
-                                        </label>
                                     </div>
-                                </div>
-                            ) : (
-                                <div
-                                    className={`bg-white border p-12 text-center transition-colors rounded-[8px] ${isDragging
-                                        ? 'border-[#c72030] border-2 bg-red-50'
-                                        : 'border-[#E5E5E5]'
-                                        }`}
-                                    onDragEnter={handleDragEnter}
-                                    onDragLeave={handleDragLeave}
-                                    onDragOver={handleDragOver}
-                                    onDrop={handleDrop}
-                                >
-                                    <input
-                                        type="file"
-                                        id="file-upload"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                        accept="image/*,video/*"
-                                        multiple
-                                    />
-                                    <label
-                                        htmlFor="file-upload"
-                                        className="cursor-pointer text-[#9CA3AF]"
-                                    >
-                                        <p className="text-sm leading-relaxed">
-                                            Choose files or<br />drag & drop them here
-                                        </p>
-                                    </label>
-                                </div>
                             )}
                         </div>
 
@@ -1427,8 +1388,25 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                             <label className="block text-sm font-semibold text-gray-900 mb-2">
                                 Add Media
                             </label>
-                            {(selectedFiles.length > 0 || existingAttachments.length > 0) ? (
-                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px]">
+                            <div
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                    className={`rounded-lg transition-shadow ${isDragging ? 'ring-2 ring-brand' : ''}`}
+                                >
+                                    <AttachmentUpload
+                                        chooseText="Choose Media"
+                                        uploadText="Upload Media"
+                                        emptyText="No media chosen"
+                                        accept="image/*,video/*"
+                                        multiple
+                                        files={selectedFiles}
+                                        onFilesSelected={(files) => setSelectedFiles(prev => [...prev, ...files])}
+                                    />
+                                </div>
+                                {(selectedFiles.length > 0 || existingAttachments.length > 0) && (
+                                <div className="bg-white border border-[#E5E5E5] p-4 rounded-[8px] mt-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         {/* Display existing attachments */}
                                         {existingAttachments.map((attachment) => (
@@ -1489,53 +1467,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                             </div>
                                         ))}
                                     </div>
-                                    {/* Add more files button */}
-                                    <div className="mt-4">
-                                        <input
-                                            type="file"
-                                            id="poll-file-upload-more"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                            accept="image/*,video/*"
-                                            multiple
-                                        />
-                                        <label
-                                            htmlFor="poll-file-upload-more"
-                                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            Add More Files
-                                        </label>
                                     </div>
-                                </div>
-                            ) : (
-                                <div
-                                    className={`bg-white border p-12 text-center transition-colors rounded-[8px] ${isDragging
-                                        ? 'border-[#c72030] border-2 bg-red-50'
-                                        : 'border-[#E5E5E5]'
-                                        }`}
-                                    onDragEnter={handleDragEnter}
-                                    onDragLeave={handleDragLeave}
-                                    onDragOver={handleDragOver}
-                                    onDrop={handleDrop}
-                                >
-                                    <input
-                                        type="file"
-                                        id="poll-file-upload"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                        accept="image/*,video/*"
-                                        multiple
-                                    />
-                                    <label
-                                        htmlFor="poll-file-upload"
-                                        className="cursor-pointer text-[#9CA3AF]"
-                                    >
-                                        <p className="text-sm leading-relaxed">
-                                            Choose files or<br />drag & drop them here
-                                        </p>
-                                    </label>
-                                </div>
                             )}
                         </div>
 

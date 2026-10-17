@@ -35,11 +35,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { useApiData } from '@/hooks/useApiData';
 
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
   '& .MuiStepConnector-line': {
-    borderColor: '#E0E0E0',
+    borderColor: 'rgba(26,26,24,0.2)',
     borderTopWidth: 2,
     borderStyle: 'dotted',
   },
@@ -50,28 +51,28 @@ const CustomStepIconRoot = styled('div')<{
 }>(({ theme, ownerState }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#fff',
   zIndex: 1,
-  color: '#A0A0A0',
+  color: 'rgba(26,26,24,0.48)',
   width: 'auto',
   height: 40,
   display: 'flex',
   paddingLeft: '24px',
   paddingRight: '24px',
   borderRadius: '4px',
-  border: '1px solid #E0E0E0',
+  border: '1px solid rgba(26,26,24,0.12)',
   justifyContent: 'center',
   alignItems: 'center',
   fontWeight: 500,
   fontFamily: 'Work Sans, sans-serif',
   fontSize: '14px',
   ...(ownerState.active && {
-    backgroundColor: '#da7756',
+    backgroundColor: '#1A1A18',
     color: 'white',
-    border: '1px solid #da7756',
+    border: '1px solid #1A1A18',
   }),
   ...(ownerState.completed && {
-    backgroundColor: '#da7756',
+    backgroundColor: '#1A1A18',
     color: 'white',
-    border: '1px solid #da7756',
+    border: '1px solid #1A1A18',
   }),
 }));
 
@@ -91,60 +92,111 @@ function CustomStepIcon(props: {
   );
 }
 
+// Footer uses the theme's fm-action-* buttons; these styled buttons are kept in theme ink.
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#da7756',
-  color: 'white !important',
-  borderRadius: 0,
+  backgroundColor: '#1A1A18',
+  color: '#fff',
+  minWidth: '128px',
+  height: '44px',
+  borderRadius: '10px',
+  fontSize: '14px',
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
-  fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  fontWeight: 700,
+  letterSpacing: '0.02em',
+  border: '1px solid #1A1A18',
+  boxShadow: 'none',
+  '&, &.MuiButton-root': {
+    color: '#fff',
+  },
   '&:hover': {
-    backgroundColor: '#C4623C',
-    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
+    backgroundColor: 'rgba(26,26,24,0.88)',
+    boxShadow: 'none',
   },
 }));
 RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#ffffff',
-  color: '#da7756',
-  border: '1px solid #da7756',
-  borderRadius: 0,
+  backgroundColor: '#fff',
+  color: '#1A1A18',
+  minWidth: '108px',
+  height: '44px',
+  borderRadius: '10px',
+  fontSize: '14px',
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
-  fontWeight: 500,
+  fontWeight: 600,
+  border: '1px solid rgba(26,26,24,0.09)',
   '&:hover': {
-    backgroundColor: '#F2EEE9',
-    borderColor: '#C45F40',
-    color: '#C45F40',
+    backgroundColor: '#f5f4f0',
   },
 }));
 
+// Business Genie light form shell: white card, neutral border, 16px radius, heading
+// directly on the card surface (no tinted band), 12px to body, 20px between blocks.
 const SectionCard = styled(Paper)({
   backgroundColor: 'white',
-  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  borderRadius: 0,
+  border: '1px solid rgba(26,26,24,0.09)',
+  boxShadow: 'none',
+  borderRadius: '16px',
   overflow: 'hidden',
-  marginBottom: '24px',
+  marginBottom: '20px',
+  // Body <Box p={3}> follows the header: trim its top padding to the 12px title gap.
+  '&& > .MuiBox-root + .MuiBox-root': {
+    paddingTop: '12px',
+  },
 });
 
 const SectionHeader = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
-  padding: '16px',
-  backgroundColor: '#F6F4EE',
-  borderBottom: '1px solid #E0E0E0',
+  padding: '24px 24px 0',
+  backgroundColor: 'transparent',
+  '& > svg': {
+    width: 18,
+    height: 18,
+    color: 'rgba(26,26,24,0.68)',
+    flexShrink: 0,
+  },
 });
 
 const SectionTitle = styled('h3')({
-  fontSize: '18px',
-  fontWeight: 700,
-  color: '#333',
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#1A1A18',
 });
+
+// Labels sit above controls: 12px/600 inkSoft, 6px gap.
+const FieldLabel: React.FC<{ htmlFor?: string; required?: boolean; children: React.ReactNode }> = ({
+  htmlFor,
+  required,
+  children,
+}) => (
+  <label htmlFor={htmlFor} className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
+    {children}
+    {required && <span className="ml-0.5">*</span>}
+  </label>
+);
+
+const VENDOR_FORM_CSS = `
+.vendor-add-page .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.08)!important}
+.vendor-add-page .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{border-color:rgba(26,26,24,.28)!important}
+.vendor-add-page .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{border-color:#1A1A18!important;border-width:1px!important}
+html body .vendor-add-page .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline{border-color:#1A1A18!important}
+.vendor-add-page .MuiInputLabel-root{color:rgba(26,26,24,.48)!important}
+.vendor-add-page .MuiInputLabel-root.Mui-focused{color:#1A1A18!important}
+html body .vendor-add-page .MuiFormControl-root > .MuiInputLabel-root.MuiInputLabel-outlined.Mui-error,html body .vendor-add-page .MuiInputLabel-root.Mui-error{color:#1A1A18!important}
+html body .vendor-add-page .MuiFormHelperText-root.Mui-error{color:#1A1A18!important}
+.vendor-add-page .MuiInputBase-input,.vendor-add-page .MuiSelect-select{color:#1A1A18!important}
+.vendor-add-page .MuiInputBase-input::placeholder,.vendor-add-page textarea::placeholder{color:rgba(26,26,24,.3)!important;opacity:1}
+.vendor-add-page .MuiSelect-icon,.vendor-add-page .MuiSvgIcon-root{color:rgba(26,26,24,.48)}
+.vendor-add-page .vendor-labeled .MuiOutlinedInput-root{min-height:44px;border-radius:12px;background:#fff}
+.vendor-add-page .vendor-labeled .MuiOutlinedInput-notchedOutline{border-width:1px!important}
+.vendor-add-page .vendor-labeled .MuiInputBase-input,.vendor-add-page .vendor-labeled .MuiSelect-select{font-size:13.5px;font-weight:500;padding-top:10px;padding-bottom:10px}
+`;
 
 const steps = [
   'Company Information',
@@ -163,19 +215,19 @@ const fieldStyles = {
     height: '40px',
     fontSize: '14px',
     '& fieldset': {
-      borderColor: '#ddd',
+      borderColor: 'rgba(26,26,24,0.08)',
     },
     '&:hover fieldset': {
-      borderColor: '#da7756',
+      borderColor: 'rgba(26,26,24,0.28)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#da7756',
+      borderColor: '#1A1A18',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#da7756',
+      color: '#1A1A18',
     },
   },
 };
@@ -216,6 +268,7 @@ const initialContactPerson = {
 
 export const AddVendorClub = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened('vendor', 'create');
   const { suppliers, services, loading } = useApiData();
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -592,10 +645,13 @@ export const AddVendorClub = () => {
     }
 
     try {
-      await vendorService.createVendor(apiFormData);
+      const createdVendor = await vendorService.createVendor(apiFormData);
       toast.success('Vendor created successfully!');
+      accountingEvents.onRecordCreated('vendor', createdVendor?.id ?? createdVendor?.pms_supplier?.id);
       navigate('/accounting/vendor');
     } catch (error: any) {
+      accountingEvents.onSaveFailed('vendor', 'create', error);
+
       // Handle 422 Unprocessable Entity (validation errors)
       if (error.status === 422 && error.validationErrors) {
         const validationErrors = error.validationErrors;
@@ -729,28 +785,28 @@ export const AddVendorClub = () => {
     const fileNames = currentFiles.map(f => f.name);
 
     return (
-      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#da7756] bg-orange-50' : 'border-gray-300'}`}>
-        <p className="text-gray-600 font-medium mb-2">{title}</p>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#1A1A18] bg-[#F5F4F0]' : 'border-[#EBE9E2]'}`}>
+        <p className="text-[rgba(26,26,24,0.68)] font-medium mb-2">{title}</p>
         <label className="cursor-pointer">
           <div className="flex flex-col items-center">
-            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#da7756] font-semibold">Choose Files</span></p>
+            <Upload className="w-8 h-8 text-[rgba(26,26,24,0.38)] mb-2" />
+            <p className="text-sm text-[rgba(26,26,24,0.48)]">Drag & Drop or <span className="text-[#1A1A18] font-semibold">Choose Files</span></p>
           </div>
           <input type="file" multiple className="hidden" onChange={handleFileChange} />
         </label>
         {fileNames.length > 0 ? (
           <div className="mt-3 p-2 bg-white rounded border">
-            <p className="text-xs text-[#da7756] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
+            <p className="text-xs text-[#1A1A18] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
             <div className="max-h-20 overflow-y-auto">
               {fileNames.map((fileName, index) => (
-                <p key={index} className="text-xs text-gray-700 truncate" title={fileName}>
+                <p key={index} className="text-xs text-[rgba(26,26,24,0.68)] truncate" title={fileName}>
                   📎 {fileName}
                 </p>
               ))}
             </div>
           </div>
         ) : (
-          <p className="text-xs text-gray-400 mt-2">No file chosen</p>
+          <p className="text-xs text-[rgba(26,26,24,0.38)] mt-2">No file chosen</p>
         )}
       </div>
     );
@@ -763,45 +819,61 @@ export const AddVendorClub = () => {
           <>
             <SectionCard>
               <SectionHeader>
-                <Building className="text-[#da7756]" />
+                <Building className="text-[rgba(26,26,24,0.68)]" />
                 <SectionTitle>COMPANY INFORMATION</SectionTitle>
               </SectionHeader>
               <Box p={3}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="vendor-labeled grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                  <FieldLabel htmlFor="vendor-companyName" required>Company Name</FieldLabel>
                   <TextField
-                    label={<span>Company Name <span style={{ color: '#DA7756' }}>*</span></span>}
+                    id="vendor-companyName"
                     fullWidth
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                     error={!!errors.companyName}
                     helperText={errors.companyName}
+                    placeholder="Enter Company Name"
                   />
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-primaryPhone">Primary Phone No.</FieldLabel>
                   <TextField
-                    label="Primary Phone No."
+                    id="vendor-primaryPhone"
                     type='numeric'
                     fullWidth
                     value={formData.primaryPhone}
                     onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
                     error={!!errors.primaryPhone}
                     helperText={errors.primaryPhone}
+                    placeholder="Enter Primary Phone No."
                   />
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-secondaryPhone">Secondary Phone No.</FieldLabel>
                   <TextField
-                    label="Secondary Phone No."
+                    id="vendor-secondaryPhone"
                     fullWidth
                     value={formData.secondaryPhone}
                     onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })}
                     error={!!errors.secondaryPhone}
                     helperText={errors.secondaryPhone}
+                    placeholder="Enter Secondary Phone No."
                   />
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-email" required>Email</FieldLabel>
                   <TextField
-                    label={<span>Email <span style={{ color: '#DA7756' }}>*</span></span>}
+                    id="vendor-email"
                     type="email"
                     fullWidth
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     error={!!errors.email}
                     helperText={errors.email}
+                    placeholder="Enter Email"
                   />
+                  </div>
                   {/* GST and PAN moved to Other Details section */}
                   {/* <TextField
                   label="PAN"
@@ -821,13 +893,24 @@ export const AddVendorClub = () => {
                   helperText={errors.gst}
                   placeholder="22AAAAA0000A1Z5"
                 /> */}
+                  <div>
+                  <FieldLabel htmlFor="vendor-supplierType">Supplier Type</FieldLabel>
                   <TextField
-                    label="Supplier Type"
+                    id="vendor-supplierType"
                     select
                     fullWidth
                     value={formData.supplierType}
                     onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
                     disabled={loading.suppliers}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (selected: any) =>
+                        selected === '' || selected == null ? (
+                          <span className="text-[rgba(26,26,24,0.3)]">Select Supplier Type</span>
+                        ) : (
+                          suppliers.find((s: any) => String(s.id) === String(selected))?.name ?? selected
+                        ),
+                    }}
                     InputProps={{
                       endAdornment: loading.suppliers ? <CircularProgress size={20} /> : null,
                     }}
@@ -842,8 +925,11 @@ export const AddVendorClub = () => {
                       ))
                     )}
                   </TextField>
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-websiteUrl">Website Url</FieldLabel>
                   <TextField
-                    label="Website Url"
+                    id="vendor-websiteUrl"
                     fullWidth
                     value={formData.websiteUrl}
                     onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
@@ -851,31 +937,40 @@ export const AddVendorClub = () => {
                     helperText={errors.websiteUrl}
                     placeholder="https://example.com"
                   />
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-date">Date</FieldLabel>
                   <TextField
-                    label={
-                      <span>
-                        Date
-                      </span>
-                    }
+                    id="vendor-date"
                     type="date"
                     fullWidth
                     variant="outlined"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
                     placeholder="Select Date"
                     inputProps={{
                       max: formData.date || undefined,
                     }}
                   />
+                  </div>
+                  <div>
+                  <FieldLabel htmlFor="vendor-services">Services</FieldLabel>
                   <TextField
-                    label="Services"
+                    id="vendor-services"
                     select
                     fullWidth
                     value={formData.services}
                     onChange={(e) => setFormData({ ...formData, services: e.target.value })}
                     disabled={loading.services}
+                    SelectProps={{
+                      displayEmpty: true,
+                      renderValue: (selected: any) =>
+                        selected === '' || selected == null ? (
+                          <span className="text-[rgba(26,26,24,0.3)]">Select Services</span>
+                        ) : (
+                          services.find((s: any) => String(s.id) === String(selected))?.name ?? selected
+                        ),
+                    }}
                     InputProps={{
                       endAdornment: loading.services ? <CircularProgress size={20} /> : null,
                     }}
@@ -890,47 +985,31 @@ export const AddVendorClub = () => {
                       ))
                     )}
                   </TextField>
+                  </div>
                   <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                    <div className="relative w-full">
-                      <textarea
-                        id="serviceDescription"
-                        value={formData.serviceDescription}
-                        onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                        rows={3}
-                        placeholder=" "
-                        className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-            focus:outline-none 
-            focus:border-[2px] 
-            focus:border-[rgb(25,118,210)] 
-            resize-vertical"
-                      />
-                      <label
-                        htmlFor="serviceDescription"
-                        className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
-            peer-placeholder-shown:top-4
-            peer-placeholder-shown:text-base
-            peer-placeholder-shown:text-gray-400
-            peer-focus:-top-[10px]
-            peer-focus:text-sm
-            peer-focus:text-[rgb(25,118,210)]"
-                      >
-                        Service Description
-                      </label>
-                    </div>
+                    <FieldLabel htmlFor="serviceDescription">Service Description</FieldLabel>
+                    <textarea
+                      id="serviceDescription"
+                      value={formData.serviceDescription}
+                      onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                      rows={3}
+                      placeholder="Enter Service Description"
+                      className="block w-full min-h-[88px] rounded-[12px] border border-[rgba(26,26,24,0.08)] bg-white px-[14px] py-3 text-[13.5px] font-medium text-[#1A1A18] placeholder:text-[rgba(26,26,24,0.3)] hover:border-[rgba(26,26,24,0.28)] focus:outline-none focus:border-[#1A1A18] resize-y"
+                    />
                   </div>
                 </div>
               </Box>
             </SectionCard>
             <SectionCard>
               <SectionHeader>
-                <Landmark className="text-[#da7756]" />
+                <Landmark className="text-[rgba(26,26,24,0.68)]" />
                 <SectionTitle>OTHER DETAILS</SectionTitle>
               </SectionHeader>
               <Box p={3}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {/* GST Treatment - Dropdown */}
                   <TextField
-                    label={<span>GST Treatment <span style={{ color: '#DA7756' }}>*</span></span>}
+                    label={<span>GST Treatment<span className="ml-0.5">*</span></span>}
                     select
                     fullWidth
                     value={formData.gstTreatment}
@@ -1029,7 +1108,7 @@ export const AddVendorClub = () => {
             </SectionCard>
             <SectionCard className="mb-10 " >
               <SectionHeader>
-                <Landmark className="text-[#da7756]" />
+                <Landmark className="text-[rgba(26,26,24,0.68)]" />
                 <SectionTitle>OPENING BALANCE</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -1152,9 +1231,9 @@ export const AddVendorClub = () => {
                           }
                         }}
                         sx={{
-                          border: '1px solid #da7756',
+                          border: '1px solid rgba(26,26,24,0.12)',
                           borderRadius: '4px',
-                          color: '#da7756',
+                          color: '#1A1A18',
                           width: 36,
                           height: 36,
                           flexShrink: 0,
@@ -1173,20 +1252,20 @@ export const AddVendorClub = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <MapPin className="text-[#da7756]" />
+              <MapPin className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>ADDRESS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
               <div className="space-y-6">
 
                 {/* Billing Address Block */}
-                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="p-4 border border-[rgba(26,26,24,0.09)] rounded-lg bg-[#F5F4F0]">
                   <div className="mb-4">
-                    <span className="text-sm font-semibold text-gray-700">Billing Address</span>
+                    <span className="text-sm font-semibold text-[#1A1A18]">Billing Address</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <TextField
-                      label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Country<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={billingAddress.country}
                       onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
@@ -1196,7 +1275,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., India"
                     />
                     <TextField
-                      label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>State<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={billingAddress.state}
                       onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
@@ -1206,7 +1285,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., Maharashtra"
                     />
                     <TextField
-                      label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>City<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={billingAddress.city}
                       onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
@@ -1227,7 +1306,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <TextField
-                      label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Address Line 1<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={billingAddress.addressLine1}
                       onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
@@ -1244,9 +1323,9 @@ export const AddVendorClub = () => {
                 </div>
 
                 {/* Shipping Address Block */}
-                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="p-4 border border-[rgba(26,26,24,0.09)] rounded-lg bg-[#F5F4F0]">
                   <div className="mb-4">
-                    <span className="text-sm font-semibold text-gray-700">
+                    <span className="text-sm font-semibold text-[#1A1A18]">
                       Shipping Address
                       <span
                         className="text-brand text-xs ml-2 cursor-pointer hover:underline"
@@ -1258,7 +1337,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <TextField
-                      label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Country<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={shippingAddress.country}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
@@ -1268,7 +1347,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., India"
                     />
                     <TextField
-                      label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>State<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={shippingAddress.state}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
@@ -1278,7 +1357,7 @@ export const AddVendorClub = () => {
                       placeholder="e.g., Maharashtra"
                     />
                     <TextField
-                      label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>City<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={shippingAddress.city}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
@@ -1299,7 +1378,7 @@ export const AddVendorClub = () => {
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <TextField
-                      label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Address Line 1<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={shippingAddress.addressLine1}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
@@ -1323,7 +1402,7 @@ export const AddVendorClub = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Landmark className="text-[#da7756]" />
+              <Landmark className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>BANK DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1366,22 +1445,22 @@ export const AddVendorClub = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <User className="text-[#da7756]" />
+              <User className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>CONTACT PERSON</SectionTitle>
             </SectionHeader>
             <Box p={3}>
               {contactPersons.map((contact, index) => (
-                <div key={index} className="relative border rounded-lg p-4 mb-4 bg-gray-50">
+                <div key={index} className="relative border border-[rgba(26,26,24,0.09)] rounded-lg p-4 mb-4 bg-[#F5F4F0]">
                   {/* Header with Contact Number and Delete Button */}
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-gray-800">
+                    <h4 className="text-lg font-semibold text-[#1A1A18]">
                       Contact Person {index + 1}
                     </h4>
                     {contactPersons.length > 1 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
+                        className="text-[#E5484D] hover:text-[#A32126] hover:bg-[rgba(229,72,77,0.08)] p-2"
                         onClick={() => removeContactPerson(index)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1392,11 +1471,11 @@ export const AddVendorClub = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
-                        <p className="text-brand text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                        <p className="text-[#1A1A18] text-sm mt-1">{errors[`contact_${index}_general`]}</p>
                       </div>
                     )}
                     <TextField
-                      label={<span>First Name <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>First Name<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={contact.firstName}
                       onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
@@ -1404,7 +1483,7 @@ export const AddVendorClub = () => {
                       helperText={errors[`contact_${index}_firstName`]}
                     />
                     <TextField
-                      label={<span>Last Name <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Last Name<span className="ml-0.5">*</span></span>}
                       fullWidth
                       value={contact.lastName}
                       onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
@@ -1412,7 +1491,7 @@ export const AddVendorClub = () => {
                       helperText={errors[`contact_${index}_lastName`]}
                     />
                     <TextField
-                      label={<span>Primary Email <span style={{ color: '#DA7756' }}>*</span></span>}
+                      label={<span>Primary Email<span className="ml-0.5">*</span></span>}
                       type="email"
                       fullWidth
                       value={contact.primaryEmail}
@@ -1460,7 +1539,7 @@ export const AddVendorClub = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <FileText className="text-[#da7756]" />
+              <FileText className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>KYC DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1487,7 +1566,7 @@ export const AddVendorClub = () => {
                 <TextField
                   label={
                     <span>
-                      Start Date <span style={{ color: '#DA7756' }}>*</span>
+                      Start Date<span className="ml-0.5">*</span>
                     </span>
                   }
                   id="startFrom"
@@ -1512,7 +1591,7 @@ export const AddVendorClub = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Upload className="text-[#da7756]" />
+              <Upload className="text-[rgba(26,26,24,0.68)]" />
               <SectionTitle>ATTACHMENTS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1533,36 +1612,23 @@ export const AddVendorClub = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen vendor-club-form">
-      <style>{`
-        .vendor-club-form .Mui-error {
-          color: #DA7756 !important;
-        }
-        .vendor-club-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
-          border-color: #DA7756 !important;
-        }
-        .vendor-club-form .MuiFormHelperText-root.Mui-error {
-          color: #DA7756 !important;
-        }
-        .vendor-club-form .MuiInputLabel-root.Mui-error {
-          color: #DA7756 !important;
-        }
-      `}</style>
+    <div className="vendor-add-page p-6 bg-[#FDFDFB] min-h-screen">
+      <style>{VENDOR_FORM_CSS}</style>
       {/* Header with Back Button and Breadcrumbs */}
       <div className="mb-6">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+        <div className="flex items-center space-x-2 text-sm text-[rgba(26,26,24,0.48)] mb-2">
           <button
             onClick={() => navigate('/accounting/vendor')}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#F7F6F2] transition-colors mr-2"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
+            <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
           </button>
           <span>Vendor List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Add New Vendor</span>
+          <span className="text-[#1A1A18] font-medium">Add New Vendor</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">ADD VENDOR</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A18]">ADD VENDOR</h1>
       </div>
 
       <Box sx={{ mb: 4, overflow: 'auto' }}>
@@ -1580,12 +1646,12 @@ export const AddVendorClub = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: 'white',
-                  color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
-                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
-                  fontWeight: (index === activeStep) ? 600 : 500,
+                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : 'rgba(26,26,24,0.48)',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.12)'}`,
                   padding: '8px 12px',
                   fontSize: '11px',
+                  fontWeight: 500,
                   textAlign: 'center',
                   minWidth: '140px',
                   maxWidth: '140px',
@@ -1593,7 +1659,7 @@ export const AddVendorClub = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: index === activeStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(26, 26, 24, 0.15)' : 'none',
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
                   position: 'relative',
@@ -1612,7 +1678,7 @@ export const AddVendorClub = () => {
                   sx={{
                     width: '30px',
                     height: '2px',
-                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
+                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.2)'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#1A1A18' : 'rgba(26,26,24,0.2)'} 6px, transparent 6px, transparent 12px)`,
                     margin: '0 0px',
                     flexShrink: 0
                   }}
@@ -1627,18 +1693,18 @@ export const AddVendorClub = () => {
         {getStepContent(activeStep)}
       </div>
 
-      <div className="flex justify-end gap-4 mt-8 " style={{ marginBottom: '100px' }}>
-        <DraftButton disabled={activeStep === 0} onClick={handleBack}>
+      <div className="fm-action-bar mt-8 pt-4 sm:pt-6">
+        <button type="button" className="fm-action-secondary" disabled={activeStep === 0} onClick={handleBack}>
           Back
-        </DraftButton>
+        </button>
         {activeStep === steps.length - 1 ? (
-          <RedButton onClick={handleSave} disabled={isSubmitting}>
+          <button type="button" className="fm-action-primary" onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
-          </RedButton>
+          </button>
         ) : (
-          <RedButton onClick={handleNext}>
+          <button type="button" className="fm-action-primary" onClick={handleNext}>
             Next
-          </RedButton>
+          </button>
         )}
       </div>
     </div>

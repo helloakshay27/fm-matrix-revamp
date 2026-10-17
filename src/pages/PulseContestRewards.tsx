@@ -3,7 +3,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
-import { Eye, Plus } from "lucide-react"
+import { Plus, Eye } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { usePulseEvents } from "@/components/PostHogPulseEvents"
 
@@ -193,12 +193,6 @@ const PulseContestRewards = () => {
 
     return (
         <div className="p-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Rewards</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                    Manage user contest reward.
-                </p>
-            </div>
             <EnhancedTable
                 data={claims}
                 columns={columns}
@@ -206,13 +200,7 @@ const PulseContestRewards = () => {
                 renderActions={renderActions}
                 loading={loading}
                 leftActions={
-                    <Button
-                        onClick={() => navigate("/pulse/rewards/create")}
-                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-none flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Create Reward
-                    </Button>
+                    <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/rewards/create")}><Plus className="w-4 h-4 mr-2" />Create Reward</Button>
                 }
             />
         </div>

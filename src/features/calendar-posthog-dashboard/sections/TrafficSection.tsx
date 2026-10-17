@@ -13,7 +13,7 @@ const MEASURES: { key: SessTab; label: string }[] = [
 
 /** Layer 1 — Traffic & Session. */
 export function TrafficSection() {
-  const { vm, palette, setSessTab, trafficLoading } = useCalendarDashboard();
+  const { vm, palette, setSessTab, trafficLoading, errors } = useCalendarDashboard();
   const { traffic, sessTab } = vm;
 
   const series =
@@ -47,6 +47,8 @@ export function TrafficSection() {
           </li>
         </ul>
       </div>
+
+      {errors.traffic && <p role="alert">Unable to load traffic data: {errors.traffic.message}</p>}
 
       <Tiles specs={traffic.tiles} columns={3} id="tilesTraffic" loading={trafficLoading} />
 

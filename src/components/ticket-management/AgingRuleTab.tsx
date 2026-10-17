@@ -189,10 +189,10 @@ export const AgingRuleTab: React.FC = () => {
                 />
               </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
+              <div className="fm-action-bar">
+                <button type="submit" disabled={isSubmitting} className="fm-action-primary">
                   {isSubmitting ? 'Saving...' : 'Submit'}
-                </Button>
+                </button>
               </div>
             </form>
           </Form>

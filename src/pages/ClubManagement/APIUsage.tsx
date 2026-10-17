@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 // Chart series order: purple, infoBlue, growth, olive, sageMint, purpleMid, warning, danger
 const USED_COLOR = "#5A4BE0"; // series 1 — purple
@@ -51,6 +52,7 @@ const MOCK_ROWS: ApiUsageRow[] = [];
 const APIUsage: React.FC = () => {
   const [totalApiCalls] = useState(2000);
   const [usedCalls] = useState(0);
+  useAccountingReportViewed("api_usage");
 
   const remainingCalls = useMemo(
     () => Math.max(0, totalApiCalls - usedCalls),

@@ -33,6 +33,7 @@ import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { useDebounce } from "@/hooks/useDebounce";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -311,6 +312,8 @@ export const ChartOfAccountsDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed("chart_of_account");
+  useAccountingSearchTracking("chart_of_account", lockLedgerSearch);
   const [groupViewData, setGroupViewData] = useState<any[]>([]);
   const [groupSearch, setGroupSearch] = useState("");
   const debouncedGroupSearch = useDebounce(groupSearch, 300);
@@ -430,6 +433,7 @@ export const ChartOfAccountsDashboard = () => {
 
         // ✅ FIXED DATA MAPPING
         setLockLedgers(data.lock_account_ledgers || []);
+        reportListLoaded((data.lock_account_ledgers || []).length, data.lock_account_ledgers_pagination?.total_count);
 
         // ✅ FIXED PAGINATION MAPPING
         // if (data.lock_account_ledgers_pagination) {
@@ -731,6 +735,7 @@ export const ChartOfAccountsDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log("Applying filters:", newFilters);
+    accountingEvents.onFilterApplied("chart_of_account", newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

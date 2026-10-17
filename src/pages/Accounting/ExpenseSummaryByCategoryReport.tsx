@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ExpenseSummaryRow {
   id: string;
@@ -77,6 +78,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
   const [filters, setFilters] = useState(defaultRange);
   const [rows, setRows] = useState<ExpenseSummaryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("expense_summary_by_category");
 
   // Detail view state
   const [detailItem, setDetailItem] = useState<{
@@ -393,7 +395,10 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("expense_summary_by_category", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchData(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

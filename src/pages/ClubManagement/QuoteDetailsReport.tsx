@@ -6,6 +6,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 type QuoteRow = {
   id: string;
@@ -67,6 +68,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const QuoteDetailsReport: React.FC = () => {
+  useAccountingReportViewed("quote_details");
   const navigate = useNavigate();
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
@@ -218,7 +220,7 @@ const QuoteDetailsReport: React.FC = () => {
           />
 
           <Button
-            onClick={() => fetchQuoteDetails(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("quote_details", { from_date: filters.fromDate, to_date: filters.toDate }); fetchQuoteDetails(filters.fromDate, filters.toDate); }}
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View

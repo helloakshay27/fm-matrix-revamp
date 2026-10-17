@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface InvoiceListItem {
   invoiceNo: string;
@@ -26,6 +27,7 @@ const toAmount = (value?: string | null) => {
 
 const AccountTypeTransactionsDetailPage: React.FC = () => {
   const location = useLocation();
+  useAccountingReportViewed("account_type_transactions_details");
   const params = new URLSearchParams(location.search);
 
   const section = params.get("section") || "Accounts Receivable";

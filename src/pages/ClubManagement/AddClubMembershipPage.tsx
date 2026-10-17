@@ -2842,13 +2842,13 @@ export const AddClubMembershipPage = () => {
                 </div>
 
                 {/* Submit/Update Buttons */}
-                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
-                  <Button
-                    variant="outline"
+                <div className="fm-action-bar pt-4 sm:pt-6 border-t border-gray-200">
+                  <button
                     onClick={handleGoBack}
+                    className="fm-action-secondary"
                   >
                     Cancel
-                  </Button>
+                  </button>
                   {/* <Button
                     onClick={handleNext}
                     className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[80px]"
@@ -2856,13 +2856,13 @@ export const AddClubMembershipPage = () => {
                     Next
                   </Button> */}
 
-                  <Button
+                  <button
                     onClick={handleSubmit}
                     // disabled={isSubmitting || !selectedPlanId}
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="fm-action-primary"
                   >
                     {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                  </Button>
+                  </button>
                 </div>
               </>
             )}
@@ -3189,27 +3189,27 @@ export const AddClubMembershipPage = () => {
 
                 {/* Submit Buttons */}
                 <div className="flex justify-between gap-3 pt-6 border-t border-gray-200">
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={handleBackToStep1}
+                    className="fm-action-secondary"
                   >
                     Back
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
+                  </button>
+                  <div className="fm-action-bar">
+                    <button
                       onClick={handleGoBack}
                       disabled={isSubmitting}
+                      className="fm-action-secondary"
                     >
                       Cancel
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       onClick={handleSubmit}
                       disabled={isSubmitting || !selectedPlanId}
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      className="fm-action-primary"
                     >
                       {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </>

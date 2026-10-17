@@ -6,6 +6,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface CreditNoteApi {
   id: number;
@@ -90,6 +91,7 @@ const getCustomerName = (note: CreditNoteApi) => {
 
 const CreditNoteDetailsReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("credit_note_details");
   const [rows, setRows] = useState<CreditNoteRow[]>([]);
   const [loading, setLoading] = useState(false);
   const defaultRange = useMemo(() => {
@@ -275,7 +277,13 @@ const CreditNoteDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchCreditNotes(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("credit_note_details", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+              fetchCreditNotes(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

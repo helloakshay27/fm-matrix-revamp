@@ -4,6 +4,7 @@ import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface FixedAssetRow {
   id: string;
@@ -120,6 +121,7 @@ const getDefaultFiscalYearRange = () => {
 };
 
 const FixedAssetReport: React.FC = () => {
+  useAccountingReportViewed("fixed_asset");
   const defaultRange = useMemo(() => getDefaultFiscalYearRange(), []);
   const [filters, setFilters] = useState({
     fromDate: defaultRange.fromDate,
@@ -140,6 +142,10 @@ const FixedAssetReport: React.FC = () => {
   }, [filters.fromDate, filters.toDate]);
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("fixed_asset", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     // Hook for API: load fixed assets for filters.fromDate / filters.toDate
   };
 

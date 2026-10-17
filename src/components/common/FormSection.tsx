@@ -83,16 +83,19 @@ export const FormActionBar = ({
   submitAsFormSubmit = false,
 }: FormActionBarProps) => (
   <div className="fm-action-bar pt-4 sm:pt-6">
-    <button type="button" onClick={onCancel} className="fm-action-secondary" disabled={isSubmitting}>
-      {cancelLabel}
-    </button>
-    <button
-      type={submitAsFormSubmit ? 'submit' : 'button'}
-      onClick={submitAsFormSubmit ? undefined : onSubmit}
-      className="fm-action-primary"
-      disabled={isSubmitting}
-    >
-      {isSubmitting ? 'Saving...' : submitLabel}
-    </button>
+    {/* grid-cols-2 → dono buttons hamesha same width (bade label ke barabar) */}
+    <div className="grid grid-cols-2 gap-3">
+      <button type="button" onClick={onCancel} className="fm-action-secondary min-w-[120px]" disabled={isSubmitting}>
+        {cancelLabel}
+      </button>
+      <button
+        type={submitAsFormSubmit ? 'submit' : 'button'}
+        onClick={submitAsFormSubmit ? undefined : onSubmit}
+        className="fm-action-primary min-w-[120px]"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Saving...' : submitLabel}
+      </button>
+    </div>
   </div>
 );

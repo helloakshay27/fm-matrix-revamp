@@ -3,7 +3,7 @@ import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { Plus, Edit, Eye, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -233,13 +233,7 @@ const ServiceCategoryDashboard = () => {
 
   const leftActions = (
     <>
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/pulse/pulse-privilege/service-category/create")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/pulse-privilege/service-category/create")}><Plus className="w-4 h-4 mr-2" />Add</Button>
     </>
   );
 

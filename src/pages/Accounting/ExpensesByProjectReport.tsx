@@ -5,6 +5,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface CustomerOption {
   id?: number | string;
@@ -200,6 +201,7 @@ const normalizeProjectName = (item: ExpenseApi) => {
 const ExpensesByProjectReport: React.FC = () => {
   const [rows, setRows] = useState<ExpensesByProjectRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("expenses_by_project");
 
   const defaultDateRange = useMemo(() => {
     const today = new Date();
@@ -398,7 +400,10 @@ const ExpensesByProjectReport: React.FC = () => {
             />
 
             <Button
-              onClick={() => fetchExpensesByProject(filters.fromDate, filters.toDate)}
+              onClick={() => {
+                accountingEvents.onReportGenerated("expenses_by_project", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+                fetchExpensesByProject(filters.fromDate, filters.toDate);
+              }}
               className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
             >
               View

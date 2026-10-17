@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const VendorStatementTemplateEditPage: React.FC = () => (
+export const VendorStatementTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="vendor_statement"
     moduleLabel="Vendor Statement"
@@ -11,6 +14,7 @@ export const VendorStatementTemplateEditPage: React.FC = () => (
     detailsRoutePrefix="/accounting/vendor/view"
     pdfTabValue="statement"
   />
-);
+  );
+};
 
 export default VendorStatementTemplateEditPage;

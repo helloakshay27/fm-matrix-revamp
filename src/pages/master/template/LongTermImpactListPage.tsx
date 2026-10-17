@@ -102,8 +102,9 @@ const LongTermImpactListPage = () => {
         data={templates.map((template, idx) => ({ ...template, srno: idx + 1 }))}
         leftActions={
           <Button
+            size="sm"
             onClick={() => setShowActionPanel((prev) => !prev)}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium mr-2"
           >
             <Plus className="w-4 h-4 mr-2" />
             Action

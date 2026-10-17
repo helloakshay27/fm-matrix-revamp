@@ -7,6 +7,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -146,6 +147,8 @@ export const BillListPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed("bill");
+  useAccountingSearchTracking("bill", searchQuery);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -258,6 +261,7 @@ export const BillListPage: React.FC = () => {
       const bills = apiData?.lock_account_bills ?? apiData?.data ?? apiData;
 
       setBillData(Array.isArray(bills) ? (bills as Bill[]) : []);
+      reportListLoaded(Array.isArray(bills) ? bills.length : 0);
     } catch (error: unknown) {
       console.error("Error fetching bill data:", error);
 
@@ -436,11 +440,14 @@ export const BillListPage: React.FC = () => {
       );
 
       toast.success("Bill deleted successfully!");
+      accountingEvents.onRecordDeleted("bill", deleteTarget.id);
       setShowDeleteModal(false);
       setDeleteTarget(null);
       fetchBillData(currentPage, perPage, "", appliedFilters);
     } catch (error: unknown) {
       console.error("Error deleting bill:", error);
+      accountingEvents.onSaveFailed("bill", "delete", error, { record_id: deleteTarget.id });
+
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast.error(`Failed to delete bill: ${errorMessage}`);
     } finally {

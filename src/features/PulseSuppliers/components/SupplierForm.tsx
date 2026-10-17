@@ -1,31 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, Building2, Send } from "lucide-react";
+import { ArrowLeft, Building2, MapPin } from "lucide-react";
 import { TextField } from "@mui/material";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import type { SupplierFormFields } from "../types/supplier";
-
-const fieldStyles = {
-    backgroundColor: "#fff",
-    borderRadius: "4px",
-    "& .MuiOutlinedInput-root": {
-        "& fieldset": { borderColor: "#ddd" },
-        "&:hover fieldset": { borderColor: "var(--color-primary)" },
-        "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
-    },
-    "& .MuiInputLabel-root": {
-        "&.Mui-focused": { color: "var(--color-primary)" },
-    },
-};
-
-const singleLineFieldStyles = {
-    ...fieldStyles,
-    height: "45px",
-    "& .MuiOutlinedInput-root": {
-        ...fieldStyles["& .MuiOutlinedInput-root"],
-        height: "45px",
-    },
-};
 
 const Required = () => <span className="text-brand-error">*</span>;
 
@@ -68,10 +46,11 @@ function buildInitialState(initialValues?: Partial<SupplierFormFields>): Supplie
 }
 
 export interface SupplierFormProps {
+    /** Breadcrumb current item, e.g. "Create New Supplier" */
+    currentLabel: string;
+    /** Page heading, e.g. "NEW SUPPLIER" */
     headerTitle: string;
-    headerSubtitle: string;
     submitLabel: string;
-    submittingLabel: string;
     isSubmitting: boolean;
     initialValues?: Partial<SupplierFormFields>;
     onSubmit: (payload: SupplierFormFields) => void | Promise<void>;
@@ -79,10 +58,9 @@ export interface SupplierFormProps {
 }
 
 export function SupplierForm({
+    currentLabel,
     headerTitle,
-    headerSubtitle,
     submitLabel,
-    submittingLabel,
     isSubmitting,
     initialValues,
     onSubmit,
@@ -155,37 +133,26 @@ export function SupplierForm({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col pb-6">
-            <div className="px-6 py-4">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={onCancel}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
-                        <p className="text-sm text-gray-500">{headerSubtitle}</p>
-                    </div>
-                </div>
+        <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <span>Supplier List</span>
+                <span>{">"}</span>
+                <span className="text-gray-900 font-medium">{currentLabel}</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{headerTitle}</h1>
             </div>
 
-            <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="bg-brand-bg p-4 border-b border-gray-200">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-brand" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Supplier Details</h2>
-                                <p className="text-xs text-gray-500">Basic and contact information</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 space-y-6">
+            <div className="space-y-4 sm:space-y-6">
+                <FormSection title="SUPPLIER DETAILS" icon={Building2}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <TextField
                                 label={<>First Name <Required /></>}
@@ -195,7 +162,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label={<>Last Name <Required /></>}
@@ -205,7 +172,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label={<>Company Name <Required /></>}
@@ -215,7 +182,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label={<>Email <Required /></>}
@@ -225,7 +192,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label={<>Mobile 1 <Required /></>}
@@ -236,7 +203,7 @@ export function SupplierForm({
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 inputProps={{ inputMode: "numeric", maxLength: 10 }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="Mobile 2"
@@ -247,7 +214,7 @@ export function SupplierForm({
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 inputProps={{ inputMode: "numeric", maxLength: 10 }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="GSTIN Number"
@@ -257,7 +224,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="PAN Number"
@@ -267,7 +234,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="Category"
@@ -277,26 +244,12 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                         </div>
-                    </div>
-                </div>
+                </FormSection>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="bg-brand-bg p-4 border-b border-gray-200">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-brand" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Address</h2>
-                                <p className="text-xs text-gray-500">Location details</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 space-y-6">
+                <FormSection title="ADDRESS" icon={MapPin}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <TextField
                                 label="Address"
@@ -306,7 +259,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="Address 2"
@@ -316,7 +269,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="Country"
@@ -326,7 +279,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="State"
@@ -336,7 +289,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="City"
@@ -346,7 +299,7 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                             <TextField
                                 label="Pincode"
@@ -356,31 +309,17 @@ export function SupplierForm({
                                 fullWidth
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                sx={singleLineFieldStyles}
+                                InputProps={{ sx: assetFieldStyles }}
                             />
                         </div>
-                    </div>
-                </div>
-            </div>
+                </FormSection>
 
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-end gap-3 px-6">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="w-full sm:w-40 h-11 !border-brand !text-brand hover:!bg-brand-selected hover:!text-brand"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="w-full sm:w-40 h-11 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand gap-2"
-                >
-                    <Send className="w-4 h-4" />
-                    {isSubmitting ? submittingLabel : submitLabel}
-                </Button>
+                <FormActionBar
+                    onCancel={onCancel}
+                    onSubmit={handleSubmit}
+                    submitLabel={submitLabel}
+                    isSubmitting={isSubmitting}
+                />
             </div>
         </div>
     );

@@ -226,7 +226,8 @@ export const ClassSetupList = () => {
         emptyMessage={isLoading ? "Loading classes..." : "No classes found"}
         leftActions={
           <Button
-            className="fm-button-fix fm-button-brand px-8 py-2"
+            size="sm"
+            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
             onClick={() => navigate("/club-management/class-setup/add")}
           >
             <Plus className="w-4 h-4 mr-2" /> Add
@@ -261,7 +262,7 @@ export const ClassSetupList = () => {
               want to delete {deleteTarget?.className || "this class"}?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="fm-action-bar">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {

@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { useAppDispatch } from "@/store/hooks";
 import { editBanner, fetchBanners } from "@/store/slices/bannerSlice";
-import { Edit, Eye, Plus } from "lucide-react";
+import { Plus, Edit, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -158,13 +158,7 @@ const BannerSetupDashboard = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setShowAddModal(true)}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Add</Button>
         </>
     );
 

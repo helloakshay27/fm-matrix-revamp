@@ -14,6 +14,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
@@ -471,9 +472,11 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         )
             .then(res => {
                 // Optionally handle success
+                accountingEvents.onRecordUpdated('payment_term', null, { item_count: paymentTermsPayload.length });
             })
             .catch(err => {
                 alert('Failed to save payment terms');
+                accountingEvents.onSaveFailed('payment_term', 'update', err);
             });
 
         // Refresh payment terms list after save
@@ -496,8 +499,10 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     }
                 }
             );
+            accountingEvents.onActionPerformed('payment_term', 'deactivate', id);
         } catch (err) {
             alert('Failed to deactivate payment term');
+            accountingEvents.onSaveFailed('payment_term', 'action', err, { action: 'deactivate', record_id: id });
         }
         setEditTerms(terms => terms.filter((_, i) => i !== idx));
         fetchPaymentTerms();
@@ -1346,6 +1351,7 @@ const CustomersEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = !!id;
+    useAccountingFormOpened("customer", isEdit ? "edit" : "create", id);
     const [editIds, setEditIds] = useState({
         billingId: null,
         shippingId: null,
@@ -1916,10 +1922,13 @@ const CustomersEdit = () => {
         )
             .then(res => {
                 toast.success(isEdit ? "Customer updated successfully!" : "Customer saved successfully!");
+                if (isEdit) accountingEvents.onRecordUpdated("customer", id);
+                else accountingEvents.onRecordCreated("customer", res.data?.id ?? res.data?.lock_account_customer?.id);
                 navigate("/accounting/customers");
             })
             .catch(err => {
                 toast.error(isEdit ? "Failed to update customer" : "Failed to save customer");
+                accountingEvents.onSaveFailed("customer", isEdit ? "update" : "create", err, { record_id: id });
                 console.error("Customer save error:", err);
             })
             .finally(() => {

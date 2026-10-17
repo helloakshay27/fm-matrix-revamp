@@ -481,7 +481,7 @@ export const RoomPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-selected [&_svg]:text-brand"
+                size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -491,7 +491,7 @@ export const RoomPage = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-selected [&_svg]:text-brand"
+                    size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Rooms
@@ -518,33 +518,35 @@ export const RoomPage = () => {
                       onRemove={() => setImportFile(null)}
                       disabled={isImporting}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
+                    <div className="fm-action-bar">
+                      <button
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
                         }}
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImportRooms}
                         disabled={!importFile || isImporting}
-                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
+                        className="fm-action-primary"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
                 {shouldShow("Room", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
+                    <Button size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Room
                     </Button>
@@ -750,9 +752,10 @@ export const RoomPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button
-                      variant="outline"
+                  <div className="fm-action-bar pt-4">
+                    <button
+                      type="button"
+                      className="fm-action-secondary"
                       onClick={() => {
                         setIsAddDialogOpen(false);
                         setNewRoom({
@@ -765,24 +768,24 @@ export const RoomPage = () => {
                           createQrCode: false
                         });
                       }}
-                      className="border-brand"
                     >
                       Cancel
-                    </Button>
-                    <Button
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleAddRoom}
-                      className="bg-brand hover:bg-brand-hover text-white"
+                      className="fm-action-primary"
                       disabled={!newRoom.building || !newRoom.roomName.trim()}
                     >
                       Submit
-                    </Button>
+                    </button>
                   </div>
                 </DialogContent>
               </Dialog>
 
               <Button
                 onClick={handlePrintAllQR}
-                className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+                size="sm" variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 Print All QR
               </Button>
@@ -1086,14 +1089,15 @@ export const RoomPage = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4">
-                <Button
+              <div className="fm-action-bar pt-4">
+                <button
+                  type="button"
                   onClick={handleUpdateRoom}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                  className="fm-action-primary"
                   disabled={!editRoom.roomName.trim() || !editRoom.building}
                 >
                   Submit
-                </Button>
+                </button>
               </div>
             </DialogContent>
           </Dialog>
@@ -1124,7 +1128,6 @@ export const RoomPage = () => {
                         document.body.removeChild(link);
                         toast.success('QR Code downloaded successfully');
                       }}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download QR Code

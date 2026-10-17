@@ -3,6 +3,7 @@ import type { ChartPalette, DashboardTheme } from '@/features/analytics-dashboar
 import type { DateRange, Device } from '../data/constants';
 import type { PageKey } from '../data/pages';
 import type { AdoptionSample, TrafficSample, WorkflowSample } from '../data/sampleData';
+import type { CalendarQueryFilters } from '../api/queries';
 
 /**
  * Context object, its types, and the consumer hook.
@@ -38,6 +39,11 @@ export interface ViewModel {
 export interface CalendarDashboardValue {
   vm: ViewModel;
   queryFilters: CalendarQueryFilters;
+  errors: {
+    traffic: Error | null;
+    adopt: Error | null;
+    flows: Error | null;
+  };
 
   /** filters */
   provider: string;

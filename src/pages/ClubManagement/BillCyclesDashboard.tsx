@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -142,6 +143,8 @@ export const BillCyclesDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed('bill_cycle');
+  useAccountingSearchTracking('bill_cycle', searchQuery);
 
 
   const fetchMemberships = useCallback(async () => {
@@ -164,6 +167,7 @@ export const BillCyclesDashboard = () => {
       setMemberships(cycles);
       setTotalMembers(cycles.length);
       setTotalPages(1); // API does not support pagination
+      reportListLoaded(cycles.length, cycles.length);
 
     } catch (error) {
       console.error("Error fetching bill cycles:", error);
@@ -393,6 +397,7 @@ export const BillCyclesDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('bill_cycle', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

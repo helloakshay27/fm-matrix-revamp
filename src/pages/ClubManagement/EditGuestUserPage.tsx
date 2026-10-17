@@ -610,22 +610,22 @@ export const EditGuestUserPage: React.FC = () => {
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-center gap-4 pt-2">
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="fm-action-secondary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
           onClick={handleSubmit}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium rounded-lg"
+          className="fm-action-primary"
           disabled={loading}
         >
           Update
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-8 py-3 text-base font-medium rounded-lg"
-        >
-          Cancel
-        </Button>
+        </button>
       </div>
     </div>
   );

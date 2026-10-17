@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -264,6 +265,7 @@ export const InvoiceAdd: React.FC = () => {
     );
     const navigate = useNavigate();
     const location = useLocation();
+    useAccountingFormOpened('invoice', 'create');
 
     useEffect(() => {
         document.title = 'New Invoice';
@@ -1502,11 +1504,17 @@ export const InvoiceAdd: React.FC = () => {
                 body: formData
             });
 
+            accountingEvents.onRecordCreated('invoice', null, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'sent',
+            });
             toast.success(`Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/invoices/list');
         } catch (error) {
             console.error('Error submitting invoice:', error);
             toast.error('Failed to create invoice');
+            accountingEvents.onSaveFailed('invoice', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

@@ -16,6 +16,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { InputAdornment, TextField } from "@mui/material";
 import {
@@ -131,6 +132,7 @@ interface TaxRate {
 
 const ItemsAdd = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened("item", "create");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [form, setForm] = useState({
     type: "goods",
@@ -601,10 +603,12 @@ const ItemsAdd = () => {
       )
       .then((res) => {
         toast.success("Item saved successfully!");
+        accountingEvents.onRecordCreated("item", res.data?.id ?? res.data?.lock_account_item?.id);
         navigate("/accounting/items");
       })
       .catch((err) => {
         console.error("Item save error:", err);
+        accountingEvents.onSaveFailed("item", "create", err);
         const errors = err?.response?.data;
         if (errors && typeof errors === "object") {
           const messages = Object.entries(errors)

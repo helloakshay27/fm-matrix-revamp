@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
@@ -77,6 +78,8 @@ export const ItemsDashboard = () => {
   const [totalMembers, setTotalMembers] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const reportListLoaded = useAccountingListViewed('item');
+  useAccountingSearchTracking('item', searchQuery);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -164,6 +167,7 @@ export const ItemsDashboard = () => {
         setBulkUploadStatus('warning');
         setBulkUploadMessage(errData.message || errData.error || 'Upload completed with issues.');
         setBulkUploadResults(results);
+        accountingEvents.onActionPerformed('item', 'import', null, { status: 'partial', row_count: results.length });
         const toastMessage = errData.message || errData.error || 'Upload completed with issues.';
         const detail = results.map(r => `Row ${r.row}: ${r.message}`).join('\n');
         toast.warning(toastMessage, {
@@ -199,18 +203,21 @@ export const ItemsDashboard = () => {
         window.URL.revokeObjectURL(url);
         closeBulkUploadDialog();
         toast.success('File processed. Result file downloaded.');
+        accountingEvents.onActionPerformed('item', 'import', null);
         return;
       }
 
       const data = await response.json();
       closeBulkUploadDialog();
       toast.success(data.message || 'Items uploaded successfully!');
+      accountingEvents.onActionPerformed('item', 'import', null, { row_count: Array.isArray(data?.results) ? data.results.length : undefined });
       await fetchItems();
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Upload failed';
       setBulkUploadStatus('error');
       setBulkUploadMessage(msg);
       toast.error(msg);
+      accountingEvents.onSaveFailed('item', 'import', error);
     }
   };
 
@@ -258,6 +265,7 @@ export const ItemsDashboard = () => {
 
       console.log('API response:', response.data)
       setItems(fetchedItems);
+      reportListLoaded(fetchedItems.length, response.data?.meta?.total_count);
       console.log('Fetched items:', fetchedItems);
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -445,6 +453,7 @@ export const ItemsDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('item', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);
@@ -687,6 +696,7 @@ export const ItemsDashboard = () => {
       );
 
       toast.success("Item deleted successfully");
+      accountingEvents.onRecordDeleted('item', selectedDeleteItem.id);
 
       setDeleteDialogOpen(false);
       setSelectedDeleteItem(null);
@@ -697,6 +707,7 @@ export const ItemsDashboard = () => {
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete item");
+      accountingEvents.onSaveFailed('item', 'delete', error, { record_id: selectedDeleteItem.id });
     } finally {
       setDeleteLoading(false);
     }
@@ -719,6 +730,7 @@ export const ItemsDashboard = () => {
       toast.success(
         response?.data?.message || "Status updated successfully"
       );
+      accountingEvents.onActionPerformed('item', 'status_change', item.id);
 
       // Reload latest items
       await fetchItems();
@@ -726,6 +738,7 @@ export const ItemsDashboard = () => {
     } catch (error) {
       console.error("Toggle status error:", error);
       toast.error("Failed to update status");
+      accountingEvents.onSaveFailed('item', 'action', error, { action: 'status_change', record_id: item.id });
     }
   };
 

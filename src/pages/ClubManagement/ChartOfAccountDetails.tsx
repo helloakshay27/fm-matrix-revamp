@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export const ChartOfAccountDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("chart_of_account");
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -66,6 +68,7 @@ export const ChartOfAccountDetails = () => {
                     : ""
             );
             setTransactions(rows)
+            reportRecordLoaded(id);
         } catch (err) {
             console.error(err);
             setLedgerDetails(null);

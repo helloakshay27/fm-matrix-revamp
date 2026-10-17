@@ -3,10 +3,10 @@ import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { isCMContextActive } from "@/utils/posthogHelpers";
 import { Button } from "@/components/ui/button"
-import { Switch } from "@mui/material"
+import { Switch } from "@/components/ui/switch"
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import axios from "axios"
-import { Edit, Eye, Plus } from "lucide-react"
+import { Plus, Edit, Eye } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { CommunityFilterModal } from "@/components/CommunityFilterModal"
@@ -219,13 +219,7 @@ const Communtiy = () => {
     const leftActions = (
         <>
             {!isSelectionMode && (
-                <Button
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white !px-6"
-                    onClick={() => navigate("/pulse/community/add")}
-                >
-                    <Plus className="w-4 h-4" />
-                    Add
-                </Button>
+                <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/community/add")}><Plus className="w-4 h-4 mr-2" />Add</Button>
             )}
         </>
     );
@@ -390,17 +384,8 @@ const Communtiy = () => {
                 return <div className="flex items-center gap-2">
                     <Switch
                         checked={!!item.active}
-                        onChange={() => handleStatusChange(item.id, item.active)}
+                        onCheckedChange={() => handleStatusChange(item.id, item.active)}
                         disabled={isToggling === item.id}
-                        size="small"
-                        sx={{
-                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                color: '#04A231',
-                            },
-                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                backgroundColor: '#04A231',
-                            },
-                        }}
                     />
                     {item.active ? "Active" : "Inactive"}
                 </div>
@@ -439,7 +424,6 @@ const Communtiy = () => {
 
     return (
         <div className="p-6 space-y-4">
-            <h1 className="font-medium text-[16px] text-[rgba(26,26,26,0.5)] mb-4">Community</h1>
             {isSelectionMode && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
                     <div>
@@ -464,14 +448,12 @@ const Communtiy = () => {
                                     navigate('/pulse/notices/add');
                                 }
                             }}
-                            className="border-gray-300"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleContinue}
                             disabled={selectedRows.length === 0}
-                            className="bg-[#C72030] hover:bg-[#A01020] text-white disabled:opacity-50"
                         >
                             Continue
                         </Button>

@@ -620,9 +620,7 @@ export const BookingSetupDetailClubPage = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
                 onClick={() => handleEditClick(id)}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 Edit
               </Button>
@@ -996,7 +994,7 @@ export const BookingSetupDetailClubPage = () => {
                         </div>
                         <Button
                           onClick={() => handleSendData(slotKey)}
-                          className="w-full bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                          className="w-full"
                         >
                           Save
                         </Button>

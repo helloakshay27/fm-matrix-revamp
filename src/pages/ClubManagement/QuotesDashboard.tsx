@@ -9,6 +9,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -165,6 +166,8 @@ export const QuotesDashboard: React.FC = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const reportListLoaded = useAccountingListViewed('quote');
+    useAccountingSearchTracking('quote', debouncedSearchQuery);
 
 
 
@@ -197,6 +200,7 @@ export const QuotesDashboard: React.FC = () => {
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
             setSalesOrderData(Array.isArray(data) ? data : []);
+            reportListLoaded((Array.isArray(data) ? data : []).length, data?.pagination?.total_count);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -457,6 +461,7 @@ export const QuotesDashboard: React.FC = () => {
                     }
                 }
             );
+            accountingEvents.onRecordDeleted('quote', selectedDeleteId);
             toast.success('Quote deleted successfully!', { duration: 3000 });
             setDeleteDialogOpen(false);
             setSelectedDeleteId(null);
@@ -464,6 +469,7 @@ export const QuotesDashboard: React.FC = () => {
         } catch (error) {
             console.error("Delete error:", error);
             toast.error("Failed to delete quote");
+            accountingEvents.onSaveFailed('quote', 'delete', error, { record_id: selectedDeleteId });
         } finally {
             setDeleteLoading(false);
         }
@@ -486,11 +492,13 @@ export const QuotesDashboard: React.FC = () => {
                 }
             );
 
+            accountingEvents.onActionPerformed('quote', 'toggle_active', order.id);
             toast.success(response?.data?.message || "Status updated successfully");
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error("Toggle status error:", error);
             toast.error("Failed to update status");
+            accountingEvents.onSaveFailed('quote', 'action', error, { action: 'toggle_active', record_id: order.id });
         }
     };
 
@@ -546,15 +554,18 @@ export const QuotesDashboard: React.FC = () => {
                 } else {
                     setErrorModal({ show: true, errors: [{ id: '-', message: message || failMsg }] });
                 }
+                accountingEvents.onSaveFailed('quote', 'action', message || failMsg, { action: status === 'sent' ? 'mark_as_sent' : 'submit_for_approval' });
                 return;
             }
 
+            accountingEvents.onActionPerformed('quote', status === 'sent' ? 'mark_as_sent' : 'submit_for_approval', null, { bulk_count: selectedRows.length });
             toast.success(successMsg);
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error(error);
             toast.error(failMsg);
+            accountingEvents.onSaveFailed('quote', 'action', error, { action: status === 'sent' ? 'mark_as_sent' : 'submit_for_approval' });
         }
     };
 

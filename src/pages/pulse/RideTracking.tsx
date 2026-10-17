@@ -296,41 +296,14 @@ export const RideTracking: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-full">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-[#C72030] transition-colors"
-          onClick={() => navigate("/pulse/carpool")}
-        >
-          Carpool
-        </span>
-        <span>&gt;</span>
-        <span className="text-gray-800 font-medium">Live Tracking</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-[#C72030] transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Back</span>
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Live Ride Tracking</h1>
-        </div>
-        {/* <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchRides}
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button> */}
-      </div>
+      {/* Back — heading hata di (list pages pe heading nahi), back navigation same rakha */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1 text-sm text-gray-600 hover:text-brand transition-colors mb-4"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>Back</span>
+      </button>
 
       {/* Error */}
       {error && (

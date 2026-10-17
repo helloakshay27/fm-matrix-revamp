@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const QuotesTemplateEditPage: React.FC = () => (
+export const QuotesTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="quote"
     moduleLabel="Quote"
@@ -10,6 +13,7 @@ export const QuotesTemplateEditPage: React.FC = () => (
     backRoute="/accounting/quotes"
     detailsRoutePrefix="/accounting/quotes/details"
   />
-);
+  );
+};
 
 export default QuotesTemplateEditPage;

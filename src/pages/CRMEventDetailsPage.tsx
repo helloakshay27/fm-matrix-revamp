@@ -33,7 +33,7 @@ export const CRMEventDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p className="text-gray-700">Loading event details...</p>
         </div>
       </div>
@@ -54,9 +54,9 @@ export const CRMEventDetailsPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-white border">
-          <TabsTrigger value="details" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Event Details</TabsTrigger>
-          <TabsTrigger value="feed" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Participants Details</TabsTrigger>
+        <TabsList className="w-full mb-6 bg-white border border-gray-200">
+          <TabsTrigger value="details" className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Event Details</TabsTrigger>
+          <TabsTrigger value="feed" className="group w-full flex items-center gap-2 data-[state=active]:bg-[#f5f4f0] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Participants Details</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">

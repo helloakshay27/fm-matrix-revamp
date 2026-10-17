@@ -1,7 +1,8 @@
 import ExternalSosDirectory from "@/components/ExternalSosDirectory"
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import InternalSosDirectory from "@/components/InternalSosDirectory"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar"
 import axios from "axios"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -214,21 +215,10 @@ const SOSDirectory = () => {
                 defaultValue="internal"
                 className="w-full"
             >
-                <TabsList className="w-full bg-white border border-gray-200">
-                    <TabsTrigger
-                        value="internal"
-                        className="group w-full flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-                    >
-                        Internal
-                    </TabsTrigger>
-
-                    <TabsTrigger
-                        value="external"
-                        className="group w-full flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-                    >
-                        External
-                    </TabsTrigger>
-                </TabsList>
+                <AssetTabsList>
+                    <AssetTabsTrigger value="internal">Internal</AssetTabsTrigger>
+                    <AssetTabsTrigger value="external">External</AssetTabsTrigger>
+                </AssetTabsList>
 
                 <TabsContent value="internal">
                     <InternalSosDirectory

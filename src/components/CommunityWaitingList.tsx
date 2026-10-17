@@ -125,7 +125,7 @@ const CommunityWaitingList = ({ communityId }: { communityId: string }) => {
                     columns={columns}
                     renderCell={renderCell}
                     hideColumnsButton={true}
-                    hideTableSearch={true}
+                    hideTableSearch={false}
                     loading={loading}
                     pageSize={10}
                     pagination={true}

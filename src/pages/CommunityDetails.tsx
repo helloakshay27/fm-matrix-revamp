@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 import CommunityDetailsTab from "@/components/community/CommunityDetailsTab";
 import CommunityFeedTab from "@/components/community/CommunityFeedTab";
 import CommunityReportsTab from "@/components/community/CommunityReportsTab";
@@ -45,53 +46,50 @@ const CommunityDetails = () => {
     }, [id, detailViewed]);
 
     return (
-        <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
-            <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4">
-                <Link to="/pulse/community">Community</Link>{" "}
-                <span className="font-normal">{">"}</span> Community Details
-            </h1>
+        <div className="p-6 mx-auto bg-white min-h-screen">
+            <p className="text-sm text-gray-500 mb-1">
+                <Link to="/pulse/community" className="hover:text-brand transition-colors">Community</Link>
+                <span className="mx-1.5">/</span>
+                <span className="text-gray-700">Community Details</span>
+            </p>
+            <h1 className="text-2xl font-semibold mb-4">Community Details</h1>
 
             <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
                 className="w-full"
             >
-                <TabsList className="grid w-full grid-cols-5 mb-6 bg-white border">
-                    <TabsTrigger
+                <AssetTabsList className="grid grid-cols-5 mb-6">
+                    <AssetTabsTrigger
                         value="details"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                     >
                         Community Details
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="feed"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                     >
                         Community Feed
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="reports"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                     >
                         Reports
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="events"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                     >
                         Shared
-                    </TabsTrigger>
+                    </AssetTabsTrigger>
 
-                    <TabsTrigger
+                    <AssetTabsTrigger
                         value="pending_requests"
-                        className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                     >
                         Pending Request
-                    </TabsTrigger>
-                </TabsList>
+                    </AssetTabsTrigger>
+                </AssetTabsList>
 
                 <TabsContent value="details">
                     <CommunityDetailsTab

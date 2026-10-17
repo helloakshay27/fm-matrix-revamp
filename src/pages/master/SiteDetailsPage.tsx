@@ -195,7 +195,6 @@ export const SiteDetailsPage: React.FC = () => {
           </p>
           <Button
             onClick={() => navigate("/ops-console/master/location/account")}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Sites

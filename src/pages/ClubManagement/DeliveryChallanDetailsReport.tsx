@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface RawDeliveryChallanItem {
   delivery_challan_number?: string;
@@ -67,6 +68,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const DeliveryChallanDetailsReport: React.FC = () => {
+  useAccountingReportViewed("delivery_challan_details");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<DeliveryChallanRow[]>([]);
@@ -138,6 +140,10 @@ const DeliveryChallanDetailsReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
+    accountingEvents.onReportGenerated("delivery_challan_details", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     fetchDeliveryChallanDetails();
   };
 

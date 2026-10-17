@@ -9,6 +9,7 @@ import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import axios from "axios";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -143,6 +144,8 @@ export const RecurringBillsDashboard: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed("recurring_bill");
+  useAccountingSearchTracking("recurring_bill", searchTerm);
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const lock_account_id = localStorage.getItem('lock_account_id');
@@ -244,6 +247,7 @@ export const RecurringBillsDashboard: React.FC = () => {
       const bills: Bill[] = Array.isArray(list) ? list : [];
 
       setBillData(bills);
+      reportListLoaded(bills.length, apiData?.total_count);
 
       setPagination({
         current_page: apiData?.current_page || page,
@@ -443,11 +447,14 @@ export const RecurringBillsDashboard: React.FC = () => {
       );
 
       toast.success('Bill deleted successfully!');
+      accountingEvents.onRecordDeleted("recurring_bill", deleteTarget.id);
       setShowDeleteModal(false);
       setDeleteTarget(null);
       fetchBillData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     } catch (error: unknown) {
       console.error('Error deleting bill:', error);
+      accountingEvents.onSaveFailed("recurring_bill", "delete", error, { record_id: deleteTarget.id });
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to delete bill: ${errorMessage}`);
     } finally {

@@ -23,6 +23,7 @@ import {
   validateBankField,
   validateBankRecord,
 } from './bankMasterUtils';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 const SANITIZERS: Partial<Record<keyof BankRecord, (value: string) => string>> = {
   beneficiaryName: sanitizeNameLikeInput,
@@ -40,6 +41,7 @@ const LIVE_VALIDATE_FIELDS: (keyof BankRecord)[] = ['accountNo', 'ifscCode', 'sw
 const BankMasterEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  useAccountingFormOpened('bank', 'edit', id);
   const [bank, setBank] = useState<BankRecord | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -136,8 +138,10 @@ const BankMasterEdit = () => {
       );
 
       toast.success('Bank details updated successfully');
+      accountingEvents.onRecordUpdated('bank', id);
       navigate('/accounting/bank-master');
     } catch (error) {
+      accountingEvents.onSaveFailed('bank', 'update', error, { record_id: id });
       const rowErrors = parseBankMasterApiErrors(error);
 
       if (rowErrors.length > 0) {

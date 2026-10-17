@@ -7,6 +7,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import axios from "axios";
 import { toast } from "sonner";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 export type TrialBalanceRowKind =
   | "section"
@@ -225,6 +226,7 @@ function formatDisplayDate(value: string) {
 }
 
 const TrialBalance: React.FC = () => {
+  useAccountingReportViewed("trial_balance");
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -285,6 +287,7 @@ const TrialBalance: React.FC = () => {
   }, [fetchTrialBalance]);
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("trial_balance", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchTrialBalance();
   };
 

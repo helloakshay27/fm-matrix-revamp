@@ -371,7 +371,7 @@ export const UnitPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -381,7 +381,7 @@ export const UnitPage = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-light [&_svg]:text-brand"
+                    size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Units
@@ -408,24 +408,26 @@ export const UnitPage = () => {
                       onRemove={() => setImportFile(null)}
                       disabled={isImporting}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
+                    <div className="fm-action-bar">
+                      <button
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
                         }}
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImportUnits}
                         disabled={!importFile || isImporting}
-                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
+                        className="fm-action-primary"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
@@ -434,7 +436,7 @@ export const UnitPage = () => {
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 {shouldShow("Unit", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap  [&_svg]:text-white">
+                    <Button size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Unit
                     </Button>
@@ -609,20 +611,20 @@ export const UnitPage = () => {
                   </div> */}
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button
-                      variant="outline"
+                  <div className="fm-action-bar pt-4">
+                    <button
+                      type="button"
+                      className="fm-action-secondary"
                       onClick={() => {
                         setIsAddDialogOpen(false);
                         setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
                       }}
-                      className="border-brand"
                     >
                       Cancel
-                    </Button>
-                    <Button onClick={handleAddUnit} className="bg-[#C72030] hover:bg-[#B01E2E] text-white">
+                    </button>
+                    <button type="button" onClick={handleAddUnit} className="fm-action-primary">
                       Submit
-                    </Button>
+                    </button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -885,14 +887,15 @@ export const UnitPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
                 onClick={handleUpdateUnit}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                className="fm-action-primary"
                 disabled={!editUnit.unitName.trim() || !editUnit.building}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </DialogContent>
         </Dialog>

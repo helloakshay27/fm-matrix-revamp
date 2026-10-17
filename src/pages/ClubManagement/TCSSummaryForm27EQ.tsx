@@ -4,6 +4,7 @@ import MenuItem from "@mui/material/MenuItem";
 import { NotepadText } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface TCSSummaryRow {
   id: string;
@@ -65,6 +66,7 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const TCSSummaryForm27EQ: React.FC = () => {
+  useAccountingReportViewed("tcs_summary_form_27eq");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
 
   const [filters, setFilters] = useState({

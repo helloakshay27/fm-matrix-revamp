@@ -91,18 +91,6 @@ export const ActiveSOS: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-full">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-[#C72030]"
-          onClick={() => navigate("/pulse/carpool")}
-        >
-          Carpool
-        </span>
-        <span className="mx-1">&gt;</span>
-        <span className="text-gray-700 font-medium">Active SOS</span>
-      </div>
-
       {/* Header */}
       <div className="mb-6">
         <div className="inline-flex items-center gap-2 text-base font-semibold text-[#DC143C]">

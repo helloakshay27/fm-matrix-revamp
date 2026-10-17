@@ -7,6 +7,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 // Type definitions for Payment Received
 interface PaymentReceived {
@@ -195,6 +196,8 @@ export const PaymentsReceivedListPage: React.FC = () => {
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const reportListLoaded = useAccountingListViewed("payment_received");
+  useAccountingSearchTracking("payment_received", searchTerm);
   const [paymentData, setPaymentData] = useState<PaymentReceived[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -231,6 +234,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
       const list: LockPaymentAPI[] = data.lock_payments || data || [];
       const mapped = list.map(mapLockPayment);
       setPaymentData(mapped);
+      reportListLoaded(mapped.length, data.pagination?.total_count);
       if (data.pagination) {
         setPagination({
           current_page: data.pagination.current_page || currentPage,

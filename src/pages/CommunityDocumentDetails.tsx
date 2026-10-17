@@ -5,8 +5,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import axios from 'axios';
-import Switch from '@mui/material/Switch';
+import { Switch } from "@/components/ui/switch";
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { DetailCard } from "@/components/ui/detail-card";
 import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface DocumentDetails {
@@ -147,44 +148,21 @@ const CommunityDocumentDetails = () => {
             </div>
 
             {/* Main Content Card */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                {/* Header with Title and Active Badge */}
-                <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                <File size={22} />
-                            </div>
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                {documentDetails.title || "Document"}
-                            </h2>
-                        </div>
-                        <div className="flex items-center gap-3">
+            <DetailCard
+                title={documentDetails.title || "Document"}
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                headerActions={
+                    <div className="flex items-center gap-3">
                             <Switch
                                 checked={isActive}
-                                onChange={(e) => setIsActive(e.target.checked)}
-                                sx={{
-                                    '& .MuiSwitch-switchBase': {
-                                        color: '#ef4444',
-                                        '&.Mui-checked': {
-                                            color: '#22c55e',
-                                        },
-                                        '&.Mui-checked + .MuiSwitch-track': {
-                                            backgroundColor: '#22c55e',
-                                        },
-                                    },
-                                    '& .MuiSwitch-track': {
-                                        backgroundColor: '#ef4444',
-                                    },
-                                }}
+                                onCheckedChange={(checked) => setIsActive(checked)}
                             />
                             <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                         </div>
-                    </div>
-                </div>
-
-                {/* Details Section */}
-                <div className="p-6 bg-white border-b border-gray-200">
+                }
+                className="mb-6"
+            >
+                <div>
                     <div className="grid grid-cols-3 gap-y-6">
                         <div className="flex items-center gap-8">
                             <span className="text-sm text-gray-500 min-w-[140px]">Category</span>
@@ -215,17 +193,15 @@ const CommunityDocumentDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Share Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <Share2 size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Share</span>
-                </div>
-                <div className="p-6 bg-white">
+            <DetailCard
+                title="Share"
+                icon={<Share2 className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div>
                     <div className="grid grid-cols-2 gap-8">
                         <div className="flex items-start gap-8">
                             <span className="text-sm text-gray-500 min-w-[160px]">Share With Communities</span>
@@ -243,17 +219,15 @@ const CommunityDocumentDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Attachment Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <File size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Attachment</span>
-                </div>
-                <div className="p-6 bg-white">
+            <DetailCard
+                title="Attachment"
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div>
                     {documentDetails.attachment ? (
                         <div className="border-2 border-dashed border-gray-400 rounded-lg p-8 w-60 h-48 flex flex-col items-center justify-center bg-white relative group hover:border-gray-600 transition-colors">
                             {/* Filename Header */}
@@ -305,7 +279,7 @@ const CommunityDocumentDetails = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </DetailCard>
         </div>
     );
 };

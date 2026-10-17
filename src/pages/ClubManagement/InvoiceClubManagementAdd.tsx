@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrandRadio } from '@/components/ui/brand-radio';
+import { Button as UIButton } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     TextField,
@@ -46,18 +47,13 @@ import {
     getBankMasterApiConfig,
     mapApiBankRecord,
 } from './bankMasterUtils';
+import { ClassFormSection } from './ClassFormSection';
 
 // Section component - matching Notices/Add page card style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                {icon}
-            </div>
-            <span className="font-semibold text-lg text-gray-800">{title}</span>
-        </div>
-        <div className="p-6 bg-white">{children}</div>
-    </section>
+    <ClassFormSection title={title} icon={icon}>
+        {children}
+    </ClassFormSection>
 );
 
 interface Customer {
@@ -551,17 +547,6 @@ export const InvoiceClubManagementAdd: React.FC = () => {
         '& .MuiInputBase-input, & .MuiSelect-select': {
             padding: { xs: '8px', sm: '10px', md: '12px' },
         },
-    };
-    const modalPrimaryButtonSx = {
-        backgroundColor: '#DA7756',
-        textTransform: 'none',
-        '&:hover': { backgroundColor: '#C45F40' }
-    };
-    const modalSecondaryButtonSx = {
-        color: '#DA7756',
-        borderColor: '#DA7756',
-        textTransform: 'none',
-        '&:hover': { borderColor: '#DA7756', backgroundColor: 'rgba(218, 119, 86, 0.06)' }
     };
     const gstTreatmentOptions = [
         { value: 'registered_regular', label: 'Registered Business - Regular' },
@@ -1854,7 +1839,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => openAddressFormModal('new', 'billing')}
-                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block"
                                         >
                                             New Address
                                         </button>
@@ -1923,7 +1908,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => openAddressFormModal('new', 'shipping')}
-                                            className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            className="text-xs text-[#1A1A18] font-medium py-1 px-2 bg-[#f5f4f0] rounded border border-[rgba(26,26,24,0.09)] inline-block"
                                         >
                                             New Address
                                         </button>
@@ -1960,7 +1945,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                                 rows={4}
                                 value={billingAddress}
                                 onChange={(e) => {
@@ -1979,7 +1964,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
                                 value={shippingAddress}
                                 onChange={(e) => {
@@ -2088,7 +2073,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                             Subject
                         </label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
                             rows={4}
                             value={subject}
                             onChange={(e) => {
@@ -2327,8 +2312,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                         disabled={items.length === 1}
                                         sx={{
                                             // color: '#DA7756',
-                                            '&:hover': { backgroundColor: 'rgba(218, 119, 86, 0.08)' },
-                                            '&.Mui-disabled': { color: 'rgba(218, 119, 86, 0.4)' },
+                                            '&:hover': { backgroundColor: 'rgba(26,26,24,0.05)' },
+                                            '&.Mui-disabled': { color: 'rgba(26,26,24,0.28)' },
                                         }}
                                     >
                                         <Delete fontSize="small" />
@@ -2425,7 +2410,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
     {/* Customer Notes */ }
     <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
             rows={3}
             value={customerNotes}
             onChange={(e) => {
@@ -2481,7 +2466,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
     {/* Terms & Conditions */ }
     <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#1A1A18] focus:border-[#1A1A18] resize-y"
             rows={4}
             value={termsAndConditions}
             onChange={(e) => {
@@ -2545,35 +2530,23 @@ export const InvoiceClubManagementAdd: React.FC = () => {
     </Section>
             </div >
 
-    <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-            variant="text"
-            onClick={() => handleSubmit()}
-            disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand px-8 py-2"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-        </Button>
-        <Button
-            variant="outlined"
+    <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+            type="button"
             onClick={() => navigate('/club-management/invoice')}
             disabled={isSubmitting}
-            className="fm-button-fix px-8 py-2"
-            sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderColor: '#DA7756',
-                color: '#DA7756',
-                '&:hover': {
-                    borderColor: '#C45F40',
-                    bgcolor: '#F2EEE9',
-                    color: '#C45F40'
-                }
-            }}
+            className="fm-action-secondary"
         >
             Cancel
-        </Button>
+        </button>
+        <button
+            type="button"
+            onClick={() => handleSubmit()}
+            disabled={isSubmitting}
+            className="fm-action-primary"
+        >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+        </button>
     </div>
 
 
@@ -2597,9 +2570,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                <DialogActions className="fm-action-bar">
+                    <button type="button" onClick={() => setAddUserDialogOpen(false)} className="fm-action-secondary">Cancel</button>
+                    <button type="button" onClick={handleAddExternalUser} className="fm-action-primary">Add</button>
                 </DialogActions>
             </Dialog>
 
@@ -2676,26 +2649,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         />
                     </div>
                 </DialogContent>
-                <DialogActions className="!justify-center !px-6 !py-3">
-                    <Button variant="text" onClick={saveAddressFormLocal} className="fm-button-fix fm-button-brand px-8 py-2" sx={{ textTransform: 'none', fontWeight: 600 }}>Save</Button>
-                    <Button
-                        variant="outlined"
-                        onClick={() => setAddressFormModalOpen(false)}
-                        className="fm-button-fix px-8 py-2"
-                        sx={{
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            borderColor: '#DA7756',
-                            color: '#DA7756',
-                            '&:hover': {
-                                borderColor: '#C45F40',
-                                bgcolor: '#F2EEE9',
-                                color: '#C45F40'
-                            }
-                        }}
-                    >
-                        Cancel
-                    </Button>
+                <DialogActions className="fm-action-bar !px-6 !py-3">
+                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="fm-action-secondary">Cancel</button>
+                    <button type="button" onClick={saveAddressFormLocal} className="fm-action-primary">Save</button>
                 </DialogActions>
             </Dialog>
 
@@ -2706,8 +2662,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         {gstTreatmentOptions.map((opt) => (<MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>))}
                     </TextField>
                 </DialogContent>
-                <DialogActions className="!justify-start !px-6 !pb-4">
-                    <Button variant="contained" onClick={handleUpdateGstConfig} sx={modalPrimaryButtonSx}>Update</Button>
+                <DialogActions className="fm-action-bar !px-6 !pb-4">
+                    <button type="button" onClick={handleUpdateGstConfig} className="fm-action-primary">Update</button>
                 </DialogActions>
             </Dialog>
 
@@ -2718,7 +2674,7 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                 </DialogTitle>
                 <DialogContent className="!pt-4">
                     <div className="space-y-4">
-                        <Button variant="contained" size="small" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} sx={modalPrimaryButtonSx}>Add New Tax Information</Button>
+                        <UIButton type="button" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}>Add New Tax Information</UIButton>
                         {showNewGstForm && (
                             <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
@@ -2740,9 +2696,9 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                                 </TextField>
                                 <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} onChange={(e) => setNewGstForm(prev => ({ ...prev, business_legal_name: e.target.value }))} size="small" />
                                 <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} onChange={(e) => setNewGstForm(prev => ({ ...prev, business_trade_name: e.target.value }))} size="small" />
-                                <div className="md:col-span-3 flex items-center gap-2">
-                                    <Button variant="contained" size="small" onClick={handleSaveAndSelectGst} sx={modalPrimaryButtonSx}>{editingGstDetailId ? 'Save' : 'Save and Select'}</Button>
-                                    <Button variant="outlined" size="small" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} sx={modalSecondaryButtonSx}>Cancel</Button>
+                                <div className="md:col-span-3 fm-action-bar">
+                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="fm-action-secondary">Cancel</button>
+                                    <button type="button" onClick={handleSaveAndSelectGst} className="fm-action-primary">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
                                 </div>
                             </div>
                         )}
@@ -2771,8 +2727,8 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         </div>
                     </div>
                 </DialogContent>
-                <DialogActions className="!px-5 !pb-4">
-                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)} sx={modalSecondaryButtonSx}>Close</Button>
+                <DialogActions className="fm-action-bar !px-5 !pb-4">
+                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="fm-action-secondary">Close</button>
                 </DialogActions>
             </Dialog>
 
@@ -2820,15 +2776,17 @@ export const InvoiceClubManagementAdd: React.FC = () => {
 
                 </DialogContent>
 
-                <DialogActions>
+                <DialogActions className="fm-action-bar">
                     <button
-                        className="bg-gray-200 px-4 py-2 rounded"
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => setExemptionModalOpen(false)}
                     >
                         Cancel
                     </button>
                     <button
-                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
+                        type="button"
+                        className="fm-action-primary"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -2857,21 +2815,14 @@ export const InvoiceClubManagementAdd: React.FC = () => {
                         Are you sure about deleting this {deleteTargetType}?
                     </Typography>
                 </DialogContent>
-                <DialogActions>
-                    <Button
+                <DialogActions className="fm-action-bar">
+                    <button
+                        type="button"
                         onClick={() => setDeleteConfirmOpen(false)}
-                        variant="outlined"
-                        sx={{
-                            color: '#DA7756',
-                            borderColor: '#DA7756',
-                            '&:hover': {
-                                borderColor: '#DA7756',
-                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
-                            }
-                        }}
+                        className="fm-action-secondary"
                     >
                         Cancel
-                    </Button>
+                    </button>
                     <Button
                         onClick={handleDeleteConfirm}
                         variant="contained"

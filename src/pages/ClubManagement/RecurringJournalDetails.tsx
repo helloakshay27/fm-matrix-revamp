@@ -5,6 +5,7 @@ import { ArrowLeft, User, DollarSign ,NotepadText } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
@@ -96,6 +97,7 @@ const AMENITIES_OPTIONS = [
 export const RecurringJournalDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("recurring_journal");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
@@ -185,6 +187,8 @@ export const RecurringJournalDetails = () => {
     }
 
     useEffect(() => {
+        // Detail API is still a placeholder (route has no :id), so report the view on open.
+        reportRecordLoaded(id ?? null);
         fetchMembershipPlanDetails();
     }, [id])
 

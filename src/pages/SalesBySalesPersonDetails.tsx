@@ -226,6 +226,7 @@
 import React, { useState } from "react";
 import { Users } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SalesDetail {
     date: string;
@@ -300,6 +301,7 @@ const STATIC_DETAILS: SalesDetail[] = [
 
 const SalesBySalesPersonDetails: React.FC = () => {
     const [searchParams] = useSearchParams();
+    useAccountingReportViewed("sales_by_sales_person_details");
     const navigate = useNavigate();
     const salespersonName = searchParams.get("salesperson_name") ?? "";
     const fromDate = searchParams.get("from_date") ?? "";

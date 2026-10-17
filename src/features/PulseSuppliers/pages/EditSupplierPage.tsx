@@ -72,10 +72,9 @@ const EditSupplierPage = () => {
 
     return (
         <SupplierForm
-            headerTitle="Edit Supplier"
-            headerSubtitle="Update this supplier's details."
+            currentLabel="Edit Supplier"
+            headerTitle="EDIT SUPPLIER"
             submitLabel="Save Changes"
-            submittingLabel="Saving..."
             isSubmitting={updateSupplier.isPending}
             initialValues={{
                 first_name: supplier.first_name ?? "",

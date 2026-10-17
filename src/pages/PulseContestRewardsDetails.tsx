@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Award, Package, Calendar, Tag, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { DetailCard } from '@/components/ui/detail-card'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { usePulseEvents } from '@/components/PostHogPulseEvents'
@@ -191,7 +192,7 @@ const PulseContestRewardsDetails = () => {
         return (
             <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div>
                     <p className="text-gray-600">Loading claim details...</p>
                 </div>
             </div>
@@ -259,11 +260,7 @@ const PulseContestRewardsDetails = () => {
             {/* Main Content */}
             <div className="space-y-6">
                 {/* User Information */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                        <User className="w-5 h-5 text-[#C72030]" />
-                        User Information
-                    </h2>
+                <DetailCard title="User Information" icon={<User className="w-[18px] h-[18px] text-gray-500" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Full Name</span>
@@ -318,14 +315,10 @@ const PulseContestRewardsDetails = () => {
                             </Badge>
                         </div>
                     </div>
-                </div>
+                </DetailCard>
 
                 {/* Contest Information */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                        <Award className="w-5 h-5 text-[#C72030]" />
-                        Contest Information
-                    </h2>
+                <DetailCard title="Contest Information" icon={<Award className="w-[18px] h-[18px] text-gray-500" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Contest Name</span>
@@ -365,14 +358,10 @@ const PulseContestRewardsDetails = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </DetailCard>
 
                 {/* Prize Information */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                        <Tag className="w-5 h-5 text-[#C72030]" />
-                        Prize Information
-                    </h2>
+                <DetailCard title="Prize Information" icon={<Tag className="w-[18px] h-[18px] text-gray-500" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Prize Title</span>
@@ -419,15 +408,11 @@ const PulseContestRewardsDetails = () => {
                             </Badge>
                         </div>
                     </div>
-                </div>
+                </DetailCard>
 
                 {/* Product Information */}
                 {claim.prize.product && (
-                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                            <Package className="w-5 h-5 text-[#C72030]" />
-                            Product Information
-                        </h2>
+                    <DetailCard title="Product Information" icon={<Package className="w-[18px] h-[18px] text-gray-500" />}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Product Name</span>
@@ -486,15 +471,11 @@ const PulseContestRewardsDetails = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </DetailCard>
                 )}
 
                 {/* Claim Details */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-[#C72030]" />
-                        Claim Details
-                    </h2>
+                <DetailCard title="Claim Details" icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Claim ID</span>
@@ -529,7 +510,7 @@ const PulseContestRewardsDetails = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </DetailCard>
             </div>
         </div>
     )

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { useNavigate } from "react-router-dom";
-import { Edit, Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -108,14 +108,11 @@ const GreSiteAssignmentSetupPage = () => {
   }, []);
 
   const leftActions = (
-    <Button onClick={() => navigate("/pulse/gre-site-assignment-setup/add")}>
-      <Plus size={18} />
-      Add
-    </Button>
+    <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/gre-site-assignment-setup/add")}><Plus className="w-4 h-4 mr-2" />Add</Button>
   );
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <EnhancedTable
         data={assignments}
         columns={columns}
@@ -126,7 +123,7 @@ const GreSiteAssignmentSetupPage = () => {
         emptyMessage="No GRE site assignments found"
         pagination={true}
         pageSize={10}
-        hideTableSearch={true}
+        hideTableSearch={false}
         hideColumnsButton={true}
         getItemId={(item: GreSiteAssignment) => String(item.id)}
       />

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@mui/material";
+import { Switch } from "@/components/ui/switch";
+import { DetailCard } from "@/components/ui/detail-card";
 import axios from "axios";
 import { FileText, Loader2, File, Pencil, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -126,49 +127,25 @@ const SosDirectoryDetailsPage = () => {
             </div>
 
             {/* Details Card */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <FileText size={16} />
-                        </div>
-                        <span className="font-semibold text-lg text-gray-800">Details</span>
-                    </div>
+            <DetailCard
+                title="Details"
+                icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+                headerActions={
                     <div className="flex items-center gap-2">
                         <Switch
                             checked={status}
-                            onChange={handleStatusChange}
-                            sx={{
-                                // Active state (Green)
-                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                    color: '#00A300',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(0, 163, 0, 0.08)',
-                                    },
-                                },
-                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                    backgroundColor: '#00A300',
-                                },
-                                // Inactive state (Red)
-                                '& .MuiSwitch-switchBase': {
-                                    color: '#C72030',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(199, 32, 48, 0.08)',
-                                    },
-                                },
-                                '& .MuiSwitch-track': {
-                                    backgroundColor: '#C72030',
-                                    opacity: 0.4,
-                                },
-                            }}
+                            onCheckedChange={(checked) =>
+                                handleStatusChange({ target: { checked } } as React.ChangeEvent<HTMLInputElement>)
+                            }
                         />
                         <span className="text-sm font-bold text-gray-900">
                             {status ? "Active" : "Inactive"}
                         </span>
                     </div>
-                </div>
-
-                <div className="p-8">
+                }
+                className="mb-6"
+            >
+                <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-6">{data?.title || "Security"}</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-12">
@@ -211,18 +188,15 @@ const SosDirectoryDetailsPage = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Attachment Card */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <File size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Attachment</span>
-                </div>
-
-                <div className="p-8 grid grid-cols-1 md:grid-cols-5 gap-8">
+            <DetailCard
+                title="Attachment"
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
                     <div>
                         <Label className="text-sm font-bold text-gray-700 mb-4 block">
                             Light Mode Image
@@ -267,7 +241,7 @@ const SosDirectoryDetailsPage = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
         </div>
     );
 };

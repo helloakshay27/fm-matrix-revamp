@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const SalesOrderDetailsReport: React.FC = () => {
+  useAccountingReportViewed("sales_order_details");
   const navigate = useNavigate();
   const [rows, setRows] = useState<SalesOrderRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -196,7 +198,7 @@ const SalesOrderDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchSalesOrders(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("sales_order_details", { from_date: filters.fromDate, to_date: filters.toDate }); fetchSalesOrders(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

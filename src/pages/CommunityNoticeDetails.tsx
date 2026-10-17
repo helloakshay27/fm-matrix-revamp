@@ -8,8 +8,9 @@ import { useAppDispatch } from '@/store/hooks';
 import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
-import { Switch } from '@mui/material';
+import { Switch } from "@/components/ui/switch";
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { DetailCard } from "@/components/ui/detail-card";
 import { isCMContextActive } from '@/utils/posthogHelpers';
 
 interface BroadcastDetails {
@@ -164,47 +165,24 @@ export const CommunityNoticeDetails = () => {
             </div>
 
             {/* Main Content Card */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                {/* Header with Title, Star, and Active Badge */}
-                <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                <File size={22} />
-                            </div>
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                {broadcastDetails.notice_heading || "Fire Safety Drill Report"}
-                            </h2>
-                        </div>
-                        <div className="flex items-center gap-2">
+            <DetailCard
+                title={broadcastDetails.notice_heading || "Fire Safety Drill Report"}
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                headerActions={
+                    <div className="flex items-center gap-2">
                             <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                             <div>
                                 <Switch
                                     checked={isActive}
-                                    onChange={(e) => handleStatusToggle('active', e.target.checked)}
-                                    sx={{
-                                        '& .MuiSwitch-switchBase': {
-                                            color: '#ef4444',
-                                            '&.Mui-checked': {
-                                                color: '#22c55e',
-                                            },
-                                            '&.Mui-checked + .MuiSwitch-track': {
-                                                backgroundColor: '#22c55e',
-                                            },
-                                        },
-                                        '& .MuiSwitch-track': {
-                                            backgroundColor: '#ef4444',
-                                        },
-                                    }}
+                                    onCheckedChange={(checked) => handleStatusToggle('active', checked)}
                                 />
                                 <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Description Section */}
-                <div className="p-6 bg-white border-b border-gray-200">
+                }
+                className="mb-6"
+            >
+                <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-3">Description</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
                         {broadcastDetails.notice_text || "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."}
@@ -224,22 +202,7 @@ export const CommunityNoticeDetails = () => {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={showOnHomeScreen}
-                                    onChange={(e) => handleStatusToggle('show_on_home_screen', e.target.checked)}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiSwitch-switchBase': {
-                                            color: '#ef4444',
-                                            '&.Mui-checked': {
-                                                color: '#22c55e',
-                                            },
-                                            '&.Mui-checked + .MuiSwitch-track': {
-                                                backgroundColor: '#22c55e',
-                                            },
-                                        },
-                                        '& .MuiSwitch-track': {
-                                            backgroundColor: '#ef4444',
-                                        },
-                                    }}
+                                    onCheckedChange={(checked) => handleStatusToggle('show_on_home_screen', checked)}
                                 />
                                 <span className="text-sm font-medium text-gray-700">{showOnHomeScreen ? 'Active' : 'Inactive'}</span>
                             </div>
@@ -264,39 +227,22 @@ export const CommunityNoticeDetails = () => {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={visibleAfterExpire}
-                                    onChange={(e) => handleStatusToggle('visible_after_expire', e.target.checked)}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiSwitch-switchBase': {
-                                            color: '#ef4444',
-                                            '&.Mui-checked': {
-                                                color: '#22c55e',
-                                            },
-                                            '&.Mui-checked + .MuiSwitch-track': {
-                                                backgroundColor: '#22c55e',
-                                            },
-                                        },
-                                        '& .MuiSwitch-track': {
-                                            backgroundColor: '#ef4444',
-                                        },
-                                    }}
+                                    onCheckedChange={(checked) => handleStatusToggle('visible_after_expire', checked)}
                                 />
                                 <span className="text-sm font-medium text-gray-700">{visibleAfterExpire ? 'Active' : 'Inactive'}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Share Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <Share2 size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Share</span>
-                </div>
-                <div className="p-6 bg-white">
+            <DetailCard
+                title="Share"
+                icon={<Share2 className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div>
                     <div className="grid grid-cols-2 gap-8">
                         <div className="flex items-center gap-8">
                             <span className="text-sm text-gray-500 min-w-[160px]">Share With</span>
@@ -312,17 +258,15 @@ export const CommunityNoticeDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Attachment Section */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                        <File size={16} />
-                    </div>
-                    <span className="font-semibold text-lg text-gray-800">Attachment</span>
-                </div>
-                <div className="p-6 bg-white">
+            <DetailCard
+                title="Attachment"
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div>
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
                         {/* Upload Document */}
                         <div>
@@ -378,7 +322,7 @@ export const CommunityNoticeDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Change Status Dialog */}
             <ChangeStatusDialog

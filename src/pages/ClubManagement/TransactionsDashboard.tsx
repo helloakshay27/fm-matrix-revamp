@@ -8,6 +8,7 @@ import { accountingToast as toast } from '@/lib/accountingToast';
 import '@/styles/accounting.css';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -148,6 +149,8 @@ export const TransactionsDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed('transaction');
+  useAccountingSearchTracking('transaction', searchQuery);
 const lock_account_id = localStorage.getItem("lock_account_id");
   // Fetch journal entries
   const fetchJournals = useCallback(async () => {
@@ -163,6 +166,7 @@ const lock_account_id = localStorage.getItem("lock_account_id");
         },
       });
       setJournals(response.data.lock_account_transactions || []);
+      reportListLoaded((response.data.lock_account_transactions || []).length);
       setMembershipType(response.data.lock_account_transactions || [])
     } catch (error) {
       console.error('Error fetching journal entries:', error);
@@ -306,6 +310,7 @@ const lock_account_id = localStorage.getItem("lock_account_id");
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('transaction', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

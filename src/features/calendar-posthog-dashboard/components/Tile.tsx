@@ -11,11 +11,10 @@ import { kpiInfo } from '../data/kpiInfo';
  */
 export function Tile({ spec }: { spec: CalendarTileSpec }) {
   const info = kpiInfo(spec.infoLabel);
-
-  const dir = spec.delta == null ? 'flat' : spec.delta > 0 ? 'up' : spec.delta < 0 ? 'dn' : 'flat';
-  const arrow = dir === 'up' ? '▲' : dir === 'dn' ? '▼' : '—';
-  // A fall in a "lower is better" metric is good news, so colour by meaning, not by sign.
-  const deltaGood = spec.delta == null ? null : spec.goodUp ? spec.delta >= 0 : spec.delta <= 0;
+  const deltaText =
+    spec.delta != null || /\b(prev|previous|prior)\b/i.test(spec.deltaText ?? '')
+      ? null
+      : spec.deltaText;
 
   return (
     <div className="tile">
@@ -33,16 +32,8 @@ export function Tile({ spec }: { spec: CalendarTileSpec }) {
         </InfoButton>
       </div>
       <div className="val">{spec.disp}</div>
-      {/* Some tiles change by something that is not a percentage — seconds, a step name,
-          "vs prior 8 weeks" — so those carry their own line, arrow included. */}
-      {spec.deltaText ? (
-        <div className={`delta ${spec.deltaText.startsWith('▼') ? 'dn' : 'up'}`}>{spec.deltaText}</div>
-      ) : (
-        spec.delta != null && (
-          <div className={`delta ${deltaGood ? 'up' : 'dn'}`}>
-            {arrow} {Math.abs(spec.delta)}% vs prev. period
-          </div>
-        )
+      {deltaText && (
+        <div className={`delta ${deltaText.startsWith('▼') ? 'dn' : 'up'}`}>{deltaText}</div>
       )}
       {spec.sub && <div className="sub2">{spec.sub}</div>}
     </div>

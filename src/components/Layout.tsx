@@ -328,6 +328,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     if (
       (hostname !== "pulse.lockated.com" &&
+        hostname !== "localhost" &&
         (selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||

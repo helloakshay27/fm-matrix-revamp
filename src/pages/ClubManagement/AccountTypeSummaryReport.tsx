@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface AccountTypeSummaryRow {
   type: "group" | "item";
@@ -40,6 +41,7 @@ const formatValue = (value?: number) => {
 
 const AccountTypeSummaryReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("account_type_summary");
 
   const openDetails = (accountName: string, side: "debit" | "credit") => {
     navigate(

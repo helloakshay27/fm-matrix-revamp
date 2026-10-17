@@ -288,10 +288,11 @@ const AmenityBookingClubCalenderView = () => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <Button
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px]"
+                        size="sm"
+                        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                         onClick={handleAddBooking}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
 
@@ -323,7 +324,7 @@ const AmenityBookingClubCalenderView = () => {
                     </button>
 
                     {/* Calendar icon */}
-                    <span className="pl-3 pr-1 text-[#C72030]">
+                    <span className="pl-3 pr-1 text-brand">
                         <Calendar className="w-4 h-4" />
                     </span>
 
@@ -388,7 +389,7 @@ const AmenityBookingClubCalenderView = () => {
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </Button>
-                                <div className="text-[#C72030] font-semibold text-sm">{currentMonth}</div>
+                                <div className="text-brand font-semibold text-sm">{currentMonth}</div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -414,14 +415,14 @@ const AmenityBookingClubCalenderView = () => {
                                         setSelectedDateForApi(dateInfo.fullDate)
                                     )}
                                     className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${selectedDate === dateInfo.date
-                                        ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#da7756]'
+                                        ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-brand'
                                         : dateInfo.isOff || dateInfo.isBlocked
                                             ? '!bg-gray-100 cursor-not-allowed'
                                             : '!bg-white hover:bg-gray-50 cursor-pointer'
                                         }`}
                                 >
                                     {selectedDate === dateInfo.date && !dateInfo.isBlocked && (
-                                        <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#da7756] border-r-[10px] border-r-transparent"></span>
+                                        <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-brand border-r-[10px] border-r-transparent"></span>
                                     )}
                                     {dateInfo.isBlocked && (
                                         <div className="absolute inset-0 flex items-center justify-center">
@@ -443,7 +444,7 @@ const AmenityBookingClubCalenderView = () => {
                     <div className="min-w-fit">
                         {/* Time Slots Header */}
                         <div className="flex">
-                            <div className="w-32 flex-shrink-0 bg-[#EDE9E3] text-[#C72030] border border-gray-300 p-2 sticky left-0 z-10 flex flex-col justify-center">
+                            <div className="w-32 flex-shrink-0 bg-[#f5f4f0] text-brand border border-gray-300 p-2 sticky left-0 z-10 flex flex-col justify-center">
                                 <div className="text-xs text-center">{selectedDate}</div>
                                 <div className="text-sm text-center">{selectedDateInfo?.day}</div>
                             </div>

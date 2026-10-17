@@ -33,6 +33,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import { format, parseISO } from "date-fns";
 import BookingInvoice from "@/components/BookingInvoice";
 
@@ -170,6 +171,7 @@ interface CustomerDetail {
 
 export const RecordPaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened("payment_received", "create");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -688,6 +690,11 @@ export const RecordPaymentPage: React.FC = () => {
       toast.success(
         `Payment ${status === "draft" ? "saved as draft" : "recorded"} successfully!`
       );
+      accountingEvents.onRecordCreated("payment_received", null, {
+        amount: lp.paid_amount,
+        item_count: lp.lock_bill_payments_attributes?.length ?? 0,
+        status,
+      });
 
       // After saving the payment, fetch unpaid invoices for this customer
       try {
@@ -724,6 +731,7 @@ export const RecordPaymentPage: React.FC = () => {
     } catch (err) {
       console.error("Failed to save payment:", err);
       toast.error("Failed to save payment");
+      accountingEvents.onSaveFailed("payment_received", "create", err);
     } finally {
       setSubmitting(false);
     }

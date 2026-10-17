@@ -53,6 +53,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import PurchaseDocumentPdf from "./purchasepdftamplate";
 // Types
 interface SalesOrderItem {
@@ -174,6 +175,7 @@ export const VendorCreditDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const reportRecordLoaded = useAccountingRecordViewed("vendor_credit");
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
@@ -196,6 +198,7 @@ export const VendorCreditDetails = () => {
           },
         });
         setSalesOrder(response.data);
+        reportRecordLoaded(id, response.data?.status ?? null);
       } catch (error) {
         sonnerToast.error("Failed to fetch sales order details");
       } finally {

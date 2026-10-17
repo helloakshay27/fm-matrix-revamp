@@ -15,6 +15,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
 import { API_CONFIG } from '@/config/apiConfig';
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import { useNavigate, useParams } from "react-router-dom";
 interface ChargeSetup {
     id: number;
@@ -83,6 +84,7 @@ const muiTheme = createTheme({
 
 const BillCyclesAdd: React.FC = () => {
     const navigate = useNavigate();
+    useAccountingFormOpened("bill_cycle", "create");
     const [form, setForm] = useState({
         billCycleName: "",
         startDate: "",
@@ -212,10 +214,14 @@ const BillCyclesAdd: React.FC = () => {
                 },
             });
             toast.success('Bill cycle created successfully!');
+            accountingEvents.onRecordCreated("bill_cycle", res.data?.id ?? res.data?.society_bill_cycle?.id, {
+                item_count: form.charges.length,
+            });
 
             navigate(`/accounting/bill-cycles`);
         } catch (error: any) {
             toast.error('Failed to create bill cycle.');
+            accountingEvents.onSaveFailed("bill_cycle", "create", error);
         }
     };
 

@@ -4,6 +4,7 @@ import { ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ActivityLogRow {
   id: string;
@@ -94,6 +95,7 @@ const MOCK_ROWS: ActivityLogRow[] = [
 ];
 
 const ActivityLogsAuditTrail: React.FC = () => {
+  useAccountingReportViewed("activity_logs_audit_trail");
   const defaultFrom = "2024-03-01";
   const defaultTo = "2024-03-31";
 
@@ -207,12 +209,16 @@ const ActivityLogsAuditTrail: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+              accountingEvents.onReportGenerated("activity_logs_audit_trail", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+            }}
           >
             View
           </Button>

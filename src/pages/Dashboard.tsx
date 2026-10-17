@@ -269,6 +269,9 @@ const SELF_FETCH_ENDPOINTS = new Set<string>([
   "body_injury_chart",
   "safety_metrics",
   "escalation_kpis",
+  "parking_statistics",
+  "top_management_total_amount",
+  "total_outstanding_amount_client_wise",
 ]);
 
 const buildAssetStatusChartData = (data: any) => {
@@ -990,6 +993,34 @@ export const Dashboard = () => {
       } catch (e) {
         console.error("❌ Failed to parse saved analytics", e);
       }
+    } else if (isExecutiveDashboard) {
+      // First visit to the executive dashboard: preselect the Asset Management cards
+      // so it doesn't open empty. Once the user changes the selection it is saved
+      // to localStorage and this default no longer applies.
+      const defaultAssetCardIds = [
+        "am_company_asset_overview",
+        "am_center_assets_downtime",
+        "am_highest_maintenance_assets",
+        "assets_status",
+        "assets_statistics",
+        "assets_group_wise",
+        "assets_category_wise",
+      ];
+      const defaultAnalytics = defaultAssetCardIds
+        .filter((id) => analyticsCatalogById[id])
+        .map((id) => ({
+          id,
+          module: analyticsCatalogById[id].module,
+          endpoint: analyticsCatalogById[id].endpoint,
+          title: analyticsCatalogById[id].title,
+        })) as SelectedAnalytic[];
+      setSelectedAnalytics(defaultAnalytics);
+      const initLoadingMap: Record<string, Record<string, boolean>> = {};
+      defaultAnalytics.forEach((a) => {
+        initLoadingMap[a.module] = initLoadingMap[a.module] || {};
+        initLoadingMap[a.module][a.endpoint] = true;
+      });
+      setLoadingMap(initLoadingMap);
     }
     // If site_id or access_token are present in the URL, persist them to localStorage
     // so the dashboard's own site selection (a dedicated key, since the shared
@@ -3979,8 +4010,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3989,8 +4020,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountClientWiseCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4004,8 +4035,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4014,8 +4045,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4024,8 +4055,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseGoodsInwardCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4034,8 +4065,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <DeliveryVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4044,8 +4075,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateGoodsStaffCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4059,8 +4090,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <OccupancySummaryCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4074,8 +4105,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4987,8 +5018,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <PowerConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4997,8 +5028,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <WaterConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );

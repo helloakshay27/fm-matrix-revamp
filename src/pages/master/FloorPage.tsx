@@ -326,7 +326,7 @@ export function FloorPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -334,7 +334,7 @@ export function FloorPage() {
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-light [&_svg]:text-brand">
+                  <Button variant="outline" size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap">
                     <Upload className="h-4 w-4 mr-2" />
                     Import Floors
                   </Button>
@@ -360,24 +360,26 @@ export function FloorPage() {
                       onRemove={() => setImportFile(null)}
                       disabled={isImporting}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
+                    <div className="fm-action-bar">
+                      <button
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
                         }}
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImportFloors}
                         disabled={!importFile || isImporting}
-                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
+                        className="fm-action-primary"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
@@ -386,7 +388,7 @@ export function FloorPage() {
               {shouldShow("Floor", "create") && (
                 <Button
                   onClick={() => setShowAddDialog(true)}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap  [&_svg]:text-white"
+                  size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium whitespace-nowrap"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Floor
@@ -583,9 +585,10 @@ export function FloorPage() {
                     sx={fieldStyles}
                   />
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
+                <div className="fm-action-bar">
+                  <button
+                    type="button"
+                    className="fm-action-secondary"
                     onClick={() => {
                       setShowAddDialog(false);
                       setNewFloorName('');
@@ -595,14 +598,15 @@ export function FloorPage() {
                     }}
                   >
                     Cancel
-                  </Button>
-                  <Button
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleAddFloor}
                     disabled={!newFloorName.trim() || !newFloorBuilding}
-                    className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                    className="fm-action-primary"
                   >
                     Submit
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>
@@ -734,17 +738,18 @@ export function FloorPage() {
                     Active
                   </label>
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                <div className="fm-action-bar">
+                  <button type="button" className="fm-action-secondary" onClick={() => setShowEditDialog(false)}>
+                    Close
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleUpdateFloor}
                     disabled={!editFloorName.trim()}
-                    className="bg-brand hover:bg-brand-hover text-white"
+                    className="fm-action-primary"
                   >
                     Update Floor
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                    Close
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>
@@ -776,7 +781,6 @@ export function FloorPage() {
                         document.body.removeChild(link);
                         toast.success('QR Code downloaded successfully');
                       }}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download QR Code

@@ -295,16 +295,15 @@ export const OperationalDaysTab: React.FC = () => {
                     }
                   </div>
 
-                  <div className="flex justify-end">
-                    <Button
-                      size="sm"
+                  <div className="fm-action-bar">
+                    <button
+                      type="button"
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+                      className="fm-action-primary"
                     >
                       {isSubmitting ? 'Saving...' : 'Save'}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ))}
