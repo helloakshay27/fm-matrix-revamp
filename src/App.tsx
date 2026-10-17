@@ -4556,6 +4556,13 @@ function App() {
     location.pathname.startsWith("/holiday-calendar") ||
     location.pathname.includes("space-management/setup")
   );
+  // Same check Layout uses to render ClubSidebar — every Club Management / Settings
+  // module under that sidebar gets the settings-style toast.
+  const isClubSidebarRoute =
+    hostname === "club.lockated.com" ||
+    // hostname === "recess-club.panchshil.com" ||
+    location.pathname.startsWith("/club-management");
+  const showSettingsToast = isSettingsRoute || isClubSidebarRoute;
 
   const { manager: webSocketManager, connect } = useWebSocket();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
@@ -10637,14 +10644,14 @@ function App() {
                       </Suspense>
                       <Toaster />
                       <SonnerToaster
-                        position={isSettingsRoute ? "bottom-center" : "top-right"}
+                        position={showSettingsToast ? "bottom-center" : "top-right"}
                         richColors
                         closeButton
-                        className={isSettingsRoute ? "toaster group settings-toaster" : "toaster group"}
+                        className={showSettingsToast ? "toaster group settings-toaster" : "toaster group"}
                         toastOptions={{
                           duration: 4000,
-                          className: isSettingsRoute ? "settings-toast" : undefined,
-                          style: isSettingsRoute
+                          className: showSettingsToast ? "settings-toast" : undefined,
+                          style: showSettingsToast
                             ? {
                                 background: "#1a1a18",
                                 border: "1px solid rgba(255, 255, 255, 0.12)",
