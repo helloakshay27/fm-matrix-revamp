@@ -27,7 +27,7 @@ import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useHelpdeskEvents, useCMHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
-import { RCA_WORD_LIMIT, countWords, limitWords } from "@/utils/wordLimit";
+import { RCA_WORD_LIMIT, countWords } from "@/utils/wordLimit";
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -590,6 +590,7 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 
 // Ticket statuses whose fixed state ends the ticket. "complete" behaves like "closed"
 // (same rule as EditStatusDialog), e.g. for the org 63 RCA / corrective / preventive fields.
+const CLOSURE_MANDATORY_SUFFIX = 'when ticket is closed';
 const isClosingFixedState = (state?: string | null) => state === 'closed' || state === 'complete';
 
 export const TicketDetailsPage = () => {
@@ -708,6 +709,8 @@ export const TicketDetailsPage = () => {
 
   // Ticket Management Edit State
   const [isEditingTicketMgmt, setIsEditingTicketMgmt] = useState(false);
+  // Set once Save is clicked so mandatory RCA / Corrective / Preventive errors show under the fields
+  const [ticketMgmtRcaSubmitted, setTicketMgmtRcaSubmitted] = useState(false);
   const [ticketMgmtFormData, setTicketMgmtFormData] = useState({
     selectedStatus: '',
     severity: '',
@@ -754,6 +757,7 @@ export const TicketDetailsPage = () => {
 
   // Ticket Closure Edit State
   const [isEditingTicketClosure, setIsEditingTicketClosure] = useState(false);
+  const [ticketClosureRcaSubmitted, setTicketClosureRcaSubmitted] = useState(false);
   const [ticketClosureFormData, setTicketClosureFormData] = useState({
     preventive_action_template_ids: [] as number[],
     short_term_impact_template_ids: [] as number[],
@@ -2747,6 +2751,7 @@ export const TicketDetailsPage = () => {
       setAssociationType('');
     }
 
+    setTicketMgmtRcaSubmitted(false);
     setIsEditingTicketMgmt(true);
   };
 
@@ -2831,6 +2836,25 @@ export const TicketDetailsPage = () => {
   };
 
   // Handle Ticket Management Form Submit
+  // Word-limit error shows while typing; mandatory error shows once Save has been clicked
+  const getRcaFieldError = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix = 'when closing the ticket') => {
+    if (countWords(text) > RCA_WORD_LIMIT) return `${label} cannot exceed ${RCA_WORD_LIMIT} words`;
+    if (submitted && !text?.trim()) return `${label} is mandatory ${mandatorySuffix}`;
+    return '';
+  };
+
+  const renderRcaFieldFooter = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix?: string) => (
+    <div className="mt-1 flex justify-between gap-2 text-xs">
+      <span className="text-red-500">{getRcaFieldError(label, text, submitted, mandatorySuffix)}</span>
+      <span className={countWords(text) > RCA_WORD_LIMIT ? 'shrink-0 text-red-500' : 'shrink-0 text-gray-400'}>
+        {countWords(text)}/{RCA_WORD_LIMIT} words
+      </span>
+    </div>
+  );
+
+  const rcaFieldErrorClass = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix?: string) =>
+    getRcaFieldError(label, text, submitted, mandatorySuffix) ? '!border-red-500' : '';
+
   const handleTicketMgmtSubmit = async () => {
     // GA parity: the update the user just committed. `reopen` is not a separate button on
     // web - it is a status change into a reopen fixed_state - so it is derived from the
@@ -2869,29 +2893,13 @@ export const TicketDetailsPage = () => {
 
         // Mandatory RCA, Corrective Action, Preventive Action validation when closing ticket for org_id 63
         if (isClosingFixedState(selectedFixedState)) {
-          // For org 63: validate text inputs (not selectors)
-          if (!ticketMgmtFormData.rca_text?.trim()) {
-            toast.error('Root Cause Analysis is mandatory when closing the ticket');
-            setSubmittingTicketMgmt(false);
-            return;
-          }
-          if (!ticketMgmtFormData.corrective_action_text?.trim()) {
-            toast.error('Corrective Action is mandatory when closing the ticket');
-            setSubmittingTicketMgmt(false);
-            return;
-          }
-          if (!ticketMgmtFormData.preventive_action_text?.trim()) {
-            toast.error('Preventive Action is mandatory when closing the ticket');
-            setSubmittingTicketMgmt(false);
-            return;
-          }
-          const mgmtOverLimit = ([
-            ['Root Cause Analysis', ticketMgmtFormData.rca_text],
-            ['Corrective Action', ticketMgmtFormData.corrective_action_text],
-            ['Preventive Action', ticketMgmtFormData.preventive_action_text],
-          ] as const).find(([, text]) => countWords(text) > RCA_WORD_LIMIT);
-          if (mgmtOverLimit) {
-            toast.error(`${mgmtOverLimit[0]} cannot exceed ${RCA_WORD_LIMIT} words`);
+          // For org 63: validate text inputs (not selectors) — errors render under each field
+          setTicketMgmtRcaSubmitted(true);
+          if (
+            getRcaFieldError('Root Cause Analysis', ticketMgmtFormData.rca_text, true) ||
+            getRcaFieldError('Corrective Action', ticketMgmtFormData.corrective_action_text, true) ||
+            getRcaFieldError('Preventive Action', ticketMgmtFormData.preventive_action_text, true)
+          ) {
             setSubmittingTicketMgmt(false);
             return;
           }
@@ -3210,6 +3218,7 @@ export const TicketDetailsPage = () => {
     });
 
     setTicketClosureFormData(formData);
+    setTicketClosureRcaSubmitted(false);
     setIsEditingTicketClosure(true);
 
     // Debug: Check state after setting
@@ -3247,23 +3256,12 @@ export const TicketDetailsPage = () => {
         const isClosedStatus = isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
         
         if (isClosedStatus) {
-          // For org 63: validate text inputs (not selectors)
-          if (!ticketClosureFormData.corrective_action_text?.trim()) {
-            toast.error('Corrective Action is mandatory when ticket is closed');
-            setSubmittingTicketClosure(false);
-            return;
-          }
-          if (!ticketClosureFormData.preventive_action_text?.trim()) {
-            toast.error('Preventive Action is mandatory when ticket is closed');
-            setSubmittingTicketClosure(false);
-            return;
-          }
-          const closureOverLimit = ([
-            ['Corrective Action', ticketClosureFormData.corrective_action_text],
-            ['Preventive Action', ticketClosureFormData.preventive_action_text],
-          ] as const).find(([, text]) => countWords(text) > RCA_WORD_LIMIT);
-          if (closureOverLimit) {
-            toast.error(`${closureOverLimit[0]} cannot exceed ${RCA_WORD_LIMIT} words`);
+          // For org 63: validate text inputs (not selectors) — errors render under each field
+          setTicketClosureRcaSubmitted(true);
+          if (
+            getRcaFieldError('Corrective Action', ticketClosureFormData.corrective_action_text, true, CLOSURE_MANDATORY_SUFFIX) ||
+            getRcaFieldError('Preventive Action', ticketClosureFormData.preventive_action_text, true, CLOSURE_MANDATORY_SUFFIX)
+          ) {
             setSubmittingTicketClosure(false);
             return;
           }
@@ -6226,13 +6224,11 @@ export const TicketDetailsPage = () => {
                                     <>
                                       <textarea
                                         value={ticketMgmtFormData.rca_text || ''}
-                                        onChange={(e) => handleTicketMgmtInputChange('rca_text', limitWords(e.target.value))}
+                                        onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
                                         placeholder="Enter Root Cause Analysis"
-                                        className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                        className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}`}
                                       />
-                                      <div className="mt-1 text-right text-xs text-gray-400">
-                                        {countWords(ticketMgmtFormData.rca_text)}/{RCA_WORD_LIMIT} words
-                                      </div>
+                                      {renderRcaFieldFooter('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}
                                     </>
                                   </div>
                                 );
@@ -6321,13 +6317,11 @@ export const TicketDetailsPage = () => {
                                   <>
                                     <textarea
                                       value={ticketMgmtFormData.corrective_action_text || ''}
-                                      onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', limitWords(e.target.value))}
+                                      onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
                                       placeholder="Enter Corrective Action"
-                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                      className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}`}
                                     />
-                                    <div className="mt-1 text-right text-xs text-gray-400">
-                                      {countWords(ticketMgmtFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
-                                    </div>
+                                    {renderRcaFieldFooter('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}
                                   </>
                                 </div>
                               );
@@ -6348,13 +6342,11 @@ export const TicketDetailsPage = () => {
                                   <>
                                     <textarea
                                       value={ticketMgmtFormData.preventive_action_text || ''}
-                                      onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', limitWords(e.target.value))}
+                                      onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
                                       placeholder="Enter Preventive Action"
-                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                      className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}`}
                                     />
-                                    <div className="mt-1 text-right text-xs text-gray-400">
-                                      {countWords(ticketMgmtFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
-                                    </div>
+                                    {renderRcaFieldFooter('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}
                                   </>
                                 </div>
                               );
@@ -7231,13 +7223,11 @@ export const TicketDetailsPage = () => {
                                 <>
                                   <textarea
                                     value={ticketClosureFormData.preventive_action_text || ''}
-                                    onChange={(e) => handleTicketClosureInputChange('preventive_action_text', limitWords(e.target.value))}
+                                    onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
                                     placeholder="Enter Preventive Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                    className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
                                   />
-                                  <div className="mt-1 text-right text-xs text-gray-400">
-                                    {countWords(ticketClosureFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
-                                  </div>
+                                  {renderRcaFieldFooter('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
                                 </>
                               ) : (
                                 <Select
@@ -7395,14 +7385,12 @@ export const TicketDetailsPage = () => {
                               })() ? (
                                 <>
                                   <textarea
-                                    className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                    className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
                                     placeholder="Enter Corrective Action"
                                     value={ticketClosureFormData.corrective_action_text || ''}
-                                    onChange={(e) => handleTicketClosureInputChange('corrective_action_text', limitWords(e.target.value))}
+                                    onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
                                   />
-                                  <div className="mt-1 text-right text-xs text-gray-400">
-                                    {countWords(ticketClosureFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
-                                  </div>
+                                  {renderRcaFieldFooter('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
                                 </>
                               ) : (
                                 <Select
@@ -8353,11 +8341,11 @@ export const TicketDetailsPage = () => {
                                 onChange={(e) => setInternalCommentText(e.target.value)}
                                 rows={4}
                                 placeholder=" "
-                                className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                                className={`peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
       focus:outline-none 
       focus:border-[2px] 
       focus:border-[rgb(25,118,210)] 
-      resize-vertical"
+      resize-vertical ${rcaFieldErrorClass('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}`}
                               />
 
                               <label
@@ -9753,13 +9741,11 @@ export const TicketDetailsPage = () => {
                                 <>
                                   <textarea
                                     value={ticketMgmtFormData.rca_text || ''}
-                                    onChange={(e) => handleTicketMgmtInputChange('rca_text', limitWords(e.target.value))}
+                                    onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
                                     placeholder="Enter Root Cause Analysis"
                                     className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                   />
-                                  <div className="mt-1 text-right text-xs text-gray-400">
-                                    {countWords(ticketMgmtFormData.rca_text)}/{RCA_WORD_LIMIT} words
-                                  </div>
+                                  {renderRcaFieldFooter('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}
                                 </>
                               </div>
                             );
@@ -9843,13 +9829,11 @@ export const TicketDetailsPage = () => {
                               <>
                                 <textarea
                                   value={ticketMgmtFormData.corrective_action_text || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', limitWords(e.target.value))}
+                                  onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
                                   placeholder="Enter Corrective Action"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                  className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}`}
                                 />
-                                <div className="mt-1 text-right text-xs text-gray-400">
-                                  {countWords(ticketMgmtFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
-                                </div>
+                                {renderRcaFieldFooter('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}
                               </>
                             </div>
                           );
@@ -9870,13 +9854,11 @@ export const TicketDetailsPage = () => {
                               <>
                                 <textarea
                                   value={ticketMgmtFormData.preventive_action_text || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', limitWords(e.target.value))}
+                                  onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
                                   placeholder="Enter Preventive Action"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                  className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}`}
                                 />
-                                <div className="mt-1 text-right text-xs text-gray-400">
-                                  {countWords(ticketMgmtFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
-                                </div>
+                                {renderRcaFieldFooter('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}
                               </>
                             </div>
                           );
@@ -10750,14 +10732,12 @@ export const TicketDetailsPage = () => {
                           })() ? (
                             <>
                               <textarea
-                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
                                 placeholder="Enter Preventive Action"
                                 value={ticketClosureFormData.preventive_action_text || ''}
-                                onChange={(e) => handleTicketClosureInputChange('preventive_action_text', limitWords(e.target.value))}
+                                onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
                               />
-                              <div className="mt-1 text-right text-xs text-gray-400">
-                                {countWords(ticketClosureFormData.preventive_action_text)}/{RCA_WORD_LIMIT} words
-                              </div>
+                              {renderRcaFieldFooter('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
                             </>
                           ) : (
                             <Select
@@ -10914,14 +10894,12 @@ export const TicketDetailsPage = () => {
                           })() ? (
                             <>
                               <textarea
-                                className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
+                                className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
                                 placeholder="Enter Corrective Action"
                                 value={ticketClosureFormData.corrective_action_text || ''}
-                                onChange={(e) => handleTicketClosureInputChange('corrective_action_text', limitWords(e.target.value))}
+                                onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
                               />
-                              <div className="mt-1 text-right text-xs text-gray-400">
-                                {countWords(ticketClosureFormData.corrective_action_text)}/{RCA_WORD_LIMIT} words
-                              </div>
+                              {renderRcaFieldFooter('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
                             </>
                           ) : (
                             <Select
