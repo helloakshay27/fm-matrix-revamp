@@ -249,8 +249,8 @@ const CommunityEdit = () => {
                 disabled={isLoading}
               />
 
-              {/* Pulse Category */}
-              <div>
+              {/* Pulse Category — hidden; not saved (see commented community[category] in submit) */}
+              {/* <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Pulse Category
                 </label>
