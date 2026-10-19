@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Controller, useForm, useWatch, type Control } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "../utils/zodResolver";
 import {
     Dialog,
     DialogActions,
