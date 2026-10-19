@@ -5,8 +5,13 @@ export const transportDriverSchema = z.object({
     .string()
     .trim()
     .min(1, "First name is required")
-    .max(50, "First name must be 50 characters or less"),
-  lastname: z.string().trim().max(50, "Last name must be 50 characters or less"),
+    .max(50, "First name must be 50 characters or less")
+    .regex(/^[A-Za-z\s]+$/, "First name can contain only letters and spaces"),
+  lastname: z
+    .string()
+    .trim()
+    .max(50, "Last name must be 50 characters or less")
+    .refine((value) => !value || /^[A-Za-z\s]+$/.test(value), "Last name can contain only letters and spaces"),
   // Drivers are user accounts — every existing driver has an email.
   email: z
     .string()

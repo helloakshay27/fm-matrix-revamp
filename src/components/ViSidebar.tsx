@@ -22,6 +22,7 @@ import {
   Circle,
   Database,
   Mail,
+  Upload,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -276,6 +277,16 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       name: "Circle Email Config",
       href: "/settings/circle-email-config",
     },
+    {
+      icon: Upload,
+      name: "Training Bulk Upload",
+      href: "/trainings/bulk-upload",
+    },
+    {
+      icon: Users,
+      name: "Vi Users",
+      href: "/master/user/vi-users",
+    },
   ],
 };
 
@@ -321,9 +332,13 @@ const ViSidebar: React.FC = () => {
     if (isSidebarCollapsed) setExpandedItems([]);
   }, [isSidebarCollapsed]);
 
-  // Get modules based on current section
+  // Get modules based on current section. /trainings/* (Training Bulk Upload) is linked
+  // from Settings but LayoutContext has no section for it, so keep Settings visible there.
+  const sidebarSection = location.pathname.startsWith("/trainings")
+    ? "Settings"
+    : currentSection;
   const currentModules =
-    modulesByPackage[currentSection as keyof typeof modulesByPackage] ||
+    modulesByPackage[sidebarSection as keyof typeof modulesByPackage] ||
     modulesByPackage["Safety"];
 
   const toggleExpanded = (name: string) =>
@@ -474,7 +489,7 @@ const ViSidebar: React.FC = () => {
               isSidebarCollapsed ? "text-center" : "tracking-wide"
             }`}
           >
-            {isSidebarCollapsed ? "" : currentSection}
+            {isSidebarCollapsed ? "" : sidebarSection}
           </h3>
         </div>
 
