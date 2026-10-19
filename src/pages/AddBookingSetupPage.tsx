@@ -379,9 +379,6 @@ export const AddBookingSetupPage = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
       return false;
-    } else if (!formData.category) {
-      toast.error("Please select Category");
-      return false;
     } else if (!formData.location) {
       toast.error("Please enter Location");
       return false;
@@ -918,7 +915,7 @@ export const AddBookingSetupPage = () => {
                   }}
                 />
                 <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Category<span className="text-red-500">*</span></InputLabel>
+                  <InputLabel className="bg-[#F6F7F7]">Category</InputLabel>
                   <Select
                     value={formData.category}
                     onChange={(e) => {
