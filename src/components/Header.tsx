@@ -124,7 +124,8 @@ export const Header = () => {
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
-    org_id === "90" || hostname.includes("localhost")
+    org_id === "90" ||
+    hostname.includes("localhost");
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -132,7 +133,8 @@ export const Header = () => {
     hostname.includes("fm-matrix.lockated.com");
 
   // External-role users (lock_role_name saved at Pulse login) must not see the Pulse dashboard.
-  const isExternalRole = localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
+  const isExternalRole =
+    localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
   const isPulseSiteDomain = hostname === "pulse.lockated.com";
   const isPanchshilUatSiteDomain =
     hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
@@ -251,7 +253,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -394,7 +396,8 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
+  const canShowMsafeForSelectedCompany =
+    localStorage.getItem("org_id") === "34";
   const canShowMSafeDashboard =
     !isRestrictedUser && canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
@@ -877,15 +880,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -977,7 +982,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex min-w-0 items-center text-gray-600 text-xs mt-0.5">
@@ -1054,7 +1059,7 @@ export const Header = () => {
                       <span className="font-medium">My Profile</span>
                     </DropdownMenuItem>
 
-                    {showExistingPostHogUsageAnalytics && (
+                    {/* {showExistingPostHogUsageAnalytics && (
                       <DropdownMenuItem
                         onClick={() =>
                           (window.location.href = "/posthog-dashboard")
@@ -1064,7 +1069,7 @@ export const Header = () => {
                         <Activity className="w-4 h-4 mr-2 text-gray-500" />
                         <span className="font-medium">Usage Analytics</span>
                       </DropdownMenuItem>
-                    )}
+                    )} */}
                     {showPulseUsageAnalytics && (
                       <DropdownMenuItem
                         onClick={() => navigate("/pulse")}
