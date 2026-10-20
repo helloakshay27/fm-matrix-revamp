@@ -1867,9 +1867,23 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
-const ViAuditListPage = lazy(() => import("./pages/ViAuditListPage"));
-const ViAuditAddPage = lazy(() => import("./pages/ViAuditAddPage"));
-const ViAuditDetailPage = lazy(() => import("./pages/ViAuditDetailPage"));
+// Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
+const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
+const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
+const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
+const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
+const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
+const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
+const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
+const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
+const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
+const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
+const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
+const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
+const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
+const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
+const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -9076,15 +9090,67 @@ function App() {
                             />
                             <Route
                               path="/safety/audit-list"
-                              element={<ViAuditListPage />}
+                              element={<AuditorAuditListPage />}
                             />
                             <Route
                               path="/safety/audit-list/add"
-                              element={<ViAuditAddPage />}
+                              element={<AuditorAddAuditPage />}
                             />
                             <Route
                               path="/safety/audit-list/:id"
-                              element={<ViAuditDetailPage />}
+                              element={<AuditorAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId"
+                              element={<AuditorObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc"
+                              element={<SpocAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id"
+                              element={<SpocAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId"
+                              element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
+                              element={<SpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner"
+                              element={<ActionOwnerAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id"
+                              element={<ActionOwnerAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId"
+                              element={<ActionOwnerObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId"
+                              element={<ActionOwnerActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId/action-taken"
+                              element={<ActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head"
+                              element={<FunctionalHeadAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id"
+                              element={<FunctionalHeadAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId"
+                              element={<FunctionalHeadObservationDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
