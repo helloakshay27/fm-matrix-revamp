@@ -639,14 +639,59 @@ const EditAssetDetailsPage = lazy(() => import("./pages/EditAssetDetailsPage").t
 
 // Import M Safe pages
 
-const MSafeDashboard = lazy(() => import("./pages/MSafeDashboard").then(m => ({ default: m.MSafeDashboard })));
-const MSafeUserDetail = lazy(() => import("./pages/MSafeUserDetail").then(m => ({ default: m.MSafeUserDetail })));
-const ExternalUserDetail = lazy(() => import("./pages/ExternalUserDetail").then(m => ({ default: m.ExternalUserDetail })));
-const EditExternalUserPage = lazy(() => import("./pages/EditExternalUserPage").then(m => ({ default: m.EditExternalUserPage })));
-const NonFTEUsersDashboard = lazy(() => import("./pages/NonFTEUsersDashboard").then(m => ({ default: m.NonFTEUsersDashboard })));
-const ExternalUsersDashboard = lazy(() => import("./pages/ExternalUsersDashboard").then(m => ({ default: m.ExternalUsersDashboard })));
-const KRCCFormListDashboard = lazy(() => import("./pages/KRCCFormListDashboard").then(m => ({ default: m.KRCCFormListDashboard })));
-const KRCCFormDetail = lazy(() => import("./pages/KRCCFormDetail").then(m => ({ default: m.KRCCFormDetail })));
+const MSafeDashboard = lazy(() =>
+  import("./pages/MSafeDashboard").then((m) => ({ default: m.MSafeDashboard }))
+);
+const MSafeUserDetail = lazy(() =>
+  import("./pages/MSafeUserDetail").then((m) => ({
+    default: m.MSafeUserDetail,
+  }))
+);
+const ExternalUserDetail = lazy(() =>
+  import("./pages/ExternalUserDetail").then((m) => ({
+    default: m.ExternalUserDetail,
+  }))
+);
+const EditExternalUserPage = lazy(() =>
+  import("./pages/EditExternalUserPage").then((m) => ({
+    default: m.EditExternalUserPage,
+  }))
+);
+const NonFTEUsersDashboard = lazy(() =>
+  import("./pages/NonFTEUsersDashboard").then((m) => ({
+    default: m.NonFTEUsersDashboard,
+  }))
+);
+const ExternalUsersDashboard = lazy(() =>
+  import("./pages/ExternalUsersDashboard").then((m) => ({
+    default: m.ExternalUsersDashboard,
+  }))
+);
+const KRCCFormListDashboard = lazy(() =>
+  import("./pages/KRCCFormListDashboard").then((m) => ({
+    default: m.KRCCFormListDashboard,
+  }))
+);
+// Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
+const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
+const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
+const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
+const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
+const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
+const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
+const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
+const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
+const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
+const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
+const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
+const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
+const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
+const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
+const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
+const KRCCFormDetail = lazy(() =>
+  import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
+);
 
 // Import Edit Roster Template page
 const EditRosterTemplatePage = lazy(() => import("./pages/setup/EditRosterTemplatePage").then(m => ({ default: m.EditRosterTemplatePage })));
@@ -5816,6 +5861,70 @@ function App() {
                             <Route
                               path="/safety/m-safe/krcc-form-list"
                               element={<KRCCFormListDashboard />}
+                            />
+                            <Route
+                              path="/safety/audit-list"
+                              element={<AuditorAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/add"
+                              element={<AuditorAddAuditPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id"
+                              element={<AuditorAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId"
+                              element={<AuditorObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc"
+                              element={<SpocAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id"
+                              element={<SpocAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId"
+                              element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
+                              element={<SpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner"
+                              element={<ActionOwnerAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id"
+                              element={<ActionOwnerAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId"
+                              element={<ActionOwnerObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId"
+                              element={<ActionOwnerActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId/action-taken"
+                              element={<ActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head"
+                              element={<FunctionalHeadAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id"
+                              element={<FunctionalHeadAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId"
+                              element={<FunctionalHeadObservationDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"

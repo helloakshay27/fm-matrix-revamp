@@ -22,6 +22,8 @@ import {
   Circle,
   Database,
   Mail,
+  Upload,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -95,6 +97,17 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
           href: "/safety/m-safe/reportees-reassign",
           color: "text-[#1a1a1a]",
         },
+      ],
+    },
+    {
+      name: "Audit",
+      icon: ClipboardCheck,
+      href: "/safety/audit",
+      subItems: [
+        { name: "Auditor", href: "/safety/audit-list", color: "text-[#1a1a1a]" },
+        { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
+        { name: "Action Owner", href: "/safety/audit/action-owner", color: "text-[#1a1a1a]" },
+        { name: "Functional Head", href: "/safety/audit/functional-head", color: "text-[#1a1a1a]" },
       ],
     },
     {
