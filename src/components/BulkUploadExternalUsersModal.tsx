@@ -14,17 +14,65 @@ const ACCEPT = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetm
 const isAcceptedFile = (file: File) =>
   ACCEPTED_EXTENSIONS.includes(file.name.split(".").pop()?.toLowerCase() ?? "");
 
-/** Best-effort message from an API response ({ message } / { error } / { errors }). */
+// A response is the result file (not JSON) when it is a spreadsheet / binary or an attachment.
+const isFileResponse = (response: Response) => {
+  const type = (response.headers.get("content-type") || "").toLowerCase();
+  const disposition = (response.headers.get("content-disposition") || "").toLowerCase();
+  return (
+    disposition.includes("attachment") ||
+    type.includes("spreadsheetml") ||
+    type.includes("ms-excel") ||
+    type.includes("octet-stream")
+  );
+};
+
+// File name from Content-Disposition (filename*=UTF-8''… or filename="…"), when the server sends one.
+const fileNameFromResponse = (response: Response) => {
+  const disposition = response.headers.get("content-disposition") || "";
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (encoded) return decodeURIComponent(encoded.trim());
+  return disposition.match(/filename="?([^";]+)"?/i)?.[1]?.trim() || "";
+};
+
+const resultFileName = () => `external_users_upload_result_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+const downloadBlob = (blob: Blob, fileName: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+// One error entry as text: a string, or an object with message / error.
+const errorText = (entry: unknown): string => {
+  if (typeof entry === "string") return entry;
+  if (entry && typeof entry === "object") {
+    const e = entry as Record<string, unknown>;
+    if (typeof e.message === "string") return e.message;
+    if (typeof e.error === "string") return e.error;
+    return JSON.stringify(entry);
+  }
+  return "";
+};
+
+/**
+ * Best-effort message from an API response: { message } / { error } / { errors: [...] } /
+ * { import_errors: [{ message }] } (the 422 shape for a bad upload file).
+ */
 const responseMessage = (body: unknown): string => {
   if (!body || typeof body !== "object") return "";
   const b = body as Record<string, unknown>;
   if (typeof b.message === "string") return b.message;
   if (typeof b.error === "string") return b.error;
-  if (Array.isArray(b.errors)) {
-    return b.errors
-      .map((e) => (typeof e === "string" ? e : JSON.stringify(e)))
-      .slice(0, 5)
-      .join("; ");
+  for (const key of ["import_errors", "errors"]) {
+    const list = b[key];
+    if (Array.isArray(list) && list.length) {
+      return list.map(errorText).filter(Boolean).slice(0, 5).join(" ");
+    }
   }
   return "";
 };
@@ -72,16 +120,26 @@ export const BulkUploadExternalUsersModal = ({
         headers: { Authorization: getAuthHeader() },
         body: formData,
       });
-      const result = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(responseMessage(result) || `Upload failed with status ${response.status}`);
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(responseMessage(errorBody) || `Upload failed with status ${response.status}`);
       }
-      toast.success(responseMessage(result) || "External users uploaded successfully");
+
+      // On success (201) the API returns the processed Excel file — download it.
+      if (isFileResponse(response)) {
+        const blob = await response.blob();
+        downloadBlob(blob, fileNameFromResponse(response) || resultFileName());
+        toast.success("External users uploaded. The result file has been downloaded.");
+      } else {
+        const result = await response.json().catch(() => null);
+        toast.success(responseMessage(result) || "External users uploaded successfully");
+      }
       setFile(null);
       onClose();
     } catch (error) {
       console.error("External users bulk upload failed:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload external users");
+      // Import errors (e.g. 422 missing headers) can be long — keep the toast up long enough to read.
+      toast.error(error instanceof Error ? error.message : "Failed to upload external users", { duration: 10000 });
     } finally {
       setIsUploading(false);
     }
