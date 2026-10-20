@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetailCard } from "@/components/ui/detail-card";
-import { getViAuditDetail } from "./viAuditData";
+import { getViAuditDetail, type ViAuditDetail } from "./viAuditData";
 import {
   AuditStatusPill,
   DueLabel,
@@ -20,6 +20,7 @@ import {
   auditTabTriggerClass,
   auditTabsListClass,
   sectionIcon,
+  AuditLoadingState,
 } from "./ViAuditUi";
 
 /**
@@ -31,13 +32,22 @@ export const AuditDetailView = ({
   auditId,
   listPath,
   defaultTab = "details",
+  audit: auditFromApi,
+  loading = false,
 }: {
   auditId: string | undefined;
+  /** Audit from the API. When omitted, the placeholder audit for `auditId` is shown. */
+  audit?: ViAuditDetail | null;
+  loading?: boolean;
   listPath: string;
   defaultTab?: "details" | "observations";
 }) => {
   const navigate = useNavigate();
-  const audit = useMemo(() => getViAuditDetail(auditId), [auditId]);
+  const placeholderAudit = useMemo(() => getViAuditDetail(auditId), [auditId]);
+
+  if (loading) return <AuditLoadingState message="Loading audit..." />;
+  if (auditFromApi === null) return <AuditLoadingState message="Audit not found." onBack={() => navigate(listPath)} />;
+  const audit = auditFromApi ?? placeholderAudit;
 
   const closedCount = audit.observations.filter((o) => o.status === "Closed By Action Owner").length;
 

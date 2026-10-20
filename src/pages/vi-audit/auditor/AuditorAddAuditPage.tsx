@@ -13,9 +13,15 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { MenuItem, TextField } from "@mui/material";
+import { Autocomplete, CircularProgress, MenuItem, TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { useViAuditMasters, type MasterOption } from "@/components/vi-audit/useViAuditMasters";
+import {
+  VI_USER_SEARCH_MIN_CHARS,
+  useViUserSearch,
+  type ViActiveUserOption,
+} from "@/components/vi-audit/useViActiveUsers";
 import {
   AuditTypeSelectModal,
   isViAuditType,
@@ -23,24 +29,64 @@ import {
 } from "@/components/vi-audit/AuditTypeSelectModal";
 
 // Create-audit endpoint. Confirm with the backend team — the Audit API is not live yet.
-const VI_AUDIT_CREATE_ENDPOINT = "/pms/vi_audits.json";
+const VI_AUDIT_CREATE_ENDPOINT = "/vi_audits.json";
 
-// Placeholder option lists — swap for live master-data lookups once the Audit backend is available.
-const CIRCLES = ["Mumbai", "Gujarat", "Delhi", "Karnataka"];
-const PERSONNEL_AREAS = ["Worli", "Churchgate", "Andheri", "Bandra"];
-const WORK_LOCATIONS = ["Birla Centurion Pvt. Ltd.", "Tata Projects Pvt. Ltd.", "Adani Realty Pvt. Ltd."];
-const FACILITY_TYPES = ["Office", "Warehouse", "Tower Site", "Retail Store"];
-const FUNCTIONS = ["Operations", "Maintenance", "Security", "Admin"];
-const CLASSIFICATIONS = ["Very High", "High", "Medium", "Low"];
-const CATEGORIES = ["Electronic", "Mechanical", "Civil"];
-const SUB_CATEGORIES_BY_CATEGORY: Record<string, string[]> = {
-  Electronic: ["HVAC", "Wiring"],
-  Mechanical: ["Plumbing"],
-  Civil: ["Scaffolding"],
+// Observation attachments: the audit API only accepts PDF, JPEG, JPG and PNG.
+const ALLOWED_ATTACHMENT_EXTENSIONS = ["pdf", "jpeg", "jpg", "png"];
+const ALLOWED_ATTACHMENT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+const ATTACHMENT_ACCEPT = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png";
+
+const isAllowedAttachment = (file: File) => {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  // Check the extension (what the API validates on) and, when the browser reports one, the MIME type.
+  return (
+    ALLOWED_ATTACHMENT_EXTENSIONS.includes(extension) &&
+    (!file.type || ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.type))
+  );
 };
-const FTE_USERS = ["Vansh Shah", "Arun Mohan", "Veena Kumari", "Vikram Singh", "Kiran Joshi"];
-const SPOCS = ["Arun Mohan", "Veena Kumari", "Vikram Singh", "Kiran Joshi"];
-const FUNCTIONAL_HEADS = ["Vinit Mehra", "Priya Nair", "Rohit Sharma"];
+
+/** Master / user ids are numeric on the backend; send numbers, or null when not selected. */
+const toId = (value: string | undefined | null): number | string | null => {
+  if (!value) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : value;
+};
+
+/**
+ * Reads a file as the attachment format the audit API expects:
+ * `data:<mime>;name=<filename>;base64,<data>` (one entry per file — any number per observation).
+ */
+const fileToNamedDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result ?? "");
+      // ";" and "," delimit the data-URL header, so keep them out of the file name.
+      const safeName = file.name.replace(/[;,]/g, "_");
+      resolve(dataUrl.replace(/^data:([^;,]*)/, (_, mime) => `data:${mime || "application/octet-stream"};name=${safeName}`));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error(`Could not read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
+
+/** Best-effort message from an API error body ({ message } / { error } / { errors }). */
+const apiErrorMessage = (body: unknown): string => {
+  if (!body || typeof body !== "object") return "";
+  const b = body as Record<string, unknown>;
+  if (typeof b.message === "string") return b.message;
+  if (typeof b.error === "string") return b.error;
+  if (Array.isArray(b.errors)) return b.errors.filter((e) => typeof e === "string").join(", ");
+  if (b.errors && typeof b.errors === "object") {
+    return Object.entries(b.errors as Record<string, unknown>)
+      .map(([field, msgs]) => `${field} ${Array.isArray(msgs) ? msgs.join(", ") : String(msgs)}`)
+      .join("; ");
+  }
+  return "";
+};
+
+// Basic Details / Observation Classification dropdowns come from GET /vi_audits/masters.json
+// (see useViAuditMasters); people pickers search the users API (useViUserSearch) — all FTE /
+// Non-FTE users for "People Interacted With", internal employees only for SPOC / Functional Head.
 
 interface OtherPerson {
   name: string;
@@ -50,15 +96,15 @@ interface OtherPerson {
 interface ObservationEntry {
   observation: string;
   attachments: File[];
-  spoc: string;
-  functionalHead: string;
+  spoc: ViActiveUserOption | null;
+  functionalHead: ViActiveUserOption | null;
 }
 
 const EMPTY_OBSERVATION: ObservationEntry = {
   observation: "",
   attachments: [],
-  spoc: "",
-  functionalHead: "",
+  spoc: null,
+  functionalHead: null,
 };
 
 const todayIso = () => new Date().toISOString().split("T")[0];
@@ -88,6 +134,7 @@ const requiredLabel = (text: string) => (
 );
 
 // Labelled MUI select — the global field standard places the label above the control.
+// Options are plain strings (value = label) or masters records ({ value: id, label: name }).
 function SelectField({
   label,
   required,
@@ -96,15 +143,23 @@ function SelectField({
   options,
   placeholder,
   disabled,
+  loading,
 }: {
   label: string;
   required?: boolean;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: (string | MasterOption)[];
   placeholder: string;
   disabled?: boolean;
+  loading?: boolean;
 }) {
+  const normalized: MasterOption[] = options.map((option) =>
+    typeof option === "string" ? { value: option, label: option } : option,
+  );
+  const labelFor = (selected: string) =>
+    normalized.find((option) => option.value === selected)?.label ?? selected;
+
   return (
     <TextField
       select
@@ -112,20 +167,154 @@ function SelectField({
       label={required ? requiredLabel(label) : label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
+      disabled={disabled || loading}
       InputLabelProps={{ shrink: true }}
       SelectProps={{
         displayEmpty: true,
+        MenuProps: { PaperProps: { style: { maxHeight: 320 } } },
         renderValue: (selected) =>
-          selected ? (selected as string) : <span className="text-[rgba(26,26,24,0.3)]">{placeholder}</span>,
+          selected ? (
+            labelFor(selected as string)
+          ) : (
+            <span className="text-[rgba(26,26,24,0.3)]">{loading ? "Loading..." : placeholder}</span>
+          ),
       }}
     >
-      {options.map((option) => (
-        <MenuItem key={option} value={option}>
-          {option}
+      {normalized.map((option) => (
+        <MenuItem key={option.value} value={option.value} sx={{ whiteSpace: "normal" }}>
+          {option.label}
         </MenuItem>
       ))}
     </TextField>
+  );
+}
+
+// Searchable single-user picker (SPOC / Functional Head) — internal employees only.
+function UserSelectField({
+  label,
+  required,
+  value,
+  onChange,
+  employeeType,
+  placeholder,
+}: {
+  label: string;
+  required?: boolean;
+  value: ViActiveUserOption | null;
+  onChange: (user: ViActiveUserOption | null) => void;
+  employeeType?: string;
+  placeholder: string;
+}) {
+  return (
+    <div>
+      <AutocompleteLabel required={required}>{label}</AutocompleteLabel>
+      <UserAutocomplete
+        value={value}
+        onChange={onChange}
+        employeeType={employeeType}
+        placeholder={placeholder}
+        ariaLabel={label}
+      />
+    </div>
+  );
+}
+
+// Label rendered OUTSIDE the Autocomplete (same 12px/600 style as the global field standard).
+// An MUI `label` inside an Autocomplete gets lifted into the field's clickable root by the
+// global label-above CSS, which breaks MUI's focus handling — the popup opens and instantly
+// closes. Same pattern as the app's other Autocompletes (e.g. ReporteesReassignPage).
+function AutocompleteLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <span className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
+      {children}
+      {required && <span className="fm-required-mark">*</span>}
+    </span>
+  );
+}
+
+// Server-side user search (q[email_or_mobile_cont]) — same Autocomplete setup as the working
+// ReporteesReassignPage picker: controlled input, results from the API (no client filtering),
+// spinner while searching, no MUI label (see AutocompleteLabel).
+function UserAutocomplete({
+  value,
+  onChange,
+  employeeType,
+  excludeIds,
+  placeholder,
+  ariaLabel,
+}: {
+  value: ViActiveUserOption | null;
+  onChange: (user: ViActiveUserOption | null) => void;
+  employeeType?: string;
+  excludeIds?: string[];
+  placeholder: string;
+  ariaLabel: string;
+}) {
+  // inputValue = text shown in the box (incl. the selected user's name MUI writes back);
+  // searchTerm = only what the user typed, so selecting someone doesn't trigger a search.
+  const [inputValue, setInputValue] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const { options: results, loading } = useViUserSearch(searchTerm, employeeType);
+
+  const options = excludeIds?.length ? results.filter((u) => !excludeIds.includes(u.id)) : results;
+  // Keep the selected user in the option list so MUI can render it after the results change.
+  const allOptions = value && !options.some((u) => u.id === value.id) ? [value, ...options] : options;
+  const tooShort = searchTerm.trim().length < VI_USER_SEARCH_MIN_CHARS;
+
+  return (
+    <Autocomplete
+      options={allOptions}
+      loading={loading}
+      value={value}
+      onChange={(_, user) => onChange(user)}
+      inputValue={inputValue}
+      onInputChange={(_, next, reason) => {
+        setInputValue(next);
+        if (reason === "input") setSearchTerm(next);
+        if (reason === "clear") setSearchTerm("");
+      }}
+      filterOptions={(x) => x}
+      getOptionLabel={(user) => user.name}
+      isOptionEqualToValue={(a, b) => a.id === b.id}
+      renderOption={(props, user) => (
+        <li {...props} key={user.id}>
+          <div className="flex flex-col py-0.5">
+            <span className="text-sm text-[#1A1A18]">{user.name}</span>
+            {user.email && <span className="text-xs text-[rgba(26,26,24,0.48)]">{user.email}</span>}
+          </div>
+        </li>
+      )}
+      loadingText="Searching..."
+      noOptionsText={
+        tooShort ? `Type at least ${VI_USER_SEARCH_MIN_CHARS} characters of email or mobile` : "No matching users"
+      }
+      slotProps={{
+        paper: {
+          sx: {
+            border: "1px solid rgba(26,26,24,0.09)",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.08)",
+          },
+        },
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label=""
+          placeholder={placeholder}
+          inputProps={{ ...params.inputProps, "aria-label": ariaLabel }}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {loading ? <CircularProgress color="inherit" size={16} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+        />
+      )}
+    />
   );
 }
 
@@ -156,6 +345,7 @@ function AddMoreButton({ label, onClick }: { label: string; onClick: () => void 
 const AuditorAddAuditPage = () => {
   const navigate = useNavigate();
   const loggedInUser = useMemo(getLoggedInUser, []);
+  const { masters, loading: mastersLoading } = useViAuditMasters();
 
   // Audit type comes from the "Select type of audit" modal on the list page (?type=corporate|circle)
   const [searchParams, setSearchParams] = useSearchParams();
@@ -178,16 +368,12 @@ const AuditorAddAuditPage = () => {
     category: "",
     subCategory: "",
   });
-  const [fteUsers, setFteUsers] = useState<string[]>([]);
+  const [fteUsers, setFteUsers] = useState<ViActiveUserOption[]>([]);
   const [showFtePicker, setShowFtePicker] = useState(false);
   const [otherPeople, setOtherPeople] = useState<OtherPerson[]>([]);
   const [otherDraft, setOtherDraft] = useState<OtherPerson | null>(null);
   const [vendor, setVendor] = useState({ vendorName: "", subVendorName: "" });
   const [observations, setObservations] = useState<ObservationEntry[]>([{ ...EMPTY_OBSERVATION }]);
-
-  const subCategoryOptions = classification.category
-    ? SUB_CATEGORIES_BY_CATEGORY[classification.category] ?? []
-    : [];
 
   const updateObservation = (index: number, patch: Partial<ObservationEntry>) =>
     setObservations((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
@@ -223,35 +409,37 @@ const AuditorAddAuditPage = () => {
     return true;
   };
 
-  const buildPayload = (status: "draft" | "submitted") => {
-    const payload = new FormData();
-    payload.append("audit[audit_type]", auditType ?? "");
-    payload.append("audit[status]", status);
-    payload.append("audit[date_of_audit]", basic.dateOfAudit);
-    payload.append("audit[circle]", basic.circle);
-    payload.append("audit[personnel_area]", basic.personnelArea);
-    payload.append("audit[work_location]", basic.workLocation);
-    payload.append("audit[facility_type]", basic.facilityType);
-    payload.append("audit[location]", basic.location);
-    payload.append("audit[function]", basic.function);
-    payload.append("audit[classification]", classification.classification);
-    payload.append("audit[category]", classification.category);
-    payload.append("audit[sub_category]", classification.subCategory);
-    fteUsers.forEach((name) => payload.append("audit[fte_people][]", name));
-    otherPeople.forEach((person, i) => {
-      payload.append(`audit[other_people][${i}][name]`, person.name);
-      payload.append(`audit[other_people][${i}][designation]`, person.designation);
-    });
-    payload.append("audit[vendor_name]", vendor.vendorName);
-    payload.append("audit[sub_vendor_name]", vendor.subVendorName);
-    observations.forEach((o, i) => {
-      payload.append(`audit[observations][${i}][observation]`, o.observation);
-      payload.append(`audit[observations][${i}][spoc]`, o.spoc);
-      payload.append(`audit[observations][${i}][functional_head]`, o.functionalHead);
-      o.attachments.forEach((file) => payload.append(`audit[observations][${i}][attachments][]`, file));
-    });
-    return payload;
-  };
+  // Request body for POST /vi_audits.json. `submit: false` saves a draft.
+  const buildPayload = async (submit: boolean) => ({
+    submit,
+    vi_audit: {
+      audit_type: auditType ?? "",
+      audit_date: basic.dateOfAudit,
+      cluster_id: toId(basic.circle),
+      circle_id: toId(basic.personnelArea),
+      work_location_id: toId(basic.workLocation),
+      audit_location: basic.location.trim(),
+      department_id: toId(basic.function),
+      vendor_name: vendor.vendorName.trim(),
+      sub_vendor_name: vendor.subVendorName.trim(),
+      classification_id: toId(classification.classification),
+      category_id: toId(classification.category),
+      sub_category_id: toId(classification.subCategory),
+      visit_business_area_id: toId(basic.facilityType),
+      people_interacted_with: [
+        ...fteUsers.map((user) => ({ type: "user", user_id: toId(user.id) })),
+        ...otherPeople.map((person) => ({ type: "other", name: person.name, role: person.designation })),
+      ],
+      observations_attributes: await Promise.all(
+        observations.map(async (o) => ({
+          observation: o.observation.trim(),
+          spoc_id: toId(o.spoc?.id),
+          functional_head_id: toId(o.functionalHead?.id),
+          attachments: await Promise.all(o.attachments.map(fileToNamedDataUrl)),
+        })),
+      ),
+    },
+  });
 
   const sendAudit = async (status: "draft" | "submitted") => {
     if (submitting) return;
@@ -259,15 +447,19 @@ const AuditorAddAuditPage = () => {
     try {
       const response = await fetch(getFullUrl(VI_AUDIT_CREATE_ENDPOINT), {
         method: "POST",
-        headers: { Authorization: getAuthHeader() },
-        body: buildPayload(status),
+        headers: { Authorization: getAuthHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify(await buildPayload(status === "submitted")),
       });
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(apiErrorMessage(result) || `Request failed with status ${response.status}`);
       toast.success(status === "draft" ? "Audit saved to draft" : "Audit submitted successfully");
       navigate("/safety/audit-list");
     } catch (error) {
       console.error("Audit save failed:", error);
-      toast.error(status === "draft" ? "Failed to save draft" : "Failed to submit audit");
+      const message = error instanceof Error ? error.message : "";
+      toast.error(
+        `${status === "draft" ? "Failed to save draft" : "Failed to submit audit"}${message ? `: ${message}` : ""}`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -374,7 +566,8 @@ const AuditorAddAuditPage = () => {
                 required
                 value={basic.circle}
                 onChange={(v) => setBasic((p) => ({ ...p, circle: v }))}
-                options={CIRCLES}
+                options={masters.clusters}
+                loading={mastersLoading}
                 placeholder="Select audit circle"
               />
               <SelectField
@@ -382,7 +575,8 @@ const AuditorAddAuditPage = () => {
                 required
                 value={basic.personnelArea}
                 onChange={(v) => setBasic((p) => ({ ...p, personnelArea: v }))}
-                options={PERSONNEL_AREAS}
+                options={masters.circles}
+                loading={mastersLoading}
                 placeholder="Select personnel area"
               />
               <SelectField
@@ -390,7 +584,8 @@ const AuditorAddAuditPage = () => {
                 required
                 value={basic.workLocation}
                 onChange={(v) => setBasic((p) => ({ ...p, workLocation: v }))}
-                options={WORK_LOCATIONS}
+                options={masters.workLocations}
+                loading={mastersLoading}
                 placeholder="Select work location"
               />
               <SelectField
@@ -398,7 +593,8 @@ const AuditorAddAuditPage = () => {
                 required
                 value={basic.facilityType}
                 onChange={(v) => setBasic((p) => ({ ...p, facilityType: v }))}
-                options={FACILITY_TYPES}
+                options={masters.visitBusinessAreas}
+                loading={mastersLoading}
                 placeholder="Select type of facility"
               />
               <TextField
@@ -414,7 +610,8 @@ const AuditorAddAuditPage = () => {
                 required
                 value={basic.function}
                 onChange={(v) => setBasic((p) => ({ ...p, function: v }))}
-                options={FUNCTIONS}
+                options={masters.departments}
+                loading={mastersLoading}
                 placeholder="Select function"
               />
             </div>
@@ -427,15 +624,17 @@ const AuditorAddAuditPage = () => {
                 required
                 value={classification.classification}
                 onChange={(v) => setClassification((p) => ({ ...p, classification: v }))}
-                options={CLASSIFICATIONS}
+                options={masters.classifications}
+                loading={mastersLoading}
                 placeholder="Select observation classification"
               />
               <SelectField
                 label="Category"
                 required
                 value={classification.category}
-                onChange={(v) => setClassification((p) => ({ ...p, category: v, subCategory: "" }))}
-                options={CATEGORIES}
+                onChange={(v) => setClassification((p) => ({ ...p, category: v }))}
+                options={masters.categories}
+                loading={mastersLoading}
                 placeholder="Select observation category"
               />
               <SelectField
@@ -443,9 +642,9 @@ const AuditorAddAuditPage = () => {
                 required
                 value={classification.subCategory}
                 onChange={(v) => setClassification((p) => ({ ...p, subCategory: v }))}
-                options={subCategoryOptions}
-                placeholder={classification.category ? "Select observation sub-category" : "Select category first"}
-                disabled={!classification.category}
+                options={masters.subCategories}
+                loading={mastersLoading}
+                placeholder="Select observation sub-category"
               />
             </div>
           </DetailCard>
@@ -460,28 +659,34 @@ const AuditorAddAuditPage = () => {
                 </div>
                 {showFtePicker && (
                   <div className="mb-3 max-w-md">
-                    <SelectField
-                      label="Person"
-                      value=""
-                      onChange={(v) => {
-                        setFteUsers((prev) => (prev.includes(v) ? prev : [...prev, v]));
+                    {/* Searchable — the active FTE / Non-FTE list can be long */}
+                    <AutocompleteLabel>Person</AutocompleteLabel>
+                    <UserAutocomplete
+                      excludeIds={fteUsers.map((u) => u.id)}
+                      value={null}
+                      onChange={(user) => {
+                        if (!user) return;
+                        setFteUsers((prev) => (prev.some((s) => s.id === user.id) ? prev : [...prev, user]));
                         setShowFtePicker(false);
                       }}
-                      options={FTE_USERS.filter((u) => !fteUsers.includes(u))}
-                      placeholder="Select person"
+                      placeholder="Search person by email or mobile"
+                      ariaLabel="Person"
                     />
                   </div>
                 )}
                 {fteUsers.length > 0 ? (
                   <div className="divide-y divide-[rgba(26,26,24,0.08)] rounded-[12px] border border-[rgba(26,26,24,0.09)]">
-                    {fteUsers.map((name) => (
-                      <div key={name} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                        <span className="text-[#1A1A18]">{name}</span>
+                    {fteUsers.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span className="text-[#1A1A18]">
+                          {user.name}
+                          {user.email && <span className="text-[rgba(26,26,24,0.48)]"> · {user.email}</span>}
+                        </span>
                         <button
                           type="button"
-                          onClick={() => setFteUsers((prev) => prev.filter((n) => n !== name))}
+                          onClick={() => setFteUsers((prev) => prev.filter((s) => s.id !== user.id))}
                           className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
-                          aria-label={`Remove ${name}`}
+                          aria-label={`Remove ${user.name}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -638,10 +843,22 @@ const AuditorAddAuditPage = () => {
                         <input
                           type="file"
                           multiple
+                          accept={ATTACHMENT_ACCEPT}
                           className="hidden"
                           onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            updateObservation(index, { attachments: [...entry.attachments, ...files] });
+                            const allowed = files.filter(isAllowedAttachment);
+                            const rejected = files.filter((file) => !isAllowedAttachment(file));
+                            if (rejected.length) {
+                              toast.error(
+                                `${rejected.map((file) => file.name).join(", ")} ${
+                                  rejected.length === 1 ? "is" : "are"
+                                } not allowed. Only PDF, JPEG, JPG and PNG files are accepted.`,
+                              );
+                            }
+                            if (allowed.length) {
+                              updateObservation(index, { attachments: [...entry.attachments, ...allowed] });
+                            }
                             e.target.value = "";
                           }}
                         />
@@ -672,21 +889,21 @@ const AuditorAddAuditPage = () => {
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <SelectField
+                      <UserSelectField
                         label="SPOC"
                         required
                         value={entry.spoc}
-                        onChange={(v) => updateObservation(index, { spoc: v })}
-                        options={SPOCS}
-                        placeholder="Select SPOC"
+                        onChange={(user) => updateObservation(index, { spoc: user })}
+                        employeeType="internal"
+                        placeholder="Search SPOC by email or mobile"
                       />
-                      <SelectField
+                      <UserSelectField
                         label="Functional Head"
                         required
                         value={entry.functionalHead}
-                        onChange={(v) => updateObservation(index, { functionalHead: v })}
-                        options={FUNCTIONAL_HEADS}
-                        placeholder="Select functional head"
+                        onChange={(user) => updateObservation(index, { functionalHead: user })}
+                        employeeType="internal"
+                        placeholder="Search functional head by email or mobile"
                       />
                     </div>
                   </div>

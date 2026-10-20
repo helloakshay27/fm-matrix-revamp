@@ -34,6 +34,9 @@ export const AuditListView = ({
   storageKey,
   leftActions,
   children,
+  data,
+  loading = false,
+  pagination,
 }: {
   title: string;
   stats: AuditListStat[];
@@ -44,11 +47,17 @@ export const AuditListView = ({
   leftActions?: ReactNode;
   /** Extra page-level content (e.g. modals). */
   children?: ReactNode;
+  /** Rows to show (e.g. from the audit API). Defaults to the placeholder list. */
+  data?: ViAuditListRecord[];
+  loading?: boolean;
+  /** Server-side pagination — the table shows `data` as one page and asks for others. */
+  pagination?: { currentPage: number; totalPages: number; onPageChange: (page: number) => void };
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredAudits = VI_AUDIT_LIST.filter((a) => {
+  const rows = data ?? VI_AUDIT_LIST;
+  const filteredAudits = rows.filter((a) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -108,13 +117,18 @@ export const AuditListView = ({
         storageKey={storageKey}
         enableSearch
         searchTerm={searchTerm}
+        loading={loading}
+        loadingMessage="Loading audits..."
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search..."
         enableExport
         exportFileName={storageKey}
         emptyMessage="No audits found"
         pagination
-        pageSize={10}
+        pageSize={pagination ? undefined : 10}
+        currentPage={pagination?.currentPage}
+        totalPages={pagination?.totalPages}
+        onPageChange={pagination?.onPageChange}
         onFilterClick={() => toast.info("Audit filters coming soon")}
         leftActions={leftActions}
       />

@@ -93,3 +93,19 @@ export const ActionPlanRecord = ({
     <div className="px-4 py-4">{body}</div>
   );
 };
+
+// Full-page loading / not-found state for the audit detail screens.
+export const AuditLoadingState = ({ message, onBack }: { message: string; onBack?: () => void }) => (
+  <div className="p-6 min-h-screen">
+    {onBack && (
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 inline-flex items-center gap-2 text-sm text-[rgba(26,26,24,0.68)] hover:text-[#1A1A18]"
+      >
+        ← Back
+      </button>
+    )}
+    <p className="py-16 text-center text-sm text-[rgba(26,26,24,0.48)]">{message}</p>
+  </div>
+);

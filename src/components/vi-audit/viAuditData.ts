@@ -27,6 +27,8 @@ export interface ViObservation {
   assignedSpoc: string;
   functionalHead: string;
   attachments: string[];
+  /** Attachment files from the API (name + URL), when available. */
+  attachmentFiles?: { name: string; url: string }[];
   correctiveActions: ViActionPlan[];
   preventiveActions: ViActionPlan[];
 }
@@ -59,6 +61,8 @@ export const VI_AUDIT_STATUS_TONE: Record<string, string> = {
   Closed: "bg-[rgba(26,26,24,0.06)] text-[rgba(26,26,24,0.68)]",
   Completed: "bg-[rgba(121,140,94,0.15)] text-[#56683F]",
   Draft: "bg-[rgba(237,196,136,0.28)] text-[#8A6420]",
+  Submitted: "bg-[rgba(107,155,204,0.15)] text-[#3F6E9E]",
+  "In progress": "bg-[rgba(237,196,136,0.28)] text-[#8A6420]",
   "Pending By SPOC": "bg-[rgba(231,132,142,0.15)] text-[#B04A55]",
   "Pending By Action Owner": "bg-[rgba(237,196,136,0.28)] text-[#8A6420]",
   "Closed By Action Owner": "bg-[rgba(121,140,94,0.15)] text-[#56683F]",

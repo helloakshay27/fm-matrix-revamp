@@ -30,7 +30,7 @@ import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 const columns: ColumnConfig[] = [
     { key: "id", label: "ID", sortable: true, draggable: true },
-    { key: "active", label: "Active", sortable: true, draggable: true },
+    // { key: "active", label: "Active", sortable: true, draggable: true },
     { key: "name", label: "User Name", sortable: true, draggable: true },
     { key: "email", label: "Email", sortable: true, draggable: true },
     { key: "mobile", label: "Mobile", sortable: true, draggable: true },
