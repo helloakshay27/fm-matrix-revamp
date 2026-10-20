@@ -205,11 +205,11 @@ export const BulkUploadExternalUsersModal = ({
           </div>
         )}
 
-        <div className="fm-action-bar pt-2">
-          <button type="button" className="fm-action-secondary" onClick={close} disabled={isUploading}>
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+          <button type="button" className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[8px] border px-[22px] text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 border-[rgba(26,26,24,0.12)] bg-white text-[#1A1A18] hover:border-[rgba(26,26,24,0.28)] hover:bg-[#F7F6F2]" onClick={close} disabled={isUploading}>
             Cancel
           </button>
-          <button type="button" className="fm-action-primary" onClick={handleUpload} disabled={!file || isUploading}>
+          <button type="button" className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[8px] border px-[22px] text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 border-[#1A1A18] bg-[#1A1A18] text-white hover:bg-[#12100E] [&_svg]:text-white" onClick={handleUpload} disabled={!file || isUploading}>
             <Upload className="w-4 h-4" />
             {isUploading ? "Uploading..." : "Upload"}
           </button>
