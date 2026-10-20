@@ -26,6 +26,7 @@ import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 const columns: ColumnConfig[] = [
     { key: "id", label: "ID", sortable: true, draggable: true },
@@ -52,6 +53,46 @@ const columns: ColumnConfig[] = [
 export const ViUsersMasterDashboard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    // Download the internal Vi users as Excel (company_wise_users_export), following the
+    // "Web Enabled Only" toggle.
+    const handleDownloadUsers = async () => {
+        if (isDownloading) return;
+        setIsDownloading(true);
+        try {
+            const companyId =
+                localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
+            const params = new URLSearchParams({
+                "q[employee_type_cont]": "internal",
+                company_id: companyId,
+            });
+            // Only restrict the export to web-enabled users while "Web Enabled Only" is on.
+            if (webEnabledFilter) {
+                params.set("q[lock_user_permissions_web_enabled_eq]", "true");
+            }
+            const response = await fetch(
+                getFullUrl(`/pms/users/company_wise_users_export.xlsx?${params.toString()}`),
+                { headers: { Authorization: getAuthHeader() } }
+            );
+            if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `vi_users_${moment().format("YYYY-MM-DD")}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success("Vi users downloaded successfully");
+        } catch (error) {
+            console.error("Vi users download failed:", error);
+            toast.error("Failed to download Vi users");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
     const location = useLocation();
 
     const { setCurrentSection } = useLayout();
@@ -408,6 +449,9 @@ export const ViUsersMasterDashboard = () => {
                         storageKey="vi-users-master-table"
                         searchPlaceholder="Search by name, email or mobile..."
                         loading={loading}
+                        enableExport
+                        handleExport={handleDownloadUsers}
+                        isExporting={isDownloading}
                     />
                 </div>
 
