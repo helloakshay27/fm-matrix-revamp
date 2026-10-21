@@ -4,7 +4,8 @@ import { AlertTriangle, CheckCircle2, ClipboardCheck, ClipboardList, Clock, List
 import { Button } from "@/components/ui/button";
 import { AuditListView, type AuditListStat } from "@/components/vi-audit/AuditListView";
 import { AuditTypeSelectModal } from "@/components/vi-audit/AuditTypeSelectModal";
-import { AUDIT_FULL_COLUMNS, sumAuditList } from "@/components/vi-audit/viAuditListData";
+import { AUDIT_FULL_COLUMNS } from "@/components/vi-audit/viAuditListData";
+import { dashboardCount, useViAuditDashboard, workflowCount } from "@/components/vi-audit/useViAuditDashboard";
 import { useViAuditList } from "@/components/vi-audit/useViAuditList";
 
 const LIST_PATH = "/safety/audit-list";
@@ -17,15 +18,15 @@ const AuditorAuditListPage = () => {
   // GET /vi_audits.json?page=&per_page=20 (server-side pagination)
   const { audits, pagination, loading } = useViAuditList(page);
 
-  // Counted from the audits on the current page until the API returns overall totals.
-  const isClosed = (status: string) => ["closed", "completed"].includes(status.toLowerCase());
+  // Overall totals for the stats cards — GET /vi_audits/dashboard.json?role=auditor
+  const { counts } = useViAuditDashboard("auditor");
   const stats: AuditListStat[] = [
-    { title: "Open Audits", value: audits.filter((a) => a.status && !isClosed(a.status)).length, icon: ClipboardList },
-    { title: "Closed Audits", value: audits.filter((a) => a.status && isClosed(a.status)).length, icon: ClipboardCheck },
-    { title: "Total Observations", value: sumAuditList("observations", audits), icon: ListChecks },
-    { title: "Pending Action Plan By SPOC", value: sumAuditList("pendingActionPlanBySpoc", audits), icon: Clock },
-    { title: "Action Pending By Action Owner", value: sumAuditList("actionPendingByOwner", audits), icon: AlertTriangle },
-    { title: "Action Taken By Action Owner", value: sumAuditList("actionTakenByOwner", audits), icon: CheckCircle2 },
+    { title: "Open Audits", value: dashboardCount(counts?.total_open_audits), icon: ClipboardList },
+    { title: "Closed Audits", value: dashboardCount(counts?.total_closed_audits), icon: ClipboardCheck },
+    { title: "Total Observations", value: dashboardCount(counts?.total_observations), icon: ListChecks },
+    { title: "Pending Action Plan By SPOC", value: workflowCount(counts, "pending_by_spoc"), icon: Clock },
+    { title: "Action Pending By Action Owner", value: workflowCount(counts, "pending_by_action_owner"), icon: AlertTriangle },
+    { title: "Action Taken By Action Owner", value: workflowCount(counts, "closed_by_action_owner"), icon: CheckCircle2 },
   ];
 
   return (

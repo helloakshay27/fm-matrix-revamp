@@ -19,11 +19,14 @@ export function StackedBarChart({
   series,
   negSeries,
   palette,
+  floatingTooltip = false,
 }: {
   labels: string[];
   series: BarSeries[];
   negSeries?: BarSeries;
   palette: ChartPalette;
+  /** Let the dashboard shell render a theme-aware HTML tooltip for each data column. */
+  floatingTooltip?: boolean;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -145,8 +148,34 @@ export function StackedBarChart({
       })}
       <line x1={pl} y1={zero.toFixed(1)} x2={W - pr} y2={zero.toFixed(1)} stroke={palette.line} />
 
+      {floatingTooltip &&
+        labels.map((label, i) => {
+          const tooltipText = [
+            `Week ${label}`,
+            ...series.map((item) => `${item.label}: ${fmtC(item.data[i] || 0)}`),
+            ...(negSeries
+              ? [`${negSeries.label}: ${fmtC(negSeries.data[i] || 0)}`]
+              : []),
+          ].join('\n');
+          return (
+            <rect
+              key={`hover-${label}`}
+              x={pl + i * gap}
+              y={pt}
+              width={gap}
+              height={H - pt - pb}
+              fill="transparent"
+              pointerEvents="all"
+              data-chart-tooltip={tooltipText}
+              aria-label={tooltipText}
+              role="img"
+              tabIndex={0}
+            />
+          );
+        })}
+
       {/* Hover tooltip card */}
-      {hoverIdx != null && (
+      {!floatingTooltip && hoverIdx != null && (
         <g style={{ pointerEvents: 'none' }}>
           <rect
             x={tipX.toFixed(1)}
@@ -237,4 +266,3 @@ export function StackedBarChart({
     </svg>
   );
 }
-

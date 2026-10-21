@@ -11,12 +11,12 @@ import type {
 
 type Raw = Record<string, unknown>;
 
-const obj = (value: unknown): Raw => (value && typeof value === "object" && !Array.isArray(value) ? (value as Raw) : {});
+export const obj = (value: unknown): Raw => (value && typeof value === "object" && !Array.isArray(value) ? (value as Raw) : {});
 const arr = (...values: unknown[]): Raw[] => {
   for (const value of values) if (Array.isArray(value)) return value as Raw[];
   return [];
 };
-const text = (...values: unknown[]) => {
+export const text = (...values: unknown[]) => {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) return value.trim();
     if (typeof value === "number") return String(value);
@@ -48,16 +48,21 @@ const toAttachment = (value: unknown) => {
   return { name: text(a.file_name, a.document_name, a.name, url.split("?")[0].split("/").pop()) || "attachment", url };
 };
 
-const toActionPlan = (raw: Raw, index: number, prefix: string): ViActionPlan => ({
+export const toActionPlan = (raw: Raw, index: number, prefix: string): ViActionPlan => ({
   id: text(raw.id) || `${prefix}${index + 1}`,
+  actionNo: text(raw.action_no) || undefined,
   description: text(raw.action_plan, raw.description, raw.action),
   actionOwner: text(personName(raw.responsible_person ?? raw.action_owner), raw.responsible_person_name, raw.action_owner_name),
-  targetDate: text(raw.extended_target_date, raw.target_date),
+  targetDate: text(raw.extend_target_date, raw.extended_target_date, raw.target_date),
   status: (statusLabel(raw.status) || "Pending By Action Owner") as ViActionPlanStatus,
 });
 
 const toObservation = (raw: Raw, index: number): ViObservation => {
   const attachments = arr(raw.attachments, raw.documents).map(toAttachment);
+  // Plans come as one action_plans array (action_type: corrective / preventive); older shapes
+  // used separate corrective_actions / preventive_actions arrays.
+  const plans = arr(raw.action_plans);
+  const plansOfType = (type: string) => plans.filter((p) => text(p.action_type).toLowerCase() === type);
   return {
     id: text(raw.id) || String(index + 1),
     title: text(raw.title) || undefined,
@@ -68,8 +73,8 @@ const toObservation = (raw: Raw, index: number): ViObservation => {
     functionalHead: text(personName(raw.functional_head), raw.functional_head_name),
     attachments: attachments.map((a) => a.name),
     attachmentFiles: attachments,
-    correctiveActions: arr(raw.corrective_actions, raw.corrective_action_plans).map((p, i) => toActionPlan(p, i, "Ca")),
-    preventiveActions: arr(raw.preventive_actions, raw.preventive_action_plans).map((p, i) => toActionPlan(p, i, "Pa")),
+    correctiveActions: (plans.length ? plansOfType("corrective") : arr(raw.corrective_actions, raw.corrective_action_plans)).map((p, i) => toActionPlan(p, i, "Ca")),
+    preventiveActions: (plans.length ? plansOfType("preventive") : arr(raw.preventive_actions, raw.preventive_action_plans)).map((p, i) => toActionPlan(p, i, "Pa")),
   };
 };
 

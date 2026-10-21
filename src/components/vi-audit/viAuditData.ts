@@ -10,6 +10,8 @@ export type ViActionPlanStatus = "Pending By Action Owner" | "Closed By Action O
 
 export interface ViActionPlan {
   id: string;
+  /** Display number from the API, e.g. "Ca01" (id stays the server id used in URLs). */
+  actionNo?: string;
   description: string;
   actionOwner: string;
   targetDate: string;

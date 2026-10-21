@@ -1,35 +1,36 @@
-import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck, FileText, Plus, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import {
-  findViActionPlan,
-  getViAuditDetail,
-  viAuditBasePath,
-} from "@/components/vi-audit/viAuditData";
-import { ActionPlanRecord, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
+import { ActionPlanRecord, AuditLoadingState, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
+import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
   "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
 
 // Action Owner: one corrective / preventive action plan, with "Add Action Taken".
+// Plan from GET /vi_audit_action_plans/:planId.json; parent audit / observation cards from
+// GET /vi_audits/:id.json.
 const ActionOwnerActionPlanDetailPage = () => {
   const navigate = useNavigate();
   const { id, observationId, planId } = useParams();
-  const audit = useMemo(() => getViAuditDetail(id), [id]);
-  const observation = audit.observations.find((o) => o.id === observationId);
-  const found = observation ? findViActionPlan(observation, planId) : null;
+  const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
+  const { audit, loading: auditLoading } = useViAuditDetail(id);
+  const observation = audit?.observations.find((o) => o.id === observationId);
 
   const basePath = viAuditBasePath("action-owner");
-  const auditPath = `${basePath}/${audit.id}`;
+  const auditPath = `${basePath}/${id}`;
   const observationPath = `${auditPath}/observations/${observationId}`;
 
-  if (!observation || !found) {
+  if (planLoading || auditLoading) return <AuditLoadingState message="Loading action plan..." />;
+
+  if (!found) {
     return (
       <div className="p-6 min-h-screen">
         <button
           type="button"
-          onClick={() => navigate(observation ? observationPath : auditPath)}
+          onClick={() => navigate(observationPath)}
           className="mb-4 inline-flex items-center gap-2 text-sm text-[rgba(26,26,24,0.68)] hover:text-[#1A1A18]"
         >
           <ArrowLeft className="w-4 h-4" /> Back
@@ -39,8 +40,8 @@ const ActionOwnerActionPlanDetailPage = () => {
     );
   }
 
-  const { plan, kind } = found;
-  const isClosed = plan.status === "Closed By Action Owner";
+  const { plan, kind, canEdit } = found;
+  const isClosed = plan.status === "Closed By Action Owner" || canEdit === false;
 
   return (
     <div className="p-6 min-h-screen">
@@ -58,10 +59,11 @@ const ActionOwnerActionPlanDetailPage = () => {
         <AuditStatusPill status={plan.status} />
       </div>
       <p className="mb-6 pl-11 text-sm text-[rgba(26,26,24,0.48)]">
-        ID: {audit.auditCode}/{observation.id}/{plan.id}
+        ID: {[audit?.auditCode, observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
       </p>
 
       {/* Parent audit */}
+      {audit && (
       <DetailCard icon={sectionIcon(ClipboardCheck)} title={audit.auditCode} className="mb-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -76,8 +78,10 @@ const ActionOwnerActionPlanDetailPage = () => {
           </button>
         </div>
       </DetailCard>
+      )}
 
       {/* Parent observation */}
+      {observation && (
       <DetailCard icon={sectionIcon(FileText)} title={observation.id} className="mb-5">
         <div className="flex items-start justify-between gap-4">
           <p className="line-clamp-2 text-sm text-[#1A1A18]">{observation.description}</p>
@@ -86,6 +90,7 @@ const ActionOwnerActionPlanDetailPage = () => {
           </button>
         </div>
       </DetailCard>
+      )}
 
       {/* The action plan */}
       <DetailCard

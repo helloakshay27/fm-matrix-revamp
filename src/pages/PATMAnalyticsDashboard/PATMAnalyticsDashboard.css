@@ -365,6 +365,10 @@
 }
 .patm-analytics .ctrl:hover { background: var(--surface-2); }
 .patm-analytics .ctrl .ic { color: var(--faint); font-size: 12px; }
+.patm-analytics .refresh-ctrl:disabled { cursor: wait; opacity: 0.72; }
+.patm-analytics .refresh-ctrl .ic { display: inline-block; font-size: 15px; line-height: 1; }
+.patm-analytics .refresh-ctrl .ic.spinning { animation: patm-refresh-spin 0.8s linear infinite; }
+@keyframes patm-refresh-spin { to { transform: rotate(360deg); } }
 .patm-analytics .ctrl .chev { color: var(--faint); font-size: 10px; margin-left: 1px; }
 .patm-analytics .ctrl select {
   font: inherit;
@@ -676,6 +680,23 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   margin-top: 8px;
+}
+.patm-analytics .metric-skeleton {
+  display: inline-block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: patm-skeleton-shimmer 1.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+.patm-analytics .metric-skeleton-value { width: 72px; height: 25px; }
+.patm-analytics .metric-skeleton-delta { width: 116px; height: 12px; }
+@keyframes patm-skeleton-shimmer {
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .patm-analytics .metric-skeleton,
+  .patm-analytics .refresh-ctrl .ic.spinning { animation: none; }
 }
 
 .patm-analytics .tile .delta {

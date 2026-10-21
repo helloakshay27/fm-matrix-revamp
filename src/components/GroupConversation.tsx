@@ -59,7 +59,7 @@ const GroupConversation = () => {
 
         if (token) {
             console.log('✅ Token available, connecting...');
-            connect(token, `wss://${baseUrl}/cable`);
+            connect(`wss://${baseUrl}/cable`);
         } else {
             console.error('❌ No token available for WebSocket connection');
         }
