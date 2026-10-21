@@ -10,6 +10,7 @@ import {
   CheckSquare,
   Zap,
   Footprints,
+  Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ interface SelectedAnalytic {
   "quickgate_management" |
   "escalation_management" |
   "occupancy_management" |
+  "renewable_energy" |
   "patrolling";
 
   endpoint: string;
@@ -703,6 +705,29 @@ export const executiveAnalyticsOptions = {
       },
     ],
   },
+
+  // renewable_energy: {
+  //   icon: Leaf,
+  //   label: "Renewable Energy",
+  //   color: "#798C5E",
+  //   options: [
+  //     {
+  //       id: "renewable_energy_breakdown",
+  //       endpoint: "renewable_energy_breakdown",
+  //       label: "Total Renewable Energy Breakdown",
+  //     },
+  //     {
+  //       id: "renewable_energy_comparison",
+  //       endpoint: "renewable_energy_comparison",
+  //       label: "Energy Consumption vs. RE Power Purchased & Obligations",
+  //     },
+  //     {
+  //       id: "renewable_energy_breakdown_over_time",
+  //       endpoint: "renewable_energy_breakdown_over_time",
+  //       label: "Total Renewable Energy Breakdown Over Time",
+  //     },
+  //   ],
+  // },
 
   occupancy_management: {
     icon: BarChart3,
