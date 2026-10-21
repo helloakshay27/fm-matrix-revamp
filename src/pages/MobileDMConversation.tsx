@@ -40,7 +40,7 @@ const MobileDMConversation = () => {
 
     useEffect(() => {
         if (token) {
-            connect(token, `wss://${baseUrl}/cable`);
+            connect(`wss://${baseUrl}/cable`);
         }
 
         return () => {
