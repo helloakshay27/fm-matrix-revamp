@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card';
 import './PATMAnalyticsDashboard.css';
@@ -175,7 +176,6 @@ function lineChart(
     pctScale?: boolean;
     showPrev?: boolean;
     metric?: string;
-    hoverByWeek?: boolean;
   },
   C: ChartColors,
 ): string {
@@ -235,25 +235,23 @@ function lineChart(
       : '';
   const points = cur
     .map((value, i) => {
-      const text = `${opts.labels?.[i] ?? i + 1}\n${opts.metric ?? 'Users'}: ${value.toLocaleString()}${opts.pctScale ? '%' : ''}`;
-      if (opts.hoverByWeek) {
-        const left = i === 0 ? pl : X(i) - xw / 2;
-        const right = i === n - 1 ? W - pr : X(i) + xw / 2;
-        return `<circle cx="${X(i)}" cy="${Y(value)}" r="4" fill="${opts.color}" pointer-events="none"/>
-          <rect x="${left}" y="${pt}" width="${right - left}" height="${base - pt}" fill="transparent" pointer-events="all" ${chartTooltip(text)}/>`;
-      }
-      return `<circle cx="${X(i)}" cy="${Y(value)}" r="9" fill="transparent" ${chartTooltip(text)}/>`;
+      const label = opts.labels?.[i] ?? i + 1;
+      const metric = opts.metric ?? 'Users';
+      const text = [
+        String(label),
+        `Current period · ${metric}: ${value.toLocaleString()}${opts.pctScale ? '%' : ''}`,
+        ...(prev && opts.showPrev && prev[i] !== undefined
+          ? [
+              `Previous period · ${opts.previousLabels?.[i] ?? label} · ${metric}: ${prev[i].toLocaleString()}${opts.pctScale ? '%' : ''}`,
+            ]
+          : []),
+      ].join('\n');
+      const left = i === 0 ? pl : X(i) - xw / 2;
+      const right = i === n - 1 ? W - pr : X(i) + xw / 2;
+      return `<circle cx="${X(i)}" cy="${Y(value)}" r="4" fill="${opts.color}" pointer-events="none"/>
+        <rect x="${left}" y="${pt}" width="${right - left}" height="${base - pt}" fill="transparent" pointer-events="all" ${chartTooltip(text)}/>`;
     })
     .join('');
-  const previousPoints =
-    prev && opts.showPrev
-      ? prev
-          .map(
-            (value, i) =>
-              `<circle cx="${X(i)}" cy="${Y(value)}" r="9" fill="transparent" ${chartTooltip(`Previous period · ${opts.previousLabels?.[i] ?? i + 1}\n${opts.metric ?? 'Users'}: ${value.toLocaleString()}${opts.pctScale ? '%' : ''}`)}/>`,
-          )
-          .join('')
-      : '';
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
     ${grid}${ylab}${xlab}
     <line x1="${pl}" y1="${base}" x2="${W - pr}" y2="${base}" stroke="${C.grid}"/>
@@ -261,7 +259,7 @@ function lineChart(
     ${prevPath}
     <path d="${path(cur)}" fill="none" stroke="${opts.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="${X(n - 1).toFixed(1)}" cy="${Y(cur[n - 1]).toFixed(1)}" r="3" fill="${opts.color}"/>
-    ${previousPoints}${points}
+    ${points}
   </svg>`;
 }
 
@@ -386,6 +384,7 @@ interface TileProps {
   unit?: string;
   goodUp?: boolean;
   noTarget?: boolean;
+  loading?: boolean;
 }
 
 function Tile({
@@ -399,6 +398,7 @@ function Tile({
   unit,
   goodUp = true,
   noTarget,
+  loading = false,
 }: TileProps) {
   const [bmVal, setBmVal] = useState<string>('');
   const t = bmVal === '' ? null : parseFloat(bmVal);
@@ -415,10 +415,22 @@ function Tile({
         <div className="lbl">{label}</div>
         <MetricInfo label={label} />
       </div>
-      <div className="val">{val}</div>
+      <div className="val">
+        {loading ? (
+          <span className="metric-skeleton metric-skeleton-value" aria-label="Refreshing" />
+        ) : (
+          val
+        )}
+      </div>
       {delta != null && (
         <div className={`delta ${dir}`}>
-          {arrowSym} {delta}
+          {loading ? (
+            <span className="metric-skeleton metric-skeleton-delta" aria-hidden="true" />
+          ) : (
+            <>
+              {arrowSym} {delta}
+            </>
+          )}
         </div>
       )}
       {sub && <div className="sub2">{sub}</div>}
@@ -566,6 +578,7 @@ function Metric({
   percent = false,
   seconds = false,
   sub,
+  loading = false,
 }: {
   label: string;
   value?: number | null;
@@ -573,6 +586,7 @@ function Metric({
   percent?: boolean;
   seconds?: boolean;
   sub?: string;
+  loading?: boolean;
 }) {
   return (
     <Tile
@@ -589,6 +603,7 @@ function Metric({
       dir={deltaDir(delta)}
       delta={fmtDelta(delta)}
       sub={sub}
+      loading={loading}
       noTarget
     />
   );
@@ -649,24 +664,33 @@ function TrafficPage({
           label="Active Users"
           value={t?.active_users}
           delta={delta?.active_users}
+          loading={trafficQ.isFetching}
         />
         <Metric
           label="Screen Views"
           value={t?.screen_views}
           delta={delta?.screen_views}
+          loading={trafficQ.isFetching}
         />
-        <Metric label="Sessions" value={t?.sessions} delta={delta?.sessions} />
+        <Metric
+          label="Sessions"
+          value={t?.sessions}
+          delta={delta?.sessions}
+          loading={trafficQ.isFetching}
+        />
         <Metric
           label="Session Duration"
           value={t?.avg_session_seconds}
           delta={delta?.avg_session_seconds}
           seconds
+          loading={trafficQ.isFetching}
         />
         <Metric
           label="Bounce Rate"
           value={t?.bounce_rate}
           delta={delta?.bounce_rate}
           percent
+          loading={trafficQ.isFetching}
         />
       </div>
       <div className="grid2">
@@ -839,17 +863,20 @@ function AdoptionPage({
           }
           delta={eng?.stickiness?.delta_pct}
           percent
+          loading={engagementQ.isFetching}
         />
         <Metric
           label="Adoption Trend"
           value={eng?.adoption_trend?.value}
           percent
+          loading={engagementQ.isFetching}
         />
         <Metric
           label="14-Day Activation"
           value={eng?.activation?.value}
           delta={eng?.activation?.delta_pct}
           percent
+          loading={engagementQ.isFetching}
         />
         <Tile
           label="Module Breadth"
@@ -859,6 +886,7 @@ function AdoptionPage({
               ? '\u2014'
               : eng.module_breadth.in_use + ' / ' + eng.module_breadth.total
           }
+          loading={engagementQ.isFetching}
           noTarget
         />
       </div>
@@ -878,7 +906,6 @@ function AdoptionPage({
                   {
                     labels: trend.map((_, i) => `W${i + 1}`),
                     metric: 'Weekly active users',
-                    hoverByWeek: true,
                     color: C.blue,
                     fill: C.fill,
                   },
@@ -1212,12 +1239,14 @@ function WorkflowPage({
               value={kpis?.f_adopt?.value}
               delta={kpis?.f_adopt?.delta_pct}
               percent
+              loading={workflowQ.isFetching}
             />
             <Metric
               label="Completion Rate"
               value={kpis?.f_comp?.value}
               delta={kpis?.f_comp?.delta_pct}
               percent
+              loading={workflowQ.isFetching}
             />
             <Metric
               label="Biggest Step Drop"
@@ -1225,11 +1254,13 @@ function WorkflowPage({
               delta={kpis?.f_step?.delta_pct}
               percent
               sub={funnel.find((row) => row.biggest)?.step}
+              loading={workflowQ.isFetching}
             />
             <Metric
               label="Usage Volume"
               value={kpis?.f_vol?.value}
               delta={kpis?.f_vol?.delta_pct}
+              loading={workflowQ.isFetching}
             />
           </div>
           <ChartCard
@@ -1366,6 +1397,8 @@ export default function PATMAnalyticsDashboard() {
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [isCustomRange, setIsCustomRange] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const isRefreshing = useIsFetching({ queryKey: ['patm'] }) > 0;
 
   const { from: apiFrom, to: apiTo } = isCustomRange
     ? { from: dateFrom, to: dateTo }
@@ -1679,6 +1712,26 @@ export default function PATMAnalyticsDashboard() {
               {showPrev ? '✓' : ''}
             </label>
 
+            <button
+              type="button"
+              className="ctrl refresh-ctrl"
+              onClick={() =>
+                void queryClient.invalidateQueries({
+                  queryKey: ['patm'],
+                  refetchType: 'active',
+                })
+              }
+              disabled={isRefreshing}
+              aria-label={
+                isRefreshing ? 'Refreshing PATM analytics' : 'Refresh PATM analytics'
+              }
+            >
+              <span className={`ic${isRefreshing ? ' spinning' : ''}`} aria-hidden="true">
+                ↻
+              </span>
+              {isRefreshing ? 'Refreshing' : 'Refresh'}
+            </button>
+
             <div className="filterbar-spacer"></div>
 
             {/* Recently online pill */}
@@ -1710,83 +1763,6 @@ export default function PATMAnalyticsDashboard() {
             <WorkflowPage dev={dev} dark={dark} from={apiFrom} to={apiTo} />
           )}
 
-          <div className="footer">
-            <p>
-              <b>Wireframe note.</b> Internal team-productivity view — shows all
-              PATM users across every connected organization and both platforms;
-              no cross-tenant filtering is applied by default. Every number on
-              this dashboard is illustrative sample data — it recomputes as you
-              change <code>device</code> and <code>previous period</code>, but
-              none of it is pulled from the live PostHog project yet. The{' '}
-              <b>module names, screen structure, and event names</b> are the
-              real, code-verified events from PATM's own PostHog event
-              catalogues — only the volumes, rates, and trend lines are
-              placeholder figures standing in for that data until PostHog
-              insights are wired into this dashboard.
-            </p>
-            <p>
-              <b>Two catalogues, one product.</b> PATM ships a mobile app
-              (Flutter, 112 events / 17 modules,{' '}
-              <code>PATM_PostHog_Events.xlsx</code>) and a web app (React, 38
-              events / 8 modules,{' '}
-              <code>PATM_PostHog_Events_Clean.xlsx</code>, tracked via a single{' '}
-              <code>usePATMEvents()</code> hook). The two catalogues use
-              different naming conventions — mobile is snake_case (
-              <code>task_created</code>), web is Title Case (
-              <code>"PATM Project Created"</code>) — and the web app covers a
-              narrower slice of the product: it has no Tasks, Auth, Chat/AI
-              Assistant, Home Dashboard or Calendar module of its own. The{' '}
-              <b>Desktop / Mobile toggle</b> above reweights every workflow that
-              exists on both platforms (Task/Project Creation, Sprint Review,
-              MoM Action-Point Conversion, Document Access) as a union of both
-              event streams — matching FM Matrix's own Desktop/Mobile split
-              convention, not the iOS/Android split used elsewhere in this
-              engagement for mobile-only apps. The web catalogue does not
-              document its own tenant (org/company) properties — assume
-              org_id/org_name/company_id apply on mobile only until a live query
-              confirms otherwise on web.
-            </p>
-            <p>
-              <b>Shared PostHog project.</b> PATM's events carry{' '}
-              <code>project_code=PTM-01</code> specifically because, per the
-              catalogue's own disclosure, the PostHog project is shared with a
-              separate resident-facing app. Any live query against this
-              dashboard's numbers must filter on{' '}
-              <code>project_code=PTM-01</code>, not just an org/company id, or
-              it risks blending PATM's internal team traffic with the resident
-              app's.
-            </p>
-            <p>
-              <b>
-                Known blind spot — Minutes of Meeting is mobile-only
-                unreachable, but works on web.
-              </b>{' '}
-              On mobile, the MoM drawer item is commented out in the source, so
-              none of its 5 mobile events can fire from the main navigation
-              today, and <code>mom_created</code> carries a{' '}
-              <code>mock: true</code> property — even the create action does not
-              call a real backend on mobile. On web, however, MoM is fully
-              implemented (List Viewed, Viewed, Created, Updated all fire for
-              real from <code>MinutesOfMeeting.tsx</code> /{' '}
-              <code>AddMoMPage.tsx</code> / <code>EditMoMPage.tsx</code>; only
-              the delete event has no UI). The MOM Action-Point Conversion
-              workflow (§7.3) therefore reflects web-sourced completions only,
-              with the mobile-side gap called out explicitly in its scope note —
-              a genuinely different reachability story per platform, not a
-              single unreachable module.
-            </p>
-            <p>
-              <b>Verification caveat.</b> Both catalogues are code-verified —
-              read directly from each app's own logging call sites
-              (AnalyticsContext on mobile, the <code>usePATMEvents()</code> hook
-              on web), not from a live-traffic export — and carry no stated
-              confirmation that any individual event has been observed firing on
-              a live device. Treat every event below as accurate to what the
-              code calls, not yet as confirmed live traffic. Hover the{' '}
-              <code>i</code> on any tile or chart for its exact definition and
-              source event names.
-            </p>
-          </div>
         </main>
       </div>
     </div>

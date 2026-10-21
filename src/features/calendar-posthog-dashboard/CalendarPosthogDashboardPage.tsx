@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './calendar-posthog-dashboard.css';
 import { ControlBar } from './components/ControlBar';
 import { Footer } from './components/Footer';
@@ -13,6 +13,40 @@ import { WorkflowSection } from './sections/WorkflowSection';
 
 function DashboardLayout() {
   const { vm, page, theme, navCollapsed, toggleNav } = useCalendarDashboard();
+  const [chartTooltip, setChartTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  function updateChartTooltip(
+    target: EventTarget,
+    position?: { x: number; y: number },
+  ) {
+    const element =
+      target instanceof Element ? target.closest('[data-chart-tooltip]') : null;
+    const text = element?.getAttribute('data-chart-tooltip');
+    if (!element || !text) {
+      setChartTooltip(null);
+      return;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const x = position?.x ?? rect.left;
+    const y = position?.y ?? rect.bottom;
+    const nextTooltip = {
+      text,
+      x: Math.max(8, Math.min(x + 12, window.innerWidth - 260)),
+      y: Math.max(8, Math.min(y + 12, window.innerHeight - 180)),
+    };
+    setChartTooltip((current) =>
+      current?.text === text &&
+      Math.abs(current.x - nextTooltip.x) < 12 &&
+      Math.abs(current.y - nextTooltip.y) < 12
+        ? current
+        : nextTooltip,
+    );
+  }
 
   /* `[` toggles the navigation rail. */
   useEffect(() => {
@@ -33,7 +67,29 @@ function DashboardLayout() {
       <Topbar />
       <div className="shell">
         <Sidebar />
-        <main className="main">
+        <main
+          className="main"
+          onPointerMove={(event) =>
+            updateChartTooltip(event.target, {
+              x: event.clientX,
+              y: event.clientY,
+            })
+          }
+          onPointerLeave={() => setChartTooltip(null)}
+          onFocus={(event) => updateChartTooltip(event.target)}
+          onBlur={(event) => {
+            const nextTarget = event.relatedTarget;
+            if (
+              !(nextTarget instanceof Element) ||
+              !nextTarget.closest('[data-chart-tooltip]')
+            ) {
+              setChartTooltip(null);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setChartTooltip(null);
+          }}
+        >
           <div className="page-head">
             <h2 id="pageTitle">{PAGE_TITLES[page]}</h2>
             <p className="page-sub">
@@ -49,6 +105,15 @@ function DashboardLayout() {
           {page === 'pgFlows' && <WorkflowSection />}
 
           <Footer />
+          {chartTooltip && (
+            <div
+              className="chart-tooltip"
+              role="tooltip"
+              style={{ left: chartTooltip.x, top: chartTooltip.y }}
+            >
+              {chartTooltip.text}
+            </div>
+          )}
         </main>
       </div>
     </div>

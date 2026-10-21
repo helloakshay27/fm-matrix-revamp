@@ -61,6 +61,7 @@ export function AdoptionSection() {
               labels={adopt.trend.labels}
               color={palette.blue}
               fill={palette.fill}
+              floatingTooltip
             />
             <Legend items={[{ label: 'Weekly active users', color: palette.blue }]} />
           </>
@@ -91,6 +92,7 @@ export function AdoptionSection() {
                   { label: 'Resurrecting', data: adopt.growth.map((w) => w.res), color: palette.mint },
                 ]}
                 negSeries={{ label: 'Dormant', data: adopt.growth.map((w) => w.dorm), color: palette.red }}
+                floatingTooltip
               />
               <Legend
                 items={[
@@ -138,7 +140,9 @@ export function AdoptionSection() {
                       ) : (
                         <td
                           key={w}
-                          title={`${adopt.retention.labels[i]} · Week ${w}: ${v}% retained`}
+                          data-chart-tooltip={`${adopt.retention.labels[i]} · Week ${w}\nRetention: ${v}%`}
+                          aria-label={`${adopt.retention.labels[i]} · Week ${w}: ${v}% retained`}
+                          tabIndex={0}
                           style={{
                             background: `rgba(${palette.heatRgb},${(
                               palette.heatA0 +
@@ -188,7 +192,9 @@ export function AdoptionSection() {
                 <div
                   className="role"
                   key={row.label}
-                  title={`${row.label}: ${Math.round(row.share * 100)}% share`}
+                  data-chart-tooltip={`${row.label}\nEvent share: ${Math.round(row.share * 100)}%`}
+                  aria-label={`${row.label}: ${Math.round(row.share * 100)}% share`}
+                  tabIndex={0}
                   style={{ cursor: 'pointer' }}
                 >
                   <div className="rn">{row.label}</div>

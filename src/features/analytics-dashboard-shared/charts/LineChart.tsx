@@ -28,6 +28,7 @@ export function LineChart({
   pctScale,
   palette,
   showPrev,
+  floatingTooltip = false,
 }: {
   cur: number[];
   prev?: number[] | null;
@@ -38,6 +39,8 @@ export function LineChart({
   palette: ChartPalette;
   /** Draw the dashed `prev` overlay — the ControlBar's "Previous period" toggle. */
   showPrev?: boolean;
+  /** Let the dashboard shell render a theme-aware HTML tooltip for each data point. */
+  floatingTooltip?: boolean;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tip, setTip] = useState<TooltipData | null>(null);
@@ -149,6 +152,35 @@ export function LineChart({
       <path d={path(cur)} fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={X(n - 1).toFixed(1)} cy={Y(cur[n - 1]).toFixed(1)} r="3" fill={stroke} />
 
+      {floatingTooltip &&
+        cur.map((value, i) => {
+          const label = labels?.[i] ?? `Point ${i + 1}`;
+          const tooltipText = [
+            label,
+            `Current: ${vfmt(value)}`,
+            ...(overlay && overlay[i] !== undefined
+              ? [`Previous: ${vfmt(overlay[i])}`]
+              : []),
+          ].join('\n');
+          const left = i === 0 ? pl : X(i) - xw / 2;
+          const right = i === n - 1 ? W - pr : X(i) + xw / 2;
+          return (
+            <rect
+              key={`hover-${i}`}
+              x={left}
+              y={pt}
+              width={right - left}
+              height={base - pt}
+              fill="transparent"
+              pointerEvents="all"
+              data-chart-tooltip={tooltipText}
+              aria-label={tooltipText}
+              role="img"
+              tabIndex={0}
+            />
+          );
+        })}
+
       {/* Hover crosshair + tooltip */}
       {tip && (
         <g style={{ pointerEvents: 'none' }}>
@@ -185,6 +217,8 @@ export function LineChart({
             />
           )}
 
+          {!floatingTooltip && (
+            <>
           {/* Tooltip Card Box */}
           <rect
             x={tipX.toFixed(1)}
@@ -242,9 +276,10 @@ export function LineChart({
               </text>
             </>
           )}
+            </>
+          )}
         </g>
       )}
     </svg>
   );
 }
-
