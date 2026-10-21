@@ -1,6 +1,8 @@
+import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
 import { useState } from "react";
 import {
   Bell,
+  ChevronDown,
   Share2,
   X,
   Building2,
@@ -20,7 +22,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
+import { FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import { NotificationSiteInlineList } from "./NotificationSiteInlineList";
 import { NotificationCommunityInlineList } from "./NotificationCommunityInlineList";
 import { NotificationUserInlineList } from "./NotificationUserInlineList";
@@ -234,7 +236,7 @@ export function CustomNotificationForm({
     <div className="min-h-screen bg-gray-50 flex flex-col pb-6">
       <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-4 sm:space-y-6">
         {/* Details */}
-        <FormSection title="DETAILS" icon={Bell}>
+        <FormSection title="Details" icon={Bell}>
           <div className="space-y-2">
             <div>
               <TextField
@@ -332,7 +334,7 @@ export function CustomNotificationForm({
         </FormSection>
 
         {/* Audience */}
-        <FormSection title="AUDIENCE" icon={Share2}>
+        <FormSection title="Audience" icon={Share2}>
           <div className="space-y-6">
             <RadioGroup
               name="audienceScope"
@@ -366,11 +368,13 @@ export function CustomNotificationForm({
                     return (
                       <button
                         key={option.key}
+                        aria-expanded={isExpanded}
+                        aria-controls={`pulse-audience-${option.key}`}
                         type="button"
                         onClick={() =>
                           setExpandedPanel((prev) => (prev === option.key ? null : option.key))
                         }
-                        className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${isExpanded
+                        className={`pulse-audience-disclosure flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${isExpanded
                           ? "border-brand bg-brand-selected"
                           : "border-gray-200 hover:border-brand hover:bg-brand-selected"
                           }`}
@@ -383,6 +387,7 @@ export function CustomNotificationForm({
                             <span className="text-sm font-medium text-gray-900">
                               {option.label}
                             </span>
+                            <ChevronDown size={18} aria-hidden="true" className="pulse-section-chevron" data-open={isExpanded} />
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {option.count > 0 && (
                                 <span className="bg-brand text-white px-2 py-0.5 rounded-full text-xs font-semibold">
@@ -399,7 +404,7 @@ export function CustomNotificationForm({
                 </div>
 
                 {expandedPanel && (
-                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <div id={`pulse-audience-${expandedPanel}`} className="rounded-lg border border-gray-200 overflow-hidden">
                     {expandedPanel === "sites" && (
                       <NotificationSiteInlineList
                         selectedIds={selectedSites.map((s) => s.id)}

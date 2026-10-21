@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Star, Loader2, AlertCircle } from "lucide-react";
@@ -113,23 +114,7 @@ export const RideReviews: React.FC = () => {
 
   return (
     <div className="bg-[#F5F5F0] min-h-screen px-6 py-4">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate(-1)}
-        >
-          Carpool
-        </span>{" "}
-        &gt;{" "}
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate(`/pulse/carpool/ride-detail?id=${rideId}`)}
-        >
-          Ride Detail
-        </span>{" "}
-        &gt; <span className="text-gray-700">Reviews</span>
-      </div>
+      <PulsePageHeader title="Reviews" parent={{ label: "Ride Detail", to: rideId ? `/pulse/carpool/ride-detail?id=${rideId}` : "/pulse/carpool/rides" }} />
 
       {/* Loading */}
       {loading && (

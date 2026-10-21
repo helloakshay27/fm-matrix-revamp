@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -29,6 +30,7 @@ const CarConfigurationPage = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <PulsePageHeader title="Car Configuration" />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <AssetTabsList className="grid grid-cols-3">
           <AssetTabsTrigger

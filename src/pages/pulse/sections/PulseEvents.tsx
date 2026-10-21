@@ -25,6 +25,7 @@ import {
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
 const C = {
   green: "#798C5E",
@@ -38,10 +39,10 @@ const C = {
 };
 
 // Events by Category bars — cycles teal / blue / purple per row.
-const CATEGORY_BAR_COLORS = ["#77CEC1", "#6C9CD9", "#CDB3EC"];
+const CATEGORY_BAR_COLORS = [...SERIES];
 
 // Revenue by Event bars — cycles orange / teal per row.
-const REVENUE_BAR_ROW_COLORS = ["#E0985C", "#77CEC1"];
+const REVENUE_BAR_ROW_COLORS = [SERIES[0], SERIES[1]];
 
 interface Props {
   filters: PulseFilters;
@@ -118,9 +119,9 @@ export function PulseEvents({ filters }: Props) {
   const regTrendTrend = eventsOverview?.registration_trend.trend ?? "flat";
   const RegTrendIcon = regTrendTrend === "down" ? ArrowDown : ArrowUp;
   const regTrendSeries = [
-    { key: "approved" as const, name: "Approved", color: "var(--color-primary)" },
-    { key: "rejected" as const, name: "Rejected", color: C.purple },
-    { key: "pending" as const, name: "Pending", color: C.teal },
+    { key: "approved" as const, name: "Approved", color: SERIES[0] },
+    { key: "rejected" as const, name: "Rejected", color: SERIES[1] },
+    { key: "pending" as const, name: "Pending", color: SERIES[2] },
   ];
 
   return (
@@ -410,7 +411,7 @@ export function PulseEvents({ filters }: Props) {
                     outerRadius="75%"
                     dataKey="value"
                   >
-                    {[C.green, C.orange, C.red, C.blue].map((color, i) => (
+                    {SERIES.slice(0, 4).map((color, i) => (
                       <Cell key={i} fill={color} />
                     ))}
                   </Pie>
@@ -472,7 +473,7 @@ export function PulseEvents({ filters }: Props) {
                       <td>{e.site_name}</td>
                       <td>
                         <span
-                          className={`pd-badge ${e.is_paid ? "pd-badge-no" : "pd-badge-yes"}`}
+                          className="pd-badge pd-badge-neutral"
                         >
                           {e.is_paid ? "Paid" : "Complimentary"}
                         </span>

@@ -21,6 +21,7 @@ import {
   fetchReportDetails,
 } from "@/services/pulseDashboardApi";
 import type { PulseFilters, RideOverviewResponse, RideRoutesTrafficResponse } from "@/services/pulseDashboardApi";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
 const C = {
   green: "#798C5E",
@@ -31,10 +32,10 @@ const C = {
   teal: "#15A476",
 };
 
-const PEAK_HOUR_COLOR = { morning: "#F58220", evening: "#178562" };
+const PEAK_HOUR_COLOR = { morning: SERIES[0], evening: SERIES[1] };
 
 // Ride Completion & Cancellation Rate donut.
-const RIDE_COMPLETION_COLORS = { completed: "#5DB297", cancelled: "#BD92EF" };
+const RIDE_COMPLETION_COLORS = { completed: SERIES[0], cancelled: SERIES[1] };
 
 // Fades each Peak Hours bar toward its period's base color by how busy that
 // hour is relative to the busiest hour in the same period (morning/evening),
@@ -473,7 +474,7 @@ export function PulseCarpool({ filters }: Props) {
                     type="monotone"
                     dataKey="rides_offered"
                     name="Rides Offered"
-                    stroke={C.purple}
+                    stroke={SERIES[0]}
                     strokeWidth={2}
                     dot={{ r: 2 }}
                   />
@@ -481,7 +482,7 @@ export function PulseCarpool({ filters }: Props) {
                     type="monotone"
                     dataKey="requests_received"
                     name="Requests Received"
-                    stroke={C.orange}
+                    stroke={SERIES[1]}
                     strokeWidth={2}
                     dot={{ r: 2 }}
                   />
@@ -489,7 +490,7 @@ export function PulseCarpool({ filters }: Props) {
                     type="monotone"
                     dataKey="seats_filled"
                     name="Seats Filled"
-                    stroke={C.teal}
+                    stroke={SERIES[2]}
                     strokeWidth={2}
                     dot={{ r: 2 }}
                   />
@@ -559,7 +560,7 @@ export function PulseCarpool({ filters }: Props) {
                       key={r.key}
                       d={r.path}
                       fill="none"
-                      stroke="var(--color-info)"
+                      stroke={SERIES[0]}
                       strokeWidth={ROUTE_VOLUME_WIDTH[r.intensity]}
                       strokeOpacity={ROUTE_VOLUME_OPACITY[r.intensity]}
                       strokeLinecap="round"
@@ -663,15 +664,15 @@ export function PulseCarpool({ filters }: Props) {
                 >
                   <defs>
                     <linearGradient id="pd-match-success-fill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--color-info)" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="var(--color-info)" stopOpacity="0" />
+                      <stop offset="0%" stopColor={SERIES[0]} stopOpacity="0.35" />
+                      <stop offset="100%" stopColor={SERIES[0]} stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path d={matchSuccess.chart.areaPath} fill="url(#pd-match-success-fill)" stroke="none" />
                   <path
                     d={matchSuccess.chart.linePath}
                     fill="none"
-                    stroke="var(--color-info)"
+                    stroke={SERIES[0]}
                     strokeWidth="2.5"
                     strokeLinecap="round"
                   />
@@ -679,7 +680,7 @@ export function PulseCarpool({ filters }: Props) {
                     cx={matchSuccess.chart.lastPoint.x}
                     cy={matchSuccess.chart.lastPoint.y}
                     r="4"
-                    fill="var(--color-info)"
+                    fill={SERIES[0]}
                     stroke="var(--color-card-white)"
                     strokeWidth="1.5"
                   />
