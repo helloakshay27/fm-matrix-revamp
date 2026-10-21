@@ -16,7 +16,9 @@ import {
   auditTabTriggerClass,
   auditTabsListClass,
   sectionIcon,
+  AuditLoadingState,
 } from "./ViAuditUi";
+import { useViActionPlans, type ViActionPlanDetail } from "./useViActionPlanDetail";
 
 // Corrective / preventive action-plan records. With `onSelect` each record is clickable
 // (Action Owner opens the plan to add the action taken).
@@ -42,6 +44,24 @@ const ActionPlanList = ({
     </div>
   );
 
+// Swaps each plan for its GET /vi_audit_action_plans/:id.json version (when it loaded) and
+// regroups by that response's action_type.
+const withFetchedPlans = (
+  observation: ViObservation,
+  fetched: Record<string, ViActionPlanDetail>,
+): ViObservation => {
+  if (Object.keys(fetched).length === 0) return observation;
+  const tagged = [
+    ...observation.correctiveActions.map((plan) => ({ plan, kind: "corrective" as const })),
+    ...observation.preventiveActions.map((plan) => ({ plan, kind: "preventive" as const })),
+  ].map(({ plan, kind }) => fetched[plan.id] ?? { plan, kind });
+  return {
+    ...observation,
+    correctiveActions: tagged.filter((p) => p.kind === "corrective").map((p) => p.plan),
+    preventiveActions: tagged.filter((p) => p.kind === "preventive").map((p) => p.plan),
+  };
+};
+
 export interface ObservationViewContext {
   audit: ViAuditDetail;
   observation: ViObservation;
@@ -60,8 +80,13 @@ export const ObservationDetailView = ({
   auditPath,
   onSelectPlan,
   footer,
+  audit: auditFromApi,
+  loading = false,
 }: {
   auditId: string | undefined;
+  /** Audit from the API. When omitted, the placeholder audit for `auditId` is shown. */
+  audit?: ViAuditDetail | null;
+  loading?: boolean;
   observationId: string | undefined;
   /** Audit detail route — back arrow and "View More". */
   auditPath: string;
@@ -69,8 +94,25 @@ export const ObservationDetailView = ({
   footer?: (ctx: ObservationViewContext) => ReactNode;
 }) => {
   const navigate = useNavigate();
-  const audit = useMemo(() => getViAuditDetail(auditId), [auditId]);
-  const observation = audit.observations.find((o) => o.id === observationId);
+  const placeholderAudit = useMemo(() => getViAuditDetail(auditId), [auditId]);
+
+  // Plan ids come from the audit detail's action_plans; each plan's data is then loaded from
+  // GET /vi_audit_action_plans/:id.json (placeholder audits have no server ids — skipped).
+  const apiObservation = auditFromApi?.observations.find((o) => o.id === observationId);
+  const planIds = useMemo(
+    () =>
+      apiObservation
+        ? [...apiObservation.correctiveActions, ...apiObservation.preventiveActions].map((plan) => plan.id)
+        : [],
+    [apiObservation],
+  );
+  const { plans: fetchedPlans, loading: plansLoading } = useViActionPlans(planIds);
+
+  if (loading || plansLoading) return <AuditLoadingState message="Loading observation..." />;
+  if (auditFromApi === null) return <AuditLoadingState message="Audit not found." onBack={() => navigate(auditPath)} />;
+  const audit = auditFromApi ?? placeholderAudit;
+  const listedObservation = audit.observations.find((o) => o.id === observationId);
+  const observation = listedObservation && withFetchedPlans(listedObservation, fetchedPlans);
 
   const backToAudit = () => navigate(auditPath);
 
@@ -178,16 +220,43 @@ export const ObservationDetailView = ({
                 </div>
                 {observation.attachments.length > 0 ? (
                   <div className="flex flex-wrap gap-3">
-                    {observation.attachments.map((name) => (
-                      <div
-                        key={name}
-                        title={name}
-                        className="flex h-24 w-32 flex-col items-center justify-center gap-1 rounded-[12px] border border-[rgba(26,26,24,0.09)] bg-[#F5F4F0] px-2 text-center"
-                      >
-                        <ImageIcon className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
-                        <span className="w-full truncate text-[11px] text-[rgba(26,26,24,0.68)]">{name}</span>
-                      </div>
-                    ))}
+                    {(observation.attachmentFiles ?? observation.attachments.map((name) => ({ name, url: "" }))).map(
+                      ({ name, url }, fileIndex) => {
+                        const isImage = /\.(png|jpe?g)$/i.test(name) || /^data:image\//i.test(url);
+                        const tileClass =
+                          "flex h-24 w-32 flex-col items-center justify-center gap-1 overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)] bg-[#F5F4F0] px-2 text-center";
+                        const content =
+                          url && isImage ? (
+                            <img src={url} alt={name} className="h-full w-full object-cover" />
+                          ) : (
+                            <>
+                              {/\.pdf$/i.test(name) ? (
+                                <FileText className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+                              ) : (
+                                <ImageIcon className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
+                              )}
+                              <span className="w-full truncate text-[11px] text-[rgba(26,26,24,0.68)]">{name}</span>
+                            </>
+                          );
+                        // Real attachments (from the API) open in a new tab; placeholders are static tiles.
+                        return url ? (
+                          <a
+                            key={`${name}-${fileIndex}`}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={name}
+                            className={`${tileClass} ${url && isImage ? "px-0" : ""} hover:border-[rgba(26,26,24,0.28)]`}
+                          >
+                            {content}
+                          </a>
+                        ) : (
+                          <div key={`${name}-${fileIndex}`} title={name} className={tileClass}>
+                            {content}
+                          </div>
+                        );
+                      },
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-[rgba(26,26,24,0.48)]">No attachments.</p>

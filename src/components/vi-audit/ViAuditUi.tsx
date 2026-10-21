@@ -83,7 +83,7 @@ export const ActionPlanRecord = ({
   const body = (
     <>
       <div className="mb-1 flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{plan.id}</span>
+        <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{plan.actionNo ?? plan.id}</span>
         <DueLabel label={plan.dueLabel} />
       </div>
       <p className={`text-sm text-[#1A1A18] ${clampDescription ? "line-clamp-2" : ""}`}>{plan.description}</p>

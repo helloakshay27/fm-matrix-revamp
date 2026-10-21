@@ -2,34 +2,37 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Plus, ShieldCheck, Trash2 } from "lucide-react";
-import { MenuItem, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
 import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
+import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
+import { apiErrorMessage } from "@/components/vi-audit/viAuditApi";
 
-// Create-action-plan endpoint. Confirm with the backend team — the Audit API is not live yet.
-const actionPlanEndpoint = (observationId: string) =>
-  `/pms/vi_audit_observations/${observationId}/action_plans.json`;
-
-// Placeholder list — swap for the live user lookup once the Audit backend is available.
-const RESPONSIBLE_PERSONS = ["Varne Shah", "Arun Mohan", "Veena Kumari", "Vikram Singh", "Kiran Joshi"];
+// Saves all corrective + preventive plans of an observation in one request.
+// `submit: true` submits them; without it they are saved as a draft.
+const saveActionPlansEndpoint = (observationId: string) =>
+  `/vi_audit_observations/${observationId}/save_action_plans.json`;
 
 type PlanKind = "corrective" | "preventive";
 
 interface PlanEntry {
   description: string;
-  responsiblePerson: string;
+  responsiblePerson: ViActiveUserOption | null;
   targetDate: string;
   extendTargetDate: string;
   extensionReason: string;
+  /** Server id of an existing plan — sent so the API updates it instead of creating a new one. */
+  id?: string;
 }
 
 const todayIso = () => new Date().toISOString().split("T")[0];
 
 const emptyEntry = (): PlanEntry => ({
   description: "",
-  responsiblePerson: "",
+  responsiblePerson: null,
   targetDate: todayIso(),
   extendTargetDate: "",
   extensionReason: "",
@@ -74,8 +77,8 @@ const SpocActionPlanPage = () => {
     for (const { kind, title } of PLAN_SECTIONS) {
       for (const [index, entry] of plans[kind].entries()) {
         const label = plans[kind].length > 1 ? `${title} ${index + 1}` : title;
-        if (!entry.responsiblePerson || !entry.targetDate) {
-          toast.error(`${label}: Responsible Person and Target Date are required`);
+        if (!entry.description.trim() || !entry.responsiblePerson || !entry.targetDate) {
+          toast.error(`${label}: Action Plan, Responsible Person and Target Date are required`);
           return false;
         }
         if (entry.extendTargetDate && entry.extendTargetDate < entry.targetDate) {
@@ -91,40 +94,47 @@ const SpocActionPlanPage = () => {
     return true;
   };
 
-  const buildPayload = (status: "draft" | "submitted") => {
-    const payload = new FormData();
-    payload.append("action_plan[audit_id]", id ?? "");
-    payload.append("action_plan[observation_id]", observationId ?? "");
-    payload.append("action_plan[status]", status);
-    PLAN_SECTIONS.forEach(({ kind }) => {
-      plans[kind].forEach((entry, i) => {
-        const key = `action_plan[${kind}_actions][${i}]`;
-        payload.append(`${key}[description]`, entry.description);
-        payload.append(`${key}[responsible_person]`, entry.responsiblePerson);
-        payload.append(`${key}[target_date]`, entry.targetDate);
-        payload.append(`${key}[extended_target_date]`, entry.extendTargetDate);
-        payload.append(`${key}[extension_reason]`, entry.extensionReason);
-      });
-    });
-    return payload;
+  const buildPayload = (submit: boolean) => {
+    const actionPlans = PLAN_SECTIONS.flatMap(({ kind }) =>
+      plans[kind]
+        // Drafts may be partial — skip entries the user hasn't started.
+        .filter((entry) => submit || entry.description.trim() || entry.responsiblePerson)
+        .map((entry) => ({
+          ...(entry.id ? { id: entry.id } : {}),
+          action_type: kind,
+          action_plan: entry.description.trim(),
+          responsible_person_id: entry.responsiblePerson?.id ?? null,
+          target_date: entry.targetDate,
+        })),
+    );
+    return submit ? { submit: true, action_plans: actionPlans } : { action_plans: actionPlans };
   };
 
-  const save = async (status: "draft" | "submitted") => {
+  // POST /vi_audit_observations/:id/save_action_plans.json — Submit sends `submit: true`, Save draft omits it.
+  const save = async (submit: boolean) => {
     if (submitting) return;
-    if (status === "submitted" && !validate()) return;
+    if (submit && !validate()) return;
+    const payload = buildPayload(submit);
+    if (!payload.action_plans.length) {
+      toast.error("Add at least one action plan before saving");
+      return;
+    }
     setSubmitting(true);
     try {
-      const response = await fetch(getFullUrl(actionPlanEndpoint(observationId ?? "")), {
+      const response = await fetch(getFullUrl(saveActionPlansEndpoint(observationId ?? "")), {
         method: "POST",
-        headers: { Authorization: getAuthHeader() },
-        body: buildPayload(status),
+        headers: { Authorization: getAuthHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-      toast.success(status === "draft" ? "Action plan saved to draft" : "Action plan submitted successfully");
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(apiErrorMessage(result) || `Request failed with status ${response.status}`);
+      toast.success(submit ? "Action plan submitted successfully" : "Action plan saved to draft");
       navigate(observationPath);
     } catch (error) {
       console.error("Action plan save failed:", error);
-      toast.error(status === "draft" ? "Failed to save draft" : "Failed to submit action plan");
+      const message = error instanceof Error ? error.message : "";
+      const failed = submit ? "Failed to submit action plan" : "Failed to save draft";
+      toast.error(message ? `${failed} — ${message}` : failed);
     } finally {
       setSubmitting(false);
     }
@@ -204,25 +214,14 @@ const SpocActionPlanPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <TextField
-                      select
-                      fullWidth
-                      label={requiredLabel("Responsible Person")}
+                    <UserSelectField
+                      label="Responsible Person"
+                      required
+                      employeeType="internal"
                       value={entry.responsiblePerson}
-                      onChange={(e) => updateEntry(kind, index, { responsiblePerson: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      SelectProps={{
-                        displayEmpty: true,
-                        renderValue: (selected) =>
-                          selected ? (selected as string) : <span className="text-[rgba(26,26,24,0.3)]">Select</span>,
-                      }}
-                    >
-                      {RESPONSIBLE_PERSONS.map((person) => (
-                        <MenuItem key={person} value={person}>
-                          {person}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      onChange={(user) => updateEntry(kind, index, { responsiblePerson: user })}
+                      placeholder="Search responsible person by email or mobile"
+                    />
                     <TextField
                       fullWidth
                       type="date"
@@ -269,10 +268,10 @@ const SpocActionPlanPage = () => {
       ))}
 
       <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={() => save("draft")} disabled={submitting}>
+        <button type="button" className="fm-action-secondary" onClick={() => save(false)} disabled={submitting}>
           Save draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={() => save("submitted")} disabled={submitting}>
+        <button type="button" className="fm-action-primary" onClick={() => save(true)} disabled={submitting}>
           {submitting ? "Submitting..." : "Submit"}
         </button>
       </div>
