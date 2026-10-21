@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 const VI_ACTIVE_USERS_ENDPOINT = "/pms/users/vi_fte_non_fte_active_users.json";
@@ -9,6 +9,7 @@ export interface ViActiveUserOption {
   id: string;
   name: string;
   email?: string;
+  mobile?: string;
 }
 
 type RawUser = Record<string, unknown>;
@@ -37,57 +38,105 @@ const toOption = (user: RawUser): ViActiveUserOption | null => {
     [str(user.firstname), str(user.lastname)].filter(Boolean).join(" ") ||
     str(user.email);
   if (!name) return null;
-  return { id: String(id), name, email: str(user.email) || undefined };
+  const mobile = str(user.mobile) || (typeof user.mobile === "number" ? String(user.mobile) : "");
+  return { id: String(id), name, email: str(user.email) || undefined, mobile: mobile || undefined };
 };
 
-/**
- * Server-side search of FTE / Non-FTE active users for the Vi Audit pickers
- * (GET /pms/users/vi_fte_non_fte_active_users.json?q[email_or_mobile_cont]=<term>).
- * Searches once the term has VI_USER_SEARCH_MIN_CHARS characters, debounced. Pass
- * `employeeType` (e.g. "internal" for SPOC / Functional Head) to add q[employee_type_cont].
- */
-export const useViUserSearch = (term: string, employeeType?: string) => {
-  const [options, setOptions] = useState<ViActiveUserOption[]>([]);
-  const [loading, setLoading] = useState(false);
+const fetchUsers = async (params: URLSearchParams, signal: AbortSignal) => {
+  const response = await fetch(getFullUrl(`${VI_ACTIVE_USERS_ENDPOINT}?${params.toString()}`), {
+    headers: { Authorization: getAuthHeader() },
+    signal,
+  });
+  if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+  return extractUsers(await response.json())
+    .map(toOption)
+    .filter((option): option is ViActiveUserOption => option !== null);
+};
 
+const matchesTerm = (user: ViActiveUserOption, q: string) =>
+  [user.name, user.email, user.mobile].some((field) => field?.toLowerCase().includes(q));
+
+/**
+ * FTE / Non-FTE active users for the Vi Audit pickers
+ * (GET /pms/users/vi_fte_non_fte_active_users.json). Pass `employeeType` (e.g. "internal" for
+ * SPOC / Functional Head / Responsible Person) to add q[employee_type_cont].
+ * - Server search (q[email_or_mobile_cont]) once the term has VI_USER_SEARCH_MIN_CHARS
+ *   characters, debounced.
+ * - With `preload`, the base list loads up front and is filtered locally on every keystroke
+ *   (name / email / mobile), merged with the server-search results.
+ */
+export const useViUserSearch = (
+  term: string,
+  employeeType?: string,
+  { preload = false }: { preload?: boolean } = {},
+) => {
+  const [baseList, setBaseList] = useState<ViActiveUserOption[]>([]);
+  const [baseLoading, setBaseLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<ViActiveUserOption[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const q = term.trim();
+  const searching = q.length >= VI_USER_SEARCH_MIN_CHARS;
+
+  // Base list (employee-type filter only), loaded once for preload pickers.
   useEffect(() => {
-    const q = term.trim();
-    if (q.length < VI_USER_SEARCH_MIN_CHARS) {
-      setOptions([]);
-      setLoading(false);
+    if (!preload) {
+      setBaseList([]);
       return;
     }
-
     const controller = new AbortController();
-    setLoading(true);
+    setBaseLoading(true);
+    const params = new URLSearchParams();
+    if (employeeType) params.set("q[employee_type_cont]", employeeType);
+    fetchUsers(params, controller.signal)
+      .then(setBaseList)
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("User list failed:", error);
+        setBaseList([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBaseLoading(false);
+      });
+    return () => controller.abort();
+  }, [employeeType, preload]);
+
+  // Server-side search by email / mobile.
+  useEffect(() => {
+    if (!searching) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const params = new URLSearchParams({ "q[email_or_mobile_cont]": q });
+        const params = new URLSearchParams();
         if (employeeType) params.set("q[employee_type_cont]", employeeType);
-        const response = await fetch(getFullUrl(`${VI_ACTIVE_USERS_ENDPOINT}?${params.toString()}`), {
-          headers: { Authorization: getAuthHeader() },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-        setOptions(
-          extractUsers(await response.json())
-            .map(toOption)
-            .filter((option): option is ViActiveUserOption => option !== null),
-        );
+        params.set("q[email_or_mobile_cont]", q);
+        setSearchResults(await fetchUsers(params, controller.signal));
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error("User search failed:", error);
-        setOptions([]);
+        setSearchResults([]);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setSearchLoading(false);
       }
     }, SEARCH_DEBOUNCE_MS);
-
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [term, employeeType]);
+  }, [q, searching, employeeType]);
 
-  return { options, loading };
+  const options = useMemo(() => {
+    const needle = q.toLowerCase();
+    const local = needle ? baseList.filter((user) => matchesTerm(user, needle)) : baseList;
+    if (!searching) return local;
+    const seen = new Set(local.map((user) => user.id));
+    return [...local, ...searchResults.filter((user) => !seen.has(user.id))];
+  }, [q, searching, baseList, searchResults]);
+
+  return { options, loading: baseLoading || searchLoading };
 };

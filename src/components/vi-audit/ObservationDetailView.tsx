@@ -18,6 +18,7 @@ import {
   sectionIcon,
   AuditLoadingState,
 } from "./ViAuditUi";
+import { useViActionPlans, type ViActionPlanDetail } from "./useViActionPlanDetail";
 
 // Corrective / preventive action-plan records. With `onSelect` each record is clickable
 // (Action Owner opens the plan to add the action taken).
@@ -42,6 +43,24 @@ const ActionPlanList = ({
       ))}
     </div>
   );
+
+// Swaps each plan for its GET /vi_audit_action_plans/:id.json version (when it loaded) and
+// regroups by that response's action_type.
+const withFetchedPlans = (
+  observation: ViObservation,
+  fetched: Record<string, ViActionPlanDetail>,
+): ViObservation => {
+  if (Object.keys(fetched).length === 0) return observation;
+  const tagged = [
+    ...observation.correctiveActions.map((plan) => ({ plan, kind: "corrective" as const })),
+    ...observation.preventiveActions.map((plan) => ({ plan, kind: "preventive" as const })),
+  ].map(({ plan, kind }) => fetched[plan.id] ?? { plan, kind });
+  return {
+    ...observation,
+    correctiveActions: tagged.filter((p) => p.kind === "corrective").map((p) => p.plan),
+    preventiveActions: tagged.filter((p) => p.kind === "preventive").map((p) => p.plan),
+  };
+};
 
 export interface ObservationViewContext {
   audit: ViAuditDetail;
@@ -77,10 +96,23 @@ export const ObservationDetailView = ({
   const navigate = useNavigate();
   const placeholderAudit = useMemo(() => getViAuditDetail(auditId), [auditId]);
 
-  if (loading) return <AuditLoadingState message="Loading observation..." />;
+  // Plan ids come from the audit detail's action_plans; each plan's data is then loaded from
+  // GET /vi_audit_action_plans/:id.json (placeholder audits have no server ids — skipped).
+  const apiObservation = auditFromApi?.observations.find((o) => o.id === observationId);
+  const planIds = useMemo(
+    () =>
+      apiObservation
+        ? [...apiObservation.correctiveActions, ...apiObservation.preventiveActions].map((plan) => plan.id)
+        : [],
+    [apiObservation],
+  );
+  const { plans: fetchedPlans, loading: plansLoading } = useViActionPlans(planIds);
+
+  if (loading || plansLoading) return <AuditLoadingState message="Loading observation..." />;
   if (auditFromApi === null) return <AuditLoadingState message="Audit not found." onBack={() => navigate(auditPath)} />;
   const audit = auditFromApi ?? placeholderAudit;
-  const observation = audit.observations.find((o) => o.id === observationId);
+  const listedObservation = audit.observations.find((o) => o.id === observationId);
+  const observation = listedObservation && withFetchedPlans(listedObservation, fetchedPlans);
 
   const backToAudit = () => navigate(auditPath);
 
