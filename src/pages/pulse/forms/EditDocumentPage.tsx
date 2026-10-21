@@ -1,3 +1,4 @@
+import { Upload as PulseUploadIcon } from "lucide-react";
 // Pulse-only form: shared module page remains unchanged.
 import { PulseFormSection } from "@/pages/pulse/components/PulseFormSection";
 import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
@@ -676,12 +677,9 @@ export const EditDocumentPage = () => {
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                  isDragging
-                    ? "border-[#C72030] bg-red-50"
-                    : "border-gray-300 bg-white"
-                }`}
+                className="pulse-upload-dropzone text-center transition-colors" data-dragging={isDragging}
               >
+<PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                 <p className="text-sm text-gray-500 mb-4">
                   {isDragging
                     ? "Drop your file here"
@@ -708,7 +706,7 @@ export const EditDocumentPage = () => {
                 </label>
               </div>
             ) : (
-              <div className="border border-gray-300 rounded-lg p-4">
+              <div className="pulse-upload-preview p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {getFileIcon(coverImage).isImage ? (

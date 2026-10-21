@@ -1,3 +1,4 @@
+import { Upload as PulseUploadIcon } from "lucide-react";
 // Pulse-only form: shared module page remains unchanged.
 import { PulseFormSection } from "@/pages/pulse/components/PulseFormSection";
 import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
@@ -38,6 +39,10 @@ import {
 } from "@mui/material";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { TechParkSelectionModal } from "@/components/document/TechParkSelectionModal";
 import { CommunitySelectionModal } from "@/components/document/CommunitySelectionModal";
 import { DocumentShareModal } from "@/components/document/DocumentShareModal";
@@ -449,34 +454,32 @@ export const AddDocumentDashboard = () => {
     }
   };
 
-  const handleGoBack = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to go back? Any unsaved changes will be lost."
-    );
-    if (confirmed) {
-      if (isFolderDisabled) {
-        navigate("/maintenance/documents/create-folder");
-      } else {
-        navigate("/maintenance/documents");
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    if (coverImage || formData.title || formData.documentCategory) {
-      const confirmed = window.confirm(
-        "Are you sure you want to cancel? Any unsaved changes will be lost."
-      );
-      if (confirmed) {
-        handleGoBack();
-      }
-    } else {
-      handleGoBack();
-    }
+  const [leaveIntent, setLeaveIntent] = useState<"back" | "cancel" | null>(null);
+  const handleGoBack = () => setLeaveIntent("back");
+  const handleCancel = () => setLeaveIntent("cancel");
+  const confirmLeave = () => {
+    setLeaveIntent(null);
+    navigate(isFolderDisabled
+      ? "/maintenance/documents/create-folder"
+      : "/maintenance/documents");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AlertDialog open={leaveIntent !== null} onOpenChange={(open) => { if (!open) setLeaveIntent(null); }}>
+        <AlertDialogContent className="pulse-unsaved-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {leaveIntent === "cancel" ? "Are you sure you want to cancel?" : "Are you sure you want to go back?"} Any unsaved changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row flex-wrap justify-end gap-3 space-x-0">
+            <AlertDialogCancel className="pulse-form-secondary mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="pulse-form-primary" onClick={confirmLeave}>Leave page</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Header */}
       <div className="px-6 pt-6"><PulsePageHeader title={folderName ? `Add Document to "${folderName}"` : "Add New Document"} parent={{ label: "Documents", to: "/pulse/documents" }} onBack={handleGoBack} /></div>
 
@@ -763,12 +766,9 @@ export const AddDocumentDashboard = () => {
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                  isDragging
-                    ? "border-[#C72030] bg-red-50"
-                    : "border-gray-300 bg-white"
-                }`}
+                className="pulse-upload-dropzone text-center transition-colors" data-dragging={isDragging}
               >
+<PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                 <p className="text-sm text-gray-500 mb-4">
                   {isDragging
                     ? "Drop your file here"
@@ -795,7 +795,7 @@ export const AddDocumentDashboard = () => {
                 </label>
               </div>
             ) : (
-              <div className="border border-gray-300 rounded-lg p-4">
+              <div className="pulse-upload-preview p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {getFileIcon(coverImage).isImage ? (

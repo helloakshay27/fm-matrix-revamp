@@ -1249,7 +1249,7 @@ export const AddTicketDashboard = () => {
         <PulseFormSection title="Requestor details" icon={User}>
 
             {/* Create Ticket On Behalf Of with Name and Department in same row */}
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -1331,8 +1331,8 @@ export const AddTicketDashboard = () => {
         <PulseFormSection title="Tickets type" icon={Ticket}>
 
             {/* Radio buttons for ticket type and flags */}
-            <div className="flex gap-8">
-              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
+            <div className="flex flex-wrap gap-x-8 gap-y-3">
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-x-8 gap-y-3">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="request" id="request" />
                   <label htmlFor="request" className="text-sm font-medium">Request</label>
@@ -1348,7 +1348,7 @@ export const AddTicketDashboard = () => {
               </RadioGroup>
             </div>
 
-            <div className="flex gap-8">
+            <div className="flex flex-wrap gap-x-8 gap-y-3">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
