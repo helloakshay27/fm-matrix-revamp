@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -195,6 +196,7 @@ const challanTypeOptions = [
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('delivery_challan', 'create');
 
     useEffect(() => {
         document.title = 'New Sales Order';
@@ -679,11 +681,17 @@ const challanTypeOptions = [
                 body: formData
             });
 
+            accountingEvents.onRecordCreated('delivery_challan', null, {
+                amount: totalAmount,
+                item_count: items.length,
+                status: 'draft',
+            });
             alert(`Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/invoices/list');
         } catch (error) {
             console.error('Error submitting invoice:', error);
             alert('Failed to create invoice');
+            accountingEvents.onSaveFailed('delivery_challan', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

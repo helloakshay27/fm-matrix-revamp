@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { accountingToast as toast } from '@/lib/accountingToast';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import '@/styles/accounting.css';
 import {
   BankRecord,
@@ -279,6 +280,7 @@ export const RecurringBillCreatePage: React.FC = () => {
     term.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const navigate = useNavigate();
+  useAccountingFormOpened('recurring_bill', 'create');
 
   useEffect(() => {
     document.title = 'New Sales Order';
@@ -1318,10 +1320,17 @@ if (!profileName || profileName.trim() === "") {
       });
 
       // alert(`Recurring Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+      accountingEvents.onRecordCreated('recurring_bill', null, {
+        amount: totalAmount,
+        item_count: items.length,
+        status: saveAsDraft ? 'draft' : 'active',
+      });
       navigate('/accounting/recurring-bills');
     } catch (error) {
       console.error('Error submitting invoice:', error);
       alert('Failed to create invoice');
+      accountingEvents.onSaveFailed('recurring_bill', 'create', error);
+
     } finally {
       setIsSubmitting(false);
     }

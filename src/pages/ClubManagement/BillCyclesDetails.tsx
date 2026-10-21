@@ -5,6 +5,7 @@ import { ArrowLeft, User, DollarSign, NotepadText, FileCog } from "lucide-react"
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
@@ -96,6 +97,7 @@ const AMENITIES_OPTIONS = [
 export const BillCyclesDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("bill_cycle");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
@@ -168,6 +170,7 @@ export const BillCyclesDetails = () => {
                     },
                 });
                 const data = response.data.society_bill_cycle;
+                reportRecordLoaded(id, data?.status ?? null);
                 setFormData({
                     billCycleName: data.name || "",
                     startDate: data.start_month || "",

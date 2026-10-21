@@ -24,7 +24,7 @@ const COMMUNITY_CATEGORY_OPTIONS = [
 const requiredLabel = (text: string) => (
     <span>
         {text}
-        <span className="fm-required-mark">*</span>
+        <span className="ml-0.5">*</span>
     </span>
 );
 

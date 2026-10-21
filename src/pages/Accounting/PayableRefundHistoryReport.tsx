@@ -5,6 +5,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface RefundHistoryApi {
   id: number;
@@ -77,6 +78,7 @@ const toInputDate = (ddmmyyyy: string) => {
 const PayableRefundHistoryReport: React.FC = () => {
   const [rows, setRows] = useState<RefundHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("payable_refund_history");
 
   const defaultDateRange = useMemo(() => {
     const today = new Date();
@@ -200,7 +202,10 @@ const PayableRefundHistoryReport: React.FC = () => {
             />
 
             <Button
-              onClick={() => fetchRefundHistory(filters.fromDate, filters.toDate)}
+              onClick={() => {
+                accountingEvents.onReportGenerated("payable_refund_history", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+                fetchRefundHistory(filters.fromDate, filters.toDate);
+              }}
               className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
             >
               View

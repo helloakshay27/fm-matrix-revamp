@@ -5,6 +5,7 @@ import { FileCog, ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface TransactionData {
   id: number;
@@ -40,6 +41,7 @@ const formatDate = (dateStr?: string | null): string => {
 const DetailsSaleCustomerReport: React.FC = () => {
   const navigate = useNavigate();
   const { customerName } = useParams<{ customerName: string }>();
+  useAccountingReportViewed("details_sale_customer");
 
   const [transactionData, setTransactionData] = useState<TransactionData[]>([]);
   const [loading, setLoading] = useState(false);

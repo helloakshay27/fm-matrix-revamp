@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
@@ -245,6 +246,7 @@ export const VendorCreditsAdd: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('vendor_credit', 'create');
 
     useEffect(() => {
         document.title = 'New Bill';
@@ -1333,11 +1335,17 @@ export const VendorCreditsAdd: React.FC = () => {
 
             toast.dismiss(loadingToast);
             toast.success(saveAsDraft ? "Saved as draft" : "Vendor credit created successfully!");
+            accountingEvents.onRecordCreated('vendor_credit', null, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'confirmed',
+            });
             navigate('/accounting/vendor-credits');
 
         } catch (error) {
             toast.dismiss(loadingToast);
             toast.error("Failed to save vendor credit");
+            accountingEvents.onSaveFailed('vendor_credit', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

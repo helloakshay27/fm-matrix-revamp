@@ -55,6 +55,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { CloudUpload } from "@mui/icons-material";
 import PurchaseDocumentPdf from "./purchasepdftamplate";
 import {
@@ -289,6 +290,7 @@ export const BillDetails = () => {
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
   const [bankDetail, setBankDetail] = useState<any>(null);
   const billPdfRef = useRef<HTMLDivElement | null>(null);
+  const reportRecordLoaded = useAccountingRecordViewed("bill");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -312,6 +314,7 @@ export const BillDetails = () => {
         },
       });
       setSalesOrder(response.data);
+      reportRecordLoaded(id, response.data?.status ?? null);
 
       if (response.data?.lock_account_transactions?.length > 0) {
         const allRecords = response.data.lock_account_transactions.flatMap(
@@ -446,14 +449,17 @@ export const BillDetails = () => {
             ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
             : message || "Failed to update status";
         sonnerToast.error(msg);
+        accountingEvents.onSaveFailed("bill", "action", new Error(msg), { action: "status_change", record_id: id });
         return;
       }
       sonnerToast.success(
         `Sales order ${status.replace("_", " ")} successfully`
       );
+      accountingEvents.onActionPerformed("bill", "status_change", id, { status });
       fetchSalesOrder();
     } catch (error) {
       sonnerToast.error("Failed to update status");
+      accountingEvents.onSaveFailed("bill", "action", error, { action: "status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -470,9 +476,11 @@ export const BillDetails = () => {
       sonnerToast.success(
         `Sales order ${status.replace("_", " ")} successfully`
       );
+      accountingEvents.onActionPerformed("bill", status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", id, { status });
       fetchSalesOrder();
     } catch (error) {
       sonnerToast.error("Failed to update approval status");
+      accountingEvents.onSaveFailed("bill", "action", error, { action: status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -629,10 +637,13 @@ export const BillDetails = () => {
         }
       );
       sonnerToast.success("Payment recorded successfully.");
+      accountingEvents.onActionPerformed("bill", "record_payment", id, { amount: Number(paidAmount) || null });
       setActiveTab("order-details");
       fetchSalesOrder();
     } catch (error) {
       sonnerToast.error("Failed to record payment.");
+      accountingEvents.onSaveFailed("bill", "action", error, { action: "record_payment", record_id: id });
+
     } finally {
       setPaymentSubmitting(false);
     }

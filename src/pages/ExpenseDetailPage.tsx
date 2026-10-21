@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import {
   bankMasterListUrl,
   getBankMasterApiConfig,
@@ -103,6 +104,7 @@ interface Expense {
 export const ExpenseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const reportRecordLoaded = useAccountingRecordViewed("expense");
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [bankDetail, setBankDetail] = useState<any>(null);
@@ -199,6 +201,7 @@ export const ExpenseDetailPage = () => {
         if (response.ok) {
           const data = await response.json();
           setExpense(data);
+          reportRecordLoaded(id, data?.status ?? null);
         } else {
           sonnerToast.error("Failed to fetch expense details");
           navigate("/accounting/expense");
@@ -278,13 +281,16 @@ export const ExpenseDetailPage = () => {
 
       if (response.ok) {
         sonnerToast.success("Expense deleted successfully");
+        accountingEvents.onRecordDeleted("expense", id);
         navigate("/accounting/expense");
       } else {
         sonnerToast.error("Failed to delete expense");
+        accountingEvents.onSaveFailed("expense", "delete", `HTTP ${response.status}`, { record_id: id });
       }
     } catch (error) {
       console.error("Error deleting expense:", error);
       sonnerToast.error("Failed to delete expense");
+      accountingEvents.onSaveFailed("expense", "delete", error, { record_id: id });
     }
   };
 

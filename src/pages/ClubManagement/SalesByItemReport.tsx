@@ -5,6 +5,7 @@ import { Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SalesItem {
   id: number;
@@ -17,6 +18,7 @@ interface SalesItem {
 }
 
 const SalesByItemReport: React.FC = () => {
+  useAccountingReportViewed("sales_by_item");
   const navigate = useNavigate();
   const [salesByItemData, setSalesByItemData] = useState<SalesItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,6 +85,7 @@ const SalesByItemReport: React.FC = () => {
     };
     const fromDate = formatDate(filters.fromDate);
     const toDate = formatDate(filters.toDate);
+    accountingEvents.onReportGenerated("sales_by_item", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchSalesData(fromDate, toDate);
   };
 

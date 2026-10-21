@@ -583,8 +583,9 @@ export const RoleDashboard = () => {
         </div>
         {shouldShow("Role","create")&&(
         <Button
+          size="sm"
           onClick={handleAddRole}
-          className="bg-[#C72030] hover:bg-[#A11D2A] text-white shadow-sm"
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add New Role
@@ -661,8 +662,7 @@ export const RoleDashboard = () => {
                 {!isEditMode && shouldShow("Role","update")? (
                   <Button
                     onClick={() => setIsEditMode(true)}
-                    variant="outline"
-                    className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
+                    className="gap-2"
                     disabled={!currentRole}
                   >
                     <Edit2 className="w-4 h-4 mr-2" />
@@ -673,7 +673,6 @@ export const RoleDashboard = () => {
                     <Button
                       onClick={() => setIsEditMode(false)}
                       variant="outline"
-                      className="border-gray-300 text-gray-600 hover:bg-gray-100"
                     >
                       Cancel
                     </Button>
@@ -682,7 +681,7 @@ export const RoleDashboard = () => {
                         await handleUpdatePermissions();
                         setIsEditMode(false);
                       }}
-                      className="bg-[#C72030] hover:bg-[#A11D2A] text-white min-w-[140px]"
+                      className="min-w-[140px]"
                       disabled={updating || !currentRole}
                     >
                       {updating ? (

@@ -61,6 +61,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { CloudUpload } from "@mui/icons-material";
 import {
   Accordion,
@@ -77,6 +78,7 @@ import {
 
 export const RecurringInvoiceDetailsPage = () => {
   const { id } = useParams();
+  const reportRecordLoaded = useAccountingRecordViewed("recurring_invoice");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -205,12 +207,15 @@ export const RecurringInvoiceDetailsPage = () => {
             ? errors.map((e) => `${e.id}: ${e.message}`).join(", ")
             : message || "Failed to update status";
         sonnerToast.error(msg);
+        accountingEvents.onSaveFailed("recurring_invoice", "action", msg, { action: "status_change", record_id: id });
         return;
       }
+      accountingEvents.onActionPerformed("recurring_invoice", "status_change", id, { status });
       sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
       fetchInvoiceDetails();
     } catch (error) {
       sonnerToast.error("Failed to update status");
+      accountingEvents.onSaveFailed("recurring_invoice", "action", error, { action: "status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -229,10 +234,12 @@ export const RecurringInvoiceDetailsPage = () => {
           },
         }
       );
+      accountingEvents.onActionPerformed("recurring_invoice", status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", id, { status });
       sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
       fetchInvoiceDetails();
     } catch (error) {
       sonnerToast.error("Failed to update approval status");
+      accountingEvents.onSaveFailed("recurring_invoice", "action", error, { action: status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", record_id: id });
     } finally {
       setActionLoading(false);
     }
@@ -251,6 +258,7 @@ export const RecurringInvoiceDetailsPage = () => {
         }
       );
       setInvoiceData(response.data);
+      reportRecordLoaded(id, response.data?.status ?? null);
     } catch (error) {
       console.error("Error fetching invoice details:", error);
       sonnerToast.error("Failed to fetch invoice details");
@@ -322,11 +330,13 @@ export const RecurringInvoiceDetailsPage = () => {
           },
         }
       );
+      accountingEvents.onRecordDeleted("recurring_invoice", id);
       sonnerToast.success("Invoice deleted successfully");
       navigate("/accounting/recurring-invoices");
     } catch (error) {
       console.error("Error deleting invoice:", error);
       sonnerToast.error("Failed to delete invoice");
+      accountingEvents.onSaveFailed("recurring_invoice", "delete", error, { record_id: id });
     }
     setShowDeleteDialog(false);
   };
@@ -548,10 +558,12 @@ export const RecurringInvoiceDetailsPage = () => {
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      accountingEvents.onActionPerformed("recurring_invoice", "record_payment", id, { status: paymentStatus });
       sonnerToast.success("Payment recorded successfully.");
       fetchInvoiceDetails();
     } catch (error) {
       sonnerToast.error("Failed to record payment.");
+      accountingEvents.onSaveFailed("recurring_invoice", "action", error, { action: "record_payment", record_id: id });
     } finally {
       setPaymentSubmitting(false);
     }

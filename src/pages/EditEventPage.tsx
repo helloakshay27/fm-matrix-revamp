@@ -1156,7 +1156,7 @@ export const EditEventPage = () => {
                     </div>
                     <Button
                       type="button"
-                      className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
+                      variant="outline"
                     >
                       Browse
                     </Button>
@@ -1168,22 +1168,21 @@ export const EditEventPage = () => {
         </div>
 
         <div className="fm-action-bar mt-8 pb-8">
-          <Button
+          <button
             type="button"
             onClick={() => navigate(`/pulse/events`)}
-            variant="outline"
-            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="fm-action-primary"
           >
             {isSubmitting ? "Updating..." : "Update Event"}
-          </Button>
+          </button>
         </div>
       </div>
 

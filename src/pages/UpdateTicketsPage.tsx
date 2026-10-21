@@ -3915,14 +3915,14 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center mt-8">
-              <Button
+            <div className="fm-action-bar pt-4 sm:pt-6 mt-8">
+              <button
                 type="submit"
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
+                className="fm-action-primary"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "SAVING..." : "SAVE"}
-              </Button>
+              </button>
             </div>
           </form>
         )}
@@ -4034,14 +4034,15 @@ const UpdateTicketsPage: React.FC = () => {
 
               {/* Footer */}
               <div className="p-4 border-t">
-                <div className="flex justify-center">
-                  <Button
+                <div className="fm-action-bar">
+                  <button
+                    type="button"
                     onClick={handleCostPopupSubmit}
-                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
+                    className="fm-action-primary"
                     disabled={!costPopupData.cost || !costPopupData.description}
                   >
                     Submit
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface PaymentReceived {
   id: number;
@@ -184,6 +185,7 @@ const toApiDate = (iso: string) => {
 
 const PaymentsRecievedReport: React.FC = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("payments_received");
   const lockAccountId = localStorage.getItem("lock_account_id");
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -427,7 +429,7 @@ const PaymentsRecievedReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => { setCurrentPage(1); fetchPayments(); }}
+            onClick={() => { accountingEvents.onReportGenerated("payments_received", { from_date: filters.fromDate, to_date: filters.toDate }); setCurrentPage(1); fetchPayments(); }}
           >
             View
           </Button>

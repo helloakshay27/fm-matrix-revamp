@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText ,ArrowLeft} from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
@@ -248,6 +249,7 @@ export const VendorCreditsEdit: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('vendor_credit', 'edit', vendorCreditId);
 
     useEffect(() => {
         document.title = 'New Bill';
@@ -1495,11 +1497,16 @@ export const VendorCreditsEdit: React.FC = () => {
 
             toast.dismiss(loadingToast);
             toast.success("Vendor credit updated successfully!");
+            accountingEvents.onRecordUpdated('vendor_credit', vendorCreditId, {
+                amount: totalAmount2,
+                item_count: items.length,
+            });
             navigate('/accounting/vendor-credits');
 
         } catch (error) {
             toast.dismiss(loadingToast);
             toast.error("Failed to update vendor credit");
+            accountingEvents.onSaveFailed('vendor_credit', 'update', error, { record_id: vendorCreditId });
         } finally {
             setIsSubmitting(false);
         }

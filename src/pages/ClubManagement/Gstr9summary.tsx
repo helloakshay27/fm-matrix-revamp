@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 const NS = "- - - - Not Supported - - - -";
 
 const GSTR9Summary: React.FC = () => {
+    useAccountingReportViewed("gstr_9_summary");
     const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {

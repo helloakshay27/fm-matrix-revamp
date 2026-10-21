@@ -301,17 +301,19 @@ const CommunityUserDetails = () => {
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
                             Are you sure you want to Delete<br />this Report?
                         </h2>
-                        <div className="flex mt-auto">
+                        <div className="fm-action-bar mt-auto px-6 pb-6">
                             <button
+                                type="button"
                                 onClick={() => setDeleteConfirmation({ open: false, reportId: null })}
-                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                                className="fm-action-secondary"
                             >
                                 No
                             </button>
                             <button
+                                type="button"
                                 onClick={confirmDeleteReport}
                                 disabled={isDeleting}
-                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center justify-center h-[42px] px-[22px] rounded-lg bg-[#C72030] !text-white font-semibold text-[13px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isDeleting ? "Deleting..." : "Yes"}
                             </button>

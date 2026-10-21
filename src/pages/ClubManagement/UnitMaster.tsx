@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { accountingEvents, useAccountingListViewed } from '@/components/PostHogAccountingEvents';
 
 interface Uom {
     id: number;
@@ -50,6 +51,7 @@ const UnitMaster: React.FC = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [selectedDeleteUom, setSelectedDeleteUom] = useState<Uom | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const reportListLoaded = useAccountingListViewed('uom');
 
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -62,6 +64,7 @@ const UnitMaster: React.FC = () => {
             );
             const data = Array.isArray(res.data) ? res.data : (res.data?.erp_uoms || res.data?.data || []);
             setUoms(data);
+            reportListLoaded(data.length);
         } catch {
             toast.error('Failed to load UOMs');
         } finally {
@@ -83,17 +86,19 @@ const UnitMaster: React.FC = () => {
         if (!validate()) return;
         setSubmitting(true);
         try {
-            await axios.post(
+            const response = await axios.post(
                 `https://${baseUrl}/erp_uoms.json?lock_account_id=${lock_account_id}`,
                 { erp_uom: { name: form.name, short_name: form.short_name } },
                 { headers }
             );
             toast.success('UOM created successfully');
+            accountingEvents.onRecordCreated('uom', response.data?.id ?? response.data?.erp_uom?.id);
             setAddOpen(false);
             setForm(emptyForm);
             fetchUoms();
-        } catch {
+        } catch (error) {
             toast.error('Failed to create UOM');
+            accountingEvents.onSaveFailed('uom', 'create', error);
         } finally {
             setSubmitting(false);
         }
@@ -109,12 +114,14 @@ const UnitMaster: React.FC = () => {
                 { headers }
             );
             toast.success('UOM updated successfully');
+            accountingEvents.onRecordUpdated('uom', editId);
             setEditOpen(false);
             setForm(emptyForm);
             setEditId(null);
             fetchUoms();
-        } catch {
+        } catch (error) {
             toast.error('Failed to update UOM');
+            accountingEvents.onSaveFailed('uom', 'update', error, { record_id: editId });
         } finally {
             setSubmitting(false);
         }
@@ -134,11 +141,13 @@ const UnitMaster: React.FC = () => {
                 { headers }
             );
             toast.success('UOM deleted successfully');
+            accountingEvents.onRecordDeleted('uom', selectedDeleteUom.id);
             setDeleteDialogOpen(false);
             setSelectedDeleteUom(null);
             fetchUoms();
-        } catch {
+        } catch (error) {
             toast.error('Failed to delete UOM');
+            accountingEvents.onSaveFailed('uom', 'delete', error, { record_id: selectedDeleteUom.id });
         } finally {
             setDeleteLoading(false);
         }
@@ -158,9 +167,11 @@ const UnitMaster: React.FC = () => {
                 { headers }
             );
             toast.success('Status updated successfully');
+            accountingEvents.onActionPerformed('uom', 'status_change', uom.id, { active: !uom.active });
             fetchUoms();
-        } catch {
+        } catch (error) {
             toast.error('Failed to update status');
+            accountingEvents.onSaveFailed('uom', 'action', error, { action: 'status_change', record_id: uom.id });
         }
     };
 

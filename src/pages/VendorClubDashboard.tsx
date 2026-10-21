@@ -9,6 +9,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 interface Vendor {
   id: number;
   company_name: string;
@@ -45,6 +46,8 @@ export const VendorClubDashboard = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const reportListLoaded = useAccountingListViewed('vendor');
+  useAccountingSearchTracking('vendor', searchTerm);
 
   const fetchVendors = useCallback(async (page: number, search: string) => {
     setLoading(true);
@@ -54,6 +57,7 @@ export const VendorClubDashboard = () => {
       const data = await vendorService.getVendors(page, search);
       if (data && data.pms_suppliers) {
         setVendors(data.pms_suppliers);
+        reportListLoaded(data.pms_suppliers.length, data.pagination?.total_count);
         if (data.pagination) {
           setCurrentPage(data.pagination.current_page);
           setTotalPages(data.pagination.total_pages);
@@ -65,6 +69,7 @@ export const VendorClubDashboard = () => {
         }
       } else {
         setVendors([]);
+        reportListLoaded(0, 0);
         setTotalPages(1);
         setTotalCount(0);
       }
@@ -148,6 +153,7 @@ export const VendorClubDashboard = () => {
       // Check for different possible success indicators
       if (result.success === true || result.status === 'success' || response.status === 200) {
         toast.success(result.message || 'Suppliers imported successfully!');
+        accountingEvents.onActionPerformed('vendor', 'import', null);
         // Refresh the vendor list to show imported data
         fetchVendors(currentPage, searchTerm);
         setShowImportModal(false);
@@ -158,6 +164,8 @@ export const VendorClubDashboard = () => {
     } catch (error) {
       toast.dismiss('import-loading');
       console.error('Import error:', error);
+      accountingEvents.onSaveFailed('vendor', 'import', error);
+
       toast.error('Failed to import suppliers. Please try again.');
     } finally {
       setIsImporting(false);
@@ -299,8 +307,9 @@ export const VendorClubDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button
+        size="sm"
         onClick={() => setShowActionPanel((prev) => !prev)}
-        className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
@@ -421,7 +430,7 @@ export const VendorClubDashboard = () => {
               </p>
               <p className="text-xs text-gray-500">Supports: CSV, Excel (.xlsx, .xls)</p>
               {selectedFile && (
-                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="mt-4 p-3 bg-[#f5f4f0] border border-[rgba(26,26,24,0.09)] rounded-lg">
                   <p className="text-sm font-medium text-brand">Selected file:</p>
                   <p className="text-xs text-brand">{selectedFile.name}</p>
                 </div>

@@ -4,6 +4,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface IFFRow {
   id: string;
@@ -69,6 +70,7 @@ const initialRows: IFFRow[] = [
 ];
 
 const InvoiceFurnishingFacilityIFF: React.FC = () => {
+  useAccountingReportViewed("invoice_furnishing_facility_iff");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows] = useState<IFFRow[]>(initialRows);
@@ -82,6 +84,10 @@ const InvoiceFurnishingFacilityIFF: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("invoice_furnishing_facility_iff", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     return;
   };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { API_CONFIG } from "@/config/apiConfig";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,7 @@ interface LedgerDetail {
 const OpeningBalanceDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const reportRecordLoaded = useAccountingRecordViewed("opening_balance");
     const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [ledger, setLedger] = useState<LedgerDetail | null>(null);
@@ -52,6 +54,7 @@ const OpeningBalanceDetail = () => {
                     },
                 });
                 setLedger(res.data);
+                reportRecordLoaded(id, res.data?.status ?? null);
             } catch (err) {
                 console.error("Error fetching ledger detail:", err);
             } finally {

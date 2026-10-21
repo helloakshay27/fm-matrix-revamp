@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X } from "lucide-react";
 import axios from "axios";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 
 const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null }) => {
@@ -155,10 +156,12 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                     },
                 }
             );
+            accountingEvents.onRecordCreated('chart_of_account', null, { kind: 'account' });
             toast.success('Account created successfully');
             onOpenChange(false); // Only close modal, do not navigate
         } catch (e) {
             toast.error('Failed to create account');
+            accountingEvents.onSaveFailed('chart_of_account', 'create', e);
         } finally {
             setIsSubmitting(false);
         }

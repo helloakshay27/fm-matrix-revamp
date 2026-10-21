@@ -1875,9 +1875,23 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
-const ViAuditListPage = lazy(() => import("./pages/ViAuditListPage"));
-const ViAuditAddPage = lazy(() => import("./pages/ViAuditAddPage"));
-const ViAuditDetailPage = lazy(() => import("./pages/ViAuditDetailPage"));
+// Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
+const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
+const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
+const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
+const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
+const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
+const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
+const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
+const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
+const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
+const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
+const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
+const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
+const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
+const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
+const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -3854,6 +3868,9 @@ const TransportSuppliersPage = lazy(
 const TransportSupplierDetailsPage = lazy(
   () => import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
 );
+const VisitorAppConfiguration = lazy(
+  () => import("./features/visitor-app-configuration/pages/VisitorAppConfiguration")
+);
 const GateIntegrationPage = lazy(
   () => import("./features/gate-integration/pages/GateIntegration")
 );
@@ -4561,6 +4578,13 @@ function App() {
     location.pathname.startsWith("/holiday-calendar") ||
     location.pathname.includes("space-management/setup")
   );
+  // Same check Layout uses to render ClubSidebar — every Club Management / Settings
+  // module under that sidebar gets the settings-style toast.
+  const isClubSidebarRoute =
+    hostname === "club.lockated.com" ||
+    // hostname === "recess-club.panchshil.com" ||
+    location.pathname.startsWith("/club-management");
+  const showSettingsToast = isSettingsRoute || isClubSidebarRoute;
 
   const { manager: webSocketManager, connect } = useWebSocket();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
@@ -8666,6 +8690,10 @@ function App() {
                               element={<EditVisitorGatePage />}
                             />
                             <Route
+                              path="/settings/visitor-management/app-configuration"
+                              element={<VisitorAppConfiguration />}
+                            />
+                            <Route
                               path="/settings/visitor-management/support-staff"
                               element={<SupportStaffPage />}
                             />
@@ -9070,15 +9098,67 @@ function App() {
                             />
                             <Route
                               path="/safety/audit-list"
-                              element={<ViAuditListPage />}
+                              element={<AuditorAuditListPage />}
                             />
                             <Route
                               path="/safety/audit-list/add"
-                              element={<ViAuditAddPage />}
+                              element={<AuditorAddAuditPage />}
                             />
                             <Route
                               path="/safety/audit-list/:id"
-                              element={<ViAuditDetailPage />}
+                              element={<AuditorAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId"
+                              element={<AuditorObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc"
+                              element={<SpocAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id"
+                              element={<SpocAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId"
+                              element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
+                              element={<SpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner"
+                              element={<ActionOwnerAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id"
+                              element={<ActionOwnerAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId"
+                              element={<ActionOwnerObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId"
+                              element={<ActionOwnerActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId/action-taken"
+                              element={<ActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head"
+                              element={<FunctionalHeadAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id"
+                              element={<FunctionalHeadAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId"
+                              element={<FunctionalHeadObservationDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
@@ -10638,14 +10718,14 @@ function App() {
                       </Suspense>
                       <Toaster />
                       <SonnerToaster
-                        position={isSettingsRoute ? "bottom-center" : "top-right"}
+                        position={showSettingsToast ? "bottom-center" : "top-right"}
                         richColors
                         closeButton
-                        className={isSettingsRoute ? "toaster group settings-toaster" : "toaster group"}
+                        className={showSettingsToast ? "toaster group settings-toaster" : "toaster group"}
                         toastOptions={{
                           duration: 4000,
-                          className: isSettingsRoute ? "settings-toast" : undefined,
-                          style: isSettingsRoute
+                          className: showSettingsToast ? "settings-toast" : undefined,
+                          style: showSettingsToast
                             ? {
                                 background: "#1a1a18",
                                 border: "1px solid rgba(255, 255, 255, 0.12)",

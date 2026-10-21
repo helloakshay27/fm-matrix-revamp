@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ReceivableDetailsRow {
   id: string;
@@ -78,6 +79,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const ReceivableDetailsReport: React.FC = () => {
+  useAccountingReportViewed("receivable_details");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<ReceivableDetailsRow[]>([]);
@@ -255,7 +257,7 @@ const ReceivableDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("receivable_details", { from_date: filters.fromDate, to_date: filters.toDate }); fetchData(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

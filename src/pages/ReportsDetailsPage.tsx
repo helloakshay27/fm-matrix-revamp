@@ -769,7 +769,7 @@ const ReportsDetailsPage = () => {
                                                 <span className="text-sm font-medium">0</span>
                                             </button> */}
                                         </div>
-                                        <Button variant="ghost" size="sm" className="border border-[#c72030] rounded-[5px] text-[#c72030]" onClick={() => deleteComment(reportDetails.comment.id)}>
+                                        <Button variant="outline" size="sm" onClick={() => deleteComment(reportDetails.comment.id)}>
                                             <Trash2 size={18} color="#c72030" /> Delete
                                         </Button>
                                     </div>
@@ -922,9 +922,9 @@ const ReportsDetailsPage = () => {
                             />
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-2">
-                            <Button
-                                variant="outline"
+                        <div className="fm-action-bar pt-2">
+                            <button
+                                type="button"
                                 onClick={() => {
                                     setCreatePostOpen(false);
                                     setPostContent("");
@@ -933,16 +933,17 @@ const ReportsDetailsPage = () => {
                                     setEditingPost(null);
                                     setExistingAttachments([]);
                                 }}
-                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                                className="fm-action-secondary"
                             >
                                 Cancel
-                            </Button>
-                            <Button
-                                className="!bg-[#c72030] !hover:bg-[#b01d2a] !text-white rounded-[8px]"
+                            </button>
+                            <button
+                                type="button"
+                                className="fm-action-primary"
                                 onClick={handleCreatePost}
                             >
                                 {isEditMode ? 'Update Post' : 'Publish Post'}
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </DialogContent>
@@ -1098,25 +1099,26 @@ const ReportsDetailsPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-2">
-                            <Button
-                                variant="outline"
+                        <div className="fm-action-bar pt-2">
+                            <button
+                                type="button"
                                 onClick={() => {
                                     setCreatePollOpen(false);
                                     setPostContent("");
                                     setSelectedFiles([]);
                                     setPollOptions(['', '']);
                                 }}
-                                className="border-[#E5E5E5] text-gray-700 hover:bg-gray-50 rounded-[8px]"
+                                className="fm-action-secondary"
                             >
                                 Cancel
-                            </Button>
-                            <Button
-                                className="bg-[#c72030] hover:bg-[#b01d2a] text-white rounded-[8px]"
+                            </button>
+                            <button
+                                type="button"
+                                className="fm-action-primary"
                                 onClick={handleCreatePoll}
                             >
                                 Publish Poll
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </DialogContent>
@@ -1131,16 +1133,18 @@ const ReportsDetailsPage = () => {
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
                             Are you sure you want to Delete<br />this {deleteConfirmation.type === 'post' ? 'Community Post' : 'Comment'} ?
                         </h2>
-                        <div className="flex mt-auto">
+                        <div className="fm-action-bar mt-auto px-6 pb-6">
                             <button
+                                type="button"
                                 onClick={() => setDeleteConfirmation({ open: false, type: null, id: null })}
-                                className="flex-1 px-3 py-4 bg-[#E7E3D9] text-[#6C6C6C] font-semibold text-[14px] transition-colors"
+                                className="fm-action-secondary"
                             >
                                 No
                             </button>
                             <button
+                                type="button"
                                 onClick={confirmDelete}
-                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors"
+                                className="inline-flex items-center justify-center h-[42px] px-[22px] rounded-lg bg-[#C72030] !text-white font-semibold text-[13px] hover:bg-[#A01020] transition-colors"
                             >
                                 Yes
                             </button>

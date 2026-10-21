@@ -48,6 +48,7 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
+import { accountingEvents, useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import {
     Accordion,
     AccordionItem,
@@ -217,6 +218,7 @@ const mockSalesOrder = {
 
 export const SalesOrderDetailPage = () => {
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("sales_order");
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -243,6 +245,7 @@ export const SalesOrderDetailPage = () => {
                 headers: { Authorization: token ? `Bearer ${token}` : undefined },
             });
             setSalesOrder(response.data);
+            reportRecordLoaded(id, response.data?.status ?? null);
         } catch (error) {
             sonnerToast.error("Failed to fetch sales order details");
         } finally {
@@ -316,12 +319,15 @@ export const SalesOrderDetailPage = () => {
                     ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
                     : message || "Failed to update status";
                 sonnerToast.error(msg);
+                accountingEvents.onSaveFailed("sales_order", "action", msg, { action: "status_change", record_id: id });
                 return;
             }
+            accountingEvents.onActionPerformed("sales_order", "status_change", id, { status });
             sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
             fetchSalesOrder();
         } catch (error) {
             sonnerToast.error("Failed to update status");
+            accountingEvents.onSaveFailed("sales_order", "action", error, { action: "status_change", record_id: id });
         } finally {
             setActionLoading(false);
         }
@@ -335,10 +341,12 @@ export const SalesOrderDetailPage = () => {
                 { status, comment: "" },
                 { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
             );
+            accountingEvents.onActionPerformed("sales_order", status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", id, { status });
             sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
             fetchSalesOrder();
         } catch (error) {
             sonnerToast.error("Failed to update approval status");
+            accountingEvents.onSaveFailed("sales_order", "action", error, { action: status === "approved" ? "approve" : status === "rejected" ? "reject" : "approval_status_change", record_id: id });
         } finally {
             setActionLoading(false);
         }

@@ -503,14 +503,14 @@ export const ExecutiveEscalationTab: React.FC = () => {
           ))}
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-6">
-            <Button
+          <div className="fm-action-bar pt-4 sm:pt-6">
+            <button
               onClick={handleSubmit}
               disabled={isSubmitting || loadingUsers || hasExecutive}
-              className="bg-brand hover:bg-brand-hover text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="fm-action-primary"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -682,15 +682,16 @@ export const ExecutiveEscalationTab: React.FC = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="flex justify-end gap-3 mt-4">
-                        <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
-                        <Button
+                      <div className="fm-action-bar mt-4">
+                        <button type="button" onClick={cancelEdit} className="fm-action-secondary">Cancel</button>
+                        <button
+                          type="button"
                           onClick={() => updateExecutiveEscalation(ruleGroup)}
                           disabled={updateLoading}
-                          className="bg-brand hover:bg-brand-hover text-white"
+                          className="fm-action-primary"
                         >
                           {updateLoading ? 'Saving...' : 'Save Changes'}
-                        </Button>
+                        </button>
                       </div>
                     </DialogContent>
                   </Dialog>

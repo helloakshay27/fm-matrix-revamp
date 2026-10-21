@@ -4,6 +4,7 @@ import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SystemMailRow {
   id: string;
@@ -76,6 +77,7 @@ const MOCK_ROWS: SystemMailRow[] = [
 ];
 
 const SystemMails: React.FC = () => {
+  useAccountingReportViewed("system_mails");
   const today = new Date();
   const defaultTo = today.toISOString().slice(0, 10);
   const defaultFrom = new Date(
@@ -154,12 +156,13 @@ const SystemMails: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
+              accountingEvents.onReportGenerated("system_mails", { from_date: filters.fromDate, to_date: filters.toDate });
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+            }}
           >
             View
           </Button>

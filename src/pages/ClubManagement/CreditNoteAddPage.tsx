@@ -41,6 +41,7 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -269,6 +270,7 @@ export const CreditNoteAddPage: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    useAccountingFormOpened('credit_note', 'create');
 
     useEffect(() => {
         document.title = 'New Bill';
@@ -1304,10 +1306,16 @@ export const CreditNoteAddPage: React.FC = () => {
             });
 
             toast.success(saveAsDraft ? 'Credit note saved as draft!' : 'Credit note saved as open!');
+            accountingEvents.onRecordCreated('credit_note', null, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'open',
+            });
             navigate('/accounting/credit-note');
         } catch (error) {
             console.error('Error submitting credit note:', error);
             toast.error('Failed to create credit note.');
+            accountingEvents.onSaveFailed('credit_note', 'create', error);
         } finally {
             setIsSubmitting(false);
         }

@@ -13,6 +13,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import { API_CONFIG } from '@/config/apiConfig';
 import axios from 'axios';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -105,6 +106,7 @@ const TaxSetup: React.FC = () => {
   const [form, setForm] = useState<GstForm>(defaultForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  useAccountingFormOpened('tax_setup', 'edit');
    const lock_account_id = localStorage.getItem("lock_account_id");
 
   // ── Fetch existing GST settings on mount ──────────────────────────────────
@@ -215,6 +217,7 @@ const TaxSetup: React.FC = () => {
         },
       });
       toast.success("GST settings saved successfully!");
+      accountingEvents.onRecordUpdated('tax_setup', null, { setting: 'gst' });
     } catch (error: any) {
       console.error("Error saving GST settings:", error);
       const message =
@@ -222,6 +225,7 @@ const TaxSetup: React.FC = () => {
         error?.response?.data?.error ||
         "Failed to save GST settings.";
       toast.error(message);
+      accountingEvents.onSaveFailed('tax_setup', 'update', error);
     } finally {
       setSaving(false);
     }

@@ -1,8 +1,10 @@
 import React from "react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 export default function DebtorsCreditorsReport() {
+    useAccountingReportViewed("debtors_creditors");
     const [debtors, setDebtors] = useState([]);
     const [creditors, setCreditors] = useState([]);
     const [loading, setLoading] = useState(false);

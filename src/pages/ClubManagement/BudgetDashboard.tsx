@@ -29,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -144,6 +145,8 @@ export const BudgetDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed('budget');
+  useAccountingSearchTracking('budget', searchQuery);
 
   // Fetch memberships data
   const fetchMemberships = useCallback(async (page: number = 1) => {
@@ -210,6 +213,7 @@ export const BudgetDashboard = () => {
 
       if (Array.isArray(data.club_member_allocations)) {
         setMemberships(data.club_member_allocations);
+        reportListLoaded(data.club_member_allocations.length, data.pagination?.total_count);
         setTotalMembers(data.pagination?.total_count || 0);
         setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
       } else {
@@ -361,6 +365,7 @@ export const BudgetDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('budget', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

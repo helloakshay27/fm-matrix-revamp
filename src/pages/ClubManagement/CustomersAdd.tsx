@@ -14,6 +14,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
@@ -471,9 +472,11 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         )
             .then(res => {
                 // Optionally handle success
+                accountingEvents.onRecordUpdated('payment_term', null, { item_count: paymentTermsPayload.length });
             })
             .catch(err => {
                 alert('Failed to save payment terms');
+                accountingEvents.onSaveFailed('payment_term', 'update', err);
             });
 
         // Refresh payment terms list after save
@@ -496,8 +499,10 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     }
                 }
             );
+            accountingEvents.onActionPerformed('payment_term', 'deactivate', id);
         } catch (err) {
             alert('Failed to deactivate payment term');
+            accountingEvents.onSaveFailed('payment_term', 'action', err, { action: 'deactivate', record_id: id });
         }
         setEditTerms(terms => terms.filter((_, i) => i !== idx));
         fetchPaymentTerms();
@@ -1283,6 +1288,7 @@ const CustomersAdd = () => {
     //     fetchPaymentTerms();
     // }, [fetchPaymentTerms]);
     const navigate = useNavigate();
+    useAccountingFormOpened("customer", "create");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
@@ -1698,10 +1704,12 @@ const CustomersAdd = () => {
         )
             .then(res => {
                 toast.success("Customer saved successfully!");
+                accountingEvents.onRecordCreated("customer", res.data?.id ?? res.data?.lock_account_customer?.id);
                 navigate("/accounting/customers");
             })
             .catch(err => {
                 toast.error("Failed to save customer");
+                accountingEvents.onSaveFailed("customer", "create", err);
                 console.error("Customer save error:", err);
             })
             .finally(() => {

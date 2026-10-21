@@ -6,6 +6,7 @@ import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface PurchaseOrderApi {
   id: number;
@@ -117,6 +118,7 @@ const PurchaseOrderDetailsReport: React.FC = () => {
   const navigate = useNavigate();
   const [rows, setRows] = useState<PurchaseOrderRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("purchase_order_details");
 
   const defaultDateRange = useMemo(() => {
     const today = new Date();
@@ -294,7 +296,10 @@ const PurchaseOrderDetailsReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchPurchaseOrderDetails(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("purchase_order_details", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchPurchaseOrderDetails(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

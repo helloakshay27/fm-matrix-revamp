@@ -247,6 +247,7 @@ import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface GSTR7Row {
   id: string;
@@ -289,6 +290,7 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const GSTR7Report: React.FC = () => {
+  useAccountingReportViewed("gstr_7");
   const defaultDateRange = useMemo(() => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -486,7 +488,13 @@ const GSTR7Report: React.FC = () => {
           />
 
           <Button
-            onClick={handleView}
+            onClick={() => {
+              accountingEvents.onReportGenerated("gstr_7", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+              handleView();
+            }}
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View

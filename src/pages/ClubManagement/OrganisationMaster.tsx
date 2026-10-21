@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, MapPin, Upload } from 'lucide-react';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 interface Country {
     id: number;
@@ -67,6 +68,7 @@ export const OrganisationMaster: React.FC = () => {
     const [poweredByLogoName, setPoweredByLogoName] = useState<string>('No file chosen');
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    useAccountingFormOpened('organisation', 'edit');
 
     const poweredByLogoRef = useRef<HTMLInputElement>(null);
 
@@ -211,8 +213,10 @@ export const OrganisationMaster: React.FC = () => {
             await axios.put(url, formData, { headers: { Authorization: `Bearer ${token}` } });
 
             toast.success('Organisation updated successfully');
-        } catch {
+            accountingEvents.onRecordUpdated('organisation', organisation_id || orgId);
+        } catch (error) {
             toast.error('Failed to update organisation');
+            accountingEvents.onSaveFailed('organisation', 'update', error, { record_id: organisation_id || orgId });
         } finally {
             setLoading(false);
         }

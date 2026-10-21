@@ -13,11 +13,13 @@ import Delete from '@mui/icons-material/Delete';
 // import InputLabel from '@mui/material/InputLabel';
 import { Button } from '@/components/ui/button';
 import { TextField, Select, MenuItem, FormControl, FormControlLabel, Checkbox, Box, Typography, IconButton, Card, CardMedia, InputLabel } from '@mui/material';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
 
 
 const RecurringJournalAdd = () => {
+    useAccountingFormOpened('recurring_journal', 'create');
     const [date, setDate] = useState('');
     const [journalNo, setJournalNo] = useState('');
     const [reference, setReference] = useState('');

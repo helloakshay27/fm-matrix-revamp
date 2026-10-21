@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import InputLabel from '@mui/material/InputLabel';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { useParams, useNavigate } from 'react-router-dom';
 
 
@@ -44,6 +45,7 @@ const TransactionsEdit = () => {
     const [transactionType, setTransactionType] = useState('');
     const [accountOptions, setAccountOptions] = useState([]);
     const { id } = useParams();
+    useAccountingFormOpened('transaction', 'edit', id);
     const [loading, setLoading] = useState(false);
 
 
@@ -360,10 +362,12 @@ const TransactionsEdit = () => {
                         });
                         console.log('UPDATE RESPONSE', response.data);
                         toast.success('Transaction updated successfully');
+                        accountingEvents.onRecordUpdated('transaction', id, { item_count: rows.length });
                         navigate('/accounting/transactions');
                 } catch (error) {
                         console.error('Update Error', error);
                         toast.error('Failed to update transaction');
+                        accountingEvents.onSaveFailed('transaction', 'update', error, { record_id: id });
                 } finally {
                         setLoading(false);
                 }

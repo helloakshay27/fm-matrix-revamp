@@ -5,6 +5,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface LockPaymentAPI {
   id: number;
@@ -111,6 +112,7 @@ const PaymentsMadeReport: React.FC = () => {
 });
   const [rows, setRows] = useState<PaymentMadeRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("payments_made");
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -273,7 +275,10 @@ const PaymentsMadeReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchPaymentsMade(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("payments_made", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchPaymentsMade(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

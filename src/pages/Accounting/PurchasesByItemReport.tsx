@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface PurchasesByItemRow {
   id: string;
@@ -82,6 +83,7 @@ const PurchasesByItemReport: React.FC = () => {
 });
   const [rows, setRows] = useState<PurchasesByItemRow[]>([]);
   const [loading, setLoading] = useState(false);
+  useAccountingReportViewed("purchases_by_item");
 
   // Detail view state
   const [detailItem, setDetailItem] = useState<{ id: string; name: string; vendors: VendorDetailRow[] } | null>(null);
@@ -364,7 +366,10 @@ const PurchasesByItemReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+            onClick={() => {
+              accountingEvents.onReportGenerated("purchases_by_item", { from_date: filters.fromDate || null, to_date: filters.toDate || null });
+              fetchData(filters.fromDate, filters.toDate);
+            }}
           >
             View
           </Button>

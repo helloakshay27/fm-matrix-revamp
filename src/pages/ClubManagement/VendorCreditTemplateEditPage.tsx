@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const VendorCreditTemplateEditPage: React.FC = () => (
+export const VendorCreditTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="vendor_credit"
     moduleLabel="Vendor Credit"
@@ -10,6 +13,7 @@ export const VendorCreditTemplateEditPage: React.FC = () => (
     backRoute="/accounting/vendor-credits"
     detailsRoutePrefix="/accounting/vendor-credits/details"
   />
-);
+  );
+};
 
 export default VendorCreditTemplateEditPage;

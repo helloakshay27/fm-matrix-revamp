@@ -5,6 +5,7 @@ import { ArrowLeft, FileCog } from "lucide-react";
 import { ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import {
     FileText,
@@ -33,6 +34,7 @@ const formatDate = (value: string | null | undefined) => {
 export const ItemsDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("item");
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -96,6 +98,7 @@ export const ItemsDetails = () => {
 
                 const data = response.data || {};
                 setItemData(data); // IMPORTANT
+                reportRecordLoaded(id, data.status ?? null);
 
                 setItemName(data.name || "");
                 setItemIconUrl(

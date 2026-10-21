@@ -5,6 +5,7 @@ import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
@@ -116,6 +117,7 @@ interface ManualJournalTransaction {
 export const TransactionsDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("transaction");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
      const lock_account_id = localStorage.getItem("lock_account_id");
@@ -167,6 +169,7 @@ export const TransactionsDetails = () => {
             })
 
             const data = response.data;
+            reportRecordLoaded(id, data.status ?? null);
             setFormData({
                 date: data.transaction_date
   ? data.transaction_date.split("-").reverse().join("-")

@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X } from "lucide-react";
 import axios from "axios";
 import { accountingToast as toast } from "@/lib/accountingToast";
+import { accountingEvents } from "@/components/PostHogAccountingEvents";
 import "@/styles/accounting.css";
 import { useNavigate } from 'react-router-dom';
 
@@ -121,10 +122,12 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                     },
                 }
             );
+            accountingEvents.onRecordCreated('chart_of_account', null, { kind: 'group' });
             toast.success('Group created successfully');
             onOpenChange(false); // Only close modal, do not navigate
         } catch (e) {
             toast.error('Failed to create group');
+            accountingEvents.onSaveFailed('chart_of_account', 'create', e);
         } finally {
             setIsSubmitting(false);
         }

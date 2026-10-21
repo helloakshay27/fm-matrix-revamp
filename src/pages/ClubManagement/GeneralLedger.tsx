@@ -4,6 +4,7 @@ import { ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 export interface GeneralLedgerRow {
   id: string;
@@ -610,6 +611,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const GeneralLedger: React.FC = () => {
+  useAccountingReportViewed("general_ledger");
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows] = useState<GeneralLedgerRow[]>(() => buildDemoRows());
@@ -631,6 +633,10 @@ const GeneralLedger: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("general_ledger", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     // Wire to API; periodLabel / filters reflect selected range
   };
 

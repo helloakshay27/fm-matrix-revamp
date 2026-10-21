@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ExpenseListItem {
   title: string;
@@ -29,6 +30,7 @@ const formatCurrency = (value: string) => {
 
 const AccountTransactionsDetailPage: React.FC = () => {
   const location = useLocation();
+  useAccountingReportViewed("account_transactions_details");
   const query = new URLSearchParams(location.search);
 
   const account = query.get("account") || "Goods cost";

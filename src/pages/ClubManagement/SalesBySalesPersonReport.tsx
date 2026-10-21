@@ -3,6 +3,7 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SalesReport {
   id: number | null;
@@ -19,6 +20,7 @@ interface SalesReport {
 
 const SalesBySalesPersonReport = () => {
   const navigate = useNavigate();
+  useAccountingReportViewed("sales_by_sales_person");
   const [salesData, setSalesData] = useState<SalesReport[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +115,7 @@ const SalesBySalesPersonReport = () => {
       return;
     }
 
+    accountingEvents.onReportGenerated("sales_by_sales_person", { from_date: filters.fromDate, to_date: filters.toDate });
     fetchSalesReport(filters.fromDate, filters.toDate);
   };
 

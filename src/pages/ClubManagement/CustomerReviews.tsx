@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface CustomerReviewRow {
   id: string;
@@ -66,6 +67,7 @@ const columns: ColumnConfig[] = [
 const MOCK_ROWS: CustomerReviewRow[] = [];
 
 const CustomerReviews: React.FC = () => {
+  useAccountingReportViewed("customer_reviews");
   const defaultFrom = "2026-03-01";
   const defaultTo = "2026-03-31";
 
@@ -162,12 +164,16 @@ const CustomerReviews: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+              accountingEvents.onReportGenerated("customer_reviews", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+            }}
           >
             View
           </Button>

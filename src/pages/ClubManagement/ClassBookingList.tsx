@@ -304,7 +304,7 @@ export const ClassBookingList = () => {
             }}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <Button variant="outline" onClick={() => load(1)}>
+          <Button size="sm" variant="outline" className="h-9 px-4 text-sm font-medium" onClick={() => load(1)}>
             Search
           </Button>
         </div>
@@ -329,7 +329,8 @@ export const ClassBookingList = () => {
         onPageChange={setCurrentPage}
         leftActions={
           <Button
-            className="fm-button-fix fm-button-brand px-6"
+            size="sm"
+            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
             onClick={() => navigate("/club-management/class-booking/add")}
           >
             <Plus className="w-4 h-4 mr-2" /> New Booking
@@ -353,7 +354,7 @@ export const ClassBookingList = () => {
               want to delete {deleteTarget?.userName || "this"}'s booking?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="fm-action-bar">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {

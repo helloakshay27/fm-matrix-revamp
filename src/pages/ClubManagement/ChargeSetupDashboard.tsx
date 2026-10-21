@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -145,6 +146,8 @@ export const ChargeSetupDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed('charge_setup');
+  useAccountingSearchTracking('charge_setup', searchQuery);
 
   // Fetch charge setups data
   const [chargeSetups, setChargeSetups] = useState<ChargeSetup[]>([]);
@@ -164,6 +167,7 @@ export const ChargeSetupDashboard = () => {
       if (!res.ok) throw new Error('Failed to fetch charge setups');
       const data = await res.json();
       setChargeSetups(Array.isArray(data.charge_setups) ? data.charge_setups : []);
+      reportListLoaded(Array.isArray(data.charge_setups) ? data.charge_setups.length : 0);
     } catch (err) {
       toast.error('Failed to fetch charge setups');
       setChargeSetups([]);
@@ -302,6 +306,7 @@ export const ChargeSetupDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('charge_setup', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

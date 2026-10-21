@@ -10,7 +10,7 @@ import { AttachmentUpload } from "@/components/common/AttachmentUpload";
 const requiredLabel = (text: string) => (
   <span>
     {text}
-    <span className="fm-required-mark">*</span>
+    <span className="ml-0.5">*</span>
   </span>
 );
 

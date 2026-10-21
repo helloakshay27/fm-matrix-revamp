@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
@@ -101,6 +102,8 @@ export const CustomersDashboard = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteCustomer, setSelectedDeleteCustomer] = useState<CustomerData | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed('customer');
+  useAccountingSearchTracking('customer', searchQuery);
 
   const fetchCustomers = (search = '') => {
     const baseUrl = localStorage.getItem('baseUrl');
@@ -116,6 +119,7 @@ export const CustomersDashboard = () => {
     }).then(res => {
       console.log('Customer List:', res.data);
       setCustomers(res.data || []);
+      reportListLoaded((res.data || []).length);
     }).catch(err => {
       console.error('Error fetching customers:', err);
     });
@@ -256,6 +260,7 @@ export const CustomersDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('customer', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);
@@ -488,6 +493,7 @@ export const CustomersDashboard = () => {
       );
 
       toast.success("Customer deleted successfully");
+      accountingEvents.onRecordDeleted('customer', selectedDeleteCustomer.id);
 
       setDeleteDialogOpen(false);
       setSelectedDeleteCustomer(null);
@@ -497,6 +503,7 @@ export const CustomersDashboard = () => {
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete customer");
+      accountingEvents.onSaveFailed('customer', 'delete', error, { record_id: selectedDeleteCustomer.id });
     } finally {
       setDeleteLoading(false);
     }
@@ -522,6 +529,7 @@ export const CustomersDashboard = () => {
       toast.success(
         response?.data?.message || "Status updated successfully"
       );
+      accountingEvents.onActionPerformed('customer', 'status_change', customer.id);
 
       // Reload latest customers
       fetchCustomers(debouncedSearchQuery);
@@ -529,6 +537,7 @@ export const CustomersDashboard = () => {
     } catch (error) {
       console.error("Toggle status error:", error);
       toast.error("Failed to update status");
+      accountingEvents.onSaveFailed('customer', 'action', error, { action: 'status_change', record_id: customer.id });
       // Revert on error
       fetchCustomers(debouncedSearchQuery);
     }

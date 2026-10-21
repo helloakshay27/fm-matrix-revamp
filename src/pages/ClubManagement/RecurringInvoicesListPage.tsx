@@ -9,6 +9,7 @@ import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import axios from "axios";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -158,6 +159,8 @@ export const RecurringInvoicesListPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed("recurring_invoice");
+  useAccountingSearchTracking("recurring_invoice", debouncedSearchQuery);
 
   // Fetch sales order data from API
   // const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
@@ -303,6 +306,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
       console.log("API Response:", data);
       // Assume API returns { data: SalesOrder[], pagination: {...} }
       setSalesOrderData(Array.isArray(data) ? data : []);
+      reportListLoaded((Array.isArray(data) ? data : []).length, data?.pagination?.total_count);
       setPagination(
         data.pagination || {
           current_page: page,
@@ -505,6 +509,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
           }
         }
       );
+      accountingEvents.onRecordDeleted("recurring_invoice", selectedDeleteId);
       toast.success("Recurring invoice deleted successfully!", {
         duration: 3000,
       });
@@ -519,6 +524,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete recurring invoice");
+      accountingEvents.onSaveFailed("recurring_invoice", "delete", error, { record_id: selectedDeleteId });
     } finally {
       setDeleteLoading(false);
     }
@@ -541,11 +547,13 @@ export const RecurringInvoicesListPage: React.FC = () => {
         }
       );
 
+      accountingEvents.onActionPerformed("recurring_invoice", "toggle_active", order.id);
       toast.success(response?.data?.message || "Status updated successfully");
       fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     } catch (error) {
       console.error("Toggle status error:", error);
       toast.error("Failed to update status");
+      accountingEvents.onSaveFailed("recurring_invoice", "action", error, { action: "toggle_active", record_id: order.id });
     }
   };
 

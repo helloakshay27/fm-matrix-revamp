@@ -5,6 +5,7 @@
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 // import { Label } from '@/components/ui/label';
 // import { Textarea } from '@/components/ui/textarea';
+import { RCA_WORD_LIMIT, countWords } from '@/utils/wordLimit';
 // import { X } from 'lucide-react';
 // import ReactSelect from 'react-select';
 // import { apiClient } from '@/utils/apiClient';
@@ -446,6 +447,7 @@ export const EditStatusDialog = ({
   onOpenChange,
   complaintId,
   currentStatusId,
+  currentStatus,
   onSuccess
 }: EditStatusDialogProps) => {
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -460,6 +462,7 @@ export const EditStatusDialog = ({
   const [rcaText, setRcaText] = useState('');
   const [correctiveActionText, setCorrectiveActionText] = useState('');
   const [preventiveActionText, setPreventiveActionText] = useState('');
+  const [rcaSubmitted, setRcaSubmitted] = useState(false);
 
   const orgId = Number(localStorage.getItem('org_id')); // ✅ org_id
   const helpdeskEvents = useHelpdeskEvents();
@@ -474,6 +477,7 @@ export const EditStatusDialog = ({
     setRcaText('');
     setCorrectiveActionText('');
     setPreventiveActionText('');
+    setRcaSubmitted(false);
 
     const fetchAll = async () => {
       try {
@@ -510,6 +514,28 @@ export const EditStatusDialog = ({
     fetchAll();
   }, [open, complaintId, currentStatusId]);
 
+  // Word-limit error shows while typing; mandatory error shows once Apply has been clicked
+  const getRcaFieldError = (label: string, text: string, submitted = rcaSubmitted) => {
+    if (countWords(text) > RCA_WORD_LIMIT) return `${label} cannot exceed ${RCA_WORD_LIMIT} words`;
+    if (submitted && !text.trim()) return `${label} is mandatory when closing the ticket`;
+    return '';
+  };
+
+  const renderRcaFieldFooter = (label: string, text: string) => {
+    const error = getRcaFieldError(label, text);
+    return (
+      <div className="mt-1 flex justify-between gap-2 text-xs">
+        <span className="text-red-500">{error}</span>
+        <span className={countWords(text) > RCA_WORD_LIMIT ? 'shrink-0 text-red-500' : 'shrink-0 text-gray-400'}>
+          {countWords(text)}/{RCA_WORD_LIMIT} words
+        </span>
+      </div>
+    );
+  };
+
+  const rcaTextareaClass = (label: string, text: string) =>
+    `mt-1 min-h-[80px] ${getRcaFieldError(label, text) ? 'border-red-500 focus-visible:ring-red-500' : ''}`;
+
   const handleApply = async () => {
     if (!complaintId || !selectedStatus) {
       toast.error('Please select a status');
@@ -525,17 +551,13 @@ export const EditStatusDialog = ({
 
     // ✅ Mandatory validation ONLY for org_id 63 + closed/complete
     if (isOrg63 && isClosedStatus) {
-      // For org 63, validate text inputs (not selectors)
-      if (!rcaText.trim()) {
-        toast.error('Root Cause Analysis is mandatory when closing the ticket');
-        return;
-      }
-      if (!correctiveActionText.trim()) {
-        toast.error('Corrective Action is mandatory when closing the ticket');
-        return;
-      }
-      if (!preventiveActionText.trim()) {
-        toast.error('Preventive Action is mandatory when closing the ticket');
+      // For org 63, validate text inputs (not selectors) — errors render under each field
+      setRcaSubmitted(true);
+      if (
+        getRcaFieldError('Root Cause Analysis', rcaText, true) ||
+        getRcaFieldError('Corrective Action', correctiveActionText, true) ||
+        getRcaFieldError('Preventive Action', preventiveActionText, true)
+      ) {
         return;
       }
     }
@@ -586,12 +608,17 @@ export const EditStatusDialog = ({
       // PostHog — Ticket Status Changed, fired only after the status-update API succeeds,
       // using the established business-lifecycle helper. Route-aware: flows originating from
       // the Club Management helpdesk report CM-01/P-238, FM flows stay FM-01/P-223.
-      const toStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
-      helpdeskEvents.onTicketStatusChanged(complaintId, {
-        from_status: currentStatus ?? null,
-        to_status: toStatusObj?.name ?? null,
-        changed_by_role: localStorage.getItem('role') || null,
-      });
+      // Analytics must never turn a saved update into a "Failed to update status" toast.
+      try {
+        const toStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
+        helpdeskEvents.onTicketStatusChanged(complaintId, {
+          from_status: currentStatus ?? null,
+          to_status: toStatusObj?.name ?? null,
+          changed_by_role: localStorage.getItem('role') || null,
+        });
+      } catch (analyticsError) {
+        console.error('Ticket status analytics failed', analyticsError);
+      }
     } catch {
       toast.error('Failed to update status');
     } finally {
@@ -669,8 +696,9 @@ export const EditStatusDialog = ({
                   value={rcaText}
                   onChange={(e) => setRcaText(e.target.value)}
                   placeholder="Enter Root Cause Analysis"
-                  className="mt-1 min-h-[80px]"
+                  className={rcaTextareaClass('Root Cause Analysis', rcaText)}
                 />
+                {renderRcaFieldFooter('Root Cause Analysis', rcaText)}
               </div>
 
               <div>
@@ -679,8 +707,9 @@ export const EditStatusDialog = ({
                   value={correctiveActionText}
                   onChange={(e) => setCorrectiveActionText(e.target.value)}
                   placeholder="Enter Corrective Action"
-                  className="mt-1 min-h-[80px]"
+                  className={rcaTextareaClass('Corrective Action', correctiveActionText)}
                 />
+                {renderRcaFieldFooter('Corrective Action', correctiveActionText)}
               </div>
 
               <div>
@@ -689,8 +718,9 @@ export const EditStatusDialog = ({
                   value={preventiveActionText}
                   onChange={(e) => setPreventiveActionText(e.target.value)}
                   placeholder="Enter Preventive Action"
-                  className="mt-1 min-h-[80px]"
+                  className={rcaTextareaClass('Preventive Action', preventiveActionText)}
                 />
+                {renderRcaFieldFooter('Preventive Action', preventiveActionText)}
               </div>
             </>
           )}

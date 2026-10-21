@@ -11,6 +11,7 @@ import DialogActions from "@mui/material/DialogActions";
 import CheckIcon from "@mui/icons-material/Check";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 
 /* ===================== MOCK TREE DATA (API READY) ===================== */
 
@@ -139,6 +140,7 @@ const AccountTree = ({
 /* ===================== MAIN COMPONENT ===================== */
 
 const BudgetAddNew: React.FC = () => {
+    useAccountingFormOpened("budget", "create");
     const [form, setForm] = useState({
         name: "",
         financialYear: "",

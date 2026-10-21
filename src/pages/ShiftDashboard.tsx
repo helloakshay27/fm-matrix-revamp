@@ -443,10 +443,11 @@ export const ShiftDashboard = () => {
             leftActions={
               shouldShow("Shift","create") &&(
               <Button 
-                onClick={handleAdd} 
-                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                size="sm"
+                className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+                onClick={handleAdd}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
               )

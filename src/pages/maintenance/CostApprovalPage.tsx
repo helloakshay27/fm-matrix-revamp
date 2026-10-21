@@ -500,14 +500,14 @@ export const CostApprovalPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-center gap-4">
-              <Button 
-                type="submit" 
-                className="px-8 bg-[#C72030] hover:bg-[#C72030]/90"
+            <div className="fm-action-bar pt-4 sm:pt-6">
+              <button
+                type="submit"
+                className="fm-action-primary"
                 disabled={createLoading}
               >
                 {createLoading ? 'Creating...' : 'Submit'}
-              </Button>
+              </button>
               {/* <Button 
                 type="button" 
                 variant="outline"
@@ -591,17 +591,16 @@ export const CostApprovalPage: React.FC = () => {
                       </MuiFormControl>
                     </div>
                     <Button 
-                      variant="ghost"
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="h-9 px-4"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="ghost" 
+                      variant="outline"
                       size="sm" 
-                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
+                      className="h-9 px-4"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -646,8 +645,8 @@ export const CostApprovalPage: React.FC = () => {
                                       Are you sure you want to delete this cost approval rule for {getCostRangeDisplay(rule)}? This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+                                  <AlertDialogFooter className="fm-action-bar">
+                                    <AlertDialogCancel className="fm-action-secondary">Cancel</AlertDialogCancel>
                                     <AlertDialogAction 
                                       onClick={() => handleDelete(rule.id)}
                                       className="bg-red-600 hover:bg-red-700"
@@ -747,17 +746,16 @@ export const CostApprovalPage: React.FC = () => {
                       </MuiFormControl>
                     </div>
                     <Button 
-                      variant="ghost"
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="h-9 px-4"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="ghost" 
+                      variant="outline"
                       size="sm" 
-                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
+                      className="h-9 px-4"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -802,8 +800,8 @@ export const CostApprovalPage: React.FC = () => {
                                       Are you sure you want to delete this cost approval rule for {getCostRangeDisplay(rule)}? This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+                                  <AlertDialogFooter className="fm-action-bar">
+                                    <AlertDialogCancel className="fm-action-secondary">Cancel</AlertDialogCancel>
                                     <AlertDialogAction 
                                       onClick={() => handleDelete(rule.id)}
                                       className="bg-red-600 hover:bg-red-700"
