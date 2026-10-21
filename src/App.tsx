@@ -4410,7 +4410,6 @@ const WebSocketNotificationInitializer: React.FC<{
   const navigate = useNavigate();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
@@ -4419,7 +4418,7 @@ const WebSocketNotificationInitializer: React.FC<{
 
   //   if (token) {
   //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
+  //     connect(socketUrl);
   //   } else {
   //     console.error("❌ No token available for WebSocket connection");
   //   }
@@ -4649,7 +4648,7 @@ function App() {
 
     if (token) {
       console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
+      connect(socketUrl);
     } else {
       console.error("❌ No token available for WebSocket connection");
     }
