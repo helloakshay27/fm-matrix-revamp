@@ -1,3 +1,4 @@
+import { Upload as PulseUploadIcon } from "lucide-react";
 // Pulse-only form: shared module page remains unchanged.
 import { PulseFormSection } from "@/pages/pulse/components/PulseFormSection";
 import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
@@ -638,7 +639,7 @@ export const AddBroadcastPage = () => {
                 </Label>
 
                 {formData.attachment ? (
-                  <div className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                  <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
                     <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                       {formData.attachment.name}
                     </span>
@@ -661,8 +662,9 @@ export const AddBroadcastPage = () => {
                 ) : (
                   <div
                     onClick={triggerFileInput}
-                    className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
                   >
+<PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                     <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                       <TooltipProvider>
                         <Tooltip>
@@ -704,7 +706,7 @@ export const AddBroadcastPage = () => {
                   </Label>
 
                   {formData.coverImage ? (
-                    <div className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                    <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {formData.coverImage.name}
                       </span>
@@ -727,8 +729,9 @@ export const AddBroadcastPage = () => {
                   ) : (
                     <div
                       onClick={triggerCoverImageInput}
-                      className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
                     >
+<PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                       <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                         <TooltipProvider>
                           <Tooltip>

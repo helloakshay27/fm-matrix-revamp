@@ -1,4 +1,5 @@
 import { PulseTicketRoute } from "@/pages/pulse/forms/PulseTicketRoute";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { createRoot } from "react-dom/client";
 import { useEffect, useState, lazy, Suspense } from "react";
 import {
@@ -9767,7 +9768,14 @@ function App() {
                           >
                             <Route
                               path="/pulse/community-modules/banner-list"
-                              element={<BannerListPage />}
+                              element={
+                                <div className="pulse-banners-page">
+                                  <div className="px-6 pt-6">
+                                    <PulsePageHeader title="Banners" />
+                                  </div>
+                                  <BannerListPage />
+                                </div>
+                              }
                             />
                             <Route
                               path="/pulse/community-modules/banner-list/add"
@@ -9841,7 +9849,7 @@ function App() {
 
                             <Route
                               path="/pulse/notices"
-                              element={<BroadcastDashboard />}
+                              element={<div className="pulse-notices-page"><BroadcastDashboard /></div>}
                             />
                             <Route
                               path="/pulse/notices/add"
@@ -10029,6 +10037,10 @@ function App() {
                               element={<EditFacilityBookingPage />}
                             />
                             {/* Plus curated Service Routes */}
+                            <Route
+                              path="/pulse/curated-services"
+                              element={<Navigate to="/pulse/curated-services/service" replace />}
+                            />
                             <Route
                               path="/pulse/curated-services/service"
                               element={<CuratedServiceDashboard />}

@@ -1,3 +1,4 @@
+import { Upload as PulseUploadIcon } from "lucide-react";
 // Pulse-only form: shared module page remains unchanged.
 import { PulseFormSection } from "@/pages/pulse/components/PulseFormSection";
 import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
@@ -1047,7 +1048,7 @@ export const EditEventPage = () => {
                 <div className="flex flex-wrap gap-6">
                   {/* Existing Attachments */}
                   {existingAttachments.map((att) => (
-                    <div key={att.id} className="relative border-2 border-gray-200 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
+                    <div key={att.id} className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         Existing File
                       </span>
@@ -1069,7 +1070,7 @@ export const EditEventPage = () => {
                   {newAttachments.map((attachment, index) => (
                     <div
                       key={index}
-                      className="relative border-2 border-dashed border-gray-400 rounded-full w-full max-w-[200px] h-40 flex items-center justify-center bg-white"
+                      className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center"
                     >
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {attachment.file.name}
@@ -1096,8 +1097,9 @@ export const EditEventPage = () => {
                   {/* Add new attachment box */}
                   <div
                     onClick={triggerFileInput}
-                    className="border-2 border-dashed border-gray-300 rounded-full p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
                   >
+<PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                     <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
                       <TooltipProvider>
                         <Tooltip>
