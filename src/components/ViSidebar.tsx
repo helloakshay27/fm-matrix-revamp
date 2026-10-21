@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
+import { BulkUploadExternalUsersModal } from "./BulkUploadExternalUsersModal";
 import {
   Users,
   Car,
@@ -23,12 +24,16 @@ import {
   Database,
   Mail,
   Upload,
+  ClipboardCheck,
+  UserPlus,
 } from "lucide-react";
 
 interface ModuleItem {
   name: string;
   icon?: any;
   href?: string;
+  /** Opens a modal instead of navigating (handled in ViSidebar). */
+  action?: "bulk-upload-external-users";
   subItems?: ModuleItem[];
   color?: string;
 }
@@ -96,6 +101,17 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
           href: "/safety/m-safe/reportees-reassign",
           color: "text-[#1a1a1a]",
         },
+      ],
+    },
+    {
+      name: "Audit",
+      icon: ClipboardCheck,
+      href: "/safety/audit",
+      subItems: [
+        { name: "Auditor", href: "/safety/audit-list", color: "text-[#1a1a1a]" },
+        { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
+        { name: "Action Owner", href: "/safety/audit/action-owner", color: "text-[#1a1a1a]" },
+        { name: "Functional Head", href: "/safety/audit/functional-head", color: "text-[#1a1a1a]" },
       ],
     },
     {
@@ -287,6 +303,11 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       name: "Vi Users",
       href: "/master/user/vi-users",
     },
+    {
+      icon: UserPlus,
+      name: "Bulk Upload For External User",
+      action: "bulk-upload-external-users",
+    },
   ],
 };
 
@@ -301,6 +322,12 @@ const ViSidebar: React.FC = () => {
     isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [isExternalUsersUploadOpen, setIsExternalUsersUploadOpen] = useState(false);
+
+  // Sidebar items with an `action` open a modal instead of navigating.
+  const runItemAction = (action: ModuleItem["action"]) => {
+    if (action === "bulk-upload-external-users") setIsExternalUsersUploadOpen(true);
+  };
 
   // Helper function to find the deepest navigable sub-item
   const findDeepestNavigableItem = (item: any): string | null => {
@@ -432,7 +459,7 @@ const ViSidebar: React.FC = () => {
     return (
       <div key={item.name} className="w-full">
         <button
-          onClick={() => item.href && handleNavigation(item.href)}
+          onClick={() => (item.action ? runItemAction(item.action) : item.href && handleNavigation(item.href))}
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}
                         ${isActive ? "bg-[#f0e8dc] shadow-inner" : ""}
                     `}
@@ -500,6 +527,10 @@ const ViSidebar: React.FC = () => {
                 <button
                   key={module.name}
                   onClick={() => {
+                    if (module.action) {
+                      runItemAction(module.action);
+                      return;
+                    }
                     if (module.subItems && module.subItems.length > 0) {
                       // Navigate to the deepest navigable sub-item's href if it exists
                       const deepestHref = findDeepestNavigableItem(module);
@@ -537,6 +568,10 @@ const ViSidebar: React.FC = () => {
           )}
         </nav>
       </div>
+      <BulkUploadExternalUsersModal
+        isOpen={isExternalUsersUploadOpen}
+        onClose={() => setIsExternalUsersUploadOpen(false)}
+      />
     </div>
   );
 };

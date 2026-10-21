@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
@@ -296,14 +297,7 @@ export const RideTracking: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-full">
-      {/* Back — heading hata di (list pages pe heading nahi), back navigation same rakha */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-1 text-sm text-gray-600 hover:text-brand transition-colors mb-4"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>Back</span>
-      </button>
+      <PulsePageHeader title="Ride Tracking" parent={{ label: "Carpool", to: "/pulse/carpool/rides" }} onBack={() => navigate(-1)} />
 
       {/* Error */}
       {error && (

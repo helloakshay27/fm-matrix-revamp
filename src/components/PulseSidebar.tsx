@@ -41,6 +41,7 @@ import {
   Heart,
   Car,
 } from "lucide-react";
+import "@/styles/pulse-design-system.css";
 
 // Pulse-specific module configuration
 const modulesByPackage = {
@@ -451,6 +452,13 @@ export const PulseSidebar = () => {
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
     setExpandedItems([]);
+  }, []);
+
+  // Scope the Business Genie design layer (pulse-design-system.css) to the
+  // Pulse shell. On body so portalled dialogs, menus and toasts get it too.
+  React.useEffect(() => {
+    document.body.classList.add("pulse-app");
+    return () => document.body.classList.remove("pulse-app");
   }, []);
 
   const toggleExpanded = (itemName: string) => {

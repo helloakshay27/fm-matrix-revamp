@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Loader2, AlertCircle } from "lucide-react";
@@ -151,7 +152,7 @@ export const ActiveReports: React.FC = () => {
     { key: "reportTime",       label: "Report Time",       sortable: true,  hideable: true,  draggable: true  },
     { key: "reportDate",       label: "Report Date",       sortable: true,  hideable: true,  draggable: true  },
     { key: "statusBadge",      label: "Status",            sortable: false, hideable: true,  draggable: true  },
-    { key: "statusDropdown",   label: "Status",            sortable: false, hideable: false, draggable: false },
+    { key: "statusDropdown",   label: "Update Status",         sortable: false, hideable: false, draggable: false },
   ];
 
   // Map API report → table row
@@ -229,6 +230,7 @@ export const ActiveReports: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white px-6 py-4 min-h-screen">
+      <PulsePageHeader title="Active Reports" />
       {/* Status Tabs */}
       <Tabs
         value={activeTab}
