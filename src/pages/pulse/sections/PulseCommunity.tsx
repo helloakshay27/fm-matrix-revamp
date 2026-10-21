@@ -22,17 +22,9 @@ import {
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
-const PALETTE = [
-  "#DA7756",
-  "#798C5E",
-  "#6B9BCC",
-  "#EDC488",
-  "#CECBF6",
-  "#9EC8BA",
-  "#E7848E",
-  "#AAB9C5",
-];
+const PALETTE = [...SERIES];
 const C = {
   green: "#798C5E",
   red: "#B50F0F",
@@ -56,10 +48,10 @@ const STATIC_RETENTION_FUNNEL = [
 const RETENTION_COLORS = ["#8052B833", "#8052B866", "#8052B899", "#8052B8CC", "#8052B8"];
 
 // Community Member Status Breakdown stacked bars.
-const STATUS_BREAKDOWN_COLORS = { approved: "#16976E", pending: "#4E8FE5", rejected: "#EBA366" };
+const STATUS_BREAKDOWN_COLORS = { approved: SERIES[0], pending: SERIES[1], rejected: SERIES[2] };
 
 // Community Participation Trend bar + line.
-const PARTICIPATION_TREND_COLORS = { totalParticipants: "#BE95F0", activeContributors: "#CE6913" };
+const PARTICIPATION_TREND_COLORS = { totalParticipants: SERIES[0], activeContributors: SERIES[1] };
 
 // Only the last point in a trend gets a value label (matches the reference
 // design's single "420" / "185" callout on the most recent month).
@@ -83,11 +75,11 @@ function lastPointLabel(color: string, dy: number, lastIndex: number) {
 }
 
 // Community Engagement Rate donut ring.
-const ENGAGEMENT_RING_COLOR = "#5DB297";
-const NOT_ENGAGED_RING_COLOR = "#BD92EF";
+const ENGAGEMENT_RING_COLOR = SERIES[0];
+const NOT_ENGAGED_RING_COLOR = SERIES[1];
 
 // New Members This Month sparkline stroke.
-const NEW_MEMBERS_SPARK_COLOR = "#E29758";
+const NEW_MEMBERS_SPARK_COLOR = SERIES[0];
 
 // Static placeholder — no backing API yet for per-member activity.
 const STATIC_MOST_ACTIVE_MEMBER = { name: "Rahul S.", events: 20 };

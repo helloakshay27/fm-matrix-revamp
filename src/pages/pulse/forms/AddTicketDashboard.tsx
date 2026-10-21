@@ -1,0 +1,1858 @@
+// Pulse-only form: shared module page remains unchanged.
+import { PulseFormSection } from "@/pages/pulse/components/PulseFormSection";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
+import { FileText as PulseSectionIcon } from "lucide-react";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PostHogTicketActivity } from '@/components/PostHogTicketActivity';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
+import { useViWorkflowEvents } from '@/components/PostHogViWorkflowEvents';
+import { useFlowEvents } from '@/components/PostHogFlowEvents';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Check, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
+import { AttachmentDropzone } from '@/components/AttachmentDropzone';
+import { toast } from 'sonner';
+import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
+import { FMUser } from '@/store/slices/fmUserSlice';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+interface ComplaintModeResponse {
+  id: number;
+  name: string;
+}
+
+// Update location interfaces to match API responses
+interface AreaResponse {
+  id: number;
+  name: string;
+  wing_id: string;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface BuildingResponse {
+  id: number;
+  name: string;
+  site_id: string;
+  wings?: Array<{
+    id: number;
+    name: string;
+  }>;
+  areas?: Array<{
+    id: number;
+    name: string;
+    wing_id: string;
+  }>;
+}
+
+interface WingResponse {
+  id: number;
+  name: string;
+  building_id: string;
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface FloorResponse {
+  id: number;
+  name: string;
+  wing_id: number;
+  area_id: number;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  area?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface RoomResponse {
+  id: number;
+  name: string;
+  floor_id: number;
+  wing_id: number;
+  area_id: string;
+  building_id: string;
+}
+
+const PRIORITY_OPTIONS = [
+  { value: 'P1', label: 'P1 - Critical' },
+  { value: 'P2', label: 'P2 - Very High' },
+  { value: 'P3', label: 'P3 - High' },
+  { value: 'P4', label: 'P4 - Medium' },
+  { value: 'P5', label: 'P5 - Low' }
+];
+
+const PROACTIVE_REACTIVE_OPTIONS = [
+  { value: 'Proactive', label: 'Proactive' },
+  { value: 'Reactive', label: 'Reactive' }
+];
+
+const SEVERITY_OPTIONS = [
+  { value: 'Major', label: 'Major' },
+  { value: 'Minor', label: 'Minor' }
+];
+
+// Helper functions to get user data from localStorage
+const getUserDataFromLocalStorage = () => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      console.log('🔍 Raw user data from localStorage:', user); // Debug log
+
+      // Try multiple possible department field names with extensive logging
+      const possibleDepartmentFields = [
+        'department_name',
+        'designation',
+        'department',
+        'role_name',
+        'lock_user_permission?.designation',
+        'user_permission?.designation',
+        'profile?.designation',
+        'profile?.department_name'
+      ];
+
+      console.log('🔍 Checking department fields:', possibleDepartmentFields);
+
+      let department = '';
+      // Check each possible field
+      if (user.department_name) {
+        department = user.department_name;
+        console.log('✅ Found department_name:', department);
+      } else if (user.designation) {
+        department = user.designation;
+        console.log('✅ Found designation:', department);
+      } else if (user.department) {
+        department = user.department;
+        console.log('✅ Found department:', department);
+      } else if (user.role_name) {
+        department = user.role_name;
+        console.log('✅ Found role_name:', department);
+      } else if (user.lock_user_permission?.designation) {
+        department = user.lock_user_permission.designation;
+        console.log('✅ Found lock_user_permission.designation:', department);
+      } else if (user.user_permission?.designation) {
+        department = user.user_permission.designation;
+        console.log('✅ Found user_permission.designation:', department);
+      } else if (user.profile?.designation) {
+        department = user.profile.designation;
+        console.log('✅ Found profile.designation:', department);
+      } else if (user.profile?.department_name) {
+        department = user.profile.department_name;
+        console.log('✅ Found profile.department_name:', department);
+      } else {
+        console.log('❌ No department field found in user data');
+        console.log('Available fields:', Object.keys(user));
+      }
+
+      console.log('🎯 Final extracted department:', department);
+
+      return {
+        name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+        department: department,
+        contactNumber: user.mobile || user.contactNumber || '',
+        site_id: user.site_id,
+        id: user.id,
+        email: user.email || '',
+        company_id: user.company_id || '',
+        // Add more fallback fields for department
+        designation: user.designation || '',
+        role_name: user.role_name || ''
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing user data from localStorage:', error);
+  }
+  return null;
+};
+
+const getFMUsersFromLocalStorage = () => {
+  try {
+    const fmUsersData = localStorage.getItem('fmUsers');
+    if (fmUsersData) {
+      return JSON.parse(fmUsersData);
+    }
+  } catch (error) {
+    console.error('Error parsing FM users from localStorage:', error);
+  }
+  return [];
+};
+
+const getOccupantUsersFromLocalStorage = () => {
+  try {
+    const occupantUsersData = localStorage.getItem('occupantUsers');
+    if (occupantUsersData) {
+      return JSON.parse(occupantUsersData);
+    }
+  } catch (error) {
+    console.error('Error parsing occupant users from localStorage:', error);
+  }
+  return [];
+};
+
+// Debug function to clear localStorage and force fresh API calls
+const clearUserDataCache = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('fmUsers');
+  localStorage.removeItem('occupantUsers');
+  console.log('User data cache cleared');
+};
+
+// Helper function to try getting user profile from additional endpoints
+const getUserProfileFromAlternativeAPI = async () => {
+  try {
+    // Try to get user profile from occupant users API (since the current user might be listed there)
+    console.log('🔄 Trying alternative API for user profile...');
+    const occupantResponse = await ticketManagementAPI.getOccupantUsers();
+    console.log('🔄 Occupant users response:', occupantResponse);
+
+    // Try to get current user from localStorage to find their ID
+    const currentUserData = localStorage.getItem('user');
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      console.log('🔄 Looking for current user ID:', user.id);
+
+      // Find current user in occupant users list
+      const currentUserProfile = occupantResponse.find(u => u.id === user.id);
+      if (currentUserProfile && currentUserProfile.lock_user_permission?.designation) {
+        console.log('✅ Found user profile in occupant users with department:', currentUserProfile.lock_user_permission.designation);
+        return {
+          ...user,
+          department_name: currentUserProfile.lock_user_permission.designation,
+          designation: currentUserProfile.lock_user_permission.designation
+        };
+      }
+    }
+
+    // Try FM users API as well
+    const fmResponse = await ticketManagementAPI.getEngineers();
+    const fmUsers = fmResponse.users || [];
+    console.log('🔄 FM users response:', fmUsers);
+
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      const currentUserFMProfile = fmUsers.find(u => u.id === user.id);
+      if (currentUserFMProfile && (currentUserFMProfile.designation || currentUserFMProfile.role_name)) {
+        console.log('✅ Found user profile in FM users with department:', currentUserFMProfile.designation || currentUserFMProfile.role_name);
+        return {
+          ...user,
+          department_name: currentUserFMProfile.designation || currentUserFMProfile.role_name,
+          designation: currentUserFMProfile.designation,
+          role_name: currentUserFMProfile.role_name
+        };
+      }
+    }
+
+    console.log('❌ No alternative profile found');
+    return null;
+  } catch (error) {
+    console.error('Error getting user profile from alternative API:', error);
+    return null;
+  }
+};
+
+export const AddTicketDashboard = () => {
+  const navigate = useNavigate();
+  const helpdeskEvents = useHelpdeskEvents();
+  // Org 10 requires an engineer to be assigned at ticket creation time.
+  const isAssignedToMandatory = localStorage.getItem("org_id") === "10";
+  // Vi catalogue funnel: create viewed → submitted → succeeded / failed. No-ops off the Vi
+  // deployment — see PostHogViWorkflowEvents.
+  const viEvents = useViWorkflowEvents();
+  const flowEvents = useFlowEvents();
+
+  // Mount-only, so re-renders and in-form steps are not counted as fresh views.
+  useEffect(() => {
+    viEvents.onTicketCreateViewed();
+    flowEvents.onFlowStepViewed('ticketCreate', 'create_form', 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [ticketEvent, setTicketEvent] = useState<{
+    event: "Ticket Create Form Opened" | "ticket creation successful" | "ticket abandoned";
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (ticketEvent?.event === 'ticket abandoned') {
+      navigate(-1);
+    }
+  }, [ticketEvent, navigate]);
+
+  // Form state
+  const [onBehalfOf, setOnBehalfOf] = useState('self');
+  const [ticketType, setTicketType] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFieldsReadOnly, setIsFieldsReadOnly] = useState(false);
+  const [isGoldenTicket, setIsGoldenTicket] = useState(false);
+  const [isFlagged, setIsFlagged] = useState(false);
+
+  // Dropdown data states
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
+  const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
+  const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [buildings, setBuildings] = useState<BuildingResponse[]>([]);
+  const [wings, setWings] = useState<WingResponse[]>([]);
+  const [floors, setFloors] = useState<FloorResponse[]>([]);
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+  const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
+  const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
+  const [filteredAreas, setFilteredAreas] = useState<AreaResponse[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [entities, setEntities] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingEntities, setLoadingEntities] = useState(false);
+  const [orgId, setOrgId] = useState<number | null>(null);
+
+  // Loading states
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingSubcategories, setLoadingSubcategories] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingAccount, setLoadingAccount] = useState(false);
+  const [loadingComplaintModes, setLoadingComplaintModes] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    contactNumber: '',
+    site: 'Lockated',
+    department: '',
+    unit: '',
+    categoryType: '',
+    subCategoryType: '',
+    description: '',
+    assignedTo: '',
+    proactiveReactive: '', // will be set by effect below
+    adminPriority: '',
+    severity: '',
+    referenceNumber: '',
+    mode: '',
+    vendor: '',
+    complaintMode: '',
+    // Add location fields
+    area: '',
+    building: '',
+    wing: '',
+    floor: '',
+    room: '',
+    // Customer name field (for org_id 63)
+    customer_name: ''
+  });
+  // Set default proactiveReactive based on onBehalfOf selection
+  useEffect(() => {
+    let defaultValue = '';
+    if (onBehalfOf === 'self' || onBehalfOf === 'fm-user') {
+      defaultValue = 'Proactive';
+    } else if (onBehalfOf === 'occupant-user') {
+      defaultValue = 'Reactive';
+    }
+    setFormData(prev => ({
+      ...prev,
+      proactiveReactive: defaultValue
+    }));
+  }, [onBehalfOf]);
+
+  // Fallback API method for user account
+  const loadUserAccountFromAPI = useCallback(async () => {
+    setLoadingAccount(true);
+    try {
+      const response = await ticketManagementAPI.getUserAccount();
+      console.log('🚀 API response for user account:', response); // Debug log
+      console.log('🚀 API response keys:', Object.keys(response)); // Debug log
+      console.log('🚀 Department field in API response:', response.department_name); // Debug log
+      setUserAccount(response);
+
+      // Store in localStorage for future use
+      localStorage.setItem('user', JSON.stringify(response));
+      console.log('💾 Stored user data in localStorage:', JSON.stringify(response, null, 2));
+
+      // Populate form data when account is loaded for self
+      if (onBehalfOf === 'self' && response) {
+        let department = response.department_name || '';
+        console.log('🎯 Department from API response:', department); // Debug log
+
+        // If no department found, try alternative APIs
+        if (!department) {
+          console.log('🔄 No department in main API, trying alternative sources...');
+          const alternativeProfile = await getUserProfileFromAlternativeAPI();
+          if (alternativeProfile) {
+            department = alternativeProfile.department_name || alternativeProfile.designation || alternativeProfile.role_name || '';
+            console.log('🎯 Department from alternative API:', department);
+
+            // Update stored user data with enhanced profile
+            localStorage.setItem('user', JSON.stringify(alternativeProfile));
+          }
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          name: `${response.firstname} ${response.lastname}`,
+          department: department,
+          contactNumber: response.mobile || '',
+          unit: '',
+          site: 'Lockated'
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error("Failed to load user account", { description: "Error" });
+    } finally {
+      setLoadingAccount(false);
+    }
+  }, [onBehalfOf]);
+
+  // Load user account from localStorage (faster than API call)
+  const loadUserAccountFromStorage = useCallback(() => {
+    setLoadingAccount(true);
+    try {
+      const userData = getUserDataFromLocalStorage();
+
+      if (userData) {
+        setUserAccount({
+          firstname: userData.name.split(' ')[0] || '',
+          lastname: userData.name.split(' ').slice(1).join(' ') || '',
+          department_name: userData.department,
+          mobile: userData.contactNumber,
+          site_id: userData.site_id,
+          id: userData.id,
+          email: userData.email || '',
+          company_id: userData.company_id || ''
+        });
+
+        // Populate form data when account is loaded for self
+        if (onBehalfOf === 'self') {
+          console.log('🎯 Setting form data with userData:', userData); // Debug log
+
+          // If no department in localStorage, try to fetch it fresh
+          if (!userData.department) {
+            console.log('🔄 No department in localStorage, will fetch from API');
+            loadUserAccountFromAPI();
+            return;
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            name: userData.name,
+            department: userData.department,
+            contactNumber: userData.contactNumber,
+            unit: '',
+            site: 'Lockated'
+          }));
+        }
+      } else {
+        // Fallback to API if localStorage doesn't have user data
+        loadUserAccountFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading user account from localStorage:', error);
+      // Fallback to API on error
+      loadUserAccountFromAPI();
+    } finally {
+      setLoadingAccount(false);
+    }
+  }, [onBehalfOf, loadUserAccountFromAPI]);
+
+  // Load initial data
+  useEffect(() => {
+    loadCategories();
+    loadFMUsersFromStorage();
+    loadOccupantUsersFromStorage();
+    loadComplaintModes();
+    loadLocationData();
+    if (onBehalfOf === 'self') {
+      loadUserAccountFromStorage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onBehalfOf, loadUserAccountFromStorage]);
+
+  // This useEffect is no longer needed since we populate form data directly in loadUserAccountFromStorage
+  // Keeping it as fallback for userAccount state changes
+  useEffect(() => {
+    if (onBehalfOf === 'self' && userAccount) {
+      setFormData(prev => ({
+        ...prev,
+        name: `${userAccount.firstname} ${userAccount.lastname}`,
+        department: userAccount.department_name || '',
+        contactNumber: userAccount.mobile || '',
+        unit: '',
+        site: 'Lockated'
+      }));
+    }
+  }, [userAccount, onBehalfOf]);
+
+  // Load org_id and entities on mount
+  useEffect(() => {
+    // Fetch org_id from localStorage
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const foundOrgId = user?.org_id || user?.organization_id;
+      if (foundOrgId) {
+        setOrgId(Number(foundOrgId));
+      } else {
+        const standalonOrgId = localStorage.getItem('org_id');
+        if (standalonOrgId) setOrgId(Number(standalonOrgId));
+      }
+    } catch (e) {
+      const standalonOrgId = localStorage.getItem('org_id');
+      if (standalonOrgId) setOrgId(Number(standalonOrgId));
+    }
+
+    // Load entities if org_id is 63
+    const loadEntities = async () => {
+      setLoadingEntities(true);
+      try {
+        const url = getFullUrl('/entities.json');
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch entities');
+        const data = await response.json();
+        // Extract entities array and map to id and name
+        const entityList = Array.isArray(data?.entities) ? data.entities : [];
+        setEntities(entityList.map(entity => ({
+          id: entity.id,
+          name: entity.name
+        })));
+      } catch (error) {
+        console.error('Error loading entities:', error);
+      } finally {
+        setLoadingEntities(false);
+      }
+    };
+
+    loadEntities();
+  }, []);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      setLoadingSuppliers(true);
+      try {
+        const url = getFullUrl('/pms/suppliers.json');
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch suppliers');
+        const data = await response.json();
+        // Use pms_suppliers and company_name for dropdown
+        setSuppliers(
+          Array.isArray(data.pms_suppliers)
+            ? data.pms_suppliers.map(s => ({
+              id: s.id,
+              name: s.company_name || `Supplier #${s.id}`
+            }))
+            : []
+        );
+      } catch (error) {
+        console.error('Error loading suppliers:', error);
+        toast.error("Failed to load suppliers", { description: "Error" });
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    fetchSuppliers();
+  }, []);
+
+  // Fallback API method for occupant users
+  const loadOccupantUsersFromAPI = useCallback(async () => {
+    try {
+      const response = await ticketManagementAPI.getOccupantUsers();
+      setOccupantUsers(response);
+      // Store in localStorage for future use
+      localStorage.setItem('occupantUsers', JSON.stringify(response));
+    } catch (error) {
+      console.error('Error loading occupant users:', error);
+    }
+  }, []);
+
+  // Load occupant users from localStorage (faster than API)
+  const loadOccupantUsersFromStorage = useCallback(() => {
+    try {
+      const occupantUsersData = getOccupantUsersFromLocalStorage();
+      if (occupantUsersData && occupantUsersData.length > 0) {
+        setOccupantUsers(occupantUsersData);
+      } else {
+        // Fallback to API if localStorage doesn't have data
+        loadOccupantUsersFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading occupant users from localStorage:', error);
+      // Fallback to API on error
+      loadOccupantUsersFromAPI();
+    }
+  }, [loadOccupantUsersFromAPI]);
+
+  // Fallback API method for FM users
+  const loadFMUsersFromAPI = useCallback(async () => {
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      const users = response.users || [];
+      setFmUsers(users);
+      // Store in localStorage for future use
+      localStorage.setItem('fmUsers', JSON.stringify(users));
+    } catch (error) {
+      console.error('Error loading FM users:', error);
+    }
+  }, []);
+
+  // Load FM users from localStorage (faster than API)
+  const loadFMUsersFromStorage = useCallback(() => {
+    try {
+      const fmUsersData = getFMUsersFromLocalStorage();
+      if (fmUsersData && fmUsersData.length > 0) {
+        setFmUsers(fmUsersData);
+      } else {
+        // Fallback to API if localStorage doesn't have data
+        loadFMUsersFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading FM users from localStorage:', error);
+      // Fallback to API on error
+      loadFMUsersFromAPI();
+    }
+  }, [loadFMUsersFromAPI]);
+
+  // Reset form when behalf selection changes
+  useEffect(() => {
+    setSelectedUser('');
+    setSelectedUserId(null);
+    setIsFieldsReadOnly(false);
+
+    if (onBehalfOf === 'self') {
+      // Load user account for self, form will be populated in loadUserAccountFromStorage
+      loadUserAccountFromStorage();
+    } else {
+      // Clear form data when switching to behalf of others
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        contactNumber: '',
+        department: '',
+        unit: ''
+      }));
+    }
+  }, [onBehalfOf, loadUserAccountFromStorage]);
+
+  // Load categories
+  const loadCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await ticketManagementAPI.getCategories();
+      setCategories(response.helpdesk_categories || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast.error("Failed to load categories", { description: "Error" });
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // Load subcategories when category changes
+  const loadSubcategories = async (categoryId: number) => {
+    setLoadingSubcategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setSubcategories(subcats);
+    } catch (error) {
+      console.error('Error loading subcategories:', error);
+      toast.error("Failed to load subcategories", { description: "Error" });
+    } finally {
+      setLoadingSubcategories(false);
+    }
+  };
+
+  // Legacy load FM users function (keeping for backward compatibility)
+  const loadFMUsers = async () => {
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      const users = response.users || [];
+      setFmUsers(users);
+      // Store in localStorage for future use
+      localStorage.setItem('fmUsers', JSON.stringify(users));
+    } catch (error) {
+      console.error('Error loading FM users:', error);
+    }
+  };
+
+  // Load complaint modes
+  const loadComplaintModes = async () => {
+    setLoadingComplaintModes(true);
+    try {
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.COMPLAINT_MODE);
+      const options = getAuthenticatedFetchOptions('GET');
+
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch complaint modes: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Complaint modes response:', data);
+
+      // The API returns an array directly, not wrapped in complaint_modes property
+      setComplaintModes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading complaint modes:', error);
+      toast.error("Failed to load complaint modes", { description: "Error" });
+    } finally {
+      setLoadingComplaintModes(false);
+    }
+  };
+
+  // Load areas, buildings, wings, floors, and rooms
+  const loadLocationData = useCallback(async () => {
+    await Promise.all([
+      loadAreas(),
+      loadBuildings(),
+      loadWings(),
+      loadFloors(),
+      loadRooms()
+    ]);
+  }, []);
+
+  const loadAreas = async () => {
+    setLoadingAreas(true);
+    try {
+      const url = getFullUrl('/pms/areas.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch areas');
+      const data = await response.json();
+      // API returns { areas: [...] }
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error loading areas:', error);
+      toast.error("Failed to load areas", { description: "Error" });
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const loadBuildings = async (siteId?: string) => {
+    setLoadingBuildings(true);
+    try {
+      // Use site_id in API call if provided, otherwise load all buildings
+      const url = siteId
+        ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
+        : getFullUrl('/pms/buildings.json');
+
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch buildings');
+      const data = await response.json();
+      // API returns { pms_buildings: [...] }
+      setBuildings(data.pms_buildings || data || []);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+      toast.error("Failed to load buildings", { description: "Error" });
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
+  const loadWings = async (buildingId?: string) => {
+    setLoadingWings(true);
+    try {
+      // Add building_id as query parameter if provided
+      const url = buildingId
+        ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
+        : getFullUrl('/pms/wings.json');
+
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch wings');
+      const data = await response.json();
+      // API returns { wings: [...] }
+      setWings(data.wings || []);
+    } catch (error) {
+      console.error('Error loading wings:', error);
+      toast.error("Failed to load wings", { description: "Error" });
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
+  const loadFloors = async (wingId?: string) => {
+    setLoadingFloors(true);
+    try {
+      // Add wing_id as query parameter if provided
+      const url = wingId
+        ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
+        : getFullUrl('/pms/floors.json');
+
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch floors');
+      const data = await response.json();
+      // API returns { floors: [...] }
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error loading floors:', error);
+      toast.error("Failed to load floors", { description: "Error" });
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const loadRooms = async (floorId?: string) => {
+    setLoadingRooms(true);
+    try {
+      // Add floor_id as query parameter if provided
+      const url = floorId
+        ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
+        : getFullUrl('/pms/rooms.json');
+
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const data = await response.json();
+      // API returns array directly
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      toast.error("Failed to load rooms", { description: "Error" });
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  // Handle user selection and populate details
+  const handleUserSelection = (userId: string) => {
+    setSelectedUser(userId);
+    const userIdNum = parseInt(userId);
+    setSelectedUserId(userIdNum);
+
+    if (onBehalfOf === 'fm-user') {
+      const selectedFmUser = fmUsers.find(user => user.id === userIdNum);
+      if (selectedFmUser) {
+        setFormData(prev => ({
+          ...prev,
+          name: selectedFmUser.full_name,
+          contactNumber: selectedFmUser.mobile || '',
+          department: selectedFmUser.designation || selectedFmUser.role_name || '',
+          unit: `Unit ${selectedFmUser.unit_id || ''}`,
+          site: selectedFmUser.company_name || 'Lockated'
+        }));
+        setIsFieldsReadOnly(true);
+      }
+    } else if (onBehalfOf === 'occupant-user') {
+      const selectedOccupantUser = occupantUsers.find(user => user.id === userIdNum);
+      if (selectedOccupantUser) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${selectedOccupantUser.firstname} ${selectedOccupantUser.lastname}`,
+          contactNumber: selectedOccupantUser.mobile || '',
+          department: selectedOccupantUser.lock_user_permission?.designation || '',
+          unit: `Unit ${selectedOccupantUser.unit_id || ''}`,
+          site: selectedOccupantUser.company || 'Lockated'
+        }));
+        setIsFieldsReadOnly(true);
+      }
+    }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => ({ ...prev, categoryType: categoryId, subCategoryType: '' }));
+    setSubcategories([]);
+    if (categoryId) {
+      loadSubcategories(parseInt(categoryId));
+    }
+  };
+
+  // Remove file from attachments
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle area change with API call to fetch floors (Third level)
+  const handleAreaChange = async (areaId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      area: areaId,
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (areaId) {
+      // Call floors API with area_id parameter
+      try {
+        setLoadingFloors(true);
+        const url = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredFloors(data.floors || []);
+        }
+      } catch (error) {
+        console.error('Error loading floors for area:', error);
+      } finally {
+        setLoadingFloors(false);
+      }
+    }
+  };
+
+  // Handle building change with API call to fetch wings (First level)
+  const handleBuildingChange = async (buildingId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      building: buildingId,
+      wing: '',
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear all dependent dropdowns
+    setFilteredWings([]);
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (buildingId) {
+      // Call wings API with building_id parameter
+      try {
+        setLoadingWings(true);
+        const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredWings(data.wings || []);
+        }
+      } catch (error) {
+        console.error('Error loading wings for building:', error);
+      } finally {
+        setLoadingWings(false);
+      }
+    }
+  };
+
+  // Handle wing change with API call to fetch areas (Second level)
+  const handleWingChange = async (wingId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      wing: wingId,
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (wingId) {
+      // Call areas API with wing_id parameter
+      try {
+        setLoadingAreas(true);
+        const url = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredAreas(data.areas || []);
+        }
+      } catch (error) {
+        console.error('Error loading areas for wing:', error);
+      } finally {
+        setLoadingAreas(false);
+      }
+    }
+  };
+
+  // Handle floor change with API call to fetch rooms
+  const handleFloorChange = async (floorId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      floor: floorId,
+      room: ''
+    }));
+
+    // Clear dependent dropdown
+    setFilteredRooms([]);
+
+    if (floorId) {
+      // Call rooms API with floor_id parameter
+      try {
+        setLoadingRooms(true);
+        const url = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
+        }
+      } catch (error) {
+        console.error('Error loading rooms for floor:', error);
+      } finally {
+        setLoadingRooms(false);
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setTicketEvent({ event: 'ticket abandoned' });
+  };
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    // Validation
+    // field-level validation with specific messages
+    if (!ticketType) {
+      toast.error("Validation Error: Ticket type is required.");
+      return;
+    }
+    if (!formData.categoryType) {
+      toast.error("Validation Error: Category is required.");
+      return;
+    }
+    if (!formData.complaintMode) {
+      toast.error("Validation Error: Mode is required.");
+      return;
+    }
+
+    if (!formData.description) {
+      toast.error("Validation Error: Description is required.");
+      return;
+    }
+
+    if (isAssignedToMandatory && !formData.assignedTo) {
+      toast.error("Validation Error: Assigned To is required.");
+      return;
+    }
+
+    // Validate complaint mode is selected
+    if (!formData.complaintMode) {
+      toast.error("Validation Error: Complaint mode is required.");
+      return;
+    }
+
+    // Validate user selection for behalf of others
+    if (onBehalfOf !== 'self' && !selectedUserId) {
+      toast.error("Validation Error: Please select a user when creating ticket on behalf of others.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Ensure user account is loaded to get site_id
+      if (!userAccount) {
+        await loadUserAccountFromAPI();
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount?.site_id?.toString();
+
+      if (!siteId) {
+        toast.error("Unable to determine site ID from user account. Please refresh and try again.", { description: "Error" });
+        return;
+      }
+
+      const ticketData = {
+        of_phase: 'pms',
+        site_id: parseInt(siteId),
+        on_behalf_of: onBehalfOf === 'self' ? 'admin' : onBehalfOf,
+        complaint_type: ticketType,
+        category_type_id: parseInt(formData.categoryType),
+        priority: formData.adminPriority || '',
+        severity: formData.severity || '',
+        society_staff_type: 'User',
+        ...(formData.vendor && { complaint: { supplier_id: parseInt(formData.vendor) } }),
+        supplier_id: formData.vendor ? parseInt(formData.vendor) : '', // Remove old supplier_id key
+        proactive_reactive: formData.proactiveReactive || '',
+        heading: formData.description,
+        ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
+        ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
+        ...(onBehalfOf !== 'self' && selectedUserId && {
+          sel_id_user: selectedUserId,
+          id_user: selectedUserId
+        }),
+        ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
+        ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
+        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) }),
+        // Add location parameters with correct keys
+        ...(formData.area && { area_id: parseInt(formData.area) }),
+        ...(formData.building && { tower_id: parseInt(formData.building) }),
+        ...(formData.wing && { wing_id: parseInt(formData.wing) }),
+        ...(formData.floor && { floor_id: parseInt(formData.floor) }),
+        ...(formData.room && { room_id: parseInt(formData.room) }),
+        ...(formData.customer_name && { entity_id: parseInt(formData.customer_name) }),
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged
+      };
+
+      // console.log('Ticket payload before API call:', ticketData);
+      // console.log('Using site ID from user account:', siteId);
+      // console.log('User account info:', userAccount);
+      // console.log('Form data:', formData);
+      // console.log('Severity value:', formData.severity);
+      // console.log('Golden Ticket:', isGoldenTicket);
+      // console.log('Is Flagged:', isFlagged);
+
+      console.log('Submitting ticket with data:', ticketData, 'and files:', attachedFiles);
+
+      // Fires after validation and before the network call, per the catalogue's convention:
+      // submitted → succeeded then measures server/network drop-off only, and a validation
+      // bounce (which returned early above) is never counted as a submit the server lost.
+      viEvents.onTicketCreateSubmitted({
+        category: formData.categoryType || undefined,
+        priority: formData.severity || undefined,
+      });
+
+
+      const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      console.log('Create ticket response:', response);
+
+      // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
+      const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
+
+      toast.success(ticketNumber
+        ? `Ticket created successfully - ${ticketNumber}`
+        : "Ticket created successfully!", {
+          position: 'bottom-center',
+          icon: <Check size={16} />,
+          className: 'ticket-created-toast',
+        });
+
+      setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
+      viEvents.onTicketCreateSucceeded({ ticket_id: ticketNumber });
+      flowEvents.onFlowCompleted('ticketCreate', { succeeded: true });
+
+      // Business lifecycle event — Ticket Created
+      const createdId = response?.id || response?.complaint?.id || ticketNumber || null;
+      helpdeskEvents.onTicketCreated(createdId, {
+        ticket_type: ticketType || null,
+        on_behalf_of: onBehalfOf === 'self' ? 'self' : onBehalfOf,
+        category: formData.categoryType || null,
+        sub_category: formData.subCategoryType || null,
+        mode: formData.complaintMode || null,
+        identification: formData.proactiveReactive
+          ? (formData.proactiveReactive.toLowerCase() as 'proactive' | 'reactive')
+          : null,
+        priority: formData.adminPriority || null,
+        severity: formData.severity || null,
+        creation_source: 'web',
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged,
+        has_attachments: attachedFiles.length > 0,
+        vendor_assigned: Boolean(formData.vendor),
+        linked_asset_id: null,
+      });
+
+      // navigate('/maintenance/ticket');
+      const currentPath = window.location.pathname;
+
+      if (currentPath.includes("tickets")) {
+        navigate("/tickets");
+      } else {
+        navigate("/maintenance/ticket");
+      }
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      toast.error("Failed to create ticket. Please try again.", { description: "Error" });
+      viEvents.onTicketCreateFailed(error instanceof Error ? error.message : 'request_failed');
+      flowEvents.onFlowCompleted('ticketCreate', {
+        succeeded: false,
+        failure_reason: error instanceof Error ? error.message : 'request_failed',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Get users for dropdown based on behalf selection
+  const getUsersForDropdown = () => {
+    if (onBehalfOf === 'occupant-user') {
+      return occupantUsers.map(user => ({
+        id: user.id.toString(),
+        name: `${user.firstname} ${user.lastname}`,
+        type: 'occupant'
+      }));
+    } else if (onBehalfOf === 'fm-user') {
+      return fmUsers.map(user => ({
+        id: user.id.toString(),
+        name: user.full_name,
+        type: 'fm'
+      }));
+    }
+    return [];
+  };
+
+  const handleGoBack = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("/club-management/helpdesk")) {
+      navigate("/club-management/helpdesk");
+    } else if (currentPath.includes("tickets")) {
+      navigate("/tickets");
+    } else {
+      navigate("/maintenance/ticket");
+    }
+  };
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <PostHogTicketActivity key="Ticket Create Form Opened" event="Ticket Create Form Opened" />
+      {ticketEvent && (
+        <PostHogTicketActivity key={ticketEvent.event} event={ticketEvent.event} properties={ticketEvent.properties} />
+      )}
+      {/* Header */}
+      <PulsePageHeader title="New Ticket" parent={{ label: "Tickets", to: "/maintenance/ticket" }} onBack={handleGoBack} />
+
+      {/* Debug section - remove in production */}
+      {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <h3 className="text-sm font-medium text-yellow-800">Debug Tools</h3>
+        <div className="mt-2 space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              clearUserDataCache();
+              window.location.reload();
+            }}
+            className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
+          >
+            Clear Cache & Reload
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              console.log('Current localStorage user data:', localStorage.getItem('user'));
+              console.log('Current formData:', formData);
+              console.log('Current userAccount:', userAccount);
+            }}
+            className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300"
+          >
+            Log Debug Info
+          </Button>
+        </div>
+      </div> */}
+
+      
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="ticket-create-form space-y-6">
+        {/* Section 1: Requestor Details */}
+        <PulseFormSection title="Requestor details" icon={User}>
+
+            {/* Create Ticket On Behalf Of with Name and Department in same row */}
+            <div className="grid grid-cols-3 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Create Ticket on Behalf of</InputLabel>
+                <MuiSelect
+                  value={onBehalfOf}
+                  onChange={(e) => setOnBehalfOf(e.target.value)}
+                  label="Create Ticket on Behalf of"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="self">Self</MenuItem>
+                  <MenuItem value="occupant-user">Occupant User</MenuItem>
+                  <MenuItem value="fm-user">FM User</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Name"
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Name"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.name}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+              />
+              <TextField
+                label="Department"
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Department"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.department}
+                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+              />
+            </div>
+
+            {/* User Selection Dropdown for behalf of others */}
+            {onBehalfOf !== 'self' && (
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+              >
+                <InputLabel shrink>Select User</InputLabel>
+                <MuiSelect
+                  value={selectedUser}
+                  onChange={(e) => handleUserSelection(e.target.value)}
+                  label="Select User"
+                  notched
+                  displayEmpty
+                  disabled={loadingUsers}
+                >
+                  <MenuItem value="">
+                    {loadingUsers ? "Loading users..." : "Select User"}
+                  </MenuItem>
+                  {getUsersForDropdown().map(user => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            )}
+          
+</PulseFormSection>
+
+        {/* Section 2: Tickets Type */}
+        <PulseFormSection title="Tickets type" icon={Ticket}>
+
+            {/* Radio buttons for ticket type and flags */}
+            <div className="flex gap-8">
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="request" id="request" />
+                  <label htmlFor="request" className="text-sm font-medium">Request</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="complaint" id="complaint" />
+                  <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="suggestion" id="suggestion" />
+                  <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex gap-8">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="golden"
+                  checked={isGoldenTicket}
+                  onChange={(e) => setIsGoldenTicket(e.target.checked)}
+                  className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030] focus:ring-[#C72030]"
+                  style={{
+                    accentColor: '#C72030'
+                  }}
+                />
+                <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="flagged"
+                  checked={isFlagged}
+                  onChange={(e) => setIsFlagged(e.target.checked)}
+                  className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030]"
+                  style={{
+                    accentColor: '#C72030'
+                  }}
+                />
+                <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+              </div>
+            </div>
+
+            {/* Golden Ticket and Is Flagged radio buttons */}
+
+            {/* <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="golden" id="golden" className="text-red-500 border-red-500" 
+                    checked={isGoldenTicket}
+                    onClick={() => setIsGoldenTicket(!isGoldenTicket)}
+                  />
+                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="flagged" id="flagged" className="text-red-500 border-red-500"
+                    checked={isFlagged}
+                    onClick={() => setIsFlagged(!isFlagged)}
+                  />
+                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+                </div> */}
+
+            {/* Customer Name Dropdown - Only for org_id 63 */}
+            {orgId === 63 && (
+              <div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                >
+                  <InputLabel shrink>Customer Name</InputLabel>
+                  <MuiSelect
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    label="Customer Name"
+                    notched
+                    displayEmpty
+                    disabled={loadingEntities}
+                  >
+                    <MenuItem value="">Select Customer</MenuItem>
+                    {entities.map((entity) => (
+                      <MenuItem key={entity.id} value={entity.id.toString()}>
+                        {entity.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            )}
+
+            {/* Form fields in exact layout as per image */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Row 1: Category Type, Sub Category Type, Assigned To, Mode */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+              >
+                <InputLabel shrink>Category Type <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.categoryType}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  label="Category Type"
+                  notched
+                  displayEmpty
+                  disabled={loadingCategories}
+                >
+                  <MenuItem value="">Select Category Type</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Sub Category Type</InputLabel>
+                <MuiSelect
+                  value={formData.subCategoryType}
+                  onChange={(e) => setFormData({ ...formData, subCategoryType: e.target.value })}
+                  label="Sub Category Type"
+                  notched
+                  displayEmpty
+                  disabled={loadingSubcategories || !formData.categoryType}
+                >
+                  <MenuItem value="" sx={{ fontSize: '14px' }}>
+                    {loadingSubcategories ? "Loading..." :
+                      !formData.categoryType ? "Select Category First" :
+                        "Select Sub Category Type"}
+                  </MenuItem>
+                  {subcategories.map((subcategory) => (
+                    <MenuItem key={subcategory.id} value={subcategory.id.toString()}>
+                      {subcategory.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>
+                  Assigned To {isAssignedToMandatory && <span className="text-red-500">*</span>}
+                </InputLabel>
+                <MuiSelect
+                  value={formData.assignedTo}
+                  onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                  label="Assigned To"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Assigned To</MenuItem>
+                  {fmUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id.toString()}>
+                      {user.full_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+              >
+                <InputLabel shrink>Mode <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.complaintMode}
+                  onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
+                  label="Mode*"
+                  notched
+                  displayEmpty
+                  disabled={loadingComplaintModes}
+                >
+                  <MenuItem value="">
+                    {loadingComplaintModes ? "Loading..." : "Select Mode"}
+                  </MenuItem>
+                  {complaintModes.map((mode) => (
+                    <MenuItem key={mode.id} value={mode.id.toString()}>
+                      {mode.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+
+              {/* Row 2: Proactive/Reactive, Admin Priority, Severity, Reference Number */}
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Proactive/Reactive</InputLabel>
+                <MuiSelect
+                  value={formData.proactiveReactive}
+                  onChange={(e) => setFormData({ ...formData, proactiveReactive: e.target.value })}
+                  label="Proactive/Reactive"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Proactive/Reactive</MenuItem>
+                  {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Admin Priority</InputLabel>
+                <MuiSelect
+                  value={formData.adminPriority}
+                  onChange={(e) => setFormData({ ...formData, adminPriority: e.target.value })}
+                  label="Admin Priority"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Admin Priority</MenuItem>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Severity</InputLabel>
+                <MuiSelect
+                  value={formData.severity}
+                  onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                  label="Severity"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Severity</MenuItem>
+                  {SEVERITY_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Vendor</InputLabel>
+                <MuiSelect
+                  value={formData.vendor}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData, vendor: e.target.value
+                    }); console.log(e.target.value);
+                  }}
+                  label="Vendor"
+                  notched
+                  displayEmpty
+                  disabled={loadingSuppliers}
+                >
+                  <MenuItem value="">
+                    {loadingSuppliers ? "Loading..." : "Select Vendor"}
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                      {supplier.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <TextField
+                label="Reference Number"
+                placeholder="Enter Reference Number"
+                value={formData.referenceNumber}
+                onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+              />
+            </div>
+
+            {/* Description - Full width */}
+            <div className="ticket-create-description-field">
+              <label htmlFor="description" className="ticket-create-description-label">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                placeholder="Enter description"
+                className="ticket-create-description"
+              />
+            </div>
+          
+</PulseFormSection>
+
+        {/* Section 3: Location Details */}
+        <PulseFormSection title="Location details" icon={MapPin}>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Building */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Building</InputLabel>
+                <MuiSelect
+                  value={formData.building}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
+                  label="Building"
+                  notched
+                  displayEmpty
+                  disabled={loadingBuildings}
+                >
+                  <MenuItem value="">
+                    {loadingBuildings ? "Loading..." : "Select Building"}
+                  </MenuItem>
+                  {buildings.map((building) => (
+                    <MenuItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Wing */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Wing</InputLabel>
+                <MuiSelect
+                  value={formData.wing}
+                  onChange={(e) => handleWingChange(e.target.value)}
+                  label="Wing"
+                  notched
+                  displayEmpty
+                  disabled={loadingWings || !formData.building}
+                >
+                  <MenuItem value="">
+                    {loadingWings ? "Loading..." :
+                      !formData.building ? "Select Building First" : "Select Wing"}
+                  </MenuItem>
+                  {filteredWings.map((wing) => (
+                    <MenuItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Area */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Area</InputLabel>
+                <MuiSelect
+                  value={formData.area}
+                  onChange={(e) => handleAreaChange(e.target.value)}
+                  label="Area"
+                  notched
+                  displayEmpty
+                  disabled={loadingAreas || !formData.wing}
+                >
+                  <MenuItem value="">
+                    {loadingAreas ? "Loading..." :
+                      !formData.wing ? "Select Wing First" : "Select Area"}
+                  </MenuItem>
+                  {filteredAreas.map((area) => (
+                    <MenuItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Floor */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Floor</InputLabel>
+                <MuiSelect
+                  value={formData.floor}
+                  onChange={(e) => handleFloorChange(e.target.value)}
+                  label="Floor"
+                  notched
+                  displayEmpty
+                  disabled={loadingFloors || !formData.area}
+                >
+                  <MenuItem value="">
+                    {loadingFloors ? "Loading..." :
+                      !formData.area ? "Select Area First" : "Select Floor"}
+                  </MenuItem>
+                  {filteredFloors.map((floor) => (
+                    <MenuItem key={floor.id} value={floor.id.toString()}>
+                      {floor.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Room */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+              >
+                <InputLabel shrink>Room</InputLabel>
+                <MuiSelect
+                  value={formData.room}
+                  onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                  label="Room"
+                  notched
+                  displayEmpty
+                  disabled={loadingRooms || !formData.floor}
+                >
+                  <MenuItem value="">
+                    {loadingRooms ? "Loading..." :
+                      !formData.floor ? "Select Floor First" : "Select Room"}
+                  </MenuItem>
+                  {filteredRooms.map((room) => (
+                    <MenuItem key={room.id} value={room.id.toString()}>
+                      {room.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          
+</PulseFormSection>
+
+        {/* Section 4: Add Attachments */}
+        <PulseFormSection title="Add attachments" icon={Paperclip}>
+
+            <div className="space-y-4">
+              <AttachmentDropzone
+                onFilesAdded={(files) => setAttachedFiles(prev => [...prev, ...files])}
+                fileCount={attachedFiles.length}
+              />
+
+              {/* Display attached files */}
+              {attachedFiles.length > 0 && (
+                <div className="space-y-2">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-gray-500" />
+                        <span>{file.name}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          
+</PulseFormSection>
+
+        {/* Action Buttons */}
+        <div className="pulse-form-actions"><Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="pulse-form-secondary"
+          >
+            Cancel
+          </Button>
+<Button
+            type="submit"
+            variant="ghost"
+            disabled={isSubmitting}
+            className="pulse-form-primary"
+          >
+            {isSubmitting ? 'Creating...' : 'Create Tickets'}
+          </Button></div>
+      </form>
+    </div>
+  );
+};

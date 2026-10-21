@@ -1,9 +1,11 @@
+import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import { TextField } from "@mui/material";
-import { FormSection, assetFieldStyles } from "@/components/common/FormSection";
+import { assetFieldStyles } from "@/components/common/FormSection";
 import {
   Settings2,
   Save,
@@ -144,13 +146,14 @@ const RideSettingsPage = () => {
 
   return (
     <div className="p-6 mx-auto">
+      <PulsePageHeader title="Ride Settings" />
       {settings.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <Settings2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p className="text-lg font-medium">No ride settings found</p>
         </div>
       ) : (
-        <FormSection title="RIDE SETTINGS" icon={Settings2}>
+        <FormSection title="Ride settings" icon={Settings2}>
         <div className="grid gap-4">
           {settings.map((setting) => {
             const Icon = unitIcons[setting.unit] || Settings2;

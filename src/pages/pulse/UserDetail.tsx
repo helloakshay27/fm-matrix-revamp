@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
-import { DetailCard } from "@/components/ui/detail-card";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import { FileText, FileCheck, AlertCircle, Star, Eye, Loader2, X } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
@@ -280,16 +281,7 @@ export const UserDetail = () => {
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-4">
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate("/pulse/carpool")}
-        >
-          Carpool
-        </span>{" "}
-        &gt; <span className="text-gray-700">User Detail</span>
-      </div>
+      <PulsePageHeader title="User Detail" parent={{ label: "Carpool", to: "/pulse/carpool/rides" }} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <AssetTabsList className="grid grid-cols-2 mb-6">

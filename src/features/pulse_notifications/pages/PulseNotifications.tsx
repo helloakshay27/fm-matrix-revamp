@@ -1,3 +1,4 @@
+import { PulsePageHeader as PageTitle } from "@/pages/pulse/components/PulsePageHeader";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit } from "lucide-react";
@@ -180,6 +181,7 @@ const PulseNotifications = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
+            <PageTitle title="Notifications" />
             <EnhancedTable
                 data={notifications}
                 columns={columns}
