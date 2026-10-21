@@ -5462,7 +5462,7 @@ html body [role="button"].bg-brand {
    becomes the design-team pill switcher: tinted track, white
    raised active segment, grey inactive. No component edits.
    ============================================================ */
-html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] {
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"]:not(.ticket-details-main-tabs) {
   display: inline-flex !important;
   flex-wrap: wrap;
   align-items: center;
@@ -5475,7 +5475,7 @@ html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] {
   border: none !important;
   border-radius: 12px !important;
 }
-html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"] {
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"]:not(.ticket-details-main-tabs) [role="tab"] {
   flex: none;
   gap: 7px !important;
   padding: 8px 16px !important;
@@ -5488,10 +5488,45 @@ html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="t
   box-shadow: none !important;
   transition: all 0.16s;
 }
-html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"]:hover {
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"]:not(.ticket-details-main-tabs) [role="tab"]:hover {
   color: #1a1a18 !important;
 }
-html body [role="tablist"][class*="bg-white"][class*="border-gray-200"] [role="tab"][data-state="active"] {
+html body [role="tablist"][class*="bg-white"][class*="border-gray-200"]:not(.ticket-details-main-tabs) [role="tab"][data-state="active"] {
+  background-color: #ffffff !important;
+  color: #1a1a18 !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
+}
+html body [role="tablist"].ticket-details-main-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 3px !important;
+  width: 100% !important;
+  max-width: 100%;
+  height: auto !important;
+  padding: 3px !important;
+  background-color: rgba(26, 26, 24, 0.055) !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+html body [role="tablist"].ticket-details-main-tabs [role="tab"] {
+  width: 100% !important;
+  min-width: 0;
+  gap: 7px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  color: rgba(26, 26, 24, 0.55) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transition: all 0.16s;
+}
+html body [role="tablist"].ticket-details-main-tabs [role="tab"]:hover {
+  color: #1a1a18 !important;
+}
+html body [role="tablist"].ticket-details-main-tabs [role="tab"][data-state="active"] {
   background-color: #ffffff !important;
   color: #1a1a18 !important;
   box-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05) !important;
@@ -5719,7 +5754,7 @@ html body [class*="focus:ring-[#DA7756]"]:focus {
    "Analytics | Asset Details" switcher). Excludes lists that opt out
    of a track (transparent underline tabs, rounded-full pills).
    ============================================================ */
-html body [role="tablist"]:is(
+html body [role="tablist"]:not(.ticket-details-main-tabs):is(
     [class*="bg-gray-50"],
     :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
   ) {
@@ -5735,7 +5770,7 @@ html body [role="tablist"]:is(
   border: none !important;
   border-radius: 12px !important;
 }
-html body [role="tablist"]:is(
+html body [role="tablist"]:not(.ticket-details-main-tabs):is(
     [class*="bg-gray-50"],
     :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
   ) [role="tab"] {
@@ -5752,13 +5787,13 @@ html body [role="tablist"]:is(
   box-shadow: none !important;
   transition: all 0.16s;
 }
-html body [role="tablist"]:is(
+html body [role="tablist"]:not(.ticket-details-main-tabs):is(
     [class*="bg-gray-50"],
     :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
   ) [role="tab"]:hover {
   color: #1a1a18 !important;
 }
-html body [role="tablist"]:is(
+html body [role="tablist"]:not(.ticket-details-main-tabs):is(
     [class*="bg-gray-50"],
     :not([class*="bg-"]):not([class*="border"]):not([class*="rounded-full"]):not([class*="rounded-none"])
   ) [role="tab"][data-state="active"] {
@@ -5815,7 +5850,7 @@ html body .bg-white\/20 {
   color: rgba(26, 26, 24, 0.68) !important;
 }
 /* Switcher triggers must not stretch full width / stack */
-html body [role="tablist"] [role="tab"].w-full {
+html body [role="tablist"]:not(.ticket-details-main-tabs) [role="tab"].w-full {
   width: auto !important;
 }
 
