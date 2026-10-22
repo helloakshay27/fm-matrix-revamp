@@ -160,7 +160,7 @@ export const GRNDetailsPage = () => {
   const [sapPushDisabled, setSapPushDisabled] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [printing, setPrinting] = useState(false)
+  const [printing, setPrinting] = useState(false);
   const [debitForm, setDebitForm] = useState({
     type: "",
     amount: "",
@@ -182,7 +182,10 @@ export const GRNDetailsPage = () => {
       setGrnDetails(response.grn || {});
       setSendToSap(response.show_send_sap_yes);
       // Set external API calls if available
-      if (response.grn?.external_api_calls && Array.isArray(response.grn.external_api_calls)) {
+      if (
+        response.grn?.external_api_calls &&
+        Array.isArray(response.grn.external_api_calls)
+      ) {
         setExternalApiCalls(response.grn.external_api_calls);
       }
     } catch (error) {
@@ -205,7 +208,7 @@ export const GRNDetailsPage = () => {
   const canEdit = grnDetails.user_permissions?.can_edit === true;
 
   const handlePrint = async () => {
-    setPrinting(true)
+    setPrinting(true);
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/grns/${id}/print_pdf.pdf`,
@@ -230,7 +233,7 @@ export const GRNDetailsPage = () => {
       console.log(error);
       toast.error(error.message);
     } finally {
-      setPrinting(false)
+      setPrinting(false);
     }
   };
   const handleFeeds = () => {
@@ -263,14 +266,13 @@ export const GRNDetailsPage = () => {
       fetchData();
       toast.success("Data refreshed after send to SAP");
       // Disable the button after successful push
-
     } catch (error: any) {
       console.error("Send to SAP error:", error);
 
       toast.error(
         error?.response?.data?.message ||
-        error.message ||
-        "Failed to send to SAP"
+          error.message ||
+          "Failed to send to SAP"
       );
     }
   }, [id]);
@@ -397,7 +399,7 @@ export const GRNDetailsPage = () => {
       default:
         return item[columnKey] || "-";
     }
-  }
+  };
 
   // Transform grn_inventories to include S.No.
   const itemsData =
@@ -425,9 +427,7 @@ export const GRNDetailsPage = () => {
       </Button>
       {/* Header */}
       <div className="flex justify-between items-end">
-        <h1 className="text-2xl font-semibold">
-          GRN DETAILS
-        </h1>
+        <h1 className="text-2xl font-semibold">GRN DETAILS</h1>
         <div className="flex gap-2 flex-wrap">
           {shouldShow("GRN/ SRN", "update") && canEdit && (
             <Button
@@ -450,18 +450,16 @@ export const GRNDetailsPage = () => {
               Push To SAP
             </Button>
           )}
-          {
-            grnDetails.all_level_approved && (
-              <Button
-                size="sm"
-                variant="outline"
-                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                onClick={handleOpenDebitModal}
-              >
-                Debit Note
-              </Button>
-            )
-          }
+          {grnDetails.all_level_approved && (
+            <Button
+              size="sm"
+              variant="outline"
+              // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handleOpenDebitModal}
+            >
+              Debit Note
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
@@ -471,25 +469,26 @@ export const GRNDetailsPage = () => {
             <Rss className="w-4 h-4 mr-1" />
             Feeds
           </Button>
-          {
-            !shouldShowButtons && (
-              <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
-                {
-                  printing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Print
-                    </>
-                  ) : (
-                    <>
-                      <Printer className="w-4 h-4 mr-2" />
-                      Print
-                    </>
-                  )
-                }
-              </Button>
-            )
-          }
+          {!shouldShowButtons && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              disabled={printing}
+            >
+              {printing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Print
+                </>
+              ) : (
+                <>
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -501,7 +500,7 @@ export const GRNDetailsPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(
                         approval.status
                       )}`}
                     >
@@ -517,7 +516,7 @@ export const GRNDetailsPage = () => {
                 </Tooltip>
               ) : (
                 <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                  className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(
                     approval.status
                   )}`}
                 >
@@ -534,29 +533,36 @@ export const GRNDetailsPage = () => {
         </div>
       </TooltipProvider>
 
-      {approvalStatus?.approval_levels?.filter((a: Approval) => a.status.toLowerCase() === "rejected").map((a: Approval, idx: number) => (
-        <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-red-700">
-              Rejected by {a.name}
-              {a.approved_by ? ` — ${a.approved_by}` : ""}
-              {a.approved_at ? ` (${a.approved_at})` : ""}
-            </p>
-            <p className="text-sm text-red-600 mt-0.5">
-              Reason: {a.rejection_reason ?? "No reason provided"}
-            </p>
+      {approvalStatus?.approval_levels
+        ?.filter((a: Approval) => a.status.toLowerCase() === "rejected")
+        .map((a: Approval, idx: number) => (
+          <div
+            key={idx}
+            className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-4"
+          >
+            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-700">
+                Rejected by {a.name}
+                {a.approved_by ? ` — ${a.approved_by}` : ""}
+                {a.approved_at ? ` (${a.approved_at})` : ""}
+              </p>
+              <p className="text-sm text-red-600 mt-0.5">
+                Reason: {a.rejection_reason ?? "No reason provided"}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
       {/* Vendor/Contact Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Contact className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Contact className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{billingAddress.building_name}</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+            {billingAddress.building_name}
+          </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
@@ -605,30 +611,39 @@ export const GRNDetailsPage = () => {
       </div>
 
       {/* Purchase Order Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+            GRN
+          </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Invoice Number</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.invoice_no}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.invoice_no}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Reference No.</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+            <span className="text-gray-900 font-medium">
+              {purchaseOrder.reference_number}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails?.bill_date && format(grnDetails.bill_date, "dd/MM/yyyy")}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails?.bill_date &&
+                format(grnDetails.bill_date, "dd/MM/yyyy")}
+            </span>
           </div>
 
           <div className="flex items-start">
@@ -640,134 +655,226 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Posting Date</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails?.posting_date && format(grnDetails.posting_date, "dd/MM/yyyy")}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails?.posting_date &&
+                format(grnDetails.posting_date, "dd/MM/yyyy")}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Supplier Name</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{supplier.company_name}</span>
+            <span className="text-gray-900 font-medium">
+              {supplier.company_name}
+            </span>
           </div>
 
           <div className="flex items-start">
-            <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
+            <span className="text-gray-500 min-w-[180px]">
+              Retention Amount
+            </span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.retention_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.retention_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">PO Number</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.external_id}</span>
+            <span className="text-gray-900 font-medium">
+              {purchaseOrder.external_id}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.tds_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.tds_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">QC Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.qh_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.qh_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
-            <span className="text-gray-500 min-w-[180px]">PO Reference Number</span>
+            <span className="text-gray-500 min-w-[180px]">
+              PO Reference Number
+            </span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+            <span className="text-gray-900 font-medium">
+              {purchaseOrder.reference_number}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.total_taxes)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.total_taxes)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.grn_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">PO Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(purchaseOrder.amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(purchaseOrder.amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Payment Mode</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.payment_mod}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.payment_mod}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.invoice_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.invoice_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.payable_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.payable_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.grn_amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.grn_amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
-            <span className="text-gray-500 min-w-[180px]">Physical Invoice sent to</span>
+            <span className="text-gray-500 min-w-[180px]">
+              Physical Invoice sent to
+            </span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.invoice_sent_at}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.invoice_sent_at}
+            </span>
           </div>
 
           <div className="flex items-start">
-            <span className="text-gray-500 min-w-[180px]">Physical Invoice received on</span>
+            <span className="text-gray-500 min-w-[180px]">
+              Physical Invoice received on
+            </span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.invoice_received_at}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.invoice_received_at}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Gross Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{formatIndian(grnDetails.amount)}</span>
+            <span className="text-gray-900 font-medium">
+              {formatIndian(grnDetails.amount)}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Related To</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.related_to}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.related_to}
+            </span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PR Type</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.pr_type}
+            </span>
           </div>
 
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Notes</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{grnDetails.notes}</span>
+            <span className="text-gray-900 font-medium">
+              {grnDetails.notes}
+            </span>
           </div>
         </div>
         {grnDetails.billdesk_detail && (
           <>
-            <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+            <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">
+              Billdesk Details
+            </h4>
             <EnhancedTable
-              data={[{
-                invoice_type: grnDetails.billdesk_detail.invoice_type || "-",
-                billdesk_number: grnDetails.billdesk_detail.billdesk_number || "-",
-                tracking_number: grnDetails.billdesk_detail.tracking_number || "-",
-                status: grnDetails.billdesk_detail.status || "-",
-                billdesk_remark: grnDetails.billdesk_detail.billdesk_remark || "-",
-              }]}
+              data={[
+                {
+                  invoice_type: grnDetails.billdesk_detail.invoice_type || "-",
+                  billdesk_number:
+                    grnDetails.billdesk_detail.billdesk_number || "-",
+                  tracking_number:
+                    grnDetails.billdesk_detail.tracking_number || "-",
+                  status: grnDetails.billdesk_detail.status || "-",
+                  billdesk_remark:
+                    grnDetails.billdesk_detail.billdesk_remark || "-",
+                },
+              ]}
               columns={[
-                { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
-                { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
-                { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
-                { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
-                { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                {
+                  key: "invoice_type",
+                  label: "Invoice Type",
+                  sortable: false,
+                  draggable: false,
+                  defaultVisible: true,
+                },
+                {
+                  key: "billdesk_number",
+                  label: "Billdesk Number",
+                  sortable: false,
+                  draggable: false,
+                  defaultVisible: true,
+                },
+                {
+                  key: "tracking_number",
+                  label: "Tracking Number",
+                  sortable: false,
+                  draggable: false,
+                  defaultVisible: true,
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  sortable: false,
+                  draggable: false,
+                  defaultVisible: true,
+                },
+                {
+                  key: "billdesk_remark",
+                  label: "Billdesk Remark",
+                  sortable: false,
+                  draggable: false,
+                  defaultVisible: true,
+                },
               ]}
               renderCell={(item, col) => item[col]}
               storageKey="grn-billdesk-table"
@@ -782,27 +889,71 @@ export const GRNDetailsPage = () => {
 
       {/* Gate Entry Details Section */}
       {grnDetails.gate_entry_and_transport_details && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
           <div className="flex items-center gap-3 pb-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Truck className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Truck className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Gate Entry Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+              Gate Entry Details
+            </h3>
           </div>
           <EnhancedTable
-            data={[{
-              driver_name: grnDetails.gate_entry_and_transport_details.driver_name || "-",
-              mobile_number: grnDetails.gate_entry_and_transport_details.mobile_number || "-",
-              vehicle_number: grnDetails.gate_entry_and_transport_details.vehicle_number || "-",
-              gate_entry_date: grnDetails.gate_entry_and_transport_details.gate_entry_date || "-",
-              gate_entry_number: grnDetails.gate_entry_and_transport_details.gate_entry_number || "-",
-            }]}
+            data={[
+              {
+                driver_name:
+                  grnDetails.gate_entry_and_transport_details.driver_name ||
+                  "-",
+                mobile_number:
+                  grnDetails.gate_entry_and_transport_details.mobile_number ||
+                  "-",
+                vehicle_number:
+                  grnDetails.gate_entry_and_transport_details.vehicle_number ||
+                  "-",
+                gate_entry_date:
+                  grnDetails.gate_entry_and_transport_details.gate_entry_date ||
+                  "-",
+                gate_entry_number:
+                  grnDetails.gate_entry_and_transport_details
+                    .gate_entry_number || "-",
+              },
+            ]}
             columns={[
-              { key: "driver_name", label: "Driver Name", sortable: false, draggable: false, defaultVisible: true },
-              { key: "mobile_number", label: "Mobile Number", sortable: false, draggable: false, defaultVisible: true },
-              { key: "vehicle_number", label: "Vehicle Number", sortable: false, draggable: false, defaultVisible: true },
-              { key: "gate_entry_date", label: "Gate Entry Date", sortable: false, draggable: false, defaultVisible: true },
-              { key: "gate_entry_number", label: "Gate Entry Number", sortable: false, draggable: false, defaultVisible: true },
+              {
+                key: "driver_name",
+                label: "Driver Name",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "mobile_number",
+                label: "Mobile Number",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "vehicle_number",
+                label: "Vehicle Number",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "gate_entry_date",
+                label: "Gate Entry Date",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "gate_entry_number",
+                label: "Gate Entry Number",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
             ]}
             renderCell={(item, col) => item[col]}
             storageKey="grn-gate-entry-table"
@@ -816,25 +967,61 @@ export const GRNDetailsPage = () => {
 
       {/* Transport Invoice Details Section */}
       {grnDetails.gate_entry_and_transport_details && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
           <div className="flex items-center gap-3 pb-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Receipt className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Receipt className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Transport Invoice Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+              Transport Invoice Details
+            </h3>
           </div>
           <EnhancedTable
-            data={[{
-              transportation_vendor: grnDetails.gate_entry_and_transport_details.transportation_vendor_name || "-",
-              transport_invoice_number: grnDetails.gate_entry_and_transport_details.transport_invoice_number || "-",
-              transport_invoice_date: grnDetails.gate_entry_and_transport_details.transport_invoice_date || "-",
-              transport_invoice_amount: grnDetails.gate_entry_and_transport_details.transport_invoice_amount ?? "-",
-            }]}
+            data={[
+              {
+                transportation_vendor:
+                  grnDetails.gate_entry_and_transport_details
+                    .transportation_vendor_name || "-",
+                transport_invoice_number:
+                  grnDetails.gate_entry_and_transport_details
+                    .transport_invoice_number || "-",
+                transport_invoice_date:
+                  grnDetails.gate_entry_and_transport_details
+                    .transport_invoice_date || "-",
+                transport_invoice_amount:
+                  grnDetails.gate_entry_and_transport_details
+                    .transport_invoice_amount ?? "-",
+              },
+            ]}
             columns={[
-              { key: "transportation_vendor", label: "Transportation Vendor", sortable: false, draggable: false, defaultVisible: true },
-              { key: "transport_invoice_number", label: "Transport Invoice Number", sortable: false, draggable: false, defaultVisible: true },
-              { key: "transport_invoice_date", label: "Transport Invoice Date", sortable: false, draggable: false, defaultVisible: true },
-              { key: "transport_invoice_amount", label: "Transport Invoice Amount", sortable: false, draggable: false, defaultVisible: true },
+              {
+                key: "transportation_vendor",
+                label: "Transportation Vendor",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "transport_invoice_number",
+                label: "Transport Invoice Number",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "transport_invoice_date",
+                label: "Transport Invoice Date",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
+              {
+                key: "transport_invoice_amount",
+                label: "Transport Invoice Amount",
+                sortable: false,
+                draggable: false,
+                defaultVisible: true,
+              },
             ]}
             renderCell={(item, col) => item[col]}
             storageKey="grn-transport-invoice-table"
@@ -845,21 +1032,65 @@ export const GRNDetailsPage = () => {
           />
           {grnDetails.gate_entry_and_transport_details.billdesk_detail && (
             <>
-              <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+              <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">
+                Billdesk Details
+              </h4>
               <EnhancedTable
-                data={[{
-                  invoice_type: grnDetails.gate_entry_and_transport_details.billdesk_detail.invoice_type || "-",
-                  billdesk_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_number || "-",
-                  tracking_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.tracking_number || "-",
-                  status: grnDetails.gate_entry_and_transport_details.billdesk_detail.status || "-",
-                  billdesk_remark: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_remark || "-",
-                }]}
+                data={[
+                  {
+                    invoice_type:
+                      grnDetails.gate_entry_and_transport_details
+                        .billdesk_detail.invoice_type || "-",
+                    billdesk_number:
+                      grnDetails.gate_entry_and_transport_details
+                        .billdesk_detail.billdesk_number || "-",
+                    tracking_number:
+                      grnDetails.gate_entry_and_transport_details
+                        .billdesk_detail.tracking_number || "-",
+                    status:
+                      grnDetails.gate_entry_and_transport_details
+                        .billdesk_detail.status || "-",
+                    billdesk_remark:
+                      grnDetails.gate_entry_and_transport_details
+                        .billdesk_detail.billdesk_remark || "-",
+                  },
+                ]}
                 columns={[
-                  { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
-                  { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
-                  { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
-                  { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
-                  { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                  {
+                    key: "invoice_type",
+                    label: "Invoice Type",
+                    sortable: false,
+                    draggable: false,
+                    defaultVisible: true,
+                  },
+                  {
+                    key: "billdesk_number",
+                    label: "Billdesk Number",
+                    sortable: false,
+                    draggable: false,
+                    defaultVisible: true,
+                  },
+                  {
+                    key: "tracking_number",
+                    label: "Tracking Number",
+                    sortable: false,
+                    draggable: false,
+                    defaultVisible: true,
+                  },
+                  {
+                    key: "status",
+                    label: "Status",
+                    sortable: false,
+                    draggable: false,
+                    defaultVisible: true,
+                  },
+                  {
+                    key: "billdesk_remark",
+                    label: "Billdesk Remark",
+                    sortable: false,
+                    draggable: false,
+                    defaultVisible: true,
+                  },
                 ]}
                 renderCell={(item, col) => item[col]}
                 storageKey="grn-transport-billdesk-table"
@@ -873,20 +1104,30 @@ export const GRNDetailsPage = () => {
         </div>
       )}
 
-
       {/* Items Table Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ClipboardList className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ClipboardList className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+            Items Table
+          </h3>
         </div>
         <EnhancedTable
           data={itemsData}
           renderCell={(item: any, columnKey: string) => {
-            const amountKeys = ['rate', 'cgst_amount', 'sgst_amount', 'igst_amount', 'tcs_amount', 'taxable_value', 'total_value'];
-            if (amountKeys.includes(columnKey)) return formatIndian(item[columnKey]);
+            const amountKeys = [
+              "rate",
+              "cgst_amount",
+              "sgst_amount",
+              "igst_amount",
+              "tcs_amount",
+              "taxable_value",
+              "total_value",
+            ];
+            if (amountKeys.includes(columnKey))
+              return formatIndian(item[columnKey]);
             return item[columnKey];
           }}
           columns={itemsColumns}
@@ -902,34 +1143,42 @@ export const GRNDetailsPage = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">Other Expense:</span>
-              <span className="font-medium">{formatIndian(grnDetails.other_expenses)}</span>
+              <span className="font-medium">
+                {formatIndian(grnDetails.other_expenses)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Loading Expense:
               </span>
-              <span className="font-medium">{formatIndian(grnDetails.loading_expense)}</span>
+              <span className="font-medium">
+                {formatIndian(grnDetails.loading_expense)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Adjustment Amount:
               </span>
-              <span className="font-medium">{formatIndian(grnDetails.adj_amount)}</span>
+              <span className="font-medium">
+                {formatIndian(grnDetails.adj_amount)}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
-        <div className="flex items-center gap-3 p-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Images className="w-4 h-4" />
+      <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Images className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+            Attachments
+          </h3>
         </div>
         <CardContent>
           {Array.isArray(grnDetails.attachments?.general_attachments) &&
-            grnDetails.attachments.general_attachments.length > 0 ? (
+          grnDetails.attachments.general_attachments.length > 0 ? (
             <div className="flex items-center flex-wrap gap-4">
               {grnDetails.attachments.general_attachments.map(
                 (attachment: Attachment) => {
@@ -952,15 +1201,16 @@ export const GRNDetailsPage = () => {
                   return (
                     <div
                       key={attachment.id}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-lg pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
-                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
+                              if (attachment.document_url)
+                                window.open(attachment.document_url, "_blank");
                             }}
                             type="button"
                           >
@@ -971,7 +1221,8 @@ export const GRNDetailsPage = () => {
                             alt={attachment.filename}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
-                              if (attachment.document_url) window.open(attachment.document_url, '_blank');
+                              if (attachment.document_url)
+                                window.open(attachment.document_url, "_blank");
                             }}
                           />
                         </>
@@ -1001,7 +1252,8 @@ export const GRNDetailsPage = () => {
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                           onClick={() => {
-                            if (attachment.document_url) window.open(attachment.document_url, '_blank');
+                            if (attachment.document_url)
+                              window.open(attachment.document_url, "_blank");
                           }}
                         >
                           <Eye className="w-4 h-4" />
@@ -1019,12 +1271,14 @@ export const GRNDetailsPage = () => {
       </Card>
 
       {/* Debit Note Details Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">
+            Debit Note Details
+          </h3>
         </div>
         <EnhancedTable
           data={grnDetails.debit_notes || []}
@@ -1058,6 +1312,7 @@ export const GRNDetailsPage = () => {
       )}
 
       <Dialog
+        PaperProps={{ sx: { borderRadius: "16px" } }}
         open={openRejectDialog}
         onClose={handleRejectCancel}
         maxWidth="sm"
@@ -1078,14 +1333,24 @@ export const GRNDetailsPage = () => {
             variant="outlined"
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRejectCancel} variant="outline">
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 3,
+            pt: 2,
+            gap: 1.5,
+            justifyContent: "flex-end",
+            "& > :not(style) ~ :not(style)": { ml: 0 },
+          }}
+        >
+          <Button
+            onClick={handleRejectCancel}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
             Cancel
           </Button>
-          <Button
-            onClick={handleRejectConfirm}
-            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
-          >
+          <Button onClick={handleRejectConfirm} className="fm-action-primary">
             Reject
           </Button>
         </DialogActions>
@@ -1116,30 +1381,55 @@ export const GRNDetailsPage = () => {
           </h3>
           <div className="space-y-4">
             {externalApiCalls.map((apiCall, index) => (
-              <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div
+                key={apiCall.id || index}
+                className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600 font-semibold">Provider</p>
-                    <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                    <p className="text-sm text-gray-600 font-semibold">
+                      Provider
+                    </p>
+                    <p className="text-sm font-medium">
+                      {apiCall.api_provider || "-"}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                    <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                      {apiCall.response_status || '-'}
+                    <p className="text-sm text-gray-600 font-semibold">
+                      Response Status Code
+                    </p>
+                    <p
+                      className={`text-sm font-medium ${
+                        apiCall.response_status === 200
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {apiCall.response_status || "-"}
                     </p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600 font-semibold">Message</p>
+                    <p className="text-sm text-gray-600 font-semibold">
+                      Message
+                    </p>
                     <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
                       {apiCall.eval_status && apiCall.eval_status.trim()
                         ? apiCall.eval_status
-                        : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                        : apiCall.response_string
+                          ? JSON.stringify(
+                              JSON.parse(apiCall.response_string),
+                              null,
+                              2
+                            )
+                          : "-"}
                     </p>
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-xs text-gray-500">
-                      Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
+                      Created:{" "}
+                      {apiCall.created_at
+                        ? new Date(apiCall.created_at).toLocaleString()
+                        : "-"}
                     </p>
                   </div>
                 </div>
@@ -1151,4 +1441,3 @@ export const GRNDetailsPage = () => {
     </div>
   );
 };
-

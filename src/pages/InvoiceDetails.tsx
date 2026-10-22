@@ -37,6 +37,20 @@ interface PlantDetail {
     name?: string;
 }
 
+interface PaymentDetail {
+    id?: number;
+    status?: string | null;
+    payment_mode?: string | null;
+    transaction_number?: string | null;
+    amount?: number | string | null;
+    payment_date?: string | null;
+    note?: string | null;
+    billdesk_number?: string | null;
+    ponumber?: string | null;
+    vendorcode?: string | null;
+    grnyear?: string | null;
+    created_at?: string | null;
+}
 interface WOInvoiceInventory {
     sr_no?: number;
     boq_details?: string;
@@ -113,6 +127,7 @@ interface Invoice {
     debit_notes?: DebitNote[];
     external_api_calls?: ExternalApiCall[];
     billdesk_detail?: BillDeskDetail;
+    payment_details?: PaymentDetail[];
 }
 
 interface ExternalApiCall {
@@ -148,6 +163,21 @@ const boqTableColumns: ColumnConfig[] = [
         sortable: true,
         draggable: true,
     },
+];
+
+const paymentDetailsColumns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "billdesk_number", label: "Billdesk Number", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    { key: "payment_mode", label: "Payment Mode", sortable: true, draggable: true },
+    { key: "transaction_number", label: "Transaction No.", sortable: true, draggable: true },
+    { key: "amount", label: "Amount", sortable: true, draggable: true },
+    { key: "payment_date", label: "Payment Date", sortable: true, draggable: true },
+    { key: "ponumber", label: "PO Number", sortable: true, draggable: true },
+    { key: "vendorcode", label: "Vendor Code", sortable: true, draggable: true },
+    { key: "grnyear", label: "GRN Year", sortable: true, draggable: true },
+    { key: "note", label: "Note", sortable: true, draggable: true },
+    { key: "created_at", label: "Created At", sortable: true, draggable: true },
 ];
 
 const debitNoteDetailsColumns: ColumnConfig[] = [
@@ -498,7 +528,7 @@ export const InvoiceDetails = () => {
                             {level.status?.toLowerCase() === 'rejected' ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
+                                        <div className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
                                             {`${level?.name?.toUpperCase()} : ${level.status}`}
                                         </div>
                                     </TooltipTrigger>
@@ -507,7 +537,7 @@ export const InvoiceDetails = () => {
                                     </TooltipContent>
                                 </Tooltip>
                             ) : (
-                                <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                <div className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(level.status)}`}>
                                     {`${level?.name?.toUpperCase()} : ${level.status}`}
                                 </div>
                             )}
@@ -539,12 +569,12 @@ export const InvoiceDetails = () => {
             ))}
 
             {/* Vendor/Contact Details Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex items-center gap-3 pb-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <Contact className="w-4 h-4" />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Contact className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{invoice.supplier_name}</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{invoice.supplier_name}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -582,12 +612,12 @@ export const InvoiceDetails = () => {
             </div>
 
             {/* Purchase Order Details Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex items-center gap-3 pb-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ScrollText className="w-4 h-4" />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ScrollText className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> WO INVOICE</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> WO INVOICE</h3>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -644,7 +674,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.adjustment_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Supplier Name</span>
@@ -654,7 +684,7 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.retention_amount}</span>
+                        <span className="text-gray-900 font-medium">{formatIndian(invoice.retention_amount)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
@@ -723,12 +753,12 @@ export const InvoiceDetails = () => {
                 )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                 <div className="flex items-center gap-3 pb-3">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ClipboardList className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ClipboardList className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ List</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">BOQ List</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
@@ -755,6 +785,9 @@ export const InvoiceDetails = () => {
                                     ? item.expected_date.split("T")[0]
                                     : "-";
                             }
+                            if (["rate", "tax_amount", "total_amount"].includes(columnKey)) {
+                                return formatIndian(item[columnKey]);
+                            }
                             return item[columnKey] ?? "-";
                         }}
                     />
@@ -772,12 +805,12 @@ export const InvoiceDetails = () => {
                 </div>
             </div>
 
-            <Card className="shadow-sm border border-border mb-6">
-                <div className="flex items-center gap-3 p-6">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <Images className="w-4 h-4" />
+            <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+                <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <Images className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
                 </div>
                 <CardContent>
                     {Array.isArray(invoice.attachments) && invoice.attachments.length > 0 ? (
@@ -791,12 +824,12 @@ export const InvoiceDetails = () => {
                                 return (
                                     <div
                                         key={attachment.id}
-                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                        className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                     >
                                         {/* Top-right action button */}
                                         {isImage && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="View"
                                                 onClick={() => {
                                                     setSelectedAttachment(attachment);
@@ -810,7 +843,7 @@ export const InvoiceDetails = () => {
 
                                         {isPdf && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="Open PDF"
                                                 onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
                                                 type="button"
@@ -821,7 +854,7 @@ export const InvoiceDetails = () => {
 
                                         {(isExcel || isWord) && (
                                             <button
-                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                                                 title="Download"
                                                 onClick={() => {
                                                     setSelectedAttachment(attachment);
@@ -878,12 +911,44 @@ export const InvoiceDetails = () => {
                 </CardContent>
             </Card>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+            {/* Payment Details */}
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+    <div className="flex items-center gap-3 pb-3">
+        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
+        </div>
+        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+    </div>
+    <div className="overflow-x-auto">
+        <EnhancedTable
+            data={invoice?.payment_details || []}
+            columns={paymentDetailsColumns}
+            renderCell={(item, columnKey) => {
+                if (columnKey === "amount") return formatIndian(item[columnKey]);
+                if (columnKey === "payment_date" || columnKey === "created_at") {
+                    return item[columnKey] ? formatDate(item[columnKey]) : "-";
+                }
+                return item[columnKey] ?? "-";
+            }}
+            storageKey="invoice-payment-details-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="payment-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No payment details available"
+            className="h-max"
+        />
+    </div>
+</div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                 <div className="flex items-center gap-3 pb-3">
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <ScrollText className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                        <ScrollText className="w-[18px] h-[18px]" />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+                    <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
@@ -892,6 +957,9 @@ export const InvoiceDetails = () => {
                         renderCell={(item, columnKey) => {
                             if (columnKey === "type") {
                                 return "Debit"
+                            }
+                            if (columnKey === "amount") {
+                                return formatIndian(item[columnKey]);
                             }
                             return item[columnKey] ?? "-";
                         }}
@@ -910,12 +978,12 @@ export const InvoiceDetails = () => {
 
             {/* External API Calls */}
             {(invoice as any)?.external_api_calls?.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
                     <div className="flex items-center gap-3 pb-4">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                            <Rss className="w-4 h-4" />
+                        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                            <Rss className="w-[18px] h-[18px]" />
                         </div>
-                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">External API Calls</h3>
+                        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">External API Calls</h3>
                     </div>
                     <div className="space-y-4">
                         {(invoice as any).external_api_calls.map((apiCall: ExternalApiCall, idx: number) => (
@@ -970,6 +1038,7 @@ export const InvoiceDetails = () => {
             )}
 
             <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }}
                 open={openRejectDialog}
                 onClose={handleRejectCancel}
                 maxWidth="sm"
@@ -997,15 +1066,19 @@ export const InvoiceDetails = () => {
                         }}
                     />
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleRejectCancel} variant="outline">
-                        Cancel
+                <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
+                    <Button
+                      onClick={handleRejectCancel}
+                      variant="outline"
+                      className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+                    >
+                      Cancel
                     </Button>
                     <Button
-                        onClick={handleRejectConfirm}
-                        className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+                      onClick={handleRejectConfirm}
+                      className="fm-action-primary"
                     >
-                        Reject
+                      Reject
                     </Button>
                 </DialogActions>
             </Dialog>

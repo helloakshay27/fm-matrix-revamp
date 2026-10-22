@@ -7,6 +7,7 @@ import {
   Select as MuiSelect,
   MenuItem,
   CircularProgress,
+  Select,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,9 +19,10 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X } from "lucide-react";
+import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X, ClipboardCheck, Package, Paperclip, Truck } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 interface GRNDetails {
   purchaseOrder: number;
@@ -35,6 +37,19 @@ interface GRNDetails {
   loadingExpense: string;
   adjustmentAmount: string;
   notes: string;
+}
+
+
+interface TransportDetail {
+  driver_name: string;
+  mobile_number: string;
+  vehicle_number: string;
+  gate_entry_date: string;
+  gate_entry_number: string;
+  transportation_vendor_id: string;
+  transport_invoice_number: string;
+  transport_invoice_date: string;
+  transport_invoice_amount: string;
 }
 
 interface InventoryItem {
@@ -75,6 +90,8 @@ interface Attachment {
   document_name: string;
   document_file_name: string;
 }
+const isTrue = (val: unknown) =>
+  val === true || val === "true" || val === 1 || val === "1";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -89,6 +106,7 @@ export const AddGRNDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const procurementEvents = useProcurementEvents();
 
   const [grnDetails, setGrnDetails] = useState<GRNDetails>({
     purchaseOrder: 0,
@@ -132,10 +150,24 @@ export const AddGRNDashboard = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<[string, number][]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [transportVendors, setTransportVendors] = useState<Supplier[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [invoiceType, setInvoiceType] = useState("");
+
+  const [transportDetail, setTransportDetail] = useState<TransportDetail>({
+    driver_name: "",
+    mobile_number: "",
+    vehicle_number: "",
+    gate_entry_date: "",
+    gate_entry_number: "",
+    transportation_vendor_id: "",
+    transport_invoice_number: "",
+    transport_invoice_date: "",
+    transport_invoice_amount: "",
+  });
 
   useEffect(() => {
     const fetchPO = async () => {
@@ -151,6 +183,7 @@ export const AddGRNDashboard = () => {
       try {
         const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
         setSuppliers(response.suppliers);
+        setTransportVendors(response.suppliers);
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch suppliers.");
       }
@@ -183,16 +216,61 @@ export const AddGRNDashboard = () => {
     }
   };
 
+  // const fetchItem = async (id: number) => {
+  //   try {
+  //     const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+  //     setGrnDetails((prev) => ({
+  //       ...prev,
+  //       purchaseOrder: id,
+  //       relatedTo: response.related_to,
+  //       invoiceAmount: response.total_amount || "",
+  //     }))
+  //     const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
+  //       const inventoryItem = {
+  //         ...item,
+  //         inventoryType: item.inventory.id,
+  //         itemNo: item.item_no || "",
+  //         rate: item.rate || "",
+  //         cgstRate: item.cgst_rate || "",
+  //         cgstAmount: item.cgst_amount || "",
+  //         sgstRate: item.sgst_rate || "",
+  //         sgstAmount: item.sgst_amount || "",
+  //         igstRate: item.igst_rate || "",
+  //         igstAmount: item.igst_amount || "",
+  //         tcsRate: item.tcs_rate || "",
+  //         tcsAmount: item.tcs_amount || "",
+  //         totalTaxes: item.taxable_value || "",
+  //         amount: item.total_value || "",
+  //         totalAmount: "",
+  //         expectedQuantity: item.quantity || "",
+  //         receivedQuantity: "",
+  //         approvedQuantity: "",
+  //         rejectedQuantity: "",
+  //         batch: item.batch || [],
+  //       };
+  //       return calculateInventoryTaxes(inventoryItem);
+  //     });
+  //     setInventoryDetails(updatedInventoryDetails);
+  //   } catch (error: any) {
+  //     toast.error(error.message || "Failed to fetch item details.");
+  //   }
+  // };
+
   const fetchItem = async (id: number) => {
-    try {
-      const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
-      setGrnDetails((prev) => ({
-        ...prev,
-        purchaseOrder: id,
-        relatedTo: response.related_to,
-        invoiceAmount: response.total_amount || "",
-      }))
-      const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
+  try {
+    const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+    setGrnDetails((prev) => ({
+      ...prev,
+      purchaseOrder: id,
+      relatedTo: response.related_to,
+      invoiceAmount: response.total_amount || "",
+    }));
+
+    const updatedInventoryDetails = (response.pms_po_inventories || [])
+     .filter(
+    (item: any) => !isTrue(item.deleted) && !isTrue(item.delivery_completion)
+  )
+      .map((item: any) => {
         const inventoryItem = {
           ...item,
           inventoryType: item.inventory.id,
@@ -217,11 +295,46 @@ export const AddGRNDashboard = () => {
         };
         return calculateInventoryTaxes(inventoryItem);
       });
-      setInventoryDetails(updatedInventoryDetails);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch item details.");
-    }
-  };
+
+    if (updatedInventoryDetails.length === 0) {
+  toast.error("No pending items available for GRN in this Purchase Order");
+}
+
+    setInventoryDetails(updatedInventoryDetails);
+  } catch (error: any) {
+    toast.error(error.message || "Failed to fetch item details.");
+  }
+};
+
+// const updatedInventoryDetails = (response.pms_po_inventories || [])
+//   .filter((item: any) => !isDeletedItem(item.deleted))
+//   .map((item: any) => {
+//     const inventoryItem = {
+//       ...item,
+//       inventoryType: item.inventory.id,
+//       itemNo: item.item_no || "",
+//       rate: item.rate || "",
+//       cgstRate: item.cgst_rate || "",
+//       cgstAmount: item.cgst_amount || "",
+//       sgstRate: item.sgst_rate || "",
+//       sgstAmount: item.sgst_amount || "",
+//       igstRate: item.igst_rate || "",
+//       igstAmount: item.igst_amount || "",
+//       tcsRate: item.tcs_rate || "",
+//       tcsAmount: item.tcs_amount || "",
+//       totalTaxes: item.taxable_value || "",
+//       amount: item.total_value || "",
+//       totalAmount: "",
+//       expectedQuantity: item.quantity || "",
+//       receivedQuantity: "",
+//       approvedQuantity: "",
+//       rejectedQuantity: "",
+//       batch: item.batch || [],
+//     };
+//     return calculateInventoryTaxes(inventoryItem);
+//   });
+
+// setInventoryDetails(updatedInventoryDetails);
 
   const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
     const rate = parseFloat(item.rate) || 0;
@@ -449,6 +562,7 @@ export const AddGRNDashboard = () => {
         pms_purchase_order_id: grnDetails.purchaseOrder,
         supplier_id: grnDetails.supplier,
         invoice_no: grnDetails.invoiceNumber,
+        invoice_type: invoiceType,
         related_to: grnDetails.relatedTo,
         invoice_amount: grnDetails.invoiceAmount,
         payment_mod: grnDetails.paymentMode,
@@ -478,14 +592,34 @@ export const AddGRNDashboard = () => {
           total_value: item.amount,
           pms_products_attributes: item.batch.map((batch) => ({ batch_no: batch })),
         })),
+        billdesk_detail_attributes: {
+          id: null,
+          invoice_type: invoiceType,
+        },
+        grn_transport_detail_attributes: {
+          id: null,
+          driver_name: transportDetail.driver_name,
+          mobile_number: transportDetail.mobile_number,
+          vehicle_number: transportDetail.vehicle_number,
+          gate_entry_date: transportDetail.gate_entry_date,
+          gate_entry_number: transportDetail.gate_entry_number,
+          transportation_vendor_id: transportDetail.transportation_vendor_id,
+          transport_invoice_number: transportDetail.transport_invoice_number,
+          transport_invoice_date: transportDetail.transport_invoice_date,
+          transport_invoice_amount: transportDetail.transport_invoice_amount,
+        },
       },
       attachments: selectedFiles,
     };
-
+    if (inventoryDetails.length === 0) {
+  toast.error("No inventory items to submit");
+  return false;
+}
     setIsSubmitting(true);
     try {
       await dispatch(createGRN({ data: payload, baseUrl, token })).unwrap();
       toast.success("GRN submitted successfully!");
+      try { procurementEvents.onGrnSubmitted({ item_count: inventoryDetails.length, batch_count: inventoryDetails.reduce((acc, it) => acc + (it.batch?.length || 0), 0), has_invoice: Boolean(grnDetails.invoiceNumber), partial_receipt: false }); } catch (err) { }
       navigate("/finance/grn-srn");
     } catch (error: any) {
       toast.error(error.message || "Failed to submit GRN.");
@@ -503,12 +637,12 @@ export const AddGRNDashboard = () => {
       <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">1</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <FileText className="w-[18px] h-[18px]" />
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
               GRN DETAILS
             </h2>
           </div>
@@ -577,6 +711,37 @@ export const AddGRNDashboard = () => {
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
+
+            {/* <TextField
+              label="Invoice Type"
+              placeholder="Enter Invoice Type"
+              value={invoiceType}
+              onChange={(e) => setInvoiceType(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            /> */}
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+  <InputLabel shrink>Invoice Type</InputLabel>
+  <MuiSelect
+    label="Invoice Type"
+    value={invoiceType}
+    onChange={(e) => setInvoiceType(e.target.value as string)}
+    displayEmpty
+    sx={fieldStyles}
+  >
+    <MenuItem value="">
+      <em>Select Invoice Type</em>
+    </MenuItem>
+    <MenuItem value="CR">CR-Credit Note</MenuItem>
+    <MenuItem value="CV">CV-Cash Voucher</MenuItem>
+    <MenuItem value="DR">DR-Debit Note</MenuItem>
+    <MenuItem value="IV">IV-Invoice</MenuItem>
+  </MuiSelect>
+</FormControl>
 
             <TextField
               label="Related To"
@@ -750,31 +915,162 @@ export const AddGRNDashboard = () => {
               }}
             />
           </div>
+
+        </div>
+
+        {/* Transport Details Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardCheck className="w-[18px] h-[18px]" />
+            </div>
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">GRN GATE DETAILS</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <TextField
+              label="Driver Name"
+              placeholder="Enter Driver Name"
+              value={transportDetail.driver_name}
+              onChange={(e) => setTransportDetail({ ...transportDetail, driver_name: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Mobile Number"
+              placeholder="Enter Mobile Number"
+              value={transportDetail.mobile_number}
+              onChange={(e) => setTransportDetail({ ...transportDetail, mobile_number: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Vehicle Number"
+              placeholder="Enter Vehicle Number"
+              value={transportDetail.vehicle_number}
+              onChange={(e) => setTransportDetail({ ...transportDetail, vehicle_number: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Gate Entry Date"
+              type="date"
+              value={transportDetail.gate_entry_date}
+              onChange={(e) => setTransportDetail({ ...transportDetail, gate_entry_date: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Gate Entry Number"
+              placeholder="Enter Gate Entry Number"
+              value={transportDetail.gate_entry_number}
+              onChange={(e) => setTransportDetail({ ...transportDetail, gate_entry_number: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+          </div>
+        </div>
+
+        {/* Transport Invoice Details Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Truck className="w-[18px] h-[18px]" />
+            </div>
+            <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">TRANSPORTATION DETAILS</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Transportation Vendor</InputLabel>
+              <MuiSelect
+                label="Transportation Vendor"
+                value={transportDetail.transportation_vendor_id}
+                onChange={(e) => setTransportDetail({ ...transportDetail, transportation_vendor_id: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                {transportVendors.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            <TextField
+              label="Transport Invoice Number"
+              placeholder="Enter Invoice Number"
+              value={transportDetail.transport_invoice_number}
+              onChange={(e) => setTransportDetail({ ...transportDetail, transport_invoice_number: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Transport Invoice Date"
+              type="date"
+              value={transportDetail.transport_invoice_date}
+              onChange={(e) => setTransportDetail({ ...transportDetail, transport_invoice_date: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Transport Invoice Amount"
+              type="number"
+              placeholder="Enter Amount"
+              value={transportDetail.transport_invoice_amount}
+              onChange={(e) => setTransportDetail({ ...transportDetail, transport_invoice_amount: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
+              sx={{ mt: 1 }}
+            />
+          </div>
         </div>
 
         {/* Inventory Details Section */}
         {inventoryDetails.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">2</span>
+          <div key={index} className="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            {inventoryDetails.length > 1 && (
+              <Button
+                type="button"
+                onClick={() => removeInventoryItem(index)}
+                size="sm"
+                className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-[8px]"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+                  <Package className="w-[18px] h-[18px]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
+                <h2 className="text-sm font-semibold uppercase text-[#1A1A1A]">
                   INVENTORY DETAILS {index + 1}
                 </h2>
               </div>
-              {inventoryDetails.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeInventoryItem(index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1171,12 +1467,10 @@ export const AddGRNDashboard = () => {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center">
-              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                3
-              </h2>
+        <Card className="rounded-2xl border border-gray-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase text-[#1A1A1A] flex items-center gap-3">
+              <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Paperclip className="w-[18px] h-[18px]" /></span>
               ATTACHMENTS*
             </CardTitle>
           </CardHeader>
@@ -1222,12 +1516,12 @@ export const AddGRNDashboard = () => {
                   return (
                     <div
                       key={`new-${index}`}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedDoc({
@@ -1278,7 +1572,7 @@ export const AddGRNDashboard = () => {
                         {file.name}
                       </span>
                       <button
-                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        className="absolute top-2 right-1/2 mr-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                         title="Remove"
                         onClick={() => removeFile(index)}
                         type="button"
@@ -1293,22 +1587,20 @@ export const AddGRNDashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="fm-action-bar mt-6">
           <Button
-            type="submit"
-            size="lg"
-            className="bg-[#C72030] hover:bg-[#C72030] text-white"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit GRN"}
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
             onClick={() => navigate(-1)}
-            className="px-8"
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
           >
             Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="fm-action-primary"
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit GRN"}
           </Button>
         </div>
       </form>
