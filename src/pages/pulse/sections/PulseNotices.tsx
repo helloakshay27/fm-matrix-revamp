@@ -22,6 +22,7 @@ import {
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
 const C = {
   green: "#798C5E",
@@ -33,13 +34,13 @@ const C = {
 };
 
 // Notice Status split bar — Active/Inactive/Expired.
-const NOTICE_STATUS_COLORS = { active: "#77CEC1", inactive: "#B387E9", expired: "#84ACE0" };
+const NOTICE_STATUS_COLORS = { active: SERIES[0], inactive: SERIES[1], expired: SERIES[2] };
 
 // Notices by Site grouped bars — Total/Active/Expired.
-const SITE_BAR_COLORS = { total: "#4E8FE5", active: "#EBA366", expired: "#178562" };
+const SITE_BAR_COLORS = { total: SERIES[0], active: SERIES[1], expired: SERIES[2] };
 
 // Weekly Active Broadcasts trend line.
-const BROADCAST_LINE_COLOR = "#178562";
+const BROADCAST_LINE_COLOR = SERIES[0];
 
 
 // Builds a CSS conic-gradient string for a donut chart from value/color
@@ -199,11 +200,11 @@ export function PulseNotices({ filters }: Props) {
               label: "Total Notices",
               value: noticeOverview.kpis.total_notices,
               // Real count, not a fabricated period-over-period delta.
-              badge: { text: `${noticeOverview.kpis.inactive_notices} Inactive`, variant: "success" as const },
+              badge: { text: `${noticeOverview.kpis.inactive_notices} Inactive`, variant: "neutral" as const },
             },
             { label: "Active", value: noticeOverview.kpis.active_notices, badge: { text: "On Air", variant: "success" as const } },
             { label: "Expired", value: noticeOverview.kpis.expired_notices, badge: { text: "Cleared", variant: "neutral" as const } },
-            { label: "Important", value: noticeOverview.kpis.important_notices, badge: { text: "Critical", variant: "danger" as const } },
+            { label: "Important", value: noticeOverview.kpis.important_notices, badge: { text: "Critical", variant: "warning" as const } },
           ].map((item) => (
             <div key={item.label} className="pd-kpi-card pd-kpi-card--badged">
               <div className="pd-kpi-main">

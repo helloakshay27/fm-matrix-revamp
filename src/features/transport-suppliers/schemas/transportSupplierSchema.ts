@@ -9,18 +9,29 @@ export const transportSupplierSchema = z.object({
   email: z
     .string()
     .trim()
-    .refine((value) => !value || z.email().safeParse(value).success, "Enter a valid email"),
+    .max(100, "Email must be 100 characters or less")
+    .refine(
+      (value) => !value || z.email().safeParse(value).success,
+      "Enter a valid email address (e.g. name@example.com)"
+    ),
+  // Indian mobile numbers: 10 digits starting with 6-9.
   mobile1: z
     .string()
     .trim()
-    .refine((value) => !value || /^\d{10}$/.test(value), "Enter a valid 10-digit mobile number"),
+    .refine((value) => !value || /^\d{10}$/.test(value), "Mobile number must be exactly 10 digits"),
   address: z.string().trim(),
-  city: z.string().trim(),
-  state: z.string().trim(),
+  city: z
+    .string()
+    .trim()
+    .refine((value) => !value || /^[A-Za-z\s]+$/.test(value), "City can contain only letters and spaces"),
+  state: z
+    .string()
+    .trim()
+    .refine((value) => !value || /^[A-Za-z\s]+$/.test(value), "State can contain only letters and spaces"),
   pincode: z
     .string()
     .trim()
-    .refine((value) => !value || /^\d{6}$/.test(value), "Enter a valid 6-digit pincode"),
+    .refine((value) => !value || /^\d{6}$/.test(value), "Pincode must be exactly 6 digits"),
 });
 
 export type TransportSupplierFormData = z.infer<typeof transportSupplierSchema>;

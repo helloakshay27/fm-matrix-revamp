@@ -22,6 +22,7 @@ import {
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
 const C = {
   green: "#15A476",
@@ -33,7 +34,7 @@ const C = {
   lavender: "#C8AEE7",
 };
 
-const USER_TYPE_COLOR_PALETTE = [C.green, C.orange, C.purple, C.blue, C.teal, C.peach];
+const USER_TYPE_COLOR_PALETTE = [...SERIES];
 
 const GENDER_DOLL_WIDTH = 68.8889;
 const GENDER_DOLL_HEIGHT = 155;
@@ -118,9 +119,9 @@ export function PulseUsers({ filters }: Props) {
       occupants: p.occupants,
     })) ?? [];
   const growthSeries = [
-    { key: "users" as const, name: "Users", color: "var(--color-primary)" },
-    { key: "admins" as const, name: "Admins", color: C.lavender },
-    { key: "occupants" as const, name: "Occupants", color: C.teal },
+    { key: "users" as const, name: "Users", color: SERIES[0] },
+    { key: "admins" as const, name: "Admins", color: SERIES[1] },
+    { key: "occupants" as const, name: "Occupants", color: SERIES[2] },
   ];
 
   const userTypeSegments = (usersOverview?.user_type_breakdown ?? []).map((b, i) => ({
@@ -255,10 +256,10 @@ export function PulseUsers({ filters }: Props) {
                     <rect x="0" y="0" width={GENDER_DOLL_WIDTH} height={maleBandHeight} />
                   </clipPath>
                   <g clipPath="url(#pd-gender-doll-clip-female)">
-                    <path d={GENDER_DOLL_PATH} fill={C.teal} />
+                    <path d={GENDER_DOLL_PATH} fill={SERIES[0]} />
                   </g>
                   <g clipPath="url(#pd-gender-doll-clip-male)">
-                    <path d={GENDER_DOLL_PATH} fill={C.peach} />
+                    <path d={GENDER_DOLL_PATH} fill={SERIES[1]} />
                   </g>
                 </svg>
               </div>

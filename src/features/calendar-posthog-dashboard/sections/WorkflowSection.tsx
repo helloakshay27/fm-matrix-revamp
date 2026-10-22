@@ -57,13 +57,15 @@ export function WorkflowSection() {
                 {s.dropPct != null && <div className="fdrop">▼ {s.dropPct}% drop-off</div>}
                 <div
                   className="fstep"
+                  data-chart-tooltip={`${s.step}\nReach: ${s.ofEntrants}% of entrants${s.dropPct != null ? `\nDrop-off: ${s.dropPct}%` : ''}`}
+                  aria-label={`${s.step}: ${s.ofEntrants}% of entrants${s.dropPct != null ? `, ${s.dropPct}% drop-off` : ''}`}
+                  tabIndex={0}
                   style={{
                     width: `${45 + (s.ofEntrants / 100) * 55}%`,
                     background: palette.blue,
                     opacity: 1 - i * 0.1,
                     borderRadius: 8,
                   }}
-                  title={`${s.step}: ${s.ofEntrants}% of entrants remain`}
                 >
                   {s.step}
                   <span className="fsub">{s.ofEntrants}% of entrants</span>

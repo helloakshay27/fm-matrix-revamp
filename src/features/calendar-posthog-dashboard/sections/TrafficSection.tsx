@@ -98,6 +98,7 @@ export function TrafficSection() {
                   color={color}
                   fill={fill}
                   showPrev={vm.prev && series.prev.length > 0}
+                  floatingTooltip
                 />
                 <Legend
                   items={[
@@ -146,7 +147,9 @@ export function TrafficSection() {
                 <div
                   className="role"
                   key={row.label}
-                  title={`${row.label}: ${Math.round(row.share * 100)}% of users`}
+                  data-chart-tooltip={`${row.label}\nUsers: ${Math.round(row.share * 100)}%`}
+                  aria-label={`${row.label}: ${Math.round(row.share * 100)}% of users`}
+                  tabIndex={0}
                   style={{ cursor: 'pointer' }}
                 >
                   <div className="rn">{row.label}</div>

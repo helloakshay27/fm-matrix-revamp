@@ -26,20 +26,18 @@ import {
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
+
 // Monthly Enrollment Growth line color.
+
 const C = {
   orange: "#D88F50",
 };
 
-const TENANT_COLOR_PALETTE: { bg: string; text: string }[] = [
-  { bg: "#3C8FFB", text: "#2C2C2C" },
-  { bg: "#E5A36A", text: "#2C2C2C" },
-  { bg: "#A987D3", text: "#2C2C2C" },
-  { bg: "#F87709", text: "#2C2C2C" },
-  { bg: "#15A476", text: "#2C2C2C" },
-  { bg: "#77CEC1", text: "#2C2C2C" },
-  { bg: "#6AA6F4", text: "#2C2C2C" },
-];
+const TENANT_COLOR_PALETTE: { bg: string; text: string }[] = SERIES.map((bg) => ({
+  bg,
+  text: "#2C2C2C",
+}));
 
 const MAX_ORG_MEMBER_CELLS = 8;
 // Minimum share of a 2-row column's height the smaller row is allowed to
@@ -200,7 +198,7 @@ export function PulseCustomers({ filters }: Props) {
                   type="monotone"
                   dataKey="count"
                   name="Customers"
-                  stroke={C.orange}
+                  stroke={SERIES[0]}
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
@@ -302,7 +300,7 @@ export function PulseCustomers({ filters }: Props) {
                       <td>{t.site_name}</td>
                       <td>
                         <span
-                          className={`pd-badge ${t.active ? "pd-badge-yes" : "pd-badge-no"}`}
+                          className={`pd-badge ${t.active ? "pd-badge-yes" : "pd-badge-neutral"}`}
                         >
                           {t.status}
                         </span>

@@ -1,8 +1,8 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Bell,
   Share2,
   History,
@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
-import { DetailCard } from "@/components/ui/detail-card";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import { useCustomNotificationDetailQuery } from "../hooks/useCustomNotificationDetailQuery";
 import { useSubmitForApprovalMutation } from "../hooks/useSubmitForApprovalMutation";
 import { useApproveCustomNotificationMutation } from "../hooks/useApproveCustomNotificationMutation";
@@ -236,23 +236,7 @@ const ViewCustomNotificationPage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col pb-6">
       {/* Header */}
       <div className="px-6 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/pulse/notifications")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Notification Details
-              </h1>
-              <p className="text-sm text-gray-500">
-                Read-only view of this notification.
-              </p>
-            </div>
-          </div>
+        <PulsePageHeader title="Notification Details" parent={{ label: "Notifications", to: "/pulse/notifications" }} subtitle="Read-only view of this notification." actions={<>
 
           {notification.status === "draft" && (
             <Button
@@ -335,7 +319,7 @@ const ViewCustomNotificationPage = () => {
                 {cancelNotification.isPending ? "Cancelling..." : "Cancel"}
               </Button>
             )}
-        </div>
+        </>} />
       </div>
 
       <div className="flex-1 w-full mx-auto px-6 pb-6">

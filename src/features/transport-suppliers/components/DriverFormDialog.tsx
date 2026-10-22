@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "../utils/zodResolver";
 import { Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from "@mui/material";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -30,13 +30,14 @@ interface FieldConfig {
     required?: boolean;
     type?: string;
     numeric?: boolean;
+    lettersOnly?: boolean;
     maxLength?: number;
     editOnly?: boolean;
 }
 
 const fields: FieldConfig[] = [
-    { name: "firstname", label: "First Name", placeholder: "Enter first name", required: true },
-    { name: "lastname", label: "Last Name", placeholder: "Enter last name" },
+    { name: "firstname", label: "First Name", placeholder: "Enter first name", required: true, lettersOnly: true },
+    { name: "lastname", label: "Last Name", placeholder: "Enter last name", lettersOnly: true },
     { name: "email", label: "Email", placeholder: "Enter email", required: true, type: "email" },
     { name: "mobile", label: "Mobile", placeholder: "Enter 10-digit mobile", numeric: true, maxLength: 10 },
     { name: "latitude", label: "Latitude", placeholder: "e.g. 18.5308", editOnly: true },
@@ -138,7 +139,9 @@ export function DriverFormDialog({ open, onOpenChange, supplierId, driver = null
                                             input.onChange(
                                                 field.numeric
                                                     ? e.target.value.replace(/\D/g, "")
-                                                    : e.target.value
+                                                    : field.lettersOnly
+                                                      ? e.target.value.replace(/[^A-Za-z\s]/g, "")
+                                                      : e.target.value
                                             )
                                         }
                                         label={field.label}

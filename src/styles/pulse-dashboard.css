@@ -2434,3 +2434,239 @@
     grid-template-columns: 1fr;
   }
 }
+/* ===========================================================================
+   BUSINESS GENIE REMEDIATION — Pulse Dashboard (audit 31.01 – 31.19)
+   Appended last so it wins over the rules above at equal specificity.
+   Visual only: no markup, data or behaviour depends on these rules.
+   =========================================================================== */
+
+/* 31.01 — KPI counts: flat grey #F5F4F0, 16px corners, no border/shadow,
+   four columns, label 11px/500 above a 24px/600 ink value. */
+.pulse-db .pd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .pulse-db .pd-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pulse-db .pd-kpi-card {
+  min-width: 0;
+  background: #f5f4f0;
+  border: 0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: none;
+}
+
+.pulse-db .pd-kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+}
+
+.pulse-db .pd-kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: normal;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+/* 31.03 — One 16px borderless card family for charts and table panels */
+.pulse-db .pd-chart-card,
+.pulse-db .pd-growth-card {
+  background: #fff;
+  border: 0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: none;
+}
+
+.pulse-db .pd-growth-card {
+  gap: 12px;
+}
+
+.pulse-db .pd-chart-title,
+.pulse-db .pd-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pulse-db .pd-growth-card .pd-panel-title {
+  margin-bottom: 0;
+}
+
+.pulse-db .pd-charts-row,
+.pulse-db .pd-charts-row-3,
+.pulse-db .pd-growth-row {
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Shared clipped table wrapper: 16px, no outer padding */
+.pulse-db .pd-tbl-card {
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.pulse-db .pd-tbl-header {
+  padding: 18px 20px 14px;
+  border-bottom: 0;
+}
+
+.pulse-db .pd-tbl-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pulse-db .pd-tbl-title::before {
+  display: none;
+}
+
+.pulse-db .pd-table th {
+  text-align: left;
+  padding: 11px 20px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: rgba(26, 26, 26, 0.68);
+  background: #f5f4f0;
+  border-bottom: 1px solid #ebe9e2;
+}
+
+.pulse-db .pd-table td {
+  text-align: left;
+  padding: 13px 20px;
+  border-bottom: 1px solid #ebe9e2;
+}
+
+/* 01.14 / 31.19 — numeric columns and their headers align right */
+.pulse-db .pd-table th.pd-num,
+.pulse-db .pd-table td.pd-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Common compact pagination */
+.pulse-db .pd-pagination {
+  padding: 12px 20px;
+  font-size: 12px;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+.pulse-db .pd-page-btn {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 31.06 / 31.09 / 31.14 — ordinary roles, types and inactive flags use the
+   neutral read-only pill; colour stays for genuine state. */
+.pulse-db .pd-badge-neutral,
+.pulse-db .pd-badge--flat.pd-badge-neutral,
+.pulse-db .pd-badge-pub {
+  background: #efede7;
+  color: #1a1a1a;
+}
+
+.pulse-db .pd-badge-yes,
+.pulse-db .pd-badge--flat.pd-badge-yes {
+  background: rgba(18, 161, 80, 0.12);
+  color: #0f7a3d;
+}
+
+.pulse-db .pd-badge {
+  padding: 3px 10px;
+  font-weight: 500;
+}
+
+.pulse-db .pd-event-revenue-badge {
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #efede7;
+  color: #1a1a1a;
+}
+
+/* 31.07 — one neutral rank marker for every ranking */
+.pulse-db .pd-ranked-pos,
+.pulse-db .pd-ranked-pos-1,
+.pulse-db .pd-ranked-pos-2,
+.pulse-db .pd-ranked-pos-3 {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f5f4f0;
+  color: #1a1a1a;
+}
+
+/* 31.05 — one compact data tooltip: 9px corners, 5px 9px, 11px/600 */
+.pulse-db .recharts-default-tooltip,
+.pulse-db .recharts-tooltip-wrapper > div {
+  padding: 5px 9px !important;
+  border-radius: 9px !important;
+  border: 1px solid #ebe9e2 !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.08) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: #1a1a1a !important;
+}
+
+.pulse-db .recharts-default-tooltip *,
+.pulse-db .recharts-tooltip-wrapper > div * {
+  font-size: 11px !important;
+}
+
+.pulse-db .recharts-tooltip-item-list,
+.pulse-db .recharts-default-tooltip p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 31.04 — hover emphasis stays local: no broad grey cursor band */
+.pulse-db .recharts-rectangle.recharts-tooltip-cursor {
+  fill: transparent !important;
+}
+
+.pulse-db .recharts-curve.recharts-tooltip-cursor {
+  stroke: rgba(26, 26, 26, 0.18) !important;
+  stroke-width: 1 !important;
+}
+
+/* 31.12 — empty plot / log messages read as the shared empty state */
+.pulse-db .pd-empty {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+/* 31.11 — facility labels get a deliberate width and wrap instead of
+   truncating ("Commercial…") */
+.pulse-db .pd-util-label {
+  width: 120px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.3;
+  color: #1a1a1a;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Layers, ListChecks, Loader2, RefreshCw, UserRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -104,42 +104,39 @@ const VisitorAppConfiguration = () => {
     if (data) setDraft(toPayload(data));
   }, [data]);
 
-  const isDirty = useMemo(
-    () => !!data && !!draft && JSON.stringify(toPayload(data)) !== JSON.stringify(draft),
-    [data, draft]
-  );
-
-  const setHostMode = (hostMode: string) =>
-    setDraft((prev) => (prev ? { ...prev, hostMode: hostMode as HostMode } : prev));
-
-  const toggleItem =
-    (key: "visitorSteps" | "modules") => (code: string, active: boolean) =>
-      setDraft((prev) =>
-        prev
-          ? {
-              ...prev,
-              [key]: prev[key].map((item) => (item.code === code ? { ...item, active } : item)),
-            }
-          : prev
-      );
-
-  const handleReset = () => {
-    if (data) setDraft(toPayload(data));
-  };
-
-  const handleSave = () => {
-    if (!siteId || !draft) return;
+  // Every change is saved immediately. The UI updates optimistically and rolls
+  // back to the last server copy if the PUT fails.
+  const saveConfig = (next: UpdateVisitorAppConfigPayload) => {
+    if (!siteId) return;
+    setDraft(next);
     updateMutation.mutate(
-      { siteId, payload: draft },
+      { siteId, payload: next },
       {
         onSuccess: () => toast.success("App configuration updated successfully"),
-        onError: (err) =>
-          toast.error(getApiErrorMessage(err, "Failed to update app configuration")),
+        onError: (err) => {
+          if (data) setDraft(toPayload(data));
+          toast.error(getApiErrorMessage(err, "Failed to update app configuration"));
+        },
       }
     );
   };
 
-  const isSaving = updateMutation.isPending;
+  const setHostMode = (hostMode: string) => {
+    if (draft) saveConfig({ ...draft, hostMode: hostMode as HostMode });
+  };
+
+  const toggleItem =
+    (key: "visitorSteps" | "modules") => (code: string, active: boolean) => {
+      if (!draft) return;
+      saveConfig({
+        ...draft,
+        [key]: draft[key].map((item) => (item.code === code ? { ...item, active } : item)),
+      });
+    };
+
+  // The PUT sends the full config, so block further changes until the save and
+  // its refetch settle — otherwise a quick second toggle could overwrite the first.
+  const isSaving = updateMutation.isPending || isFetching;
 
   return (
     <div className="p-6 mx-auto bg-white min-h-screen">
@@ -227,26 +224,6 @@ const VisitorAppConfiguration = () => {
               onToggle={toggleItem("modules")}
             />
           </SectionCard>
-
-          <div className="fm-action-bar pb-8">
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={!isDirty || isSaving}
-              className="fm-action-secondary"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!isDirty || isSaving || isFetching}
-              className="fm-action-primary"
-            >
-              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-          </div>
         </div>
       ) : null}
     </div>

@@ -1,3 +1,5 @@
+import { PulseTicketRoute } from "@/pages/pulse/forms/PulseTicketRoute";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { createRoot } from "react-dom/client";
 import { useEffect, useState, lazy, Suspense } from "react";
 import {
@@ -145,6 +147,13 @@ const ClubWalletsPage = lazy(() =>
 const ClubUsageDashboard = lazy(() =>
   import("./pages/ClubManagement/usage/ClubUsageDashboard")
 );
+const PulseAddFacilityBookingPage = lazy(() => import("./pages/pulse/forms/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
+const PulseEditDocumentPage = lazy(() => import("./pages/pulse/forms/EditDocumentPage").then(m => ({ default: m.EditDocumentPage })));
+const PulseAddDocumentDashboard = lazy(() => import("./pages/pulse/forms/AddDocumentDashboard").then(m => ({ default: m.AddDocumentDashboard })));
+const PulseEditBroadcastPage = lazy(() => import("./pages/pulse/forms/EditBroadcastPage").then(m => ({ default: m.EditBroadcastPage })));
+const PulseAddBroadcastPage = lazy(() => import("./pages/pulse/forms/AddBroadcastPage").then(m => ({ default: m.AddBroadcastPage })));
+const PulseEditEventPage = lazy(() => import("./pages/pulse/forms/EditEventPage").then(m => ({ default: m.EditEventPage })));
+const PulseAddEventPage = lazy(() => import("./pages/pulse/forms/AddEventPage").then(m => ({ default: m.AddEventPage })));
 const AddTicketDashboard = lazy(() =>
   import("./pages/AddTicketDashboard").then((m) => ({
     default: m.AddTicketDashboard,
@@ -1867,9 +1876,23 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
-const ViAuditListPage = lazy(() => import("./pages/ViAuditListPage"));
-const ViAuditAddPage = lazy(() => import("./pages/ViAuditAddPage"));
-const ViAuditDetailPage = lazy(() => import("./pages/ViAuditDetailPage"));
+// Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
+const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
+const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
+const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
+const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
+const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
+const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
+const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
+const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
+const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
+const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
+const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
+const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
+const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
+const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
+const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -4382,6 +4405,7 @@ const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCr
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const ViPosthogDashboardPage = lazy(() => import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(m => ({ default: m.ViPosthogDashboardPage })));
 const CalendarPosthogDashboardPage = lazy(() => import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(m => ({ default: m.CalendarPosthogDashboardPage })));
+const AccountingPosthogDashboardPage = lazy(() => import("./features/accounting-posthog-dashboard/AccountingPosthogDashboardPage").then(m => ({ default: m.AccountingPosthogDashboardPage })));
 const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
@@ -4397,7 +4421,6 @@ const WebSocketNotificationInitializer: React.FC<{
   const navigate = useNavigate();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
@@ -4406,7 +4429,7 @@ const WebSocketNotificationInitializer: React.FC<{
 
   //   if (token) {
   //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
+  //     connect(socketUrl);
   //   } else {
   //     console.error("❌ No token available for WebSocket connection");
   //   }
@@ -4632,7 +4655,7 @@ function App() {
 
   //   if (token) {
   //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
+  //     connect(socketUrl);
   //   } else {
   //     console.error("❌ No token available for WebSocket connection");
   //   }
@@ -4761,6 +4784,10 @@ function App() {
                           <Route
                             path="/calendar-posthog-dashboard"
                             element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/accounting-dashboard"
+                            element={<AccountingPosthogDashboardPage />}
                           />
                           <Route
                             path="/smartsecure-dashboard"
@@ -7378,7 +7405,7 @@ function App() {
                             />
                             <Route
                               path="/maintenance/ticket/add"
-                              element={<AddTicketDashboard />}
+                              element={<PulseTicketRoute fallback={<AddTicketDashboard />} />}
                             />
                             <Route
                               path="/maintenance/ticket/employee/add"
@@ -7418,7 +7445,7 @@ function App() {
                             />
                             <Route
                               path="/maintenance/ticket/add"
-                              element={<AddTicketDashboard />}
+                              element={<PulseTicketRoute fallback={<AddTicketDashboard />} />}
                             />
                             <Route
                               path="/maintenance/ticket/assign"
@@ -9103,15 +9130,67 @@ function App() {
                             />
                             <Route
                               path="/safety/audit-list"
-                              element={<ViAuditListPage />}
+                              element={<AuditorAuditListPage />}
                             />
                             <Route
                               path="/safety/audit-list/add"
-                              element={<ViAuditAddPage />}
+                              element={<AuditorAddAuditPage />}
                             />
                             <Route
                               path="/safety/audit-list/:id"
-                              element={<ViAuditDetailPage />}
+                              element={<AuditorAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId"
+                              element={<AuditorObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc"
+                              element={<SpocAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id"
+                              element={<SpocAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId"
+                              element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
+                              element={<SpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner"
+                              element={<ActionOwnerAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id"
+                              element={<ActionOwnerAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId"
+                              element={<ActionOwnerObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId"
+                              element={<ActionOwnerActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId/action-taken"
+                              element={<ActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head"
+                              element={<FunctionalHeadAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id"
+                              element={<FunctionalHeadAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId"
+                              element={<FunctionalHeadObservationDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
@@ -9720,7 +9799,14 @@ function App() {
                           >
                             <Route
                               path="/pulse/community-modules/banner-list"
-                              element={<BannerListPage />}
+                              element={
+                                <div className="pulse-banners-page">
+                                  <div className="px-6 pt-6">
+                                    <PulsePageHeader title="Banners" />
+                                  </div>
+                                  <BannerListPage />
+                                </div>
+                              }
                             />
                             <Route
                               path="/pulse/community-modules/banner-list/add"
@@ -9744,7 +9830,7 @@ function App() {
                             />
                             <Route
                               path="/pulse/events/add"
-                              element={<AddEventPage />}
+                              element={<PulseAddEventPage />}
                             />
                             <Route
                               path="/pulse/events/details/:id"
@@ -9752,7 +9838,7 @@ function App() {
                             />
                             <Route
                               path="/pulse/events/edit/:id"
-                              element={<EditEventPage />}
+                              element={<PulseEditEventPage />}
                             />
                             <Route
                               path="/pulse/events/details/:id/users/:userid"
@@ -9794,15 +9880,15 @@ function App() {
 
                             <Route
                               path="/pulse/notices"
-                              element={<BroadcastDashboard />}
+                              element={<div className="pulse-notices-page"><BroadcastDashboard /></div>}
                             />
                             <Route
                               path="/pulse/notices/add"
-                              element={<AddBroadcastPage />}
+                              element={<PulseAddBroadcastPage />}
                             />
                             <Route
                               path="/pulse/notices/edit/:id"
-                              element={<EditBroadcastPage />}
+                              element={<PulseEditBroadcastPage />}
                             />
                             <Route
                               path="/pulse/notices/details/:id"
@@ -9911,11 +9997,11 @@ function App() {
                             />
                             <Route
                               path="/pulse/documents/add"
-                              element={<AddDocumentDashboard />}
+                              element={<PulseAddDocumentDashboard />}
                             />
                             <Route
                               path="/pulse/documents/edit/:id"
-                              element={<EditDocumentPage />}
+                              element={<PulseEditDocumentPage />}
                             />
                             <Route
                               path="/pulse/documents/create-folder"
@@ -9967,7 +10053,7 @@ function App() {
                             />
                             <Route
                               path="/pulse/amenity/add"
-                              element={<AddFacilityBookingPage />}
+                              element={<PulseAddFacilityBookingPage />}
                             />
                             <Route
                               path="/pulse/amenity/previous-booking/add"
@@ -9982,6 +10068,10 @@ function App() {
                               element={<EditFacilityBookingPage />}
                             />
                             {/* Plus curated Service Routes */}
+                            <Route
+                              path="/pulse/curated-services"
+                              element={<Navigate to="/pulse/curated-services/service" replace />}
+                            />
                             <Route
                               path="/pulse/curated-services/service"
                               element={<CuratedServiceDashboard />}

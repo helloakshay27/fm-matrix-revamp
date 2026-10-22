@@ -58,12 +58,11 @@ const InventoryConsumptionViewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [formData, setFormData] = useState({
-    type: 'Add', // Add | Consume | Dispose — placeholder move_type mapping, pending backend confirmation
+    type: 'Add',
     quantity: '',
-    moveType: '',
     comments: '',
   });
-  const [errors, setErrors] = useState<{ quantity: string; moveType: string }>({ quantity: '', moveType: '' });
+  const [errors, setErrors] = useState<{ quantity: string }>({ quantity: '' });
 
   // Handover Details
   const [handoverTo, setHandoverTo] = useState('');
@@ -235,15 +234,20 @@ const InventoryConsumptionViewPage = () => {
     if (!Number.isFinite(n)) return 'Invalid quantity';
     if (n < 0) return 'Invalid quantity';
     if (n === 0) return 'Quantity must be greater than 0';
+    const availableQuantity = inventory?.quantity;
+    if (typeof availableQuantity !== 'number' || !Number.isFinite(availableQuantity)) {
+      return 'Unable to verify available stock. Please reload and try again.';
+    }
+    if (n > availableQuantity) {
+      return `Quantity cannot exceed the available stock (${availableQuantity}).`;
+    }
     return '';
   };
 
   // Check if all required fields are filled and valid
   const isFormValid =
     formData.quantity !== '' &&
-    errors.quantity === '' &&
-    formData.moveType !== '' &&
-    errors.moveType === '';
+    errors.quantity === '';
 
   useEffect(() => {
     if (id && startDate && endDate) {
@@ -269,9 +273,9 @@ const InventoryConsumptionViewPage = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ type: 'Add', quantity: '', moveType: '', comments: '' });
+    setFormData({ type: 'Add', quantity: '', comments: '' });
     setIsSubmitting(false);
-    setErrors({ quantity: '', moveType: '' });
+    setErrors({ quantity: '' });
     setHandoverTo('');
     setBuildingId('');
     setWingId('');
@@ -280,7 +284,14 @@ const InventoryConsumptionViewPage = () => {
   };
 
   const handleFormSubmit = async () => {
-    if (!id || !isFormValid) return;
+    if (!id) return;
+
+    const quantityError = validateQuantity(formData.quantity);
+    if (quantityError) {
+      setErrors((prev) => ({ ...prev, quantity: quantityError }));
+      return;
+    }
+    if (!isFormValid) return;
 
     setIsSubmitting(true);
 
@@ -297,25 +308,18 @@ const InventoryConsumptionViewPage = () => {
     // Final defensive validation
     const qtyInt = parseInt(formData.quantity, 10);
     if (!Number.isFinite(qtyInt) || qtyInt < 0) {
-      toast.error('Invalid quantity');
+      setErrors((prev) => ({ ...prev, quantity: 'Invalid quantity' }));
       setIsSubmitting(false);
       return;
     }
     if (qtyInt === 0) {
-      toast.error('Quantity must be greater than 0');
+      setErrors((prev) => ({ ...prev, quantity: 'Quantity must be greater than 0' }));
       setIsSubmitting(false);
       return;
     }
-    if (formData.moveType === '') {
-      toast.error('Select a move type');
-      setIsSubmitting(false);
-      return;
-    }
-
     const payload: Record<string, unknown> = {
       resource_id: Number(id),
       quantity: qtyInt,
-      move_type: String(formData.moveType),
       comments: formData.comments,
     };
     if (buildingId !== '') payload.building_id = Number(buildingId);
@@ -378,17 +382,12 @@ const InventoryConsumptionViewPage = () => {
   };
 
   const handleInputChange = (field: string) => (event: any) => {
-    // Do NOT coerce moveType to Number; keep '' when placeholder selected
     let value = event.target.value;
     // Special handling for quantity: enforce integer-only input
     if (field === 'quantity') {
       value = sanitizeIntegerInput(String(value));
       const err = validateQuantity(String(value));
       setErrors((prev) => ({ ...prev, quantity: err }));
-    }
-    if (field === 'moveType') {
-      const err = value === '' ? 'Select a move type' : '';
-      setErrors((prev) => ({ ...prev, moveType: err }));
     }
     setFormData((prev) => ({
       ...prev,
@@ -556,7 +555,14 @@ const InventoryConsumptionViewPage = () => {
                   <RadioGroup
                     row
                     value={formData.type}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      setFormData((prev) => ({ ...prev, type }));
+                      setErrors((prev) => ({
+                        ...prev,
+                        quantity: validateQuantity(formData.quantity),
+                      }));
+                    }}
                   >
                     {['Add', 'Consume', 'Dispose'].map((opt) => (
                       <FormControlLabel
@@ -611,44 +617,13 @@ const InventoryConsumptionViewPage = () => {
                   if (invalid.includes(e.key)) e.preventDefault();
                 }}
                 error={Boolean(errors.quantity)}
-                helperText={errors.quantity || ' '}
+                helperText={
+                  errors.quantity ||
+                  `${formData.type === 'Add' ? 'Current stock' : `Available to ${formData.type.toLowerCase()}`}: ${
+                    inventory?.quantity ?? 'unavailable'
+                  }`
+                }
               />
-
-              <FormControl fullWidth variant="outlined" error={Boolean(errors.moveType)} required>
-                <InputLabel
-                  shrink={true}
-                  required
-                  sx={{
-                    color: '#9CA3AF',
-                    fontSize: '14px',
-                    '& .MuiFormLabel-asterisk': { color: '#DA7756' },
-                    '&.Mui-focused': { color: '#DA7756' },
-                  }}
-                >
-                  Select Type
-                </InputLabel>
-                <Select
-                  value={formData.moveType}
-                  onChange={handleInputChange('moveType')}
-                  label="Select Type"
-                  displayEmpty
-                  sx={{
-                    height: '48px',
-                    borderRadius: '8px',
-                    '& .MuiSelect-select': {
-                      padding: '12px 14px',
-                    },
-                  }}
-                >
-                  <MenuItem value="">Select a Move Type</MenuItem>
-                  <MenuItem value={1}>Add</MenuItem>
-                  <MenuItem value={2}>Consume</MenuItem>
-                  <MenuItem value={3}>Breakage</MenuItem>
-                  <MenuItem value={4}>Spillage</MenuItem>
-                  <MenuItem value={5}>Lost</MenuItem>
-                </Select>
-                <FormHelperText>{errors.moveType || ' '}</FormHelperText>
-              </FormControl>
 
               <TextField
                 label={
