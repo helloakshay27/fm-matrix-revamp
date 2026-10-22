@@ -1,8 +1,11 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import {
   FileText,
   Paperclip,
@@ -371,7 +374,7 @@ export const RideDetail = () => {
         </div>
         <div className="flex flex-col items-center justify-center h-96">
           <AlertCircle className="w-12 h-12 text-[#C72030] mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Failed to Load Ride Details</h2>
+          <h2 className="text-sm font-semibold mb-2">Failed to Load Ride Details</h2>
           <p className="text-gray-500 mb-4">{error}</p>
           <Button onClick={() => navigate(-1)}>Go Back</Button>
         </div>
@@ -382,44 +385,33 @@ export const RideDetail = () => {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white px-6 py-4">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span className="cursor-pointer hover:text-gray-700" onClick={() => navigate(-1)}>
-          Carpool
-        </span>{" "}&gt; <span className="text-gray-700">Ride Detail</span>
-      </div>
+      <PulsePageHeader title="Ride Detail" parent={{ label: "Carpool", to: "/pulse/carpool/rides" }} onBack={() => navigate(-1)} />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList
-          className="grid w-full mb-6 bg-white border"
+        <AssetTabsList
+          className="grid mb-6"
           style={{ gridTemplateColumns: `repeat(${showReportTab ? 5 : 4}, minmax(0, 1fr))` }}
         >
           {showReportTab && (
-            <TabsTrigger
+            <AssetTabsTrigger
               value="Report Detail"
-              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Report Detail
-            </TabsTrigger>
+            </AssetTabsTrigger>
           )}
-          <TabsTrigger value="Ride Details" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Ride Details</TabsTrigger>
-          <TabsTrigger value="Car Detail" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Car Detail</TabsTrigger>
-          <TabsTrigger value="Driver's Detail" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Driver's Detail</TabsTrigger>
-          <TabsTrigger value="Passenger's Detail" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Passenger's Detail</TabsTrigger>
-        </TabsList>
+          <AssetTabsTrigger value="Ride Details">Ride Details</AssetTabsTrigger>
+          <AssetTabsTrigger value="Car Detail">Car Detail</AssetTabsTrigger>
+          <AssetTabsTrigger value="Driver's Detail">Driver's Detail</AssetTabsTrigger>
+          <AssetTabsTrigger value="Passenger's Detail">Passenger's Detail</AssetTabsTrigger>
+        </AssetTabsList>
 
         {/* ── Report Detail Tab ─────────────────────────────────────────── */}
         {showReportTab && (
           <TabsContent value="Report Detail">
-            <div className="border border-gray-200 mb-6">
-              {/* Header */}
-              <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-[#E91E63]" />
-                  </div>
-                  <h2 className="font-semibold text-base">Report Detail</h2>
-                </div>
+            <DetailCard
+              title="Report Detail"
+              icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+              headerActions={
                 <div className="flex items-center gap-2">
                   {currentReport && (
                     <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5 flex items-center gap-1.5">
@@ -435,11 +427,13 @@ export const RideDetail = () => {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              }
+              className="mb-5"
+            >
 
               {/* Passenger selector tabs — only when showing passenger reports */}
               {reportSource === "passenger" && passengers.filter((p) => p.reports_count > 0).length > 1 && (
-                <div className="flex border-b border-gray-200 bg-white px-6 gap-2 pt-2">
+                <div className="flex border-b border-gray-200 bg-white gap-2 pt-2">
                   {passengers.map((p, idx) =>
                     p.reports_count > 0 ? (
                       <button
@@ -463,7 +457,7 @@ export const RideDetail = () => {
 
               {/* Driver source label */}
               {reportSource === "driver" && (
-                <div className="flex items-center gap-2 bg-[#FFF5F5] border-b border-gray-100 px-6 py-2">
+                <div className="flex items-center gap-2 bg-[#FFF5F5] rounded px-3 py-2 mt-1">
                   <span className="text-xs font-medium text-[#C72030]">
                     Showing reports for driver: {driverDetail ? `${driverDetail.firstname} ${driverDetail.lastname}` : "Driver"}
                   </span>
@@ -473,7 +467,7 @@ export const RideDetail = () => {
 
               {/* Report index tabs — passenger source */}
               {reportSource === "passenger" && currentPassengerReports.length > 1 && (
-                <div className="flex border-b border-gray-100 bg-gray-50 px-6 gap-2 pt-2">
+                <div className="flex border-b border-gray-100 bg-gray-50 px-2 gap-2 pt-2">
                   {currentPassengerReports.map((r, idx) => (
                     <button
                       key={r.id}
@@ -492,7 +486,7 @@ export const RideDetail = () => {
 
               {/* Report index tabs — driver source */}
               {reportSource === "driver" && currentDriverReports.length > 1 && (
-                <div className="flex border-b border-gray-100 bg-gray-50 px-6 gap-2 pt-2">
+                <div className="flex border-b border-gray-100 bg-gray-50 px-2 gap-2 pt-2">
                   {currentDriverReports.map((r, idx) => (
                     <button
                       key={r.id}
@@ -511,7 +505,7 @@ export const RideDetail = () => {
 
               {/* Report Info */}
               {currentReport ? (
-                <div className="px-8 py-6">
+                <div className="pt-4">
                   <div className="grid grid-cols-2 gap-x-20 gap-y-6 text-sm">
                     <div>
                       <p className="text-gray-400 mb-1">Report by</p>
@@ -591,31 +585,29 @@ export const RideDetail = () => {
                   </div>
                 </div>
               ) : (
-                <div className="px-8 py-10 text-center text-gray-400 text-sm">
+                <div className="py-10 text-center text-gray-400 text-sm">
                   No reports found.
                 </div>
               )}
-            </div>
+            </DetailCard>
           </TabsContent>
         )}
 
         {/* ── Ride Details Tab ──────────────────────────────────────────── */}
         <TabsContent value="Ride Details">
-          <div className="border border-gray-200 mb-6">
-            <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-[#E91E63]" />
-                </div>
-                <h2 className="font-semibold text-base">Ride Detail</h2>
-              </div>
-              {totalReportsCount > 0 && (
+          <DetailCard
+            title="Ride Detail"
+            icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+            headerActions={
+              totalReportsCount > 0 && (
                 <Badge className="bg-[#E57373] hover:bg-[#E57373] text-white px-4 py-1.5 text-sm rounded">
                   {totalReportsCount} Report{totalReportsCount > 1 ? "s" : ""}
                 </Badge>
-              )}
-            </div>
-            <div className="px-8 py-6">
+              )
+            }
+            className="mb-5"
+          >
+            <div>
               <div className="grid grid-cols-3 gap-x-20 gap-y-5 text-sm">
                 <Info label="Driver" value={driver?.name ?? "N/A"} />
                 <Info label="Registration Number" value={vehicle?.registration_number ?? "N/A"} />
@@ -626,16 +618,16 @@ export const RideDetail = () => {
                 <Info label="Booking Date" value={fmt(ride?.created_at)} />
                 <Info label="Seat" value={`${passengers.length}/${ride?.available_seats ?? 0}`} />
                 <Info label="Gender Preference" value={ride?.gender_preference ?? "N/A"} />
-                <Info label="Status" value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
+                <StatusInfo value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
                 <Info label="Leaving From" value={ride?.start_location ?? "N/A"} />
                 <Info label="Price Per Person" value={ride?.price ? `₹${ride.price}` : "N/A"} />
                 <Info label="Destination" value={ride?.end_location ?? "N/A"} />
               </div>
             </div>
-          </div>
+          </DetailCard>
 
           {/* Attachment */}
-          <Section title="Attachment" icon={<Paperclip />} right={undefined}>
+          <DetailCard title="Attachment" icon={<Paperclip className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
             <p className="font-semibold mb-4">Car Images</p>
             <div className="grid grid-cols-4 gap-6">
               {vehicle?.attachments && vehicle.attachments.length > 0 ? (
@@ -648,23 +640,24 @@ export const RideDetail = () => {
                 <p className="text-sm text-gray-400 col-span-4">No images available</p>
               )}
             </div>
-          </Section>
+          </DetailCard>
 
           {/* Reports */}
           {totalReportsCount > 0 && (
-            <Section
+            <DetailCard
               title="Reports"
-              icon={<AlertCircle />}
-              right={
+              icon={<AlertCircle className="w-[18px] h-[18px] text-gray-500" />}
+              headerActions={
                 <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A]">
                   {allPassengerReports[0]?.status ?? "Under Review"}
                 </Badge>
               }
+              className="mb-5"
             >
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-gray-500 mb-2">Report:</p>
-                  <Badge className="bg-[#E57373] text-white px-4 py-1 mb-2">
+                  <Badge className="bg-[rgba(231,132,142,0.18)] text-[#a3343f] hover:bg-[rgba(231,132,142,0.18)] rounded-full px-[10px] py-[3px] text-[11px] font-medium mb-2">
                     {totalReportsCount} Report{totalReportsCount > 1 ? "s" : ""}
                   </Badge>
                   {allPassengerReports[0]?.report_date && (
@@ -675,22 +668,14 @@ export const RideDetail = () => {
                   View Reports
                 </Button>
               </div>
-            </Section>
+            </DetailCard>
           )}
         </TabsContent>
 
         {/* ── Car Detail Tab ────────────────────────────────────────────── */}
         <TabsContent value="Car Detail">
-          <div className="border border-gray-200 mb-6">
-            <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-[#E91E63]" />
-                </div>
-                <h2 className="font-semibold text-base">Car Detail</h2>
-              </div>
-            </div>
-            <div className="px-8 py-6">
+          <DetailCard title="Car Detail" icon={<FileText className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
+            <div>
               <div className="grid grid-cols-2 gap-x-32 gap-y-5 text-sm">
                 <Info label="Driver" value={driver?.name ?? "N/A"} />
                 <Info label="Registration Number" value={vehicle?.registration_number ?? "N/A"} />
@@ -699,9 +684,9 @@ export const RideDetail = () => {
                 <Info label="Car Color" value={vehicle?.colour ?? "N/A"} />
               </div>
             </div>
-          </div>
+          </DetailCard>
 
-          <Section title="Attachment" icon={<Paperclip />} right={undefined}>
+          <DetailCard title="Attachment" icon={<Paperclip className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
             <p className="font-semibold mb-4">Car Images</p>
             <div className="grid grid-cols-4 gap-6">
               {vehicle?.attachments && vehicle.attachments.length > 0 ? (
@@ -714,7 +699,7 @@ export const RideDetail = () => {
                 <p className="text-sm text-gray-400 col-span-4">No images available</p>
               )}
             </div>
-          </Section>
+          </DetailCard>
         </TabsContent>
 
         {/* ── Driver's Detail Tab ───────────────────────────────────────── */}
@@ -774,16 +759,8 @@ export const RideDetail = () => {
           {!driverDetailLoading && driverDetail && (
             <>
               {/* Driver Info card */}
-              <div className="border border-gray-200 mb-6">
-                <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-[#E91E63]" />
-                    </div>
-                    <h2 className="font-semibold text-base">Driver's Detail</h2>
-                  </div>
-                </div>
-                <div className="px-8 py-6 flex gap-8">
+              <DetailCard title="Driver's Detail" icon={<FileText className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
+                <div className="flex gap-8">
                   {/* {driverDetail.profile_image_url && (
                     <img
                       src={driverDetail.profile_image_url}
@@ -801,20 +778,20 @@ export const RideDetail = () => {
                     <Info label="Correspondence Address" value={driverDetail.correspondence_address || "N/A"} />
                     <Info label="Registration Number" value={vehicle?.registration_number ?? "N/A"} />
                     <Info label="Ride Date" value={fmt(ride?.start_time)} />
-                    <Info label="Status" value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
+                    <StatusInfo value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
                     <Info label="Leaving From" value={ride?.start_location ?? "N/A"} />
                     <Info label="Destination" value={ride?.end_location ?? "N/A"} />
                     <Info label="Price Per Person" value={ride?.price ? `₹${ride.price}` : "N/A"} />
                   </div>
                 </div>
-              </div>
+              </DetailCard>
 
               {/* Documents — Aadhaar Card */}
               {driverDetail.aadhar_documents.length > 0 && (
-                <Section
+                <DetailCard
                   title="Aadhaar Card"
-                  icon={<FileCheck />}
-                  right={
+                  icon={<FileCheck className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     driverDetail.aadhar_documents[0].verified === 1 ? (
                       <Badge className="bg-[#E8F5E9] text-[#2E7D32] border-0 flex items-center gap-1.5 px-3 py-1.5">
                         <div className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center">
@@ -828,6 +805,7 @@ export const RideDetail = () => {
                       <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5">Pending</Badge>
                     )
                   }
+                  className="mb-5"
                 >
                   <div className="grid grid-cols-4 gap-4">
                     {driverDetail.aadhar_documents.map((doc) => (
@@ -852,15 +830,15 @@ export const RideDetail = () => {
                       </button>
                     ))}
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Documents — Driving License */}
               {driverDetail.driving_licenses.length > 0 && (
-                <Section
+                <DetailCard
                   title="Driving License"
-                  icon={<FileCheck />}
-                  right={
+                  icon={<FileCheck className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     driverDetail.driving_licenses[0].verified === 1 ? (
                       <Badge className="bg-[#E8F5E9] text-[#2E7D32] border-0 flex items-center gap-1.5 px-3 py-1.5">
                         <div className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center">
@@ -874,6 +852,7 @@ export const RideDetail = () => {
                       <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5">Pending</Badge>
                     )
                   }
+                  className="mb-5"
                 >
                   <div className="grid grid-cols-4 gap-4">
                     {driverDetail.driving_licenses.map((doc) => (
@@ -898,20 +877,21 @@ export const RideDetail = () => {
                       </button>
                     ))}
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Reports from driver_detail */}
               {driverDetail.reports_count > 0 && (
-                <Section
+                <DetailCard
                   title="Reports"
-                  icon={<AlertCircle />}
-                  right={
+                  icon={<AlertCircle className="w-[18px] h-[18px] text-gray-500" />}
+                  headerActions={
                     <Badge className="bg-[#FFF7CC] text-[#8A6D1D] border border-[#F5E08A] px-3 py-1.5 flex items-center gap-1.5">
                       <AlertCircle className="w-4 h-4" />
                       {driverDetail.reports[0]?.status ?? "Under Review"}
                     </Badge>
                   }
+                  className="mb-5"
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -927,17 +907,20 @@ export const RideDetail = () => {
                       View Reports
                     </Button>
                   </div>
-                </Section>
+                </DetailCard>
               )}
 
               {/* Reviews from driver_detail */}
-              <Section title="Reviews" icon={<Star />} right={undefined}>
+              <DetailCard title="Reviews" icon={<Star className="w-[18px] h-[18px] text-gray-500" />} className="mb-5">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm text-gray-500 mb-2">Reviews:</p>
                     <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-base font-medium">
+                      <Star
+                        className={driverDetail.reviews_count > 0 ? "w-5 h-5 fill-[#1a1a1a] text-[#1a1a1a]" : "w-5 h-5 text-gray-500"}
+                        strokeWidth={1.8}
+                      />
+                      <span className="text-sm font-medium text-gray-900">
                         {driverDetail.reviews_count > 0
                           ? `${(driverDetail.reviews.reduce((s, r) => s + r.ratings, 0) / driverDetail.reviews.length).toFixed(1)} Rating Out Of 5 (${driverDetail.reviews_count} review${driverDetail.reviews_count > 1 ? "s" : ""})`
                           : "No ratings yet"}
@@ -952,7 +935,7 @@ export const RideDetail = () => {
                     View Reviews
                   </Button>
                 </div>
-              </Section>
+              </DetailCard>
             </>
           )}
         </TabsContent>
@@ -960,7 +943,7 @@ export const RideDetail = () => {
         {/* ── Passenger's Detail Tab ────────────────────────────────────── */}
         <TabsContent value="Passenger's Detail">
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Total User's</h2>
+            <h2 className="text-sm font-semibold">Total User's</h2>
             <EnhancedTaskTable
               data={passengerTableData}
               columns={[
@@ -1004,13 +987,13 @@ export const RideDetail = () => {
                   <span className="text-gray-400 text-sm">0</span>
                 ),
               })}
-              enableSearch={false}
+              enableSearch={true}
               hideColumnsButton={true}
               enableSelection={false}
               hideTableExport={true}
               selectable={false}
               enableExport={false}
-              hideTableSearch={true}
+              hideTableSearch={false}
               storageKey="passenger-detail-table"
               emptyMessage="No passengers found"
               exportFileName="passengers"
@@ -1023,6 +1006,14 @@ export const RideDetail = () => {
 };
 
 /* Reusable helpers */
+// 07.05 — read-only state uses the shared low-tint pill
+const StatusInfo: React.FC<{ value: string }> = ({ value }) => (
+  <div>
+    <p className="text-gray-400 mb-1">Status</p>
+    <span className={`bg-pill ${value === "Active" ? "bg-pill-success" : ""}`}>{value}</span>
+  </div>
+);
+
 const Info: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
     <p className="text-gray-400 mb-1">{label}</p>
@@ -1030,25 +1021,4 @@ const Info: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   </div>
 );
 
-const Section: React.FC<{
-  title: string;
-  icon: React.ReactNode;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}> = ({ title, icon, right, children }) => (
-  <div className="border border-gray-200 mb-6">
-    <div className="bg-[#F9F7F4] px-6 py-4 flex justify-between items-center border-b border-gray-200">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm bg-[#FCE4E4] flex items-center justify-center text-[#E91E63]">
-          {icon}
-        </div>
-        <h3 className="font-semibold text-base">{title}</h3>
-      </div>
-      {right}
-    </div>
-    <div className="bg-white px-6 py-6">
-      {children}
-    </div>
-  </div>
-);
 

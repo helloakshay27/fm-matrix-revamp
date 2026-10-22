@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -444,6 +445,7 @@ export const QuotesEdit: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
+    useAccountingFormOpened('quote', id ? 'edit' : 'create', id);
 
     useEffect(() => {
         document.title = isEdit ? 'Edit Quote' : 'New Quote';
@@ -1806,9 +1808,14 @@ export const QuotesEdit: React.FC = () => {
                         }
                     }
                 );
+                accountingEvents.onRecordUpdated('quote', id, {
+                    amount: totalAmount2,
+                    item_count: items.length,
+                    status: saveAsDraft ? 'draft' : 'sent',
+                });
                 toast.success('Quote updated successfully');
             } else {
-                await axios.post(
+                const response = await axios.post(
                     `https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`,
                     formData,
                     {
@@ -1817,12 +1824,18 @@ export const QuotesEdit: React.FC = () => {
                         }
                     }
                 );
+                accountingEvents.onRecordCreated('quote', response.data?.id ?? response.data?.lock_account_quote?.id, {
+                    amount: totalAmount2,
+                    item_count: items.length,
+                    status: saveAsDraft ? 'draft' : 'sent',
+                });
                 toast.success(saveAsDraft ? 'Quote saved as draft successfully' : 'Quote created successfully');
             }
             navigate('/accounting/quotes');
         } catch (error) {
             console.error('Error submitting quote:', error);
             toast.error('Failed to save quote');
+            accountingEvents.onSaveFailed('quote', isEdit ? 'update' : 'create', error, { record_id: id });
         } finally {
             setIsSubmitting(false);
         }

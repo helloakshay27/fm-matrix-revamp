@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { DetailCard } from "@/components/ui/detail-card";
 import { isCMContextActive } from "@/utils/posthogHelpers";
 
 interface UserDetail {
@@ -159,21 +160,12 @@ const CommunityUserDetails = () => {
             <h1 className="font-medium text-[15px] text-[rgba(26,26,26,0.5)] mb-4"><Link to={'/pulse/community'}>Community</Link> <span className="font-normal">{">"}</span> View User Details</h1>
 
             {/* Main Content Card */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                {/* Header with Title and Icon */}
-                <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                            <File size={22} />
-                        </div>
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            View User Detail
-                        </h2>
-                    </div>
-                </div>
-
-                {/* Details Section */}
-                <div className="p-6 bg-white">
+            <DetailCard
+                title="View User Detail"
+                icon={<File className="w-[18px] h-[18px] text-gray-500" />}
+                className="mb-6"
+            >
+                <div>
                     {/* Details Grid - 2 columns */}
                     <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                         {/* Left Column */}
@@ -243,20 +235,16 @@ const CommunityUserDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
             {/* Reports Section */}
             <div className="space-y-6">
                 {
                     userDetails.reports.length > 0 && userDetails.reports.map((report: any) => (
-                        <div className="border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="bg-[#F6F4EE] px-6 py-4 flex items-center justify-between border-b border-gray-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                        <AlertCircle size={16} />
-                                    </div>
-                                    <span className="font-semibold text-lg text-gray-800">Reports</span>
-                                </div>
+                        <DetailCard
+                            title="Reports"
+                            icon={<AlertCircle className="w-[18px] h-[18px] text-gray-500" />}
+                            headerActions={
                                 <div className="flex items-center gap-2">
                                     <span className={`${getStatusColor(report.status).bg} text-black px-3 py-1 rounded text-sm flex items-center gap-2`}>
                                         <svg width="13" height="14" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -268,8 +256,9 @@ const CommunityUserDetails = () => {
                                         <Trash2 size={16} color="#c72030" />
                                     </Button>
                                 </div>
-                            </div>
-                            <div className="p-6 bg-white grid grid-cols-3 items-start">
+                            }
+                        >
+                            <div className="grid grid-cols-3 items-start">
                                 <div className="space-y-4">
                                     <div>
                                         <label className="text-sm text-gray-500 block mb-2">Report:</label>
@@ -298,7 +287,7 @@ const CommunityUserDetails = () => {
                                     )
                                 }
                             </div>
-                        </div>
+                        </DetailCard>
                     ))
                 }
             </div>
@@ -312,17 +301,19 @@ const CommunityUserDetails = () => {
                         <h2 className="text-base font-semibold text-gray-900 mb-12 leading-tight">
                             Are you sure you want to Delete<br />this Report?
                         </h2>
-                        <div className="flex mt-auto">
+                        <div className="fm-action-bar mt-auto px-6 pb-6">
                             <button
+                                type="button"
                                 onClick={() => setDeleteConfirmation({ open: false, reportId: null })}
-                                className="flex-1 px-3 py-4 bg-[#D3D3D3] text-[#6C6C6C] font-semibold text-[14px] hover:bg-[#C0C0C0] transition-colors"
+                                className="fm-action-secondary"
                             >
                                 No
                             </button>
                             <button
+                                type="button"
                                 onClick={confirmDeleteReport}
                                 disabled={isDeleting}
-                                className="flex-1 px-3 py-4 bg-[#C72030] !text-white font-semibold text-[14px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center justify-center h-[42px] px-[22px] rounded-lg bg-[#C72030] !text-white font-semibold text-[13px] hover:bg-[#A01020] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isDeleting ? "Deleting..." : "Yes"}
                             </button>

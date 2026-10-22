@@ -27,6 +27,7 @@ import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useHelpdeskEvents, useCMHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { useGaFunnelEvents } from '@/components/PostHogGaFunnelEvents';
+import { RCA_WORD_LIMIT, countWords } from "@/utils/wordLimit";
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -587,6 +588,11 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
   }
 };
 
+// Ticket statuses whose fixed state ends the ticket. "complete" behaves like "closed"
+// (same rule as EditStatusDialog), e.g. for the org 63 RCA / corrective / preventive fields.
+const CLOSURE_MANDATORY_SUFFIX = 'when ticket is closed';
+const isClosingFixedState = (state?: string | null) => state === 'closed' || state === 'complete';
+
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -703,6 +709,8 @@ export const TicketDetailsPage = () => {
 
   // Ticket Management Edit State
   const [isEditingTicketMgmt, setIsEditingTicketMgmt] = useState(false);
+  // Set once Save is clicked so mandatory RCA / Corrective / Preventive errors show under the fields
+  const [ticketMgmtRcaSubmitted, setTicketMgmtRcaSubmitted] = useState(false);
   const [ticketMgmtFormData, setTicketMgmtFormData] = useState({
     selectedStatus: '',
     severity: '',
@@ -749,6 +757,7 @@ export const TicketDetailsPage = () => {
 
   // Ticket Closure Edit State
   const [isEditingTicketClosure, setIsEditingTicketClosure] = useState(false);
+  const [ticketClosureRcaSubmitted, setTicketClosureRcaSubmitted] = useState(false);
   const [ticketClosureFormData, setTicketClosureFormData] = useState({
     preventive_action_template_ids: [] as number[],
     short_term_impact_template_ids: [] as number[],
@@ -2601,6 +2610,11 @@ export const TicketDetailsPage = () => {
   };
 
   // Update the handleTicketMgmtEdit function
+  // Closed tickets can no longer be edited from the Ticket Management section.
+  const isTicketMgmtLocked =
+    complaintStatus.find(s => s.name === ticketData?.issue_status)?.fixed_state === 'closed' ||
+    ticketData?.issue_status?.toLowerCase() === 'closed';
+
   const handleTicketMgmtEdit = () => {
     console.log('=== Form Initialization Debug ===');
     console.log('ticketData:', ticketData);
@@ -2737,6 +2751,7 @@ export const TicketDetailsPage = () => {
       setAssociationType('');
     }
 
+    setTicketMgmtRcaSubmitted(false);
     setIsEditingTicketMgmt(true);
   };
 
@@ -2821,6 +2836,25 @@ export const TicketDetailsPage = () => {
   };
 
   // Handle Ticket Management Form Submit
+  // Word-limit error shows while typing; mandatory error shows once Save has been clicked
+  const getRcaFieldError = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix = 'when closing the ticket') => {
+    if (countWords(text) > RCA_WORD_LIMIT) return `${label} cannot exceed ${RCA_WORD_LIMIT} words`;
+    if (submitted && !text?.trim()) return `${label} is mandatory ${mandatorySuffix}`;
+    return '';
+  };
+
+  const renderRcaFieldFooter = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix?: string) => (
+    <div className="mt-1 flex justify-between gap-2 text-xs">
+      <span className="text-red-500">{getRcaFieldError(label, text, submitted, mandatorySuffix)}</span>
+      <span className={countWords(text) > RCA_WORD_LIMIT ? 'shrink-0 text-red-500' : 'shrink-0 text-gray-400'}>
+        {countWords(text)}/{RCA_WORD_LIMIT} words
+      </span>
+    </div>
+  );
+
+  const rcaFieldErrorClass = (label: string, text: string | undefined, submitted: boolean, mandatorySuffix?: string) =>
+    getRcaFieldError(label, text, submitted, mandatorySuffix) ? '!border-red-500' : '';
+
   const handleTicketMgmtSubmit = async () => {
     // GA parity: the update the user just committed. `reopen` is not a separate button on
     // web - it is a status change into a reopen fixed_state - so it is derived from the
@@ -2858,20 +2892,14 @@ export const TicketDetailsPage = () => {
         }
 
         // Mandatory RCA, Corrective Action, Preventive Action validation when closing ticket for org_id 63
-        if (selectedFixedState === 'closed') {
-          // For org 63: validate text inputs (not selectors)
-          if (!ticketMgmtFormData.rca_text?.trim()) {
-            toast.error('Root Cause Analysis is mandatory when closing the ticket');
-            setSubmittingTicketMgmt(false);
-            return;
-          }
-          if (!ticketMgmtFormData.corrective_action_text?.trim()) {
-            toast.error('Corrective Action is mandatory when closing the ticket');
-            setSubmittingTicketMgmt(false);
-            return;
-          }
-          if (!ticketMgmtFormData.preventive_action_text?.trim()) {
-            toast.error('Preventive Action is mandatory when closing the ticket');
+        if (isClosingFixedState(selectedFixedState)) {
+          // For org 63: validate text inputs (not selectors) — errors render under each field
+          setTicketMgmtRcaSubmitted(true);
+          if (
+            getRcaFieldError('Root Cause Analysis', ticketMgmtFormData.rca_text, true) ||
+            getRcaFieldError('Corrective Action', ticketMgmtFormData.corrective_action_text, true) ||
+            getRcaFieldError('Preventive Action', ticketMgmtFormData.preventive_action_text, true)
+          ) {
             setSubmittingTicketMgmt(false);
             return;
           }
@@ -2972,7 +3000,7 @@ export const TicketDetailsPage = () => {
       // Add Root Cause Analysis, Corrective Action, Preventive Action
       // For org_id 63 + closed: send text values; for others: send template IDs
       const selectedStatusObjForApi = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-      const isClosedForApi = selectedStatusObjForApi?.fixed_state === 'closed';
+      const isClosedForApi = isClosingFixedState(selectedStatusObjForApi?.fixed_state);
 
       if (orgId === 63 && isClosedForApi) {
         // For org 63: send text values
@@ -3050,7 +3078,7 @@ export const TicketDetailsPage = () => {
           changed_by_role: changedByRole,
         });
         // Ticket Resolution Recorded — reached a completed/closed state
-        if (toFixedState === 'closed' || toFixedState === 'completed') {
+        if (isClosingFixedState(toFixedState) || toFixedState === 'completed') {
           helpdeskEvents.onTicketResolutionRecorded(id, {
             resolution_outcome: toStatus,
             closure_completeness_score: null,
@@ -3190,6 +3218,7 @@ export const TicketDetailsPage = () => {
     });
 
     setTicketClosureFormData(formData);
+    setTicketClosureRcaSubmitted(false);
     setIsEditingTicketClosure(true);
 
     // Debug: Check state after setting
@@ -3224,17 +3253,15 @@ export const TicketDetailsPage = () => {
       // Mandatory validation for org_id 63 when ticket status is closed
       if (orgId === 63) {
         const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status || s.id.toString() === ticketMgmtFormData?.selectedStatus);
-        const isClosedStatus = currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+        const isClosedStatus = isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
         
         if (isClosedStatus) {
-          // For org 63: validate text inputs (not selectors)
-          if (!ticketClosureFormData.corrective_action_text?.trim()) {
-            toast.error('Corrective Action is mandatory when ticket is closed');
-            setSubmittingTicketClosure(false);
-            return;
-          }
-          if (!ticketClosureFormData.preventive_action_text?.trim()) {
-            toast.error('Preventive Action is mandatory when ticket is closed');
+          // For org 63: validate text inputs (not selectors) — errors render under each field
+          setTicketClosureRcaSubmitted(true);
+          if (
+            getRcaFieldError('Corrective Action', ticketClosureFormData.corrective_action_text, true, CLOSURE_MANDATORY_SUFFIX) ||
+            getRcaFieldError('Preventive Action', ticketClosureFormData.preventive_action_text, true, CLOSURE_MANDATORY_SUFFIX)
+          ) {
             setSubmittingTicketClosure(false);
             return;
           }
@@ -3249,7 +3276,7 @@ export const TicketDetailsPage = () => {
 
       // Determine if org 63 + closed for API submission
       const closureStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status || s.id.toString() === ticketMgmtFormData?.selectedStatus);
-      const isClosedForClosure = closureStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+      const isClosedForClosure = isClosingFixedState(closureStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
 
       if (orgId === 63 && isClosedForClosure) {
         // For org 63: send text values for preventive and corrective action
@@ -4422,7 +4449,7 @@ export const TicketDetailsPage = () => {
   };
 
   return (
-    <div className="ticket-details-page p-4 sm:p-6 min-h-screen">
+    <div className="ticket-details-page p-4 sm:p-6 min-h-screen bg-white">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -4460,14 +4487,12 @@ export const TicketDetailsPage = () => {
               <>
                 <Button
                   onClick={handleJobSheet}
-                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                 >
                   Job Sheet
                 </Button>
                 {isTicketClosed && (
                   <Button
                     onClick={() => setIsFeedbackModalOpen(true)}
-                    className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                   >
                     Add Feedback
                   </Button>
@@ -4518,16 +4543,16 @@ export const TicketDetailsPage = () => {
             }
           }}
         >
-          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+          <TabsList className="ticket-details-main-tabs h-auto text-sm">
             <TabsTrigger
               value="analytics"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
+              className="w-full"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger
               value="details"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
+              className="w-full"
             >
               Details
             </TabsTrigger>
@@ -4569,14 +4594,14 @@ export const TicketDetailsPage = () => {
 
             <TabsTrigger
               value="cost-approval"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
+              className="w-full"
             >
               Cost Approval
             </TabsTrigger>
 
             <TabsTrigger
               value="action-logs"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
+              className="w-full"
             >
               Logs
             </TabsTrigger>
@@ -4647,7 +4672,7 @@ export const TicketDetailsPage = () => {
                   {/* Ticket Detail Table */}
                   <div
                     className="rounded-xl p-3 sm:p-6 border shadow-lg"
-                    style={{ backgroundColor: "#F6F4EE" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     <div className="overflow-x-auto">
                       <table className="min-w-full border border-gray-300 rounded-lg">
@@ -4674,7 +4699,7 @@ export const TicketDetailsPage = () => {
                               <th
                                 key={idx}
                                 className="p-4 border border-gray-300"
-                                style={{ backgroundColor: "#EDEAE3" }}
+                                style={{ backgroundColor: "#FFFFFF" }}
                               >
                                 <div className="flex items-center justify-center text-black font-semibold text-lg">
                                   {header}
@@ -5187,8 +5212,8 @@ export const TicketDetailsPage = () => {
                           Ticket Details
                         </h3>
                       </div>
-                      <div className="px-6 bg-[#dfd9cb]">
-                        <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
+                      <div className="px-6 bg-white">
+                        <div className="flex justify-between py-4 border-b border-gray-200">
                           <div className='w-full '>
                             <div className="">
                               <div className="flex items-start mb-4">
@@ -5723,11 +5748,11 @@ export const TicketDetailsPage = () => {
                           </svg>
                         </button>
                       )}
-                      {shouldShow("Ticket", "update") && (
+                      {shouldShow("Ticket", "update") && !isTicketMgmtLocked && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                        className="h-8 px-3 text-[12px]"
                         onClick={handleTicketMgmtEdit}
                         disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
                       >
@@ -5796,7 +5821,7 @@ export const TicketDetailsPage = () => {
                                 const isOrg63 = orgId === 63;
                                 const isClosedStatus = (() => {
                                   const statusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return statusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(statusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })();
                                 // For org 63 non-closed, hide RCA/Corrective/Preventive entirely
                                 if (isOrg63 && !isClosedStatus) return null;
@@ -6185,7 +6210,7 @@ export const TicketDetailsPage = () => {
                             {/* Root Cause Analysis - Show only for org_id 63 when closed status, or always for other orgs */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               const shouldShowRca = orgId === 63 ? isClosedStatus : true;
                               if (!shouldShowRca) return null;
 
@@ -6196,12 +6221,15 @@ export const TicketDetailsPage = () => {
                                     <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                       Root Cause Analysis<span className="text-red-500"> *</span>
                                     </label>
-                                    <textarea
-                                      value={ticketMgmtFormData.rca_text || ''}
-                                      onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
-                                      placeholder="Enter Root Cause Analysis"
-                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                    />
+                                    <>
+                                      <textarea
+                                        value={ticketMgmtFormData.rca_text || ''}
+                                        onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
+                                        placeholder="Enter Root Cause Analysis"
+                                        className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}`}
+                                      />
+                                      {renderRcaFieldFooter('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}
+                                    </>
                                   </div>
                                 );
                               }
@@ -6277,7 +6305,7 @@ export const TicketDetailsPage = () => {
                             {/* Corrective Action - Show only for org_id 63 when closed status */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               if (!(orgId === 63 && isClosedStatus)) return null;
 
                               // For org 63: show TEXT INPUT
@@ -6286,12 +6314,15 @@ export const TicketDetailsPage = () => {
                                   <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                     Corrective Action<span className="text-red-500"> *</span>
                                   </label>
-                                  <textarea
-                                    value={ticketMgmtFormData.corrective_action_text || ''}
-                                    onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
-                                    placeholder="Enter Corrective Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                  />
+                                  <>
+                                    <textarea
+                                      value={ticketMgmtFormData.corrective_action_text || ''}
+                                      onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
+                                      placeholder="Enter Corrective Action"
+                                      className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}`}
+                                    />
+                                    {renderRcaFieldFooter('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}
+                                  </>
                                 </div>
                               );
                             })()}
@@ -6299,7 +6330,7 @@ export const TicketDetailsPage = () => {
                             {/* Preventive Action - Show only for org_id 63 when closed status */}
                             {(() => {
                               const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                              const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                              const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                               if (!(orgId === 63 && isClosedStatus)) return null;
 
                               // For org 63: show TEXT INPUT
@@ -6308,12 +6339,15 @@ export const TicketDetailsPage = () => {
                                   <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                     Preventive Action<span className="text-red-500"> *</span>
                                   </label>
-                                  <textarea
-                                    value={ticketMgmtFormData.preventive_action_text || ''}
-                                    onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
-                                    placeholder="Enter Preventive Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                  />
+                                  <>
+                                    <textarea
+                                      value={ticketMgmtFormData.preventive_action_text || ''}
+                                      onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
+                                      placeholder="Enter Preventive Action"
+                                      className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}`}
+                                    />
+                                    {renderRcaFieldFooter('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}
+                                  </>
                                 </div>
                               );
                             })()}
@@ -6371,23 +6405,22 @@ export const TicketDetailsPage = () => {
 
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingTicketMgmt(false)}
                             disabled={submittingTicketMgmt}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingTicketMgmt}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingTicketMgmt ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -6742,15 +6775,12 @@ export const TicketDetailsPage = () => {
                       </div>
 
                       {/* Submit Cost Approval Button */}
-                      <div className="flex justify-center mt-6">
+                      <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
                         <button
                           type="button"
                           onClick={handleSubmitCostApproval}
                           disabled={submittingCostApproval}
-                          className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-[#A01828]'
-                            }`}
+                          className="fm-action-primary"
                         >
                           {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
                         </button>
@@ -6898,7 +6928,7 @@ export const TicketDetailsPage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      className="h-8 px-3 text-[12px]"
                       onClick={handleTicketClosureEdit}
                       disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
@@ -7181,21 +7211,24 @@ export const TicketDetailsPage = () => {
                               >
                                 Preventive Action{orgId === 63 && (() => {
                                   const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })() && <span style={{ color: 'red' }}> *</span>}
                               </label>
 
                               {/* For org 63 + closed: show TEXT INPUT; for others: show Select */}
                               {orgId === 63 && (() => {
                                 const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                               })() ? (
-                                <textarea
-                                  value={ticketClosureFormData.preventive_action_text || ''}
-                                  onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                                  placeholder="Enter Preventive Action"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                />
+                                <>
+                                  <textarea
+                                    value={ticketClosureFormData.preventive_action_text || ''}
+                                    onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
+                                    placeholder="Enter Preventive Action"
+                                    className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
+                                  />
+                                  {renderRcaFieldFooter('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
+                                </>
                               ) : (
                                 <Select
                                   value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
@@ -7221,7 +7254,7 @@ export const TicketDetailsPage = () => {
                             {/* Show template descriptions only for non-org-63 (selector mode) */}
                             {!(orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })()) && (
                             <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                               {(() => {
@@ -7341,21 +7374,24 @@ export const TicketDetailsPage = () => {
                               >
                                 Corrective Action{orgId === 63 && (() => {
                                   const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                  return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                  return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                                 })() && <span style={{ color: 'red' }}> *</span>}
                               </label>
 
                               {/* React Select or Textarea */}
                               {orgId === 63 && (() => {
                                 const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                                return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                                return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                               })() ? (
-                                <textarea
-                                  className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                                  placeholder="Enter Corrective Action"
-                                  value={ticketClosureFormData.corrective_action_text || ''}
-                                  onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                                />
+                                <>
+                                  <textarea
+                                    className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
+                                    placeholder="Enter Corrective Action"
+                                    value={ticketClosureFormData.corrective_action_text || ''}
+                                    onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
+                                  />
+                                  {renderRcaFieldFooter('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
+                                </>
                               ) : (
                                 <Select
                                   value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
@@ -7380,7 +7416,7 @@ export const TicketDetailsPage = () => {
 
                             {!(orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })()) && (
                             <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                               {(() => {
@@ -7601,23 +7637,22 @@ export const TicketDetailsPage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingTicketClosure(false)}
                             disabled={submittingTicketClosure}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingTicketClosure}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -7639,7 +7674,7 @@ export const TicketDetailsPage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      className="h-8 px-3 text-[12px]"
                       onClick={handleLocationEdit}
                       disabled={isEditingLocation}
                     >
@@ -7829,23 +7864,22 @@ export const TicketDetailsPage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3 justify-end mt-6">
-                          <Button
+                        <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                          <button
                             type="button"
-                            variant="outline"
                             onClick={() => setIsEditingLocation(false)}
                             disabled={submittingLocation}
-                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="fm-action-secondary"
                           >
                             Cancel
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="submit"
                             disabled={submittingLocation}
-                            className="bg-brand hover:bg-brand-hover text-white px-8"
+                            className="fm-action-primary"
                           >
                             {submittingLocation ? 'Saving...' : 'Submit'}
-                          </Button>
+                          </button>
                         </div>
                       </form>
                     )}
@@ -8307,11 +8341,11 @@ export const TicketDetailsPage = () => {
                                 onChange={(e) => setInternalCommentText(e.target.value)}
                                 rows={4}
                                 placeholder=" "
-                                className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                                className={`peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
       focus:outline-none 
       focus:border-[2px] 
       focus:border-[rgb(25,118,210)] 
-      resize-vertical"
+      resize-vertical ${rcaFieldErrorClass('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}`}
                               />
 
                               <label
@@ -8686,8 +8720,8 @@ export const TicketDetailsPage = () => {
                       Ticket Details
                     </h3>
                   </div>
-                  <div className="px-6 bg-[#dfd9cb]">
-                    <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
+                  <div className="px-6 bg-white">
+                    <div className="flex justify-between py-4 border-b border-gray-200">
                       <div className='w-full '>
                         <div className="">
                           <div className="flex items-start mb-4">
@@ -9231,11 +9265,11 @@ export const TicketDetailsPage = () => {
                       </svg>
                     </button>
                   )}
-                  {shouldShow("Ticket", "update") && (
+                  {shouldShow("Ticket", "update") && !isTicketMgmtLocked && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                    className="h-8 px-3 text-[12px]"
                     onClick={handleTicketMgmtEdit}
                     disabled={isEditingTicketMgmt || loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons}
                   >
@@ -9304,7 +9338,7 @@ export const TicketDetailsPage = () => {
                             const isOrg63 = orgId === 63;
                             const isClosedStatus = (() => {
                               const statusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return statusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(statusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })();
                             // For org 63 non-closed, hide RCA/Corrective/Preventive entirely
                             if (isOrg63 && !isClosedStatus) return null;
@@ -9693,7 +9727,7 @@ export const TicketDetailsPage = () => {
                         {/* Root Cause Analysis - Show only for org_id 63 when closed status, or always for other orgs */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           const shouldShowRca = orgId === 63 ? isClosedStatus : true;
                           if (!shouldShowRca) return null;
 
@@ -9704,12 +9738,15 @@ export const TicketDetailsPage = () => {
                                 <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                   Root Cause Analysis<span className="text-red-500"> *</span>
                                 </label>
-                                <textarea
-                                  value={ticketMgmtFormData.rca_text || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
-                                  placeholder="Enter Root Cause Analysis"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                                />
+                                <>
+                                  <textarea
+                                    value={ticketMgmtFormData.rca_text || ''}
+                                    onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
+                                    placeholder="Enter Root Cause Analysis"
+                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
+                                  />
+                                  {renderRcaFieldFooter('Root Cause Analysis', ticketMgmtFormData.rca_text, ticketMgmtRcaSubmitted)}
+                                </>
                               </div>
                             );
                           }
@@ -9780,7 +9817,7 @@ export const TicketDetailsPage = () => {
                         {/* Corrective Action - Show only for org_id 63 when closed status */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           if (!(orgId === 63 && isClosedStatus)) return null;
 
                           // For org 63: show TEXT INPUT
@@ -9789,12 +9826,15 @@ export const TicketDetailsPage = () => {
                               <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                 Corrective Action<span className="text-red-500"> *</span>
                               </label>
-                              <textarea
-                                value={ticketMgmtFormData.corrective_action_text || ''}
-                                onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
-                                placeholder="Enter Corrective Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                              />
+                              <>
+                                <textarea
+                                  value={ticketMgmtFormData.corrective_action_text || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
+                                  placeholder="Enter Corrective Action"
+                                  className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}`}
+                                />
+                                {renderRcaFieldFooter('Corrective Action', ticketMgmtFormData.corrective_action_text, ticketMgmtRcaSubmitted)}
+                              </>
                             </div>
                           );
                         })()}
@@ -9802,7 +9842,7 @@ export const TicketDetailsPage = () => {
                         {/* Preventive Action - Show only for org_id 63 when closed status */}
                         {(() => {
                           const selectedStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
-                          const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+                          const isClosedStatus = isClosingFixedState(selectedStatusObj?.fixed_state);
                           if (!(orgId === 63 && isClosedStatus)) return null;
 
                           // For org 63: show TEXT INPUT
@@ -9811,12 +9851,15 @@ export const TicketDetailsPage = () => {
                               <label className="absolute -top-2 left-3 bg-white px-2 text-sm font-medium text-gray-700 z-10">
                                 Preventive Action<span className="text-red-500"> *</span>
                               </label>
-                              <textarea
-                                value={ticketMgmtFormData.preventive_action_text || ''}
-                                onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
-                                placeholder="Enter Preventive Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
-                              />
+                              <>
+                                <textarea
+                                  value={ticketMgmtFormData.preventive_action_text || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
+                                  placeholder="Enter Preventive Action"
+                                  className={`w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}`}
+                                />
+                                {renderRcaFieldFooter('Preventive Action', ticketMgmtFormData.preventive_action_text, ticketMgmtRcaSubmitted)}
+                              </>
                             </div>
                           );
                         })()}
@@ -9874,23 +9917,22 @@ export const TicketDetailsPage = () => {
 
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 justify-end mt-6">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingTicketMgmt(false)}
                         disabled={submittingTicketMgmt}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingTicketMgmt}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingTicketMgmt ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -10245,15 +10287,12 @@ export const TicketDetailsPage = () => {
                   </div>
 
                   {/* Submit Cost Approval Button */}
-                  <div className="flex justify-center mt-6">
+                  <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
                     <button
                       type="button"
                       onClick={handleSubmitCostApproval}
                       disabled={submittingCostApproval}
-                      className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-[#A01828]'
-                        }`}
+                      className="fm-action-primary"
                     >
                       {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
                     </button>
@@ -10399,7 +10438,7 @@ export const TicketDetailsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  className="h-8 px-3 text-[12px]"
                   onClick={handleTicketClosureEdit}
                   disabled={isEditingTicketClosure || loadingResponsiblePersons}
                 >
@@ -10682,21 +10721,24 @@ export const TicketDetailsPage = () => {
                           >
                             Preventive Action{orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })() && <span style={{ color: 'red' }}> *</span>}
                           </label>
 
                           {/* React Select or Textarea */}
                           {orgId === 63 && (() => {
                             const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                           })() ? (
-                            <textarea
-                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                              placeholder="Enter Preventive Action"
-                              value={ticketClosureFormData.preventive_action_text || ''}
-                              onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
-                            />
+                            <>
+                              <textarea
+                                className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
+                                placeholder="Enter Preventive Action"
+                                value={ticketClosureFormData.preventive_action_text || ''}
+                                onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
+                              />
+                              {renderRcaFieldFooter('Preventive Action', ticketClosureFormData.preventive_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
+                            </>
                           ) : (
                             <Select
                               value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
@@ -10721,7 +10763,7 @@ export const TicketDetailsPage = () => {
 
                         {!(orgId === 63 && (() => {
                           const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                         })()) && (
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
@@ -10841,21 +10883,24 @@ export const TicketDetailsPage = () => {
                           >
                             Corrective Action{orgId === 63 && (() => {
                               const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                              return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                              return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                             })() && <span style={{ color: 'red' }}> *</span>}
                           </label>
 
                           {/* React Select or Textarea */}
                           {orgId === 63 && (() => {
                             const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                            return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                            return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                           })() ? (
-                            <textarea
-                              className="w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical"
-                              placeholder="Enter Corrective Action"
-                              value={ticketClosureFormData.corrective_action_text || ''}
-                              onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
-                            />
+                            <>
+                              <textarea
+                                className={`w-full border border-gray-300 rounded-md p-2 text-sm min-h-[80px] resize-vertical ${rcaFieldErrorClass('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}`}
+                                placeholder="Enter Corrective Action"
+                                value={ticketClosureFormData.corrective_action_text || ''}
+                                onChange={(e) => handleTicketClosureInputChange('corrective_action_text', e.target.value)}
+                              />
+                              {renderRcaFieldFooter('Corrective Action', ticketClosureFormData.corrective_action_text, ticketClosureRcaSubmitted, CLOSURE_MANDATORY_SUFFIX)}
+                            </>
                           ) : (
                             <Select
                               value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
@@ -10880,7 +10925,7 @@ export const TicketDetailsPage = () => {
 
                         {!(orgId === 63 && (() => {
                           const currentStatusObj = complaintStatus.find(s => s.name === ticketData?.issue_status);
-                          return currentStatusObj?.fixed_state === 'closed' || ticketData?.issue_status?.toLowerCase() === 'closed';
+                          return isClosingFixedState(currentStatusObj?.fixed_state) || ticketData?.issue_status?.toLowerCase() === 'closed';
                         })()) && (
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
@@ -11101,23 +11146,22 @@ export const TicketDetailsPage = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 justify-end mt-6">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6 mt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingTicketClosure(false)}
                         disabled={submittingTicketClosure}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingTicketClosure}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingTicketClosure ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -11141,7 +11185,7 @@ export const TicketDetailsPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  className="h-8 px-3 text-[12px]"
                   onClick={handleLocationEdit}
                   disabled={isEditingLocation}
                 >
@@ -11330,23 +11374,22 @@ export const TicketDetailsPage = () => {
                       </FormControl>
                     </div>
 
-                    <div className="flex items-center gap-3 justify-end">
-                      <Button
+                    <div className="fm-action-bar pt-4 sm:pt-6">
+                      <button
                         type="button"
-                        variant="outline"
                         onClick={() => setIsEditingLocation(false)}
                         disabled={submittingLocation}
-                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="fm-action-secondary"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="submit"
                         disabled={submittingLocation}
-                        className="bg-brand hover:bg-brand-hover text-white px-8"
+                        className="fm-action-primary"
                       >
                         {submittingLocation ? 'Saving...' : 'Submit'}
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
@@ -11828,17 +11871,14 @@ export const TicketDetailsPage = () => {
 
                 {/* Submit Comment Button (centered) */}
                 <div className="flex justify-center mt-6 pb-6">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleSubmitComment}
                     disabled={submittingComment}
-                    className={`bg-brand text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:bg-[#A01828]'
-                      }`}
+                    className="text-[12px] font-medium px-6 py-2"
                   >
                     {submittingComment ? 'Submitting...' : 'Submit Comment'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -12536,7 +12576,7 @@ export const TicketDetailsPage = () => {
                       {isTicketClosed && (
                         <Button
                           onClick={() => setIsFeedbackModalOpen(true)}
-                          className="mt-3 bg-brand hover:bg-brand-hover text-white"
+                          className="mt-3"
                           size="sm"
                         >
                           Add Feedback
@@ -13005,25 +13045,24 @@ export const TicketDetailsPage = () => {
                 </p>
               </div>
 
-              <div className="flex justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancelCostApproval}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors"
-                >
-                  Yes
-                </button>
+              <div className="fm-action-bar">
                 <button
                   type="button"
                   onClick={() => {
                     setCancelModalOpen(false);
                     setCancelRequestId('');
                   }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
+                  className="fm-action-secondary"
                 >
                   No
                 </button>
-
+                <button
+                  type="button"
+                  onClick={handleCancelCostApproval}
+                  className="inline-flex items-center justify-center h-[42px] px-[22px] rounded-lg bg-red-600 text-white text-[13px] font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Yes
+                </button>
               </div>
             </div>
           </div>
@@ -13099,21 +13138,22 @@ export const TicketDetailsPage = () => {
             />
 
             {/* Actions */}
-            <div className="flex justify-center gap-3">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
-                className="px-6 border-gray-300"
+                className="fm-action-secondary"
               >
                 Skip
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleFeedbackSubmit}
                 disabled={isSubmittingFeedback}
-                className="px-6 bg-brand hover:bg-brand-hover text-white"
+                className="fm-action-primary"
               >
                 {isSubmittingFeedback ? 'Submitting...' : 'Submit Rating'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

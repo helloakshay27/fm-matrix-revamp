@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 
 interface InvoiceItem {
   id: number;
@@ -88,6 +89,7 @@ const customers = [
 
 export const CreateRetainerInvoicePage = () => {
   const navigate = useNavigate();
+  useAccountingFormOpened("retainer_invoice", "create");
 
   // Form State
   const [open, setOpen] = useState(false);

@@ -1,9 +1,11 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import axios from "axios";
 import { toast } from "sonner";
@@ -150,7 +152,7 @@ export const ActiveReports: React.FC = () => {
     { key: "reportTime",       label: "Report Time",       sortable: true,  hideable: true,  draggable: true  },
     { key: "reportDate",       label: "Report Date",       sortable: true,  hideable: true,  draggable: true  },
     { key: "statusBadge",      label: "Status",            sortable: false, hideable: true,  draggable: true  },
-    { key: "statusDropdown",   label: "Status",            sortable: false, hideable: false, draggable: false },
+    { key: "statusDropdown",   label: "Update Status",         sortable: false, hideable: false, draggable: false },
   ];
 
   // Map API report → table row
@@ -228,53 +230,36 @@ export const ActiveReports: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white px-6 py-4 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate("/pulse/carpool")}
-        >
-          Carpool
-        </span>{" "}
-        &gt; <span className="text-gray-700">Active Reports</span>
-      </div>
-
+      <PulsePageHeader title="Active Reports" />
       {/* Status Tabs */}
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as TabValue)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
-          <TabsTrigger
+        <AssetTabsList className="grid grid-cols-4 mb-6">
+          <AssetTabsTrigger
             value="Under Review"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             Under Review
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="Action in Progress"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             Action in Progress
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="Resolved"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             Resolved
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="Closed"
-            className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
           >
             Closed
-          </TabsTrigger>
-        </TabsList>
+          </AssetTabsTrigger>
+        </AssetTabsList>
       </Tabs>
-
-      {/* Section Title */}
-      <h2 className="text-xl font-bold mb-4">Active Reports</h2>
 
       {/* Loading */}
       {loading && (
@@ -300,13 +285,13 @@ export const ActiveReports: React.FC = () => {
           data={tableData}
           columns={columns}
           renderRow={renderRow}
-          enableSearch={false}
+          enableSearch={true}
           hideColumnsButton={true}
           enableSelection={false}
           hideTableExport={true}
           selectable={false}
           enableExport={false}
-          hideTableSearch={true}
+          hideTableSearch={false}
           storageKey={`carpool-active-reports-${activeTab}`}
           emptyMessage="No reports found"
           exportFileName="active-reports"

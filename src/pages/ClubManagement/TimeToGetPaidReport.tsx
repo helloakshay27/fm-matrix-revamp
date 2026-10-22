@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
@@ -44,6 +45,7 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const TimeToGetPaidReport: React.FC = () => {
+  useAccountingReportViewed("time_to_get_paid");
   const navigate = useNavigate();
   const lockAccountId = localStorage.getItem("lock_account_id");
   const [rows, setRows] = useState<TimeToGetPaidRow[]>([]);
@@ -209,7 +211,7 @@ credit_balance: (
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => fetchPayments(filters.fromDate, filters.toDate)}
+            onClick={() => { accountingEvents.onReportGenerated("time_to_get_paid", { from_date: filters.fromDate, to_date: filters.toDate }); fetchPayments(filters.fromDate, filters.toDate); }}
           >
             View
           </Button>

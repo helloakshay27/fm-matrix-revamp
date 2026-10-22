@@ -4,6 +4,7 @@ import { ScrollText, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 export type DetailedLedgerRowKind = "group" | "opening" | "transaction" | "closing";
 
@@ -1430,6 +1431,7 @@ const buildDemoRows = (
 };
 
 const DetailedGeneralLedger: React.FC = () => {
+  useAccountingReportViewed("detailed_general_ledger");
   const defaultRange = useMemo(() => getQuarterRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<DetailedGeneralLedgerRow[]>(() =>
@@ -1453,6 +1455,10 @@ const DetailedGeneralLedger: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("detailed_general_ledger", {
+      from_date: filters.fromDate,
+      to_date: filters.toDate,
+    });
     setReportRows(buildDemoRows(filters.fromDate, filters.toDate));
   };
 

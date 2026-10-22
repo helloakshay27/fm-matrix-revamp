@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface InwardSupplyRow {
   id: string;
@@ -34,6 +35,7 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const SummaryOfInwardSupplies: React.FC = () => {
+  useAccountingReportViewed("summary_of_inward_supplies");
   const defaultDateRange = useMemo(() => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -151,6 +153,7 @@ const SummaryOfInwardSupplies: React.FC = () => {
   };
 
   const handleView = () => {
+    accountingEvents.onReportGenerated("summary_of_inward_supplies", { from_date: filters.fromDate, to_date: filters.toDate });
     return;
   };
 

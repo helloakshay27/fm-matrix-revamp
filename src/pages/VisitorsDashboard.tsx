@@ -33,7 +33,7 @@ import { useViWorkflowEvents } from "@/components/PostHogViWorkflowEvents";
 import { useFlowEvents } from '@/components/PostHogFlowEvents';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { MaterialDatePicker } from '@/components/ui/material-date-picker';
+import { Input } from '@/components/ui/input';
 import { CommonImportModal } from '@/components/CommonImportModal';
 
 // Get current site ID dynamically from localStorage
@@ -231,11 +231,16 @@ export const VisitorsDashboard = () => {
   const [exportToDate, setExportToDate] = useState('');
   const EXPORT_MAX_RANGE_DAYS = 10;
 
-  // exportFromDate/exportToDate are DD/MM/YYYY strings from MaterialDatePicker
+  // exportFromDate/exportToDate are YYYY-MM-DD strings from native date inputs
+  const toDDMMYYYY = (value: string): string => {
+    const [yyyy, mm, dd] = value.split('-');
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const parseDDMMYYYY = (value: string): Date | null => {
-    const parts = value.split('/');
+    const parts = value.split('-');
     if (parts.length !== 3) return null;
-    const [dd, mm, yyyy] = parts.map(Number);
+    const [yyyy, mm, dd] = parts.map(Number);
     const date = new Date(yyyy, mm - 1, dd);
     return isNaN(date.getTime()) ? null : date;
   };
@@ -1488,6 +1493,8 @@ export const VisitorsDashboard = () => {
       return;
     }
 
+    
+
     let successCount = 0;
     let errorCount = 0;
     let lastErrorMessage = "";
@@ -1615,10 +1622,9 @@ export const VisitorsDashboard = () => {
 
     try {
       // Step 1: kick off the background export job.
-      // exportFromDate/exportToDate are already "DD/MM/YYYY" strings from
-      // MaterialDatePicker, matching the confirmed "DD/MM/YYYY - DD/MM/YYYY" format.
+      // API expects "DD/MM/YYYY - DD/MM/YYYY"; inputs hold YYYY-MM-DD.
       const startUrl = new URL(getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT_START));
-      startUrl.searchParams.set('q[date_range]', `${exportFromDate} - ${exportToDate}`);
+      startUrl.searchParams.set('q[date_range]', `${toDDMMYYYY(exportFromDate)} - ${toDDMMYYYY(exportToDate)}`);
 
       const startResponse = await fetch(startUrl.toString(), {
         method: 'GET',
@@ -2206,19 +2212,21 @@ const handlePageChange = (page: number) => {
           <div className="space-y-4 py-4">
             <div>
               <Label>From</Label>
-              <MaterialDatePicker
+              <Input
+                type="date"
                 value={exportFromDate}
-                onChange={setExportFromDate}
-                placeholder="Select start date"
+                max={exportToDate || undefined}
+                onChange={(e) => setExportFromDate(e.target.value)}
                 className="mt-1"
               />
             </div>
             <div>
               <Label>To</Label>
-              <MaterialDatePicker
+              <Input
+                type="date"
                 value={exportToDate}
-                onChange={setExportToDate}
-                placeholder="Select end date"
+                min={exportFromDate || undefined}
+                onChange={(e) => setExportToDate(e.target.value)}
                 className="mt-1"
               />
             </div>

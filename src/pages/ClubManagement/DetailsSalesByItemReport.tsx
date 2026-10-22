@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileCog } from 'lucide-react';
 import axios from "axios";
 import { toast } from "sonner";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface SalesItem {
   id: number;
@@ -26,6 +27,7 @@ interface CustomerSale {
 
 const DetailsSalesByItemReport = () => {
   const { itemName } = useParams<{ itemName: string }>();
+  useAccountingReportViewed("details_sales_by_item");
   const navigate = useNavigate();
   const [itemSales, setItemSales] = useState<SalesItem[]>([]);
   const [loading, setLoading] = useState(false);

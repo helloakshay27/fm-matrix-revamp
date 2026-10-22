@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -141,6 +142,8 @@ export const DeliveryChallansDashboard: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+    const reportListLoaded = useAccountingListViewed('delivery_challan');
+    useAccountingSearchTracking('delivery_challan', debouncedSearchQuery);
 
 
 
@@ -173,6 +176,7 @@ export const DeliveryChallansDashboard: React.FC = () => {
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
             setSalesOrderData(Array.isArray(data) ? data : []);
+            reportListLoaded((Array.isArray(data) ? data : []).length, data?.pagination?.total_count);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -420,11 +424,13 @@ export const DeliveryChallansDashboard: React.FC = () => {
                 },
                 body: JSON.stringify(payload)
             });
+            accountingEvents.onActionPerformed('delivery_challan', 'mark_as_confirmed', null, { bulk_count: selectedRows.length });
             toast.success('Status updated successfully');
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (err) {
             toast.error('Failed to update status');
+            accountingEvents.onSaveFailed('delivery_challan', 'action', err, { action: 'mark_as_confirmed' });
         }
     };
 

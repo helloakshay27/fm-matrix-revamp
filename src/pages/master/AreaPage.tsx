@@ -335,7 +335,7 @@ export const AreaPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -343,7 +343,7 @@ export const AreaPage = () => {
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-brand text-brand hover:bg-brand-light [&_svg]:text-brand">
+                  <Button variant="outline" size="sm" className="h-9 px-4 text-sm font-medium whitespace-nowrap">
                     <Upload className="h-4 w-4 mr-2" />
                     Import Areas
                   </Button>
@@ -369,24 +369,26 @@ export const AreaPage = () => {
                       onRemove={() => setImportFile(null)}
                       disabled={isImportingFile}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        variant="outline"
+                    <div className="fm-action-bar">
+                      <button
+                        type="button"
+                        className="fm-action-secondary"
                         onClick={() => {
                           setShowImportDialog(false);
                           setImportFile(null);
                         }}
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleImportAreas}
                         disabled={!importFile || isImportingFile}
-                        className="bg-brand hover:bg-brand-hover text-white h-9 [&_svg]:text-white"
+                        className="fm-action-primary"
                       >
                         {isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
@@ -395,7 +397,7 @@ export const AreaPage = () => {
               {shouldShow("Area", "create") && (
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white"
+                  size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Area
@@ -600,15 +602,15 @@ export const AreaPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
+            <div className="fm-action-bar pt-4">
+              <button
+                type="button"
                 onClick={handleUpdateArea}
-                variant="ghost"
-                className="fm-button-fix fm-button-brand px-8"
+                className="fm-action-primary"
                 disabled={!name.trim() || !buildingId}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </DialogContent>
         </Dialog>
@@ -646,7 +648,6 @@ export const AreaPage = () => {
                       document.body.removeChild(link);
                       toast.success('QR Code downloaded successfully');
                     }}
-                    className="fm-button-fix fm-button-brand"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download QR Code

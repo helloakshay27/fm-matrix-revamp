@@ -4,6 +4,7 @@ import { NotepadText } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface Ledger {
   ledger_id: number;
@@ -52,6 +53,7 @@ interface PnlResponse {
 }
 
 const ProfitAndLossReport: React.FC = () => {
+  useAccountingReportViewed("profit_and_loss");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [pnlData, setPnlData] = useState<PnlResponse | null>(null);
@@ -328,7 +330,7 @@ const ProfitAndLossReport: React.FC = () => {
           <Button
             type="button"
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
-            onClick={fetchPnlData}
+            onClick={() => { accountingEvents.onReportGenerated("profit_and_loss", { from_date: filters.fromDate, to_date: filters.toDate }); fetchPnlData(); }}
             disabled={loading}
           >
             {loading ? "Loading..." : "View"}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
@@ -350,13 +350,7 @@ case "enable_sites":
   const leftActions = (
     <>
       {shouldShow("Customers", "create") && (
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/crm/customers/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/crm/customers/add")}><Plus className="w-4 h-4 mr-2" />Add</Button>
       )}
     </>
   );

@@ -8,6 +8,8 @@ export interface TrainerCredential {
   name: string;
   size: string;
   url: string;
+  // API download endpoint (attachfiles/:id/download) - preferred over the raw S3 url.
+  downloadUrl?: string;
 }
 
 export interface TimeValue {
@@ -116,6 +118,7 @@ export function mapTrainerApiData(raw: any): TrainerSetup {
           name: credential.name ?? credential.file_name ?? credential.filename ?? "Attachment",
           size: credential.size ?? "",
           url: attachmentUrl(credential.url ?? credential.file_url ?? ""),
+          downloadUrl: attachmentUrl(credential.download_url ?? ""),
         }))
       : [],
     shift: String(trainer?.user_shift_id ?? trainer?.shift_id ?? trainer?.shift ?? ""),

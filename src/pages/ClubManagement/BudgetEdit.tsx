@@ -47,6 +47,7 @@ import DialogActions from "@mui/material/DialogActions";
 import CheckIcon from "@mui/icons-material/Check";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -170,6 +171,7 @@ const getRootGroupId = (groupId: string): string => {
 /* ---------------- COMPONENT ---------------- */
 
 export default function EditBudget() {
+    useAccountingFormOpened("budget", "edit");
     const [activeTab, setActiveTab] = useState<"IE" | "ALE">("IE");
     const [groups, setGroups] = useState<Group[]>(incomeExpenseData);
     const [selectedAccountType, setSelectedAccountType] = useState<string>("");

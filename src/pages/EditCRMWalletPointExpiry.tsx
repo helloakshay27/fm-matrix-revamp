@@ -1,8 +1,7 @@
 import { Settings } from "lucide-react";
 import TextField from "@mui/material/TextField";
 import RuleAlert from "@/components/RuleAlert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import { useEffect, useState } from "react";
 import { MenuItem } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -67,119 +66,82 @@ const EditCRMWalletPointExpiry = () => {
     };
 
     return (
-        <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
-            <Card className="mb-6 rounded-2xl border border-gray-200 shadow-sm bg-white">
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-sm font-semibold uppercase text-[#1A1A1A]">
-                        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0"><Settings className="w-[18px] h-[18px]" /></span>
-                        RULE EDIT
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 pt-0">
+        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen space-y-4 sm:space-y-6">
+            <FormSection title="RULE EDIT" icon={Settings}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                        <TextField
+                            fullWidth
+                            label="Rule Name"
+                            value={formData.rule_name}
+                            onChange={(e) =>
+                                setFormData({ ...formData, rule_name: e.target.value })
+                            }
+                            variant="outlined"
+                            defaultValue="New Rule"
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                    </div>
                     <TextField
                         fullWidth
-                        label="Rule Name"
-                        value={formData.rule_name}
+                        value={formData.complementary_condition}
                         onChange={(e) =>
-                            setFormData({ ...formData, rule_name: e.target.value })
+                            setFormData({
+                                ...formData,
+                                complementary_condition: e.target.value,
+                            })
                         }
+                        select
+                        label="Customer Complimentary Point Destruction"
                         variant="outlined"
-                        defaultValue="New Rule"
-                        margin="normal"
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                    background: "#ffffff !important",
-                            },
-                            "& .MuiInputLabel-root": {
-                                    background: "#ffffff !important",
-                            },
-                        }}
-                    />
-                    <div className="flex items-center justify-between gap-4">
-                        <TextField
-                            fullWidth
-                            value={formData.complementary_condition}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    complementary_condition: e.target.value,
-                                })
-                            }
-                            select
-                            label="Customer Complimentary Point Destruction"
-                            variant="outlined"
-                            defaultValue="Weekly"
-                            margin="normal"
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    background: "#ffffff !important",
-                                },
-                                "& .MuiInputLabel-root": {
-                                    background: "#ffffff !important",
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                Select
-                            </MenuItem>
-                            <MenuItem value="daily">Daily</MenuItem>
-                            <MenuItem value="weekly">Weekly</MenuItem>
-                            <MenuItem value="monthly">Monthly</MenuItem>
-                            <MenuItem value="yearly">Yearly</MenuItem>
-                        </TextField>
-                        <TextField
-                            fullWidth
-                            select
-                            value={formData.purchase_condition}
-                            onChange={(e) =>
-                                setFormData({ ...formData, purchase_condition: e.target.value })
-                            }
-                            label="Customer Purchase Point Destruction"
-                            variant="outlined"
-                            defaultValue="Monthly"
-                            margin="normal"
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    background: "#ffffff !important",
-                                },
-                                "& .MuiInputLabel-root": {
-                                    background: "#ffffff !important",
-                                },
-                            }}
-                        >
-                            <MenuItem value="" disabled>
-                                Select
-                            </MenuItem>
-                            <MenuItem value="daily">Daily</MenuItem>
-                            <MenuItem value="weekly">Weekly</MenuItem>
-                            <MenuItem value="monthly">Monthly</MenuItem>
-                            <MenuItem value="yearly">Yearly</MenuItem>
-                        </TextField>
-                    </div>
-                </CardContent>
-            </Card>
+                        defaultValue="Weekly"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: assetFieldStyles }}
+                    >
+                        <MenuItem value="" disabled>
+                            Select
+                        </MenuItem>
+                        <MenuItem value="daily">Daily</MenuItem>
+                        <MenuItem value="weekly">Weekly</MenuItem>
+                        <MenuItem value="monthly">Monthly</MenuItem>
+                        <MenuItem value="yearly">Yearly</MenuItem>
+                    </TextField>
+                    <TextField
+                        fullWidth
+                        select
+                        value={formData.purchase_condition}
+                        onChange={(e) =>
+                            setFormData({ ...formData, purchase_condition: e.target.value })
+                        }
+                        label="Customer Purchase Point Destruction"
+                        variant="outlined"
+                        defaultValue="Monthly"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: assetFieldStyles }}
+                    >
+                        <MenuItem value="" disabled>
+                            Select
+                        </MenuItem>
+                        <MenuItem value="daily">Daily</MenuItem>
+                        <MenuItem value="weekly">Weekly</MenuItem>
+                        <MenuItem value="monthly">Monthly</MenuItem>
+                        <MenuItem value="yearly">Yearly</MenuItem>
+                    </TextField>
+                </div>
+            </FormSection>
 
-            <div className="fm-action-bar mt-6">
-                <Button
-                    onClick={() => {
-                        setShowRuleCreateAlert(true);
-                        setButtonClick("cancel");
-                    }}
-                    variant="outline"
-                    className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={() => {
-                        setShowRuleCreateAlert(true);
-                        setButtonClick("submit");
-                    }}
-                    className="fm-action-primary"
-                >
-                    Update Rule
-                </Button>
-            </div>
+            <FormActionBar
+                onCancel={() => {
+                    setShowRuleCreateAlert(true);
+                    setButtonClick("cancel");
+                }}
+                onSubmit={() => {
+                    setShowRuleCreateAlert(true);
+                    setButtonClick("submit");
+                }}
+                submitLabel="Update Rule"
+            />
 
             {buttonClick === "submit" ? (
                 <RuleAlert

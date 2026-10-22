@@ -6,7 +6,7 @@ import { useCalendarDashboard } from '../context/calendarDashboardStore';
 
 /** Layer 3 — Workflow Usage. */
 export function WorkflowSection() {
-  const { vm, palette, flowsLoading } = useCalendarDashboard();
+  const { vm, palette, flowsLoading, errors } = useCalendarDashboard();
   const { flows } = vm;
   const w = flows.workflow;
 
@@ -21,6 +21,8 @@ export function WorkflowSection() {
       </div>
 
       <ModuleNav />
+
+      {errors.flows && <p role="alert">Unable to load workflow data: {errors.flows.message}</p>}
 
       <Tiles specs={flows.tiles} columns={4} id="wfKpis" className="tiles-4" loading={flowsLoading} />
 
@@ -55,13 +57,15 @@ export function WorkflowSection() {
                 {s.dropPct != null && <div className="fdrop">▼ {s.dropPct}% drop-off</div>}
                 <div
                   className="fstep"
+                  data-chart-tooltip={`${s.step}\nReach: ${s.ofEntrants}% of entrants${s.dropPct != null ? `\nDrop-off: ${s.dropPct}%` : ''}`}
+                  aria-label={`${s.step}: ${s.ofEntrants}% of entrants${s.dropPct != null ? `, ${s.dropPct}% drop-off` : ''}`}
+                  tabIndex={0}
                   style={{
                     width: `${45 + (s.ofEntrants / 100) * 55}%`,
                     background: palette.blue,
                     opacity: 1 - i * 0.1,
                     borderRadius: 8,
                   }}
-                  title={`${s.step}: ${s.ofEntrants}% of entrants remain`}
                 >
                   {s.step}
                   <span className="fsub">{s.ofEntrants}% of entrants</span>

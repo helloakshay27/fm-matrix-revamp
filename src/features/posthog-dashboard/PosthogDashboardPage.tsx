@@ -5,8 +5,8 @@ import { Header } from './components/Header';
 import { ControlBar } from './components/ControlBar';
 import { InfoPopover } from './components/InfoPopover';
 import { AiPanel } from './components/AiPanel';
-import { TierNote } from './components/TierNote';
-import { Footer } from './components/Footer';
+// import { TierNote } from './components/TierNote'; // tier note card temporarily hidden
+// import { Footer } from './components/Footer'; // "Data note" footer temporarily hidden
 import { TrafficSection } from './sections/TrafficSection';
 import { AdoptionSection } from './sections/AdoptionSection';
 import { WorkflowSection } from './sections/WorkflowSection';
@@ -87,14 +87,14 @@ function DashboardLayout() {
           </div>
 
           <ControlBar />
-          <TierNote />
+          {/* <TierNote /> */}
 
           {activePage === 'pgTraffic' && <TrafficSection />}
           {activePage === 'pgAdopt' && <AdoptionSection />}
           {activePage === 'pgFlows' && <WorkflowSection />}
           {/* {activePage === 'pgFm' && <FmDashboardSection />} */}
 
-          <Footer />
+          {/* <Footer /> */}
         </main>
       </div>
       <InfoPopover />

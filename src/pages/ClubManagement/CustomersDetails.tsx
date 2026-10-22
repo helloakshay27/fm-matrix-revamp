@@ -5,6 +5,7 @@ import { ArrowLeft, User, Mail, Phone, MapPin } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -123,6 +124,7 @@ interface CustomerData {
 export const CustomersDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("customer");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
@@ -139,6 +141,7 @@ export const CustomersDetails = () => {
                 },
             });
             setCustomerData(response.data);
+            reportRecordLoaded(id, response.data?.status ?? null);
         } catch (error) {
             console.error("Error fetching customer details:", error);
             toast.error("Failed to fetch customer details");

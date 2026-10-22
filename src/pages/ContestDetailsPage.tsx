@@ -18,7 +18,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 interface Prize {
@@ -230,7 +231,7 @@ export const ContestDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-[#C72030] animate-spin" />
+        <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-brand animate-spin" />
       </div>
     );
   }
@@ -243,7 +244,7 @@ export const ContestDetailsPage: React.FC = () => {
           <Button
             onClick={handleBack}
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            className="border-brand text-brand hover:bg-brand-light"
           >
             Go Back
           </Button>
@@ -292,7 +293,7 @@ export const ContestDetailsPage: React.FC = () => {
                 <Button
                   onClick={() => navigate(`/pulse/contests/${id}/run`)}
                   variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
+                  className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                 >
                   <FlaskConical className="w-4 h-4 mr-2" />
                   Run Contest
@@ -303,7 +304,7 @@ export const ContestDetailsPage: React.FC = () => {
             <Button
               onClick={() => handleEdit()}
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
+              className="border-brand text-brand hover:bg-brand-light px-4 py-2"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Contest
@@ -315,27 +316,10 @@ export const ContestDetailsPage: React.FC = () => {
       {/* Main Content */}
       <div className="space-y-6">
         {/* Basic Contest Info */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <Trophy className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Basic Contest Info
-              </h3>
-            </div>
-            {/* <Button
-              onClick={() => handleEdit("basic")}
-              variant="outline"
-              size="sm"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button> */}
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
+        <DetailCard
+          title="Basic Contest Info"
+          icon={<Trophy className="w-[18px] h-[18px] text-gray-500" />}
+        >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">
@@ -369,41 +353,23 @@ export const ContestDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </DetailCard>
 
         {/* Validity & Status */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <Calendar className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Validity & Status
-              </h3>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-md text-sm font-medium ${contest.active
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
-                  }`}
-              >
-                {contest.active ? "Active" : "Inactive"}
-              </span>
-              {/* <Button
-                onClick={() => handleEdit("validity")}
-                variant="outline"
-                size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button> */}
-            </div>
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
+        <DetailCard
+          title="Validity & Status"
+          icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />}
+          headerActions={
+            <span
+              className={`px-3 py-1 rounded-md text-sm font-medium ${contest.active
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-100 text-gray-800"
+                }`}
+            >
+              {contest.active ? "Active" : "Inactive"}
+            </span>
+          }
+        >
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-500">Start Date</p>
@@ -460,65 +426,33 @@ export const ContestDetailsPage: React.FC = () => {
                 </>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </DetailCard>
 
         {/* Contest Sites */}
         {contest.contest_sites && contest.contest_sites.length > 0 && (
-          <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-            <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                  <MapPin className="w-5 h-5 text-[#C72030]" />
-                </div>
-                <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                  Contest Sites
-                </h3>
-              </div>
-              {/* {contest.access_type && (
-                <span className="px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                  {contest.access_type.replace(/_/g, " ")}
-                </span>
-              )} */}
-            </div>
-            <CardContent className="bg-white p-6 rounded-b-lg">
+          <DetailCard
+            title="Contest Sites"
+            icon={<MapPin className="w-[18px] h-[18px] text-gray-500" />}
+          >
               <div className="flex flex-wrap gap-2">
                 {contest.contest_sites.map((site) => (
                   <span
                     key={site.id}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[#F6F4EE] text-[#1A1A1A] border border-[#E5E0D3]"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-[#C72030]" />
+                    <MapPin className="w-3.5 h-3.5 text-brand" />
                     {site.site_name}
                   </span>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+          </DetailCard>
         )}
 
         {/* Offers & Media (Prizes) */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <Gift className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Prizes / Offers
-              </h3>
-            </div>
-            {/* <Button
-              onClick={() => handleEdit("prizes")}
-              variant="outline"
-              size="sm"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button> */}
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
+        <DetailCard
+          title="Prizes / Offers"
+          icon={<Gift className="w-[18px] h-[18px] text-gray-500" />}
+        >
             {contest.prizes.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 No prizes defined yet
@@ -549,7 +483,7 @@ export const ContestDetailsPage: React.FC = () => {
                     <div key={rewardType} className={groupIndex > 0 ? "mt-8 pt-6 border-t border-gray-200" : ""}>
                       {/* Reward type badge */}
                       <div className="flex items-center gap-2 mb-5">
-                        <span className="px-3 py-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold rounded-full">
+                        <span className="px-3 py-1 bg-brand-light text-brand text-xs font-semibold rounded-full">
                           {rewardTypeLabel(rewardType)}
                         </span>
                         <span className="text-xs text-gray-400">
@@ -571,7 +505,7 @@ export const ContestDetailsPage: React.FC = () => {
                           return (
                             <div key={title} className="border-b pb-6 last:border-b-0 last:pb-0">
                               <div className="flex items-start gap-3">
-                                <span className="text-[#C72030] font-semibold text-lg shrink-0">
+                                <span className="text-brand font-semibold text-lg shrink-0">
                                   {index + 1}.
                                 </span>
                                 <div className="flex-1">
@@ -631,22 +565,13 @@ export const ContestDetailsPage: React.FC = () => {
                 });
               })()
             )}
-          </CardContent>
-        </Card>
+        </DetailCard>
 
         {/* Terms & Conditions */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <FileText className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Terms & Conditions
-              </h3>
-            </div>
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
+        <DetailCard
+          title="Terms & Conditions"
+          icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+        >
             <div className="prose max-w-none text-sm quill-content">
               <div
                 dangerouslySetInnerHTML={{
@@ -656,22 +581,13 @@ export const ContestDetailsPage: React.FC = () => {
                 }}
               />
             </div>
-          </CardContent>
-        </Card>
+        </DetailCard>
 
         {/* Redemption Guide */}
-        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
-          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#C4B89D54] p-2 rounded-lg">
-                <FileText className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                Redemption Guide
-              </h3>
-            </div>
-          </div>
-          <CardContent className="bg-white p-6 rounded-b-lg">
+        <DetailCard
+          title="Redemption Guide"
+          icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+        >
             <div className="prose max-w-none text-sm quill-content">
               <div
                 dangerouslySetInnerHTML={{
@@ -681,8 +597,7 @@ export const ContestDetailsPage: React.FC = () => {
                 }}
               />
             </div>
-          </CardContent>
-        </Card>
+        </DetailCard>
       </div>
 
       {/* Dry Run Modal */}
@@ -692,8 +607,8 @@ export const ContestDetailsPage: React.FC = () => {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#C72030]/10 flex items-center justify-center shrink-0">
-                  <FlaskConical className="w-4 h-4 text-[#C72030]" />
+                <div className="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center shrink-0">
+                  <FlaskConical className="w-4 h-4 text-brand" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-[#1a1a1a] leading-tight">Run Result</h2>
@@ -711,7 +626,7 @@ export const ContestDetailsPage: React.FC = () => {
                   }}
                   disabled={dryRunLoading}
                   title="Refresh"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#C72030] bg-[#C72030]/5 hover:bg-[#C72030]/10 border border-[#C72030]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand bg-brand-selected hover:bg-brand-light border border-brand-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${dryRunLoading ? "animate-spin" : ""}`} />
                   Refresh
@@ -729,7 +644,7 @@ export const ContestDetailsPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto px-6 py-5">
               {dryRunLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <Loader2 className="w-8 h-8 text-[#C72030] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-brand animate-spin" />
                   <p className="text-sm text-gray-500 font-medium">Running simulation…</p>
                 </div>
               ) : dryRunError ? (
@@ -743,11 +658,11 @@ export const ContestDetailsPage: React.FC = () => {
               ) : dryRunResult ? (
                 <div className="space-y-4">
                   {/* Summary bar */}
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#C72030]/5 border border-[#C72030]/20">
-                    <Trophy className="w-4 h-4 text-[#C72030] shrink-0" />
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-brand-selected border border-brand-light">
+                    <Trophy className="w-4 h-4 text-brand shrink-0" />
                     <p className="text-sm font-semibold text-[#1a1a1a]">
                       Total Rewards Distributed:&nbsp;
-                      <span className="text-[#C72030]">{dryRunResult.total_rewards ?? 0}</span>
+                      <span className="text-brand">{dryRunResult.total_rewards ?? 0}</span>
                     </p>
                   </div>
 
@@ -761,7 +676,7 @@ export const ContestDetailsPage: React.FC = () => {
                         {/* Card header — winner number + already-won tag + checkbox */}
                         <div className="flex items-center justify-between px-4 py-2.5 bg-[#F6F4EE] border-b border-gray-200">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-[#C72030] uppercase tracking-wide">
+                            <span className="text-xs font-bold text-brand uppercase tracking-wide">
                               Winner #{i + 1}
                             </span>
                             {entry.prize_won && (
@@ -770,14 +685,12 @@ export const ContestDetailsPage: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={entry.prize_won ? false : (dryRunChecked[i] ?? true)}
                             disabled={entry.prize_won}
-                            onChange={(e) =>
-                              setDryRunChecked((prev) => ({ ...prev, [i]: e.target.checked }))
+                            onCheckedChange={(checked) =>
+                              setDryRunChecked((prev) => ({ ...prev, [i]: checked === true }))
                             }
-                            className="w-4 h-4 accent-[#C72030] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </div>
 
@@ -785,8 +698,8 @@ export const ContestDetailsPage: React.FC = () => {
                           {/* User info */}
                           <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-[#C72030]/10 flex items-center justify-center shrink-0">
-                                <User className="w-4 h-4 text-[#C72030]" />
+                              <div className="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-brand" />
                               </div>
                               <div>
                                 <p className="text-xs text-gray-500 font-medium">User</p>
@@ -853,7 +766,7 @@ export const ContestDetailsPage: React.FC = () => {
               <Button
                 onClick={() => setShowDistributeConfirm(true)}
                 disabled={distributing || dryRunLoading || !dryRunResult}
-                className="bg-[#C72030] hover:bg-[#a81c28] text-white font-semibold px-5 disabled:opacity-50"
+                className="bg-brand hover:bg-brand-hover text-white font-semibold px-5 disabled:opacity-50"
               >
                 {distributing ? (
                   <>
@@ -878,7 +791,7 @@ export const ContestDetailsPage: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                <Gift className="w-5 h-5 text-[#C72030]" />
+                <Gift className="w-5 h-5 text-brand" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -896,7 +809,7 @@ export const ContestDetailsPage: React.FC = () => {
               </button>
               <button
                 onClick={() => { setShowDistributeConfirm(false); handleDistribute(); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-[#C72030] hover:bg-[#a81c28] rounded-lg transition-colors"
+                className="px-4 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors"
               >
                 Confirm
               </button>

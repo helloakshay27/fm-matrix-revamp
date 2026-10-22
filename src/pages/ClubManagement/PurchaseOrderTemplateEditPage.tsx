@@ -1,7 +1,10 @@
 import React from 'react';
 import { DocumentTemplateEditPage } from './DocumentTemplateEditPage';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 
-export const PurchaseOrderTemplateEditPage: React.FC = () => (
+export const PurchaseOrderTemplateEditPage: React.FC = () => {
+  useAccountingFormOpened('template', 'edit');
+  return (
   <DocumentTemplateEditPage
     documentType="purchase_order"
     moduleLabel="Purchase Order"
@@ -11,6 +14,7 @@ export const PurchaseOrderTemplateEditPage: React.FC = () => (
     detailsRoutePrefix="/accounting/purchase-order"
     pdfTabValue="pdf-view"
   />
-);
+  );
+};
 
 export default PurchaseOrderTemplateEditPage;

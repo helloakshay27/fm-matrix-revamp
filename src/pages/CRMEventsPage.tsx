@@ -570,11 +570,11 @@ const [pagination, setPagination] = useState(() => {
           <div className="flex flex-wrap gap-2">
             {shouldShow("Events", "create") && (
             <Button
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              size="sm"
+              className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
               onClick={handleAdd}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-2" />
               Add
             </Button>
             )}

@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
@@ -20,6 +21,7 @@ import { NotepadText } from "lucide-react";
 export const BusinessPerformanceRatioReport = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  useAccountingReportViewed("business_performance_ratio");
 
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");

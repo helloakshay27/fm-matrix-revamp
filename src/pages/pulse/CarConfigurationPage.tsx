@@ -1,6 +1,8 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 import { VehicleBrandsTab } from "@/components/pulse-carpool/VehicleBrandsTab";
 import { VehicleModelsTab } from "@/components/pulse-carpool/VehicleModelsTab";
 import { VehicleColoursTab } from "@/components/pulse-carpool/VehicleColoursTab";
@@ -28,31 +30,25 @@ const CarConfigurationPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Car Configuration</h1>
-      </div>
-
+      <PulsePageHeader title="Car Configuration" />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
-          <TabsTrigger
+        <AssetTabsList className="grid grid-cols-3">
+          <AssetTabsTrigger
             value="brands"
-            className="group flex items-center gap-2 data-[state=active]:bg-brand-selected data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             Vehicle Brands
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="models"
-            className="group flex items-center gap-2 data-[state=active]:bg-brand-selected data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             Vehicle Models
-          </TabsTrigger>
-          <TabsTrigger
+          </AssetTabsTrigger>
+          <AssetTabsTrigger
             value="colours"
-            className="group flex items-center gap-2 data-[state=active]:bg-brand-selected data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
             Vehicle Colours
-          </TabsTrigger>
-        </TabsList>
+          </AssetTabsTrigger>
+        </AssetTabsList>
 
         <TabsContent value="brands" className="mt-6">
           <VehicleBrandsTab />

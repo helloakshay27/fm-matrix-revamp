@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 
 const columns: ColumnConfig[] = [
 	{ key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
@@ -31,6 +32,8 @@ const PaymentTermsMaster = () => {
 	const [totalRecords, setTotalRecords] = useState(0);
 	const [loading, setLoading] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
+	const reportListLoaded = useAccountingListViewed('payment_term');
+	useAccountingSearchTracking('payment_term', searchQuery);
 
 	// Modal logic (unchanged)
 	const [editTerms, setEditTerms] = useState<PaymentTerm[]>([]);
@@ -55,6 +58,7 @@ const PaymentTermsMaster = () => {
 			if (res && res.data && Array.isArray(res.data)) {
 				setPaymentTerms(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
 				setTotalRecords(res.data.length);
+				reportListLoaded(res.data.length, res.data.length);
 				setTotalPages(Math.ceil(res.data.length / perPage));
 			}
 		} catch (err) {
@@ -91,9 +95,11 @@ const PaymentTermsMaster = () => {
 				}
 			);
 			toast.success("Payment term deleted successfully");
+			accountingEvents.onRecordDeleted('payment_term', id);
 			fetchPaymentTerms();
 		} catch (err) {
 			toast.error("Failed to delete payment term");
+			accountingEvents.onSaveFailed('payment_term', 'delete', err, { record_id: id });
 		}
 	};
 
@@ -142,6 +148,7 @@ const PaymentTermsMaster = () => {
 			);
 
 			toast.success("Payment term created successfully");
+			accountingEvents.onRecordCreated('payment_term', null, { item_count: paymentTermsPayload.length });
 
 			fetchPaymentTerms();
 
@@ -152,6 +159,7 @@ const PaymentTermsMaster = () => {
 			setEditTerms([{ name: "", days: "" }]);
 		} catch (err) {
 			toast.error("Failed to save payment terms");
+			accountingEvents.onSaveFailed('payment_term', 'create', err);
 		}
 	};
 
@@ -216,10 +224,12 @@ const PaymentTermsMaster = () => {
 				}
 			);
 			toast.success("Payment term updated successfully");
+			accountingEvents.onRecordUpdated('payment_term', editForm.id);
 			setEditModalOpen(false);
 			fetchPaymentTerms();
 		} catch (err) {
 			toast.error("Failed to update payment term");
+			accountingEvents.onSaveFailed('payment_term', 'update', err, { record_id: editForm.id });
 		} finally {
 			setEditSubmitting(false);
 		}

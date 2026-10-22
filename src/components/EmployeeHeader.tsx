@@ -1048,6 +1048,15 @@ export const EmployeeHeader: React.FC = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
+                {window.location.pathname.startsWith("/club-management") && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/club-management/usage-dashboard")}
+                    className="mx-2 my-1 !rounded-full"
+                  >
+                    <ChartArea className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Dashboard</span>
+                  </DropdownMenuItem>
+                )}
                 {/* <DropdownMenuItem
                   onClick={handleSettingsClick}
                   className="mx-2 my-1 !rounded-full"

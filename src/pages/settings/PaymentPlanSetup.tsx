@@ -137,7 +137,8 @@ export const PaymentPlanSetup = () => {
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        size="sm"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
         onClick={() => navigate('/settings/payment-plan/add')}
       >
         <Plus className="w-4 h-4 mr-2" />

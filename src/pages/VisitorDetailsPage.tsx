@@ -701,7 +701,7 @@ export const VisitorDetailsPage = () => {
           </TabsList>
 
           {/* Tab 1: Basic Info */}
-          <TabsContent value="profile" className="p-6 space-y-6">
+          <TabsContent value="profile" className="px-0 py-6 space-y-6">
             {/* Visitor Information Card */}
             <Card className="w-full">
               <CardHeader className="pb-4 lg:pb-6">
@@ -1168,7 +1168,7 @@ export const VisitorDetailsPage = () => {
           </TabsContent>
 
           {/* Tab 2: Additional Details */}
-          <TabsContent value="additional" className="p-6 space-y-6">
+          <TabsContent value="additional" className="px-0 py-6 space-y-6">
             {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 ? (
               visitorData.additional_visitors.map((visitor: AdditionalVisitor, index: number) => (
                 <div
@@ -1247,7 +1247,7 @@ export const VisitorDetailsPage = () => {
           </TabsContent>
 
           {/* Tab 3: Asset Details */}
-          <TabsContent value="assets" className="p-6 space-y-6">
+          <TabsContent value="assets" className="px-0 py-6 space-y-6">
             {/* Item Movements Section */}
             {visitorData.item_movements && visitorData.item_movements.length > 0 && (
               <div className="space-y-6">
@@ -1470,7 +1470,7 @@ export const VisitorDetailsPage = () => {
           </TabsContent>
 
           {/* Tab 4: Identity Verification */}
-          <TabsContent value="identity" className="p-6 space-y-6">
+          <TabsContent value="identity" className="px-0 py-6 space-y-6">
             {/* Main Visitor's Documents */}
             {visitorData.visitor_documents && visitorData.visitor_documents.length > 0 && (
               <div>

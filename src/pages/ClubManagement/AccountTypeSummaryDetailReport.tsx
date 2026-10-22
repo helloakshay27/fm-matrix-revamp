@@ -1,6 +1,7 @@
 import React from "react";
 import { useMemo } from "react";
 import { useLocation, useParams } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface LedgerRow {
   account: string;
@@ -60,6 +61,7 @@ const formatValue = (value: number) =>
 
 const AccountTypeSummaryDetailReport: React.FC = () => {
   const { accountName = "Accounts Receivable" } = useParams();
+  useAccountingReportViewed("account_type_summary_detail");
   const location = useLocation();
 
   const query = new URLSearchParams(location.search);

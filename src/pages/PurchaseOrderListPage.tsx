@@ -376,6 +376,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import axios from "axios";
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from "@/components/PostHogAccountingEvents";
 
 interface PurchaseOrder {
   id: number;
@@ -482,6 +483,8 @@ export const PurchaseOrderListPage: React.FC = () => {
     id: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const reportListLoaded = useAccountingListViewed("purchase_order");
+  useAccountingSearchTracking("purchase_order", searchTerm);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -531,6 +534,7 @@ export const PurchaseOrderListPage: React.FC = () => {
       const items = data.purchase_orders || [];
 
       setPurchaseOrderData(items);
+      reportListLoaded(items.length, data.total_count);
 
       setPagination({
         current_page: data.current_page || page,
@@ -584,7 +588,8 @@ export const PurchaseOrderListPage: React.FC = () => {
   const handleBulkUpdate = async (
     payload: Record<string, unknown>,
     successMsg: string,
-    failMsg: string
+    failMsg: string,
+    action = "bulk_update"
   ) => {
     if (selectedRows.length === 0) {
       sonnerToast.error("Select at least one Purchase Order");
@@ -617,15 +622,18 @@ export const PurchaseOrderListPage: React.FC = () => {
             errors: [{ id: "-", message: message || failMsg }],
           });
         }
+        accountingEvents.onSaveFailed("purchase_order", "action", new Error(message || failMsg), { action });
         return;
       }
 
       sonnerToast.success(successMsg);
+      accountingEvents.onActionPerformed("purchase_order", action, null, { bulk_count: selectedRows.length });
       setSelectedRows([]);
       fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery);
     } catch (error) {
       console.error(error);
       sonnerToast.error(failMsg);
+      accountingEvents.onSaveFailed("purchase_order", "action", error, { action });
     }
   };
 
@@ -633,28 +641,32 @@ export const PurchaseOrderListPage: React.FC = () => {
     handleBulkUpdate(
       { status: "issued" },
       "Purchase orders marked as issued",
-      "Failed to mark purchase orders as issued"
+      "Failed to mark purchase orders as issued",
+      "mark_as_issued"
     );
 
   const handleSubmitForApproval = () =>
     handleBulkUpdate(
       { status: "pending_approval" },
       "Purchase orders submitted for approval",
-      "Failed to submit purchase orders for approval"
+      "Failed to submit purchase orders for approval",
+      "submit_for_approval"
     );
 
   const handleMarkAsReceived = () =>
     handleBulkUpdate(
       { received: true },
       "Purchase orders marked as received",
-      "Failed to mark purchase orders as received"
+      "Failed to mark purchase orders as received",
+      "mark_as_received"
     );
 
   const handleMarkAsUnreceived = () =>
     handleBulkUpdate(
       { received: false },
       "Purchase orders marked as unreceived",
-      "Failed to mark purchase orders as unreceived"
+      "Failed to mark purchase orders as unreceived",
+      "mark_as_unreceived"
     );
 
   const handleDeleteClick = (id: number) => {
@@ -697,10 +709,13 @@ export const PurchaseOrderListPage: React.FC = () => {
       }
 
       sonnerToast.success("Record deleted successfully.");
+      accountingEvents.onRecordDeleted("purchase_order", deleteConfirm.id);
       setDeleteConfirm({ show: false, id: null });
       fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery);
     } catch (error: any) {
       console.error("Delete error:", error);
+      accountingEvents.onSaveFailed("purchase_order", "delete", error, { record_id: deleteConfirm.id });
+
       sonnerToast.error(error.message || "Failed to delete record.");
     } finally {
       setDeleting(false);

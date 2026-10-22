@@ -802,7 +802,6 @@ export const ClubGroupMembershipDetails = () => {
                 <Button
                   onClick={handleEditMembershipPlan}
                   variant="outline"
-                  className="border-[#C72030] text-[#C72030]"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Change Membership Plan
@@ -811,8 +810,6 @@ export const ClubGroupMembershipDetails = () => {
             }
             <Button
               onClick={handleEdit}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
@@ -1132,7 +1129,6 @@ export const ClubGroupMembershipDetails = () => {
                   <div className="flex gap-2 mb-4">
                     {selectedBill.status?.toLowerCase() !== 'paid' && (
                       <Button
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={() => setOpenPaymentModal(true)}
                       >
                         <CreditCard className="w-4 h-4 mr-2" />
@@ -1142,7 +1138,6 @@ export const ClubGroupMembershipDetails = () => {
                     <Button
                       onClick={handleDownloadPDF}
                       disabled={downloadingPDF}
-                      className="bg-[#C72030] hover:bg-[#A01828] text-white"
                     >
                       {downloadingPDF ? (
                         <>
@@ -1160,7 +1155,7 @@ export const ClubGroupMembershipDetails = () => {
                       <Button
                         onClick={() => handleSendInvoiceBill(selectedBill.id)}
                         disabled={sendingBillId === selectedBill.id}
-                        className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                        variant="outline"
                       >
                         {sendingBillId === selectedBill.id ? (
                           <>
@@ -2058,10 +2053,10 @@ export const ClubGroupMembershipDetails = () => {
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+          <DialogFooter className="fm-action-bar">
+            <button type="button" onClick={handlePayment} disabled={paymentLoading} className="fm-action-primary">
               {paymentLoading ? 'Processing...' : 'Submit Payment'}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

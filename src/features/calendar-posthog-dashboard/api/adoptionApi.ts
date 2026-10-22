@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import type {
   AdoptionEngagementResponse,
   AdoptionTrendResponse,
@@ -59,24 +59,11 @@ client.interceptors.request.use((config) => {
     sessionStorage.getItem('access_token') ||
     '';
   if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers = AxiosHeaders.from(config.headers);
+    config.headers.set('Authorization', `Bearer ${token}`);
   }
   return config;
 });
-
-/* Silent degradation on 404 or non-JSON responses. */
-client.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status;
-    const contentType = error.response?.headers?.['content-type'] || '';
-    if (status === 404 || (status >= 400 && !contentType.includes('application/json'))) {
-      return Promise.resolve({ data: null });
-    }
-    return Promise.reject(error);
-  },
-);
 
 function baseParams(os?: CalendarOsType[], provider?: string): Record<string, string> {
   const p: Record<string, string> = {
@@ -181,7 +168,7 @@ export interface RecentActiveUsersResponse {
   users: RecentActiveUser[];
 }
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/recent_active_users.xlsx';
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
 
 export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', {

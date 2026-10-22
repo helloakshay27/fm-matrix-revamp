@@ -140,6 +140,9 @@ import ResolutionTATQuarterlyCard from "@/components/meeting-room/ResolutionTATQ
 import parkingManagementAnalyticsAPI from "@/services/parkingManagementAnalyticsAPI";
 import ParkingAllocationOverviewCard from "@/components/parking/ParkingAllocationOverviewCard";
 import ExecutiveParkingStatsCard from "@/components/parking-analytics/ExecutiveParkingStatsCard";
+import RenewableEnergyBreakdownCard from "@/components/renewable-energy/RenewableEnergyBreakdownCard";
+import RenewableEnergyComparisonCard from "@/components/renewable-energy/RenewableEnergyComparisonCard";
+import RenewableEnergyOverTimeCard from "@/components/renewable-energy/RenewableEnergyOverTimeCard";
 import AmountOverviewCard from "@/components/accounting/AmountOverviewCard";
 import AmountClientWiseCard from "@/components/accounting/AmountClientWiseCard";
 import QuickGateOverviewCard from "@/components/quickgate/QuickGateOverviewCard";
@@ -207,6 +210,7 @@ interface SelectedAnalytic {
   | "quickgate_management"
   | "escalation_management"
   | "occupancy_management"
+  | "renewable_energy"
   | "patrolling";
   endpoint: string;
   title: string;
@@ -235,6 +239,7 @@ interface DashboardData {
   quickgate_management?: any;
   escalation_management?: any;
   occupancy_management?: any;
+  renewable_energy?: any;
 }
 
 // Track errors per module/endpoint so we can show error state inside each analytic
@@ -269,6 +274,12 @@ const SELF_FETCH_ENDPOINTS = new Set<string>([
   "body_injury_chart",
   "safety_metrics",
   "escalation_kpis",
+  "parking_statistics",
+  "renewable_energy_breakdown",
+  "renewable_energy_comparison",
+  "renewable_energy_breakdown_over_time",
+  "top_management_total_amount",
+  "total_outstanding_amount_client_wise",
 ]);
 
 const buildAssetStatusChartData = (data: any) => {
@@ -903,6 +914,9 @@ export const Dashboard = () => {
           top_consumables_center: { h: 10, minH: 8 },
           inventory_overstock_top10: { h: 10, minH: 8 },
           parking_statistics: { h: 10, minH: 8 },
+          renewable_energy_breakdown: { h: 10, minH: 8 },
+          renewable_energy_comparison: { h: 10, minH: 8 },
+          renewable_energy_breakdown_over_time: { h: 10, minH: 8 },
           top_management_total_amount: { h: 4, minH: 3, maxH: 4 },
           total_outstanding_amount_client_wise: { h: 10, minH: 8 },
           visitor_summary: { h: 4, minH: 3, maxH: 4 },
@@ -990,6 +1004,34 @@ export const Dashboard = () => {
       } catch (e) {
         console.error("❌ Failed to parse saved analytics", e);
       }
+    } else if (isExecutiveDashboard) {
+      // First visit to the executive dashboard: preselect the Asset Management cards
+      // so it doesn't open empty. Once the user changes the selection it is saved
+      // to localStorage and this default no longer applies.
+      const defaultAssetCardIds = [
+        "am_company_asset_overview",
+        "am_center_assets_downtime",
+        "am_highest_maintenance_assets",
+        "assets_status",
+        "assets_statistics",
+        "assets_group_wise",
+        "assets_category_wise",
+      ];
+      const defaultAnalytics = defaultAssetCardIds
+        .filter((id) => analyticsCatalogById[id])
+        .map((id) => ({
+          id,
+          module: analyticsCatalogById[id].module,
+          endpoint: analyticsCatalogById[id].endpoint,
+          title: analyticsCatalogById[id].title,
+        })) as SelectedAnalytic[];
+      setSelectedAnalytics(defaultAnalytics);
+      const initLoadingMap: Record<string, Record<string, boolean>> = {};
+      defaultAnalytics.forEach((a) => {
+        initLoadingMap[a.module] = initLoadingMap[a.module] || {};
+        initLoadingMap[a.module][a.endpoint] = true;
+      });
+      setLoadingMap(initLoadingMap);
     }
     // If site_id or access_token are present in the URL, persist them to localStorage
     // so the dashboard's own site selection (a dedicated key, since the shared
@@ -2646,6 +2688,7 @@ export const Dashboard = () => {
             }
             break;
           case "occupancy_management":
+          case "renewable_energy":
             for (const analytic of analytics) {
               toLoad[module] = toLoad[module] || {};
               toLoad[module][analytic.endpoint] = true;
@@ -3979,8 +4022,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -3989,8 +4032,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmountClientWiseCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4004,8 +4047,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateOverviewCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4014,8 +4057,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4024,8 +4067,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <SiteWiseGoodsInwardCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4034,8 +4077,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <DeliveryVisitorsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4044,14 +4087,48 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <QuickGateGoodsStaffCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
           default:
             return null;
         }
+      case "renewable_energy": {
+        // The renewable energy API filters by site name; "all" sends no site.
+        const renewableSiteName =
+          selectedSite === "all"
+            ? undefined
+            : allowedSites.find((site) => String(site.id) === selectedSite)?.name;
+        const renewableProps = {
+          siteName: renewableSiteName,
+          startDate: insightScope.fromDate,
+          endDate: insightScope.toDate,
+        };
+        switch (analytic.endpoint) {
+          case "renewable_energy_breakdown":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <RenewableEnergyBreakdownCard {...renewableProps} />
+              </SortableChartItem>
+            );
+          case "renewable_energy_comparison":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <RenewableEnergyComparisonCard {...renewableProps} />
+              </SortableChartItem>
+            );
+          case "renewable_energy_breakdown_over_time":
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <RenewableEnergyOverTimeCard {...renewableProps} />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      }
       case "occupancy_management":
         switch (analytic.endpoint) {
           case "occupancy_summary":
@@ -4059,8 +4136,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <OccupancySummaryCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4074,8 +4151,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ExecutiveParkingStatsCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4987,8 +5064,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <PowerConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );
@@ -4997,8 +5074,8 @@ export const Dashboard = () => {
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <WaterConsumptionTopManagementCard
                   siteIds={activeSiteIds}
-                  startDate={dateRange?.from ? dateRange.from.toISOString().split("T")[0] : undefined}
-                  endDate={dateRange?.to ? dateRange.to.toISOString().split("T")[0] : undefined}
+                  startDate={insightScope.fromDate}
+                  endDate={insightScope.toDate}
                 />
               </SortableChartItem>
             );

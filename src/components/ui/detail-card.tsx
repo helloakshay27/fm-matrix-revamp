@@ -9,13 +9,18 @@ export const DetailCard: React.FC<{
   title: string;
   children: React.ReactNode;
   className?: string;
-}> = ({ icon, title, children, className }) => (
+  /** Optional right-aligned header content, e.g. a status badge or close button */
+  headerActions?: React.ReactNode;
+}> = ({ icon, title, children, className, headerActions }) => (
   <div className={`w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-6 ${className || ""}`}>
-    <div className="flex items-center gap-3 mb-3">
-      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
-        {icon}
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 shrink-0">
+          {icon}
+        </div>
+        <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{title}</h3>
       </div>
-      <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">{title}</h3>
+      {headerActions && <div className="flex items-center gap-2 shrink-0">{headerActions}</div>}
     </div>
     <div className="text-sm text-gray-800">{children}</div>
   </div>

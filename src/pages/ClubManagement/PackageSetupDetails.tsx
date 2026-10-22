@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { ArrowLeft, Pencil, Trash2, Package as PackageIcon, Users } from "lucide-react";
@@ -15,6 +14,7 @@ import {
   tierTotal,
   type PricingTier,
 } from "./packageSetupMockData";
+import { ClassFormSection } from "./ClassFormSection";
 
 interface PackageDetail {
   id: string;
@@ -65,14 +65,8 @@ const PricingTierReadTable = ({
   storageKey: string;
   tiers: PricingTier[];
 }) => (
-  <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-    <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-        {icon}
-      </div>
-      <CardTitle className="text-lg font-semibold text-gray-800">{title}</CardTitle>
-    </CardHeader>
-    <CardContent className="p-4 bg-white">
+  <ClassFormSection title={title} icon={icon}>
+    <div>
       <EnhancedTable
         data={tiers}
         columns={tierColumns}
@@ -106,8 +100,8 @@ const PricingTierReadTable = ({
           // total: <span className="text-sm font-semibold text-gray-900">{inr(tierTotal(tier))}</span>,
         })}
       />
-    </CardContent>
-  </Card>
+    </div>
+  </ClassFormSection>
 );
 
 export const PackageSetupDetails = () => {
@@ -237,14 +231,8 @@ export const PackageSetupDetails = () => {
           </div> */}
         </div>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <PackageIcon className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Package Details</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-white">
+        <ClassFormSection title="Package Details" icon={<PackageIcon />}>
+          <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <ReadOnlyField label="Class / Activity" value={pkg.className} />
               <ReadOnlyField
@@ -254,8 +242,8 @@ export const PackageSetupDetails = () => {
               <ReadOnlyField label="Sessions" value={`${pkg.sessions} Sessions`} />
               <ReadOnlyField label="Validity" value={`${pkg.validityDays} days`} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
 
         <PricingTierReadTable
           title="Club member pricing"

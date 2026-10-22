@@ -12,7 +12,7 @@ import {
 } from "@/store/slices/walletListSlice";
 import axios from "axios";
 import { format } from "date-fns";
-import { Download, Eye, Plus, Settings, Wallet } from "lucide-react";
+import { Plus, Download, Eye, Settings, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -216,18 +216,13 @@ const CRMWalletList = () => {
 
     const leftActions = (
         <>
-            <Button
-                onClick={() => setShowActionPanel(true)}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
-            >
-                <Plus className="w-4 h-4" />
-                Action
-            </Button>
+            <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setShowActionPanel(true)}><Plus className="w-4 h-4 mr-2" />Action</Button>
             <Button
                 onClick={() =>
                     setIsTransactionHistoryVisible(!isTransactionHistoryVisible)
                 }
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
+                size="sm"
+                className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium flex items-center gap-2"
             >
                 {isTransactionHistoryVisible ? "Wallet List" : "Transaction History"}
             </Button>
@@ -282,36 +277,44 @@ const CRMWalletList = () => {
     };
 
     return (
-        <div className="w-full p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-semibold text-[#1a1a1a]">Wallet List</h1>
+        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen space-y-4 sm:space-y-6">
+            {/* Header */}
+            <div>
+                <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+                    <span>CRM</span>
+                    <span>{">"}</span>
+                    <span className="text-gray-900 font-medium">
+                        {isTransactionHistoryVisible ? "Transaction History" : "Wallet List"}
+                    </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">WALLET LIST</h1>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatsCard
                     title="Total Wallet Users"
                     value={formatCardValue(walletCardCount.total_users)}
-                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-brand" />}
                 />
                 <StatsCard
                     title="Total Wallet Balance"
                     value={formatCardValue(walletCardCount.total_amount)}
-                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-brand" />}
                 />
                 <StatsCard
                     title="Paid Points"
                     value={formatCardValue(walletCardCount.paid_points)}
-                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-brand" />}
                 />
                 <StatsCard
                     title="Complimentary Points"
                     value={formatCardValue(walletCardCount.complimentary_points)}
-                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-brand" />}
                 />
                 <StatsCard
                     title="Expired Points"
                     value={formatCardValue(walletCardCount.expiry_points)}
-                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-brand" />}
                 />
             </div>
 

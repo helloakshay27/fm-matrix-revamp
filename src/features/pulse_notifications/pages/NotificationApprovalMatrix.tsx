@@ -1,5 +1,6 @@
+import { PulsePageHeader as PageTitle } from "@/pages/pulse/components/PulsePageHeader";
 import { useState } from "react";
-import { Trash2, Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -87,12 +88,7 @@ const NotificationApprovalMatrix = () => {
     };
 
     const renderLeftActions = () => (
-        <Button
-            className="bg-brand hover:bg-brand-hover text-white"
-            onClick={() => setIsAddApproverOpen(true)}
-        >
-            <Plus className="w-4 h-4 mr-2" /> Add
-        </Button>
+        <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setIsAddApproverOpen(true)}><Plus className="w-4 h-4 mr-2" />Add</Button>
     );
 
     const renderActions = (approver: CustomNotificationApprover) => (
@@ -128,6 +124,7 @@ const NotificationApprovalMatrix = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen space-y-4">
+            <PageTitle title="Notification Approvers" />
             <EnhancedTable
                 data={approvers}
                 columns={columns}

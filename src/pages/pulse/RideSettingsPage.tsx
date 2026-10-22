@@ -1,7 +1,11 @@
+import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { TextField } from "@mui/material";
+import { assetFieldStyles } from "@/components/common/FormSection";
 import {
   Settings2,
   Save,
@@ -142,26 +146,14 @@ const RideSettingsPage = () => {
 
   return (
     <div className="p-6 mx-auto">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-2.5 rounded-xl bg-[#C72030]/10">
-          <Settings2 className="w-6 h-6 text-[#C72030]" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Ride Settings
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Configure ride matching parameters and booking rules
-          </p>
-        </div>
-      </div>
-
+      <PulsePageHeader title="Ride Settings" />
       {settings.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <Settings2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p className="text-lg font-medium">No ride settings found</p>
         </div>
       ) : (
+        <FormSection title="Ride settings" icon={Settings2}>
         <div className="grid gap-4">
           {settings.map((setting) => {
             const Icon = unitIcons[setting.unit] || Settings2;
@@ -174,8 +166,8 @@ const RideSettingsPage = () => {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="p-2.5 rounded-lg bg-gray-50 shrink-0">
-                      <Icon className="w-5 h-5 text-gray-600" />
+                    <div className="w-10 h-10 rounded-full bg-[#E5E0D3] flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-brand" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-[#1a1a1a]">
@@ -191,12 +183,13 @@ const RideSettingsPage = () => {
                     {isEditing ? (
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
-                          <input
-                            type="text"
+                          <TextField
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, setting)}
-                            className="w-20 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]/20 focus:border-[#C72030] text-right"
+                            size="small"
+                            InputProps={{ sx: assetFieldStyles }}
+                            sx={{ width: 96, '& input': { textAlign: 'right' } }}
                             autoFocus
                           />
                           <span className="text-sm text-gray-400 min-w-[4rem]">
@@ -245,6 +238,7 @@ const RideSettingsPage = () => {
             );
           })}
         </div>
+        </FormSection>
       )}
     </div>
   );

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -17,41 +16,8 @@ import {
   type PackageOption,
   type UserOption,
 } from "./classPurchaseApi";
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
-const Section = ({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <section className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-        {icon}
-      </div>
-      <span className="font-semibold text-lg text-gray-800">{title}</span>
-    </div>
-    <div className="p-6 bg-white">{children}</div>
-  </section>
-);
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-  "& .MuiInputLabel-root": { "&.Mui-focused": { color: "#C72030" } },
-};
-
-const requiredLabelSx = { "& .MuiFormLabel-asterisk": { color: "#DA7756" } };
 
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (dateStr: string, days: number) => {
@@ -189,7 +155,7 @@ export const ClassPurchaseAdd = () => {
         <h1 className="text-2xl font-bold text-black">New Class Purchase</h1>
       </header>
 
-      <Section title="Purchase Details" icon={<ShoppingCart className="w-5 h-5" />}>
+      <ClassFormSection title="Purchase Details" icon={<ShoppingCart />}>
         <div className="mb-6">
           <RadioGroup value={userType} onValueChange={(val) => setUserType(val as typeof userType)} className="flex gap-6">
             <div className="flex items-center space-x-2">
@@ -211,12 +177,13 @@ export const ClassPurchaseAdd = () => {
           <FormControl
             fullWidth
             variant="outlined"
-            required
             disabled={loadingUsers}
-            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            sx={{ "& .MuiInputBase-root": classFieldStyles }}
           >
             <InputLabel shrink>
-              {userType === "guest" ? "Guest (buyer)" : userType === "fm" ? "Staff (buyer)" : "Member (buyer)"}
+              <RequiredLabel>
+                {userType === "guest" ? "Guest (buyer)" : userType === "fm" ? "Staff (buyer)" : "Member (buyer)"}
+              </RequiredLabel>
             </InputLabel>
             <MuiSelect
               value={userId}
@@ -237,8 +204,10 @@ export const ClassPurchaseAdd = () => {
             </MuiSelect>
           </FormControl>
 
-          <FormControl fullWidth variant="outlined" required sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}>
-            <InputLabel shrink>Class</InputLabel>
+          <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
+            <InputLabel shrink>
+              <RequiredLabel>Class</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={classId}
               onChange={(e) => {
@@ -264,11 +233,12 @@ export const ClassPurchaseAdd = () => {
           <FormControl
             fullWidth
             variant="outlined"
-            required
             disabled={!classId || loadingPackages}
-            sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+            sx={{ "& .MuiInputBase-root": classFieldStyles }}
           >
-            <InputLabel shrink>Package</InputLabel>
+            <InputLabel shrink>
+              <RequiredLabel>Package</RequiredLabel>
+            </InputLabel>
             <MuiSelect
               value={packageId}
               onChange={(e) => setPackageId(e.target.value)}
@@ -295,29 +265,29 @@ export const ClassPurchaseAdd = () => {
             variant="outlined"
             disabled
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
           <TextField
-            label="Start date"
+            label={<RequiredLabel>Start date</RequiredLabel>}
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
           <TextField
-            label="End date"
+            label={<RequiredLabel>End date</RequiredLabel>}
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
 
           <TextField
@@ -335,7 +305,7 @@ export const ClassPurchaseAdd = () => {
             variant="outlined"
             inputProps={{ min: 0 }}
             slotProps={{ inputLabel: { shrink: true } }}
-            InputProps={{ sx: fieldStyles }}
+            InputProps={{ sx: classFieldStyles }}
           />
         </div>
 
@@ -365,20 +335,20 @@ export const ClassPurchaseAdd = () => {
             </div>
           </div>
         )}
-      </Section>
+      </ClassFormSection>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button onClick={() => submit()} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-8 py-2">
-          {isSubmitting ? "Saving..." : "Create Purchase"}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={() => navigate("/club-management/class-purchase")}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button type="button" onClick={() => submit()} disabled={isSubmitting} className="fm-action-primary">
+          {isSubmitting ? "Saving..." : "Create Purchase"}
+        </button>
       </div>
     </div>
   );

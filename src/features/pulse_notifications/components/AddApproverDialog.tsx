@@ -11,23 +11,9 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { MuiMultiSelect } from "@/components/MuiMultiSelect";
+import { assetFieldStyles } from "@/components/common/FormSection";
 import { useAudienceSitesQuery } from "../hooks/useAudienceSitesQuery";
 import { useAudienceUsersQuery } from "../hooks/useAudienceUsersQuery";
-
-const fieldStyles = {
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "var(--color-primary)" },
-    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
-  },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": { color: "var(--color-primary)" },
-  },
-  height: "45px",
-  "& .MuiInputBase-root": { height: "45px" },
-};
 
 interface AddApproverDialogProps {
   open: boolean;
@@ -66,7 +52,7 @@ export function AddApproverDialog({
       <DialogTitle sx={{ fontWeight: 600 }}>Add Approver</DialogTitle>
       <DialogContent>
         <div className="space-y-4 pt-2">
-          <FormControl fullWidth>
+          <FormControl fullWidth sx={{ "& .MuiInputBase-root": assetFieldStyles }}>
             <InputLabel id="add-approver-site-label" shrink>
               Site <span className="text-brand-error">*</span>
             </InputLabel>
@@ -76,7 +62,6 @@ export function AddApproverDialog({
               onChange={(e: SelectChangeEvent) => onSiteIdChange(e.target.value)}
               displayEmpty
               disabled={isSitesLoading}
-              sx={fieldStyles}
             >
               <MenuItem value="" disabled>
                 {isSitesLoading ? "Loading..." : "Select site"}

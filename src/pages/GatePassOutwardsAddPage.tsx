@@ -13,6 +13,9 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
+import { AttachmentDropzone } from '@/components/AttachmentDropzone';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 // Define DropdownOption type
 interface DropdownOption {
@@ -73,7 +76,6 @@ export const GatePassOutwardsAddPage = () => {
   const location = useLocation();
   const gatePassEvents = useGatePassEvents();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // PostHog: form funnel tracking (F2 · Outward Pass Creation)
   const formOpenedAtRef = useRef<number>(Date.now());
@@ -273,16 +275,15 @@ export const GatePassOutwardsAddPage = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files).map(file => ({
-        id: `${file.name}-${Date.now()}`,
-        file: file,
-        name: file.name,
-        url: URL.createObjectURL(file),
-      }));
-      setAttachments(prev => [...prev, ...newFiles]);
-    }
+  const addAttachmentFiles = (files: File[]) => {
+    if (!files.length) return;
+    const newFiles = files.map(file => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
+      file,
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }));
+    setAttachments(prev => [...prev, ...newFiles]);
   };
 
   const handleRemoveAttachment = (id: string) => {
@@ -503,6 +504,172 @@ export const GatePassOutwardsAddPage = () => {
   const handleGoBack = () => {
     captureFormAbandoned();
     navigate('/security/gate-pass/outwards');
+  };
+
+  const itemColumns: ColumnConfig[] = [
+    { key: 'srNo', label: 'Sr.No.', defaultVisible: true, hideable: false },
+    { key: 'itemType', label: 'Item Type', defaultVisible: true, hideable: false },
+    { key: 'itemCategory', label: 'Item Category', defaultVisible: true, hideable: false },
+    { key: 'itemName', label: 'Item Name', defaultVisible: true, hideable: false },
+    { key: 'quantity', label: 'Quantity', defaultVisible: true, hideable: false },
+    { key: 'unit', label: 'Unit', defaultVisible: true, hideable: false },
+    { key: 'description', label: 'Description', defaultVisible: true, hideable: false },
+  ];
+
+  const renderItemCell = (row: MaterialRow, columnKey: string): React.ReactNode => {
+    const index = materialRows.findIndex(r => r.id === row.id);
+    switch (columnKey) {
+      case 'srNo':
+        return index + 1;
+      case 'itemType':
+        return (
+          <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
+                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <MuiSelect
+                          label="Item Type"
+                          notched
+                          displayEmpty
+                          value={row.itemTypeId || ''}
+                          onChange={e => handleRowChange(row.id, 'itemTypeId', e.target.value)}
+                        >
+                          <MenuItem value="">Select Type</MenuItem>
+                          {itemTypeOptions.map((option) => (
+                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+        );
+      case 'itemCategory':
+        return (
+          <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
+                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <MuiSelect
+                          label="Item Category"
+                          notched
+                          displayEmpty
+                          value={
+        row.itemCategoryId !== null && row.itemCategoryId !== undefined
+          ? String(row.itemCategoryId)
+          : ''
+      }
+      onChange={e => {
+        const value = e.target.value;
+        if (value === String(-1)) {
+          handleRowChange(row.id, 'itemCategoryId', -1);
+        } else if (value === '') {
+          handleRowChange(row.id, 'itemCategoryId', null);
+        } else {
+          const numVal = Number(value);
+          handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
+        }
+      }}
+      disabled={!row.itemTypeId}
+    >
+      <MenuItem value="">Select Category</MenuItem>
+      {(itemCategoryOptions[row.id] || [])
+        .filter(option => option.id !== "" && option.name !== "")
+        .map((option) => (
+          <MenuItem key={option.id} value={String(option.id)}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
+    </MuiSelect>
+  </FormControl>
+        );
+      case 'itemName':
+        return (
+          <>
+          {/* If "Other" is selected, show input, else dropdown */}
+  {row.itemCategoryId === -1 ? (
+    <TextField
+      variant="outlined"
+      size="small"
+      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+      placeholder="Enter Item Name"
+      value={row.otherMaterialName || ''}
+      onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
+      required
+    />
+  ) : (
+    <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
+      <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
+      <MuiSelect
+        label="Item Name"
+        notched
+        displayEmpty
+        value={row.itemNameId || ''}
+        onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+        disabled={!row.itemCategoryId}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxWidth: 200,
+            },
+          },
+        }}
+      >
+        <MenuItem value="">Select Item</MenuItem>
+        {(itemNameOptions[row.id] || []).map((option) => (
+          <MenuItem key={option.id} value={option.id}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </FormControl>
+  )}
+          </>
+        );
+      case 'quantity':
+        return (
+          <TextField
+                        variant="outlined"
+                        label="Quantity" InputLabelProps={{ shrink: true }} placeholder='Quantity'
+                        size="small"
+                        type="number"
+                        value={row.quantity}
+                        onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                        inputProps={{
+                          // Remove max validation to avoid browser tooltip
+                          min: 0,
+                          step: 'any'
+                        }}
+                        // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
+                      />
+        );
+      case 'unit':
+        return (
+          <TextField variant="outlined" label="Unit" InputLabelProps={{ shrink: true }} placeholder='Unit' size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} value={row.unit} onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^[a-zA-Z ]*$/.test(value)) handleRowChange(row.id, 'unit', value);
+                    }}
+                      inputProps={{ pattern: "[a-zA-Z ]*" }}
+                    />
+        );
+      case 'description':
+        return (
+          <TextField label="Description" InputLabelProps={{ shrink: true }} placeholder='Enter Description' variant="outlined" size="small" value={row.description} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} />
+        );
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -840,168 +1007,23 @@ export const GatePassOutwardsAddPage = () => {
             </div>
             <Button type="button" onClick={handleAddRow} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2">Add Item</Button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500">
-              <thead className="text-xs text-white uppercase bg-[#C72030]">
-                <tr>
-                  <th scope="col" className="px-4 py-3" style={{ width: '30px' }}>Sr.No.</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Type</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Category</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Name</th>
-                  <th scope="col" className="px-4 py-3" /* Quantity: balance width */>Quantity</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '80px' }}>Unit</th>
-                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Description</th>
-                  <th scope="col" className="px-4 py-3" style={{ width: '80px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materialRows.map((row, index) => (
-                  <tr key={row.id} className="bg-white border-b">
-                    <td className="px-4 py-4">{index + 1}</td>
-                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
-                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Type"
-                          notched
-                          displayEmpty
-                          value={row.itemTypeId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemTypeId', e.target.value)}
-                        >
-                          <MenuItem value="">Select Type</MenuItem>
-                          {itemTypeOptions.map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
-                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Category"
-                          notched
-                          displayEmpty
-                          value={
-        row.itemCategoryId !== null && row.itemCategoryId !== undefined
-          ? String(row.itemCategoryId)
-          : ''
-      }
-      onChange={e => {
-        const value = e.target.value;
-        if (value === String(-1)) {
-          handleRowChange(row.id, 'itemCategoryId', -1);
-        } else if (value === '') {
-          handleRowChange(row.id, 'itemCategoryId', null);
-        } else {
-          const numVal = Number(value);
-          handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
-        }
-      }}
-      disabled={!row.itemTypeId}
-    >
-      <MenuItem value="">Select Category</MenuItem>
-      {(itemCategoryOptions[row.id] || [])
-        .filter(option => option.id !== "" && option.name !== "")
-        .map((option) => (
-          <MenuItem key={option.id} value={String(option.id)}>
-            <span style={{
-              display: 'inline-block',
-              maxWidth: 180,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {option.name}
-            </span>
-          </MenuItem>
-        ))}
-      <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
-    </MuiSelect>
-  </FormControl>
-</td>
-<td className="px-4 py-4" style={{ minWidth: 150 }}>
-  {/* If "Other" is selected, show input, else dropdown */}
-  {row.itemCategoryId === -1 ? (
-    <TextField
-      variant="outlined"
-      size="small"
-      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
-      placeholder="Enter Item Name"
-      value={row.otherMaterialName || ''}
-      onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
-      required
-    />
-  ) : (
-    <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
-      <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
-      <MuiSelect
-        label="Item Name"
-        notched
-        displayEmpty
-        value={row.itemNameId || ''}
-        onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
-        disabled={!row.itemCategoryId}
-        MenuProps={{
-          PaperProps: {
-            style: {
-              maxWidth: 200,
-            },
-          },
-        }}
-      >
-        <MenuItem value="">Select Item</MenuItem>
-        {(itemNameOptions[row.id] || []).map((option) => (
-          <MenuItem key={option.id} value={option.id}>
-            <span style={{
-              display: 'inline-block',
-              maxWidth: 180,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {option.name}
-            </span>
-          </MenuItem>
-        ))}
-      </MuiSelect>
-    </FormControl>
-  )}
-</td>
-<td className="px-4 py-4">
-                      <TextField
-                        variant="outlined"
-                        placeholder='Quantity'
-                        size="small"
-                        type="number"
-                        value={row.quantity}
-                        onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
-                        inputProps={{
-                          // Remove max validation to avoid browser tooltip
-                          min: 0,
-                          step: 'any'
-                        }}
-                        // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
-                      />
-                    </td>
-                    <td className="px-4 py-4"><TextField variant="outlined" placeholder='Unit' size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} value={row.unit} onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^[a-zA-Z ]*$/.test(value)) handleRowChange(row.id, 'unit', value);
-                    }}
-                      inputProps={{ pattern: "[a-zA-Z ]*" }}
-                    /></td>
-                    <td className="px-4 py-4"><TextField placeholder='Enter Description' variant="outlined" size="small" value={row.description} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
-                    <td className="px-4 py-4">
-                      <button type="button" onClick={() => handleDeleteRow(row.id)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <EnhancedTable
+            data={materialRows}
+            columns={itemColumns}
+            getItemId={(row: MaterialRow) => String(row.id)}
+            renderCell={renderItemCell}
+            renderActions={(row: MaterialRow) => (
+              <button type="button" onClick={() => handleDeleteRow(row.id)}>
+                <Trash2 className="w-4 h-4 text-black" />
+              </button>
+            )}
+            storageKey="gate-pass-outward-items-table"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            pagination={false}
+            emptyMessage="No items added"
+          />
           </div>
         </div>
 
@@ -1088,22 +1110,7 @@ export const GatePassOutwardsAddPage = () => {
               })}
             </div>
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              Add Attachment
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </Box>
+          <AttachmentDropzone onFilesAdded={addAttachmentFiles} fileCount={attachments.length} />
           </div>
         </div>
 

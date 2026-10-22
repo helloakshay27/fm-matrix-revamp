@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import {
     TextField,
     Button,
@@ -103,6 +104,8 @@ interface ExternalUser {
 
 export const BillCreatePage: React.FC = () => {
     const navigate = useNavigate();
+    useAccountingFormOpened('bill', 'create');
+
 
     useEffect(() => {
         document.title = 'New Bill';

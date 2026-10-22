@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 type TdsReceivableDetailRow = {
   customerName: string;
@@ -36,6 +37,7 @@ const formatDisplayDate = (value: string) => {
 
 const TDSReceivablesSummaryDetails: React.FC = () => {
   const { sectionCode } = useParams();
+  useAccountingReportViewed("tds_receivables_summary_details");
   const [searchParams] = useSearchParams();
 
   const sectionName = searchParams.get("section_name") || "Dividend";

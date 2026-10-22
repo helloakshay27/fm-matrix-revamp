@@ -74,7 +74,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 import {
   Pagination,
   PaginationContent,
@@ -1099,19 +1100,19 @@ export const CarpoolDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Status Cards - Always visible */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[14px] mb-6">
         {statusCards.map((card, index) => (
           <div
             key={index}
             className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all ${
               activeView === card.status
-                ? "ring-2 ring-[#C72030] shadow-lg"
+                ? "ring-2 ring-brand shadow-lg"
                 : ""
             }`}
             onClick={() => handleStatusCardClick(card.status)}
           >
-            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-              <card.icon className="w-6 h-6 text-[#C72030]" />
+            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
+              <card.icon className="w-6 h-6 text-brand" />
             </div>
             <div>
               <div className="text-2xl font-semibold text-[#1A1A1A]">
@@ -1406,7 +1407,7 @@ export const CarpoolDashboard = () => {
             hideTableExport={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-upcoming-rides-table"
             searchTerm={searchQuery}
             onSearchChange={handleSearch}
@@ -1510,7 +1511,7 @@ export const CarpoolDashboard = () => {
             hideColumnsButton={true}
             selectable={false}
             enableExport={false}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-active-rides-table"
             emptyMessage="No active rides"
           />
@@ -1533,32 +1534,28 @@ export const CarpoolDashboard = () => {
           onValueChange={setActiveReportTab}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border">
-            <TabsTrigger
+          <AssetTabsList className="grid grid-cols-4 mb-6">
+            <AssetTabsTrigger
               value="Under Review"
-              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Under Review
-            </TabsTrigger>
-            <TabsTrigger
+            </AssetTabsTrigger>
+            <AssetTabsTrigger
               value="Action in Progress"
-              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Action in Progress
-            </TabsTrigger>
-            <TabsTrigger
+            </AssetTabsTrigger>
+            <AssetTabsTrigger
               value="Resolved"
-              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Resolved
-            </TabsTrigger>
-            <TabsTrigger
+            </AssetTabsTrigger>
+            <AssetTabsTrigger
               value="Closed"
-              className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none"
             >
               Closed
-            </TabsTrigger>
-          </TabsList>
+            </AssetTabsTrigger>
+          </AssetTabsList>
 
           <TabsContent value="Under Review">
             <EnhancedTaskTable
@@ -1681,7 +1678,7 @@ export const CarpoolDashboard = () => {
               hideTableExport={true}
               selectable={false}
               enableExport={true}
-              hideTableSearch={true}
+              hideTableSearch={false}
               storageKey="carpool-reports-table"
               emptyMessage="No reports found"
               exportFileName="carpool-reports"
@@ -1809,7 +1806,7 @@ export const CarpoolDashboard = () => {
               hideTableExport={true}
               selectable={false}
               enableExport={true}
-              hideTableSearch={true}
+              hideTableSearch={false}
               storageKey="carpool-reports-table"
               emptyMessage="No reports found"
               exportFileName="carpool-reports"
@@ -1937,7 +1934,7 @@ export const CarpoolDashboard = () => {
               hideTableExport={true}
               selectable={false}
               enableExport={true}
-              hideTableSearch={true}
+              hideTableSearch={false}
               storageKey="carpool-reports-table"
               emptyMessage="No reports found"
               exportFileName="carpool-reports"
@@ -2065,7 +2062,7 @@ export const CarpoolDashboard = () => {
               hideTableExport={true}
               selectable={false}
               enableExport={true}
-              hideTableSearch={true}
+              hideTableSearch={false}
               storageKey="carpool-reports-table"
               emptyMessage="No reports found"
               exportFileName="carpool-reports"
@@ -2247,10 +2244,8 @@ export const CarpoolDashboard = () => {
             hideColumnsButton={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-users-table"
-            searchTerm={searchQuery}
-            onSearchChange={handleSearch}
             emptyMessage="No users found"
             searchPlaceholder="Search users..."
             exportFileName="carpool-users"
@@ -2333,10 +2328,8 @@ export const CarpoolDashboard = () => {
             hideTableExport={true}
             selectable={false}
             enableExport={true}
-            hideTableSearch={true}
+            hideTableSearch={false}
             storageKey="carpool-pending-kyc-table"
-            searchTerm={searchQuery}
-            onSearchChange={handleSearch}
             emptyMessage="No pending KYC found"
             searchPlaceholder="Search pending KYC..."
             exportFileName="carpool-pending-kyc"

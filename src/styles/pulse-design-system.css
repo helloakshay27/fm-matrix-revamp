@@ -1,0 +1,828 @@
+/* ===========================================================================
+   PULSE — Business Genie design-system layer
+   ---------------------------------------------------------------------------
+   Scoped to body.pulse-app (set by PulseSidebar while the Pulse shell is
+   mounted) so other tenants keep their current look. Rules use
+   `body.pulse-app` + !important because they must beat the legacy
+   #C72030 override layer in theme.css, which is itself !important.
+   Source: Pulse_Audit_as per business genie_15_10_26.md (items 01.xx).
+   =========================================================================== */
+
+/* Pulse-only page hierarchy and collapsible form sections (01.01–01.03). */
+/* 01.08: a consistent upload family, retaining each field's previews and handlers. */
+body.pulse-app .pulse-upload-dropzone { min-height: 160px; padding: 24px; border: 1px dashed #b9b5ac; border-radius: 12px; background: #fff; color: #1a1a1a; }
+body.pulse-app .pulse-upload-dropzone:hover,
+body.pulse-app .pulse-upload-dropzone[data-dragging="true"] { border-color: #1a1a1a; background: #f5f4f0; }
+body.pulse-app .pulse-upload-dropzone:focus-within { outline: 2px solid #1a1a1a; outline-offset: 2px; }
+body.pulse-app .pulse-upload-icon { display: block; flex-shrink: 0; margin: 0 auto 12px; color: rgba(26,26,26,.68); }
+body.pulse-app .pulse-upload-dropzone.flex .pulse-upload-icon { margin-bottom: 0; }
+body.pulse-app .pulse-upload-dropzone button { min-height: 44px; padding: 0 22px; border: 1px solid #e4e1d9 !important; border-radius: 8px !important; background: #fff !important; color: #1a1a1a !important; font-size: 13px; font-weight: 600; }
+body.pulse-app .pulse-upload-preview { border: 1px solid #e4e1d9; border-radius: 12px; background: #fff; }
+/* 01.10: the document leave confirmation uses the application's modal shell. */
+body.pulse-app .pulse-unsaved-dialog { border-radius: 24px !important; padding: 28px !important; }
+/* 14.01: six notice KPIs use four columns on desktop, preserving every metric. */
+body.pulse-app .pulse-notices-page > div > .grid:first-child { gap: 14px; margin-bottom: 24px; }
+body.pulse-app .pulse-notices-page > div > .grid:first-child > div > div { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; background: #f5f4f0 !important; border: 0; box-shadow: none; border-radius: 16px; padding: 18px 20px; }
+body.pulse-app .pulse-notices-page > div > .grid:first-child > div > div > div:first-child { width: 36px; height: 36px; border-radius: 10px; background: white !important; color: rgba(26,26,26,.68); }
+body.pulse-app .pulse-notices-page > div > .grid:first-child svg { width: 18px; height: 18px; stroke-width: 1.8; color: rgba(26,26,26,.68) !important; }
+body.pulse-app .pulse-notices-page > div > .grid:first-child .text-2xl { font-size: 24px; font-weight: 600; color: #1a1a1a; font-variant-numeric: tabular-nums; }
+body.pulse-app .pulse-notices-page > div > .grid:first-child .text-sm { font-size: 11px; font-weight: 500; color: rgba(26,26,26,.68); }
+@media (min-width: 1024px) {
+  body.pulse-app .pulse-notices-page > div > .grid:first-child { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+body.pulse-app .pulse-page-header { margin-bottom: 24px; min-width: 0; }
+body.pulse-app .pulse-banners-page > .p-6 { padding-top: 0; }
+body.pulse-app .pulse-back-button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; color: #1a1a1a; font-size: 13px; font-weight: 500; }
+body.pulse-app .pulse-breadcrumb { margin: 4px 0 12px; color: rgba(26,26,26,.68); font-size: 12px; }
+body.pulse-app .pulse-breadcrumb ol { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none; padding: 0; }
+body.pulse-app .pulse-breadcrumb [aria-current] { color: #1a1a1a; }
+body.pulse-app .pulse-page-heading-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+body.pulse-app .pulse-page-heading-row h1 { margin: 0; font-size: 22px !important; font-weight: 600 !important; line-height: 1.4; color: #1a1a1a; }
+body.pulse-app .pulse-page-heading-row p { margin: 6px 0 0; font-size: 13px; color: rgba(26,26,26,.68); }
+body.pulse-app .pulse-page-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+body.pulse-app .pulse-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; padding-top: 24px; }
+body.pulse-app .pulse-form-primary,
+body.pulse-app .pulse-form-secondary { min-height: 42px; padding: 0 22px; border-radius: 8px !important; font-size: 13px; font-weight: 600; }
+body.pulse-app .pulse-form-primary { background: #1a1a1a !important; color: white !important; border: 1px solid #1a1a1a !important; }
+body.pulse-app .pulse-form-secondary { background: white !important; color: #1a1a1a !important; border: 1px solid #e4e1d9 !important; }
+body.pulse-app .pulse-form-actions button:disabled { opacity: .5; cursor: not-allowed; }
+body.pulse-app .pulse-page-title-line { display: flex; align-items: center; gap: 12px; }
+body.pulse-app .pulse-page-title-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: #f3f4f6 !important; color: #1a1a1a !important; }
+/* Audit 01.02 / 01.13: contextual line icons on neutral utility surfaces. */
+body.pulse-app .pulse-section-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: #f3f4f6 !important; color: #1a1a1a !important; }
+body.pulse-app .pulse-section-icon svg { width: 18px; height: 18px; }
+body.pulse-app .pulse-section-heading svg { color: #1a1a1a !important; background: transparent !important; stroke-width: 1.8; }
+body.pulse-app .pulse-form-section { background: white; border: 0; border-radius: 16px; padding: 22px 24px; }
+body.pulse-app .pulse-form-section + .pulse-form-section { margin-top: 20px; }
+body.pulse-app .pulse-section-heading { display: flex; align-items: center; gap: 12px; }
+body.pulse-app .pulse-section-heading h2 { flex: 1; min-width: 0; margin: 0; font-size: 14px !important; font-weight: 600 !important; line-height: 1.4; text-transform: none; letter-spacing: normal; color: #1a1a1a; }
+body.pulse-app .pulse-section-heading h2 > button,
+body.pulse-app .pulse-section-label { display: flex; width: 100%; align-items: center; gap: 8px; text-align: left; min-height: 28px; text-transform: inherit; }
+body.pulse-app .pulse-section-chevron { margin-left: auto; flex-shrink: 0; transition: transform 150ms ease; color: #1a1a1a; }
+body.pulse-app .pulse-section-chevron[data-open="true"] { transform: rotate(180deg); }
+body.pulse-app .pulse-section-body { margin-top: 12px; }
+body.pulse-app .pulse-detail-card { border: 0 !important; box-shadow: none !important; padding: 22px 24px !important; border-radius: 16px !important; }
+body.pulse-app .pulse-detail-card h3 { text-transform: none; font-size: 14px; font-weight: 600; }
+body.pulse-app .fm-action-bar { display: flex !important; justify-content: flex-end !important; gap: 12px; }
+body.pulse-app .fm-action-primary,
+body.pulse-app .fm-action-secondary { border-radius: 8px !important; }
+body.pulse-app .fm-action-primary { background: #1a1a1a !important; border-color: #1a1a1a !important; color: white !important; }
+body.pulse-app .fm-action-secondary { background: transparent !important; border-color: #e4e1d9 !important; color: #1a1a1a !important; }
+body.pulse-app .pulse-section-body[hidden] { display: none !important; }
+body.pulse-app .pulse-section-heading button:focus-visible,
+body.pulse-app .pulse-back-button:focus-visible,
+body.pulse-app .pulse-audience-disclosure:focus-visible { outline: 2px solid #1a1a1a; outline-offset: 4px; border-radius: 8px; }
+
+/* 01.07: consistent controls; popup positioning stays managed by the UI library. */
+body.pulse-app main .MuiOutlinedInput-root,
+body.pulse-app main button[role="combobox"] { min-height: 44px; border-radius: 12px !important; font-size: 13.5px; font-weight: 500; }
+body.pulse-app main .MuiSelect-select { padding: 11px 36px 11px 14px; }
+body.pulse-app main .MuiOutlinedInput-notchedOutline { border-color: #e4e1d9 !important; border-width: 1px !important; }
+body.pulse-app main .Mui-focused .MuiOutlinedInput-notchedOutline { border-color: #1a1a1a !important; }
+body.pulse-app .MuiMenu-paper { border-radius: 12px !important; }
+body.pulse-app .MuiMenuItem-root.Mui-selected,
+body.pulse-app .MuiMenuItem-root.Mui-focusVisible,
+body.pulse-app [role="option"][data-highlighted] { background: #efede7 !important; color: #1a1a1a !important; }
+
+/* 07.03: detail tabs use a compact, raised neutral selection. */
+body.pulse-app main [role="tablist"] { width: fit-content; max-width: 100%; height: auto; flex-wrap: wrap; gap: 3px; padding: 3px; margin-bottom: 24px; border: 0 !important; border-radius: 12px !important; background: #efede7 !important; }
+body.pulse-app main [role="tablist"] [role="tab"] { flex: 0 1 auto; padding: 8px 16px; border: 0 !important; border-radius: 8px !important; font-size: 12.5px; font-weight: 600; color: rgba(26,26,26,.68) !important; background: transparent !important; }
+body.pulse-app main [role="tablist"] [role="tab"][data-state="active"] { background: white !important; color: #1a1a1a !important; box-shadow: 0 1px 2px rgba(26,26,26,.08); }
+
+body.pulse-app {
+  --bg-ink: #1a1a1a;
+  --bg-ink-muted: rgba(26, 26, 26, 0.68);
+  --bg-hairline: #e4e1d9;
+  --bg-kpi-surface: #f5f4f0;
+  --bg-switch-off: #d6d3cc;
+  --bg-link: #e8916f;
+  --bg-link-hover: #f2ac8f;
+  --bg-success-tick: #12a150;
+  --bg-scrim: rgba(17, 17, 17, 0.6);
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* 32.03 — application chrome uses Poppins, never a serif display face */
+body.pulse-app aside,
+body.pulse-app nav,
+body.pulse-app header,
+body.pulse-app main {
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   01.04 — Independent selections: 18x18 rounded-square checkbox, ink checked
+   --------------------------------------------------------------------------- */
+body.pulse-app button[role="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid #b9b5ac !important;
+  background-color: #fff !important;
+}
+
+body.pulse-app button[role="checkbox"][data-state="checked"],
+body.pulse-app button[role="checkbox"][data-state="indeterminate"] {
+  background-color: var(--bg-ink) !important;
+  border-color: var(--bg-ink) !important;
+}
+
+body.pulse-app input[type="checkbox"] {
+  accent-color: var(--bg-ink) !important;
+  border-radius: 5px !important;
+  width: 18px;
+  height: 18px;
+}
+
+body.pulse-app .MuiCheckbox-root,
+body.pulse-app [class*="MuiCheckbox-root"],
+body.pulse-app .MuiCheckbox-root.Mui-checked,
+body.pulse-app [class*="MuiCheckbox-root"].Mui-checked,
+body.pulse-app [class*="MuiCheckbox-colorPrimary"].Mui-checked {
+  color: var(--bg-ink) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.05 / 20.02 / 14.02 — Radios stay circular with a neutral ink selection
+   --------------------------------------------------------------------------- */
+body.pulse-app input[type="radio"] {
+  accent-color: var(--bg-ink) !important;
+}
+
+body.pulse-app .MuiRadio-root,
+body.pulse-app [class*="MuiRadio-root"] {
+  color: #8f8b82 !important;
+}
+
+body.pulse-app .MuiRadio-root.Mui-checked,
+body.pulse-app [class*="MuiRadio-root"].Mui-checked,
+body.pulse-app [class*="MuiRadio-colorPrimary"].Mui-checked {
+  color: var(--bg-ink) !important;
+}
+
+body.pulse-app [role="radio"] {
+  border-color: #8f8b82 !important;
+  color: var(--bg-ink) !important;
+  border-radius: 9999px !important;
+}
+
+body.pulse-app [role="radio"][data-state="checked"] {
+  border-color: var(--bg-ink) !important;
+}
+
+body.pulse-app [role="radio"] span,
+body.pulse-app [role="radio"] > span,
+body.pulse-app [role="radio"] div,
+body.pulse-app [role="radio"] svg {
+  background-color: var(--bg-ink) !important;
+  fill: var(--bg-ink) !important;
+  color: var(--bg-ink) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.05 / 15.03 / 29.06 — One switch recipe: ink on, neutral grey off.
+   Ordinary inactive states never use danger red.
+   --------------------------------------------------------------------------- */
+body.pulse-app button[role="switch"][data-state="checked"] {
+  background-color: var(--bg-ink) !important;
+  border-color: var(--bg-ink) !important;
+}
+
+body.pulse-app button[role="switch"][data-state="unchecked"] {
+  background-color: var(--bg-switch-off) !important;
+  border-color: var(--bg-switch-off) !important;
+}
+
+body.pulse-app button[role="switch"] > span {
+  background-color: #fff !important;
+}
+
+body.pulse-app .MuiSwitch-switchBase.Mui-checked,
+body.pulse-app [class*="MuiSwitch-switchBase"].Mui-checked {
+  color: #fff !important;
+}
+
+body.pulse-app .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track,
+body.pulse-app [class*="MuiSwitch-switchBase"].Mui-checked + [class*="MuiSwitch-track"] {
+  background-color: var(--bg-ink) !important;
+  opacity: 1 !important;
+}
+
+body.pulse-app .MuiSwitch-track,
+body.pulse-app [class*="MuiSwitch-track"] {
+  background-color: var(--bg-switch-off) !important;
+  opacity: 1 !important;
+}
+
+body.pulse-app .MuiSwitch-thumb,
+body.pulse-app [class*="MuiSwitch-thumb"] {
+  color: #fff !important;
+  background-color: #fff !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.07 / 27.04 — Neutral ink focus/hover, no browser-blue emphasis
+   --------------------------------------------------------------------------- */
+body.pulse-app [class*="MuiOutlinedInput-root"].Mui-focused [class*="MuiOutlinedInput-notchedOutline"] {
+  border-color: var(--bg-ink) !important;
+  border-width: 1px !important;
+}
+
+body.pulse-app [class*="MuiInputLabel-root"].Mui-focused {
+  color: var(--bg-ink) !important;
+}
+
+body.pulse-app [class*="MuiAutocomplete-option"].Mui-focused,
+body.pulse-app [class*="MuiAutocomplete-option"][aria-selected="true"],
+body.pulse-app [class*="MuiMenuItem-root"].Mui-selected,
+body.pulse-app [class*="MuiMenuItem-root"].Mui-focusVisible {
+  background-color: rgba(26, 26, 26, 0.06) !important;
+}
+
+/* react-select (escalation / approver selectors) */
+body.pulse-app [class*="-control"][class*="css-"] {
+  min-height: 44px;
+  border-radius: 12px !important;
+  border-color: var(--bg-hairline) !important;
+  box-shadow: none !important;
+}
+
+body.pulse-app [class*="-control"][class*="css-"]:hover,
+body.pulse-app [class*="-control"][class*="css-"][class*="--is-focused"] {
+  border-color: var(--bg-ink) !important;
+}
+
+body.pulse-app [class*="-option"][class*="css-"][class*="--is-focused"] {
+  background-color: rgba(26, 26, 26, 0.06) !important;
+  color: var(--bg-ink) !important;
+}
+
+body.pulse-app [class*="-option"][class*="css-"][class*="--is-selected"] {
+  background-color: rgba(26, 26, 26, 0.1) !important;
+  color: var(--bg-ink) !important;
+}
+
+body.pulse-app [class*="-multiValue"][class*="css-"] {
+  background-color: #efede7 !important;
+  border-radius: 6px !important;
+}
+
+body.pulse-app [class*="-multiValue"][class*="css-"] > div:first-child {
+  font-size: 12px !important;
+  color: var(--bg-ink) !important;
+}
+
+body.pulse-app [class*="-indicatorSeparator"][class*="css-"] {
+  display: none;
+}
+
+body.pulse-app [class*="-menu"][class*="css-"] {
+  border-radius: 12px !important;
+  overflow: hidden;
+  z-index: 60 !important;
+}
+
+body.pulse-app input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+body.pulse-app textarea:focus-visible,
+body.pulse-app select:focus-visible {
+  --tw-ring-color: rgba(26, 26, 26, 0.35) !important;
+  outline-color: var(--bg-ink) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.09 / 21.06 — One modal shell: .6 dark scrim with 2px blur, 24px corners
+   --------------------------------------------------------------------------- */
+body.pulse-app .MuiBackdrop-root:not(.MuiBackdrop-invisible),
+body.pulse-app [class*="MuiBackdrop-root"]:not([class*="MuiBackdrop-invisible"]) {
+  background-color: var(--bg-scrim) !important;
+  backdrop-filter: blur(2px);
+}
+
+body.pulse-app .MuiDialog-paper,
+body.pulse-app [class*="MuiDialog-paper"] {
+  border-radius: 24px !important;
+}
+
+/* shadcn DialogOverlay / AlertDialogOverlay / SheetOverlay */
+body.pulse-app div.fixed.inset-0[data-state="open"][class*="bg-black"] {
+  background-color: var(--bg-scrim) !important;
+  backdrop-filter: blur(2px);
+}
+
+body.pulse-app [role="dialog"].fixed[data-state="open"],
+body.pulse-app [role="alertdialog"].fixed[data-state="open"] {
+  border-radius: 24px;
+}
+
+/* Non-modal Radix dialogs (modal={false}, used so MUI selects work inside
+   them) render no overlay, which left Building/Wing/Area/Holiday/Edit Lock
+   Module over an undimmed page. Draw the same scrim with a spread shadow
+   when no real overlay is open. */
+body.pulse-app:not(:has(div.fixed.inset-0[data-state="open"][class*="bg-black"]))
+  [role="dialog"].fixed[data-state="open"][class*="translate-x-"] {
+  box-shadow: 0 0 0 100vmax var(--bg-scrim) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.12 — Bottom-centred ink toast with the green success tick
+   --------------------------------------------------------------------------- */
+body.pulse-app [data-sonner-toast][data-type="success"] [data-icon],
+body.pulse-app [data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: var(--bg-success-tick) !important;
+  fill: var(--bg-success-tick) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.14 — Tabular numerals wherever a table renders numbers
+   --------------------------------------------------------------------------- */
+body.pulse-app table td,
+body.pulse-app table th {
+  font-variant-numeric: tabular-nums;
+}
+
+body.pulse-app .pulse-num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared Business Genie component classes, used by the Pulse pages directly.
+   --------------------------------------------------------------------------- */
+
+/* Page header (01.01 / 01.02): title 22px/600 sentence case */
+body.pulse-app .bg-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+body.pulse-app .bg-page-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1a1a1a;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+body.pulse-app .bg-page-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+/* Section title (14px/600) */
+body.pulse-app .bg-section-title {
+  font-family: "Poppins", sans-serif;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4;
+  color: #1a1a1a !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* Borderless content card (01.03): 16px corners, 22px 24px padding */
+body.pulse-app .bg-card {
+  background: #fff;
+  border: 0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: none;
+}
+
+body.pulse-app .bg-card + .bg-card {
+  margin-top: 20px;
+}
+
+body.pulse-app .bg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* KPI card: flat grey, icon tile upper-left */
+body.pulse-app .bg-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+  body.pulse-app .bg-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  body.pulse-app .bg-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+body.pulse-app .bg-kpi {
+  position: relative;
+  background: #f5f4f0 !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  padding: 18px 20px;
+  transition: none;
+}
+
+body.pulse-app .bg-kpi:hover {
+  background: #f5f4f0 !important;
+}
+
+body.pulse-app .bg-kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fff;
+  color: rgba(26, 26, 26, 0.68);
+  margin-bottom: 12px;
+}
+
+body.pulse-app .bg-kpi-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+}
+
+body.pulse-app .bg-kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+body.pulse-app .bg-kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+}
+
+body.pulse-app .bg-kpi-context {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+/* Recessed neutral tab track (05.02 / 07.03 / 12.02 / 26.01 / 31.02) */
+body.pulse-app .bg-tabs {
+  display: inline-flex !important;
+  width: fit-content !important;
+  max-width: 100%;
+  overflow-x: auto;
+  gap: 3px;
+  padding: 3px !important;
+  border-radius: 12px !important;
+  background: #efede7 !important;
+  border: 0 !important;
+  height: auto !important;
+  margin-bottom: 24px;
+}
+
+body.pulse-app .bg-tabs > [role="tab"],
+body.pulse-app .bg-tabs > button {
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: rgba(26, 26, 26, 0.68) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+body.pulse-app .bg-tabs > [role="tab"][data-state="active"],
+body.pulse-app .bg-tabs > button[aria-selected="true"],
+body.pulse-app .bg-tabs > button[data-active="true"] {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.08) !important;
+}
+
+/* Read-only state pills: low tint, matching text */
+body.pulse-app .bg-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  background: #efede7;
+  color: #1a1a1a;
+  border: 0;
+}
+
+body.pulse-app .bg-pill-success {
+  background: rgba(18, 161, 80, 0.12);
+  color: #0f7a3d;
+}
+
+body.pulse-app .bg-pill-warning {
+  background: rgba(237, 196, 136, 0.3);
+  color: #8a5a12;
+}
+
+body.pulse-app .bg-pill-danger {
+  background: rgba(231, 132, 142, 0.18);
+  color: #a3343f;
+}
+
+/* Form footer (01.06): Cancel then ink primary, right-aligned to content */
+body.pulse-app .bg-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* Empty / failed result state inside a visible table area */
+body.pulse-app .bg-empty-state {
+  position: sticky;
+  left: 0;
+  width: min(100%, calc(100vw - 20rem));
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(26, 26, 26, 0.68);
+}
+
+/* Ordinary links */
+body.pulse-app .bg-link {
+  color: #e8916f;
+  font-weight: 500;
+}
+
+body.pulse-app .bg-link:hover {
+  color: #f2ac8f;
+}
+
+/* ---------------------------------------------------------------------------
+   07.01 / 09.01 / 13.04 / 14.01 / 22.01 / 31.01 — KPI tiles
+   theme.css (STAT / KPI CARDS) puts the icon tile top-right and darkens
+   clickable tiles on hover. Business Genie: 36x36 white tile at the upper
+   LEFT, flat #F5F4F0 through hover, label 11px/500, value 24px/600.
+   Same selectors as theme.css, prefixed with body.pulse-app to win.
+   --------------------------------------------------------------------------- */
+html body.pulse-app div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 16px 20px 18px 16px !important;
+}
+
+html body.pulse-app div[class*="cursor-pointer"]:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]):has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])):hover {
+  background-color: #f5f4f0 !important;
+}
+
+html body.pulse-app div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"]) {
+  font-size: 24px !important;
+}
+
+html body.pulse-app div:is([class*="bg-[#F6F4EE]" i], [class*="bg-[rgb(230_226_218"]) > [class*="bg-[#C4B89D54]" i] + div:has(> :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) > :not([class*="text-xl"]):not([class*="text-2xl"]):not([class*="text-3xl"]) {
+  margin: 0 0 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+/* Selected / active filter KPI: keep the flat recipe, mark with an ink ring
+   instead of a darker beige fill. */
+html body.pulse-app div[class*="bg-[rgb(230_226_218"]:has(> [class*="bg-[#C4B89D54]" i] + div > :is([class*="text-xl"], [class*="text-2xl"], [class*="text-3xl"])) {
+  background-color: #f5f4f0 !important;
+  box-shadow: inset 0 0 0 1.5px #1a1a1a !important;
+}
+
+/* ---------------------------------------------------------------------------
+   05.02 / 07.03 / 26.01 / 31.02 — Shared tab bar (AssetTabBar) as the
+   recessed fit-content neutral track with a raised neutral active tab.
+   Every inactive label keeps readable ink.
+   --------------------------------------------------------------------------- */
+html body.pulse-app .asset-tabs-list {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  width: fit-content !important;
+  max-width: 100%;
+  overflow-x: auto;
+  gap: 3px !important;
+  padding: 3px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: #efede7 !important;
+  margin-bottom: 24px !important;
+  grid-template-columns: none !important;
+}
+
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger {
+  flex: 0 0 auto !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  color: rgba(26, 26, 26, 0.68) !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger:hover {
+  color: #1a1a1a !important;
+}
+
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger[data-state="active"] {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.08) !important;
+}
+
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger::after,
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger::before {
+  display: none !important;
+}
+
+html body.pulse-app .asset-tabs-list > .asset-tabs-trigger * {
+  color: inherit !important;
+}
+
+/* ---------------------------------------------------------------------------
+   13.07 — Helpdesk filters (date range, ticket selector) are neutral
+   controls, not black primary actions.
+   --------------------------------------------------------------------------- */
+html body.pulse-app button.bg-filter-control,
+html body.pulse-app button.bg-filter-control:hover {
+  background-color: #fff !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+  color: #1a1a1a !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+}
+
+html body.pulse-app button.bg-filter-control:hover {
+  background-color: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+
+html body.pulse-app button.bg-filter-control svg,
+html body.pulse-app button.bg-filter-control span {
+  color: #1a1a1a !important;
+}
+
+/* 13.06 — Ticket analytics tables (Ageing Matrix etc.) use the neutral
+   uppercase header instead of a saturated coral band. */
+html body.pulse-app th.ticket-analytics-table-header {
+  background: #f5f4f0 !important;
+  color: rgba(26, 26, 26, 0.68) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.09em !important;
+  padding: 11px 20px !important;
+  border-color: #ebe9e2 !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.11 / 12.04 / 23.02 — Action launchers and selection panels: remove the
+   decorative beige rail with the letter "A"; the panel keeps its title,
+   line icons, labels and close control on one neutral surface.
+   --------------------------------------------------------------------------- */
+html body.pulse-app div.w-\[44px\].bg-\[\#C4B59A\] {
+  display: none !important;
+}
+
+html body.pulse-app div:has(> div.w-\[44px\].bg-\[\#C4B59A\]) {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   12.01 — Documents toolbar icon buttons stay legible (ink glyph on a
+   neutral outlined control) at rest and on hover.
+   --------------------------------------------------------------------------- */
+html body.pulse-app button.doc-toolbar-btn {
+  height: 40px !important;
+  min-width: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  border: 1px solid rgba(26, 26, 24, 0.12) !important;
+  color: #1a1a1a !important;
+}
+
+html body.pulse-app button.doc-toolbar-btn:hover {
+  background: #f7f6f2 !important;
+  border-color: rgba(26, 26, 24, 0.28) !important;
+}
+
+html body.pulse-app button.doc-toolbar-btn svg {
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #1a1a1a !important;
+  stroke: currentColor;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html body.pulse-app button.doc-toolbar-btn svg path[fill="currentColor"] {
+  fill: #1a1a1a !important;
+}
+
+/* 12.02 — Grid/List/Tree: recessed neutral track, raised neutral active */
+html body.pulse-app .doc-view-toggle {
+  gap: 3px;
+  padding: 3px;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: #efede7 !important;
+}
+
+html body.pulse-app .doc-view-toggle > button {
+  border: 0 !important;
+  border-radius: 8px !important;
+  padding: 7px 10px !important;
+  background: transparent !important;
+  color: rgba(26, 26, 26, 0.68) !important;
+}
+
+html body.pulse-app .doc-view-toggle > button[aria-pressed="true"] {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.08) !important;
+}
+
+html body.pulse-app .doc-view-toggle > button svg {
+  color: inherit !important;
+}
+
+/* ---------------------------------------------------------------------------
+   01.03 / 01.02 — One borderless content-card family.
+   DetailCard (read-only details) and FormSection (create/edit sections):
+   16px corners, 22px 24px padding, unfilled 14px/600 sentence-case title,
+   12px header-to-body, 20px between sections. Inputs keep their boundaries.
+   --------------------------------------------------------------------------- */
+html body.pulse-app .detail-card {
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 16px !important;
+  padding: 22px 24px !important;
+}
+
+html body.pulse-app .detail-card + .detail-card {
+  margin-top: 20px;
+}
+
+html body.pulse-app .detail-card-title,
+html body.pulse-app .form-section [class*="border-l-4"] [class*="text-[#DA7756]"] {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: #1a1a1a !important;
+}
+
+html body.pulse-app div.form-section,
+html body.pulse-app div:has(> [class*="border-l-4"][class*="border-l-[#DA7756]"]),
+html body.pulse-app div:has(> [class*="border-l-4"][class*="border-l-[#C72030]"]) {
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 16px !important;
+}
+
+html body.pulse-app .form-section > [class*="border-l-4"] {
+  padding: 22px 24px 12px !important;
+  background: transparent !important;
+}
+
+html body.pulse-app .form-section > [class*="border-l-4"] + div {
+  padding: 0 24px 22px !important;
+}
+
+html body.pulse-app .form-section + .form-section {
+  margin-top: 20px;
+}

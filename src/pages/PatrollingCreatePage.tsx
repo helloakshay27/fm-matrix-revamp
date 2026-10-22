@@ -1584,7 +1584,7 @@ export const PatrollingCreatePage: React.FC = () => {
       <Section title="Assignment" icon={<Clock className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
-            <div key={s.id} className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4">
+            <div key={s.id} className="relative rounded-lg border border-dashed border-gray-300 bg-white p-4">
               {idx > 0 && (
                 <button
                   type="button"
@@ -1681,7 +1681,7 @@ export const PatrollingCreatePage: React.FC = () => {
       <Section title="Checkpoint Setup" icon={<MapPin className="w-3 h-3 sm:w-4 sm:h-4" />}>
         <div className="space-y-6">
           {checkpoints.map((c, idx) => (
-            <div key={c.id} className="relative rounded-lg border border-dashed border-gray-300 bg-[#F6F4EE] p-4">
+            <div key={c.id} className="relative rounded-lg border border-dashed border-gray-300 bg-white p-4">
               {idx > 0 && (
                 <button
                   type="button"

@@ -1,3 +1,4 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -109,16 +110,17 @@ const EditCustomNotificationPage = () => {
   }
 
   return (
-    <CustomNotificationForm
-      headerTitle="Edit Notification"
-      headerSubtitle="Update this notification's content and audience."
-      submitLabel="Save Changes"
-      submittingLabel="Saving..."
-      isSubmitting={updateNotification.isPending}
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      onCancel={() => navigate("/pulse/notifications")}
-    />
+    <div className="bg-gray-50 min-h-screen">
+      <div className="px-6 pt-6"><PulsePageHeader title="Edit Notification" parent={{ label: "Notifications", to: "/pulse/notifications" }} /></div>
+      <CustomNotificationForm
+        submitLabel="Save Changes"
+        submittingLabel="Saving..."
+        isSubmitting={updateNotification.isPending}
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate("/pulse/notifications")}
+      />
+    </div>
   );
 };
 

@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Briefcase, Paperclip, X, Loader2 } from "lucide-react";
 import {
   FormControl,
   InputLabel,
@@ -15,34 +14,20 @@ import {
   Box,
   Typography,
 } from "@mui/material";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
+import { AttachmentUpload } from "@/components/common/AttachmentUpload";
 
 interface ServiceCategory {
   id: number;
   service_cat_name: string;
 }
 
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": {
-      borderColor: "#ddd",
-    },
-    "&:hover fieldset": {
-      borderColor: "#C72030",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#C72030",
-    },
-  },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": {
-      color: "#C72030",
-    },
-  },
-};
+const requiredLabel = (text: string) => (
+  <span>
+    {text}
+    <span className="fm-required-mark">*</span>
+  </span>
+);
 
 export const SupportedServiceEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -181,9 +166,7 @@ export const SupportedServiceEdit = () => {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
+  const handleImageSelect = (file?: File) => {
     if (!file) {
       setAttachment(null);
       setImagePreview("");
@@ -201,14 +184,12 @@ export const SupportedServiceEdit = () => {
 
     if (!validTypes.includes(file.type)) {
       toast.error("Please select only image files (JPEG, PNG, GIF, WebP).");
-      e.target.value = "";
       return;
     }
 
     const maxSize = 3 * 1024 * 1024; // 3MB
     if (file.size > maxSize) {
       toast.error("Image must be less than 3MB.");
-      e.target.value = "";
       return;
     }
 
@@ -334,11 +315,13 @@ export const SupportedServiceEdit = () => {
     navigate("/pulse/supported-services/service");
   };
 
+  const previewSrc = imageChanged ? imagePreview : existingImageUrl;
+
   if (fetchLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030] mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
           <p className="text-gray-600">Loading service details...</p>
         </div>
       </div>
@@ -347,10 +330,10 @@ export const SupportedServiceEdit = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={handleCancel}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
@@ -359,59 +342,27 @@ export const SupportedServiceEdit = () => {
           </button>
           <span>Supported Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">
-            Edit Supported Service
-          </span>
+          <span className="text-gray-900 font-medium">Edit Supported Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          EDIT SUPPORTED SERVICE
-        </h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT SUPPORTED SERVICE</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Service Details Card */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span
-                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
-                style={{ backgroundColor: "#E5E0D3" }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z"
-                    fill="#C72030"
-                  />
-                </svg>
-              </span>
-              Service Details
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Service Details */}
+        <FormSection title="SERVICE DETAILS" icon={Briefcase}>
+          <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Name */}
               <TextField
                 fullWidth
-                label="Service Name"
+                label={requiredLabel("Service Name")}
                 required
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Enter Service Name"
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                InputLabelProps={{ required: false, shrink: true }}
+                InputProps={{ sx: assetFieldStyles }}
               />
 
               {/* Service Category */}
@@ -419,15 +370,15 @@ export const SupportedServiceEdit = () => {
                 fullWidth
                 required
                 variant="outlined"
-                sx={{ "& .MuiInputBase-root": fieldStyles }}
+                sx={{ "& .MuiInputBase-root": assetFieldStyles }}
               >
-                <InputLabel shrink>Service Category</InputLabel>
+                <InputLabel required={false} shrink>{requiredLabel("Service Category")}</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
                   onChange={(e) =>
                     handleInputChange("service_category_id", e.target.value)
                   }
-                  label="Service Category"
+                  label="Service Category *"
                   notched
                   displayEmpty
                   disabled={loadingCategories}
@@ -459,9 +410,7 @@ export const SupportedServiceEdit = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                InputProps={{ sx: assetFieldStyles }}
               /> */}
 
               <TextField
@@ -477,9 +426,7 @@ export const SupportedServiceEdit = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                InputProps={{ sx: assetFieldStyles }}
                 inputProps={{
                   maxLength: 10,
                   pattern: "[0-9]*",
@@ -508,9 +455,7 @@ export const SupportedServiceEdit = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                InputProps={{ sx: assetFieldStyles }}
               />
               <TextField
                 fullWidth
@@ -524,20 +469,14 @@ export const SupportedServiceEdit = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                InputProps={{ sx: assetFieldStyles }}
               />
             </div>
 
             {/* Description - Full width */}
             <Box sx={{ position: "relative" }}>
               <TextField
-                label={
-                  <span>
-                    Description<span className="text-red-500">*</span>
-                  </span>
-                }
+                label={requiredLabel("Description")}
                 placeholder="Enter Description"
                 fullWidth
                 multiline
@@ -584,115 +523,45 @@ export const SupportedServiceEdit = () => {
               </Typography>
             </Box>
           </div>
-        </div>
+        </FormSection>
 
-        {/* Add Attachments */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span
-                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
-                style={{ backgroundColor: "#E5E0D3" }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z"
-                    fill="#C72030"
-                  />
-                  <path
-                    d="M10 2V5C10 5.55228 10.4477 6 11 6H14"
-                    fill="#E5E0D3"
-                  />
-                </svg>
-              </span>
-              Add Attachments
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                id="file-upload"
+        {/* Attachments */}
+        <FormSection title="ATTACHMENTS" icon={Paperclip}>
+          <AttachmentUpload
+            label="Service Image"
+            chooseText="Choose Image"
+            uploadText={previewSrc ? "Change Image" : "Upload Image"}
+            emptyText={previewSrc ? "Current image" : "No image chosen"}
+            accept="image/*"
+            files={imageChanged && attachment ? [attachment] : []}
+            onFilesSelected={(files) => handleImageSelect(files[0])}
+            onRemove={removeNewImage}
+          />
+          {previewSrc && (
+            <div className="relative inline-block mt-4">
+              <img
+                src={previewSrc}
+                alt={imageChanged ? "New Service Preview" : "Current Service Image"}
+                className="w-32 h-32 object-cover rounded-lg border border-gray-200"
               />
-              <Button
+              <button
                 type="button"
-                onClick={() => document.getElementById("file-upload")?.click()}
-                variant="outline"
-                className="border-dashed border border-[#DA7756] text-[#DA7756] bg-[#fdf5f2] hover:bg-[#f8e7df]"
+                onClick={imageChanged ? removeNewImage : removeExistingImage}
+                aria-label="Remove image"
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Files
-              </Button>
-
-              {/* Display attached image */}
-              {(imagePreview && imageChanged) || existingImageUrl ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
-                    <div className="flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-gray-500" />
-                      <span>
-                        {imageChanged ? attachment?.name : "Current attachment"}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={
-                        imageChanged ? removeNewImage : removeExistingImage
-                      }
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                  <div className="relative inline-block">
-                    <img
-                      src={imageChanged ? imagePreview : existingImageUrl}
-                      alt={
-                        imageChanged
-                          ? "New Service Preview"
-                          : "Current Service Image"
-                      }
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-sm text-gray-500">No image selected</p>
-                </div>
-              )}
+                <X className="w-3 h-3" />
+              </button>
             </div>
-          </div>
-        </div>
+          )}
+        </FormSection>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="fm-button-fix fm-button-brand px-8 py-2 min-w-[180px] disabled:opacity-70"
-          >
-            {loading ? "Updating..." : "Update Service"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] px-8 py-2 min-w-[130px]"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={handleCancel}
+          submitLabel="Update Service"
+          isSubmitting={loading}
+          submitAsFormSubmit
+        />
       </form>
     </div>
   );

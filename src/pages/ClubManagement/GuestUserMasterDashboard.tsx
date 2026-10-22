@@ -461,10 +461,11 @@ export const GuestUserMasterDashboard = () => {
   const leftActions = (
     <>
       <Button
+        size="sm"
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2 border-0"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-4 h-4 mr-2" />
         Action
       </Button>
     </>
@@ -632,14 +633,15 @@ export const GuestUserMasterDashboard = () => {
               </Select>
             </FormControl>
 
-            <div className="flex justify-center">
-              <Button
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={handleStatusUpdate}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded-md"
+                className="fm-action-primary"
                 disabled={!selectedStatus}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

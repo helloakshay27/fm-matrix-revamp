@@ -11,6 +11,7 @@ import { FileCog } from "lucide-react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { accountingToast as toast } from "@/lib/accountingToast";
 import "@/styles/accounting.css";
+import { accountingEvents, useAccountingFormOpened } from "@/components/PostHogAccountingEvents";
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Chip from '@mui/material/Chip';
 import { useNavigate, useParams } from "react-router-dom";
@@ -80,6 +81,7 @@ const ChargeSetupAdd: React.FC = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
+    useAccountingFormOpened("charge_setup", "create");
 
     const [form, setForm] = useState({
         chargeName: "",
@@ -288,9 +290,11 @@ const ChargeSetupAdd: React.FC = () => {
                 },
             });
             toast.success("Charge setup created successfully!");
+            accountingEvents.onRecordCreated("charge_setup", res.data?.id ?? res.data?.charge_setup?.id);
             navigate(`/accounting/charge-setup`);
         } catch (err: any) {
             toast.error("Failed to create charge setup");
+            accountingEvents.onSaveFailed("charge_setup", "create", err);
         }
     };
 

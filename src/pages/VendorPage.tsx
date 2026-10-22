@@ -862,10 +862,11 @@ export const VendorPage = () => {
     <div className="flex flex-wrap gap-2 sm:gap-3">
       {shouldShow("Vendor", "create") && (
       <Button
+        size="sm"
         onClick={() => setShowActionPanel((prev) => !prev)}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+        <Plus className="w-4 h-4 mr-2" />
         Action
       </Button>
       )}
@@ -967,18 +968,19 @@ export const VendorPage = () => {
                 </div>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={handleDownloadSample}
-                className="text-red-700 border-red-700 hover:bg-red-50"
+                className="fm-action-secondary"
               >
                 Download Sample Format
-              </Button>
-              <Button
+              </button>
+              <button
+                type="button"
                 onClick={handleImportSubmit}
                 disabled={!selectedFile || isImporting}
-                className="bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+                className="fm-action-primary"
               >
                 {isImporting ? (
                   <>
@@ -988,7 +990,7 @@ export const VendorPage = () => {
                 ) : (
                   'Import'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

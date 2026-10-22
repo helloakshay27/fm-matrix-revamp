@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAudienceCommunitiesQuery } from "../hooks/useAudienceCommunitiesQuery";
 import type { NotificationTargetSelection } from "../types/customNotification";
 
@@ -38,12 +39,15 @@ export function NotificationCommunityInlineList({
     <div>
       {communities.length > 0 && (
         <div className="px-4 py-2 border-b border-gray-100">
-          <Input
-            placeholder="Search communities..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-9"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search communities..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-9"
+            />
+          </div>
         </div>
       )}
       {filteredCommunities.length === 0 ? (
@@ -57,11 +61,9 @@ export function NotificationCommunityInlineList({
               key={community.id}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selectedIds.includes(community.id)}
-                onChange={() => onToggle(community)}
-                className="w-4 h-4 text-brand focus:ring-brand rounded"
+                onCheckedChange={() => onToggle(community)}
               />
               <div className="w-7 h-7 flex-shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
                 <Users className="w-3.5 h-3.5 text-gray-400" />

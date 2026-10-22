@@ -52,15 +52,14 @@ const RuleCreateForm = ({ id, customerNames, ruleFormData, setRuleFormData, open
                 <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     <Button
                         onClick={handleSubmit}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white hover:bg-[#C72030]/90 flex-1"
+                        className="bg-brand text-white hover:bg-brand-hover flex-1"
                     >
                         Submit
                     </Button>
                     <Button
                         onClick={onClose}
                         variant="outline"
-                        className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                        className="flex-1 border-brand text-brand hover:bg-brand-light"
                     >
                         Cancel
                     </Button>

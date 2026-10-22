@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileCog } from "lucide-react";
 import { ThemeProvider, createTheme } from "@mui/material";
 import axios from "axios";
+import { useAccountingRecordViewed } from "@/components/PostHogAccountingEvents";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -93,6 +94,7 @@ const AMENITIES_OPTIONS = [
 export const ChargeSetupDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const reportRecordLoaded = useAccountingRecordViewed("charge_setup");
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     // const [loading, setLoading] = useState(false);
@@ -114,6 +116,7 @@ export const ChargeSetupDetails = () => {
                 }
             );
             setChargeSetup(response.data.charge_setup);
+            reportRecordLoaded(id, response.data.charge_setup?.status ?? null);
         } catch (error) {
             setChargeSetup(null);
             console.error(error);

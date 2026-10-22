@@ -13,7 +13,7 @@ const MEASURES: { key: SessTab; label: string }[] = [
 
 /** Layer 1 — Traffic & Session. */
 export function TrafficSection() {
-  const { vm, palette, setSessTab, trafficLoading } = useCalendarDashboard();
+  const { vm, palette, setSessTab, trafficLoading, errors } = useCalendarDashboard();
   const { traffic, sessTab } = vm;
 
   const series =
@@ -47,6 +47,8 @@ export function TrafficSection() {
           </li>
         </ul>
       </div>
+
+      {errors.traffic && <p role="alert">Unable to load traffic data: {errors.traffic.message}</p>}
 
       <Tiles specs={traffic.tiles} columns={3} id="tilesTraffic" loading={trafficLoading} />
 
@@ -96,6 +98,7 @@ export function TrafficSection() {
                   color={color}
                   fill={fill}
                   showPrev={vm.prev && series.prev.length > 0}
+                  floatingTooltip
                 />
                 <Legend
                   items={[
@@ -144,7 +147,9 @@ export function TrafficSection() {
                 <div
                   className="role"
                   key={row.label}
-                  title={`${row.label}: ${Math.round(row.share * 100)}% of users`}
+                  data-chart-tooltip={`${row.label}\nUsers: ${Math.round(row.share * 100)}%`}
+                  aria-label={`${row.label}: ${Math.round(row.share * 100)}% of users`}
+                  tabIndex={0}
                   style={{ cursor: 'pointer' }}
                 >
                   <div className="rn">{row.label}</div>

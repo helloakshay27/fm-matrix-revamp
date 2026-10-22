@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { accountingToast as toast } from '@/lib/accountingToast';
 import '@/styles/accounting.css';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { accountingEvents, useAccountingListViewed, useAccountingSearchTracking } from '@/components/PostHogAccountingEvents';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
@@ -149,6 +150,8 @@ export const ManualJournalDashboard = () => {
   });
 
   const perPage = 20;
+  const reportListLoaded = useAccountingListViewed('manual_journal');
+  useAccountingSearchTracking('manual_journal', searchQuery);
   const lock_account_id = localStorage.getItem("lock_account_id");
 
   // Fetch journal entries
@@ -165,6 +168,7 @@ export const ManualJournalDashboard = () => {
         },
       });
       setJournals(response.data.lock_account_transactions || []);
+      reportListLoaded((response.data.lock_account_transactions || []).length);
       setMembershipType(response.data.lock_account_transactions || [])
     } catch (error) {
       console.error('Error fetching journal entries:', error);
@@ -308,6 +312,7 @@ export const ManualJournalDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
+    accountingEvents.onFilterApplied('manual_journal', newFilters as unknown as Record<string, unknown>);
     setFilters(newFilters);
     setCurrentPage(1);
     setIsFilterOpen(false);

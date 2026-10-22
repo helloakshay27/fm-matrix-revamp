@@ -278,7 +278,11 @@ export const FMUserMasterDashboard = () => {
       navigate("/maintenance/asset");
       return;
     }
-    setCurrentSection("Master");
+    // Under Club Management the sidebar owns this route; forcing "Master" here
+    // makes ClubSidebar bounce to Master's default page (Amenities Setup).
+    if (!location.pathname.includes("/club-management/")) {
+      setCurrentSection("Master");
+    }
     dispatch(fetchUserCounts());
     if (!listViewedRef.current) {
       listViewedRef.current = true;
@@ -775,10 +779,11 @@ export const FMUserMasterDashboard = () => {
   const leftActions = (
     <>
       <Button
+        size="sm"
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2  flex items-center gap-2 border-0"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-4 h-4 mr-2" />
         Action
       </Button>
     </>
@@ -944,21 +949,21 @@ export const FMUserMasterDashboard = () => {
             </Box>
           </div>
 
-          <div className="flex justify-end gap-3 p-6 pt-0 border-t mt-4">
-            <Button
+          <div className="fm-action-bar p-6 pt-4 border-t mt-4">
+            <button
+              type="button"
               onClick={handleResetFilters}
-              variant="outline"
-              className="fm-button-fix px-6 mt-4"
+              className="fm-action-secondary"
             >
               Reset
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={() => handleFilter(filters)}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-6 mt-4"
+              className="fm-action-primary"
             >
               Apply
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -998,14 +1003,15 @@ export const FMUserMasterDashboard = () => {
               </Select>
             </FormControl>
 
-            <div className="flex justify-center">
-              <Button
+            <div className="fm-action-bar">
+              <button
+                type="button"
                 onClick={handleStatusUpdate}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
+                className="fm-action-primary"
                 disabled={!selectedStatus || selectedStatus === "Select Status"}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -1167,14 +1173,15 @@ export const FMUserMasterDashboard = () => {
 
             </Tabs>
 
-            <div className="flex justify-center pt-6">
-              <Button
+            <div className="fm-action-bar pt-6">
+              <button
+                type="button"
                 onClick={handleCloneRoleSubmit}
-                className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
+                className="fm-action-primary"
                 disabled={!toUser || !fromUser || cloneLoading}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

@@ -361,7 +361,7 @@ export const AmenityBookingDetailsClubPage = () => {
       content: (
         <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#f5f4f0] text-[rgba(26,26,24,0.68)]">
               <Ticket className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOOKING DETAILS</h3>
@@ -541,14 +541,13 @@ export const AmenityBookingDetailsClubPage = () => {
         <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#f5f4f0] text-[rgba(26,26,24,0.68)]">
                 <CreditCard className="w-4 h-4" />
               </div>
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS</h3>
             </div>
             <Button
               onClick={handleDownloadInvoice}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               <Download className="w-4 h-4 mr-2" />
               Download Invoice
@@ -675,9 +674,9 @@ export const AmenityBookingDetailsClubPage = () => {
               )}
 
               {/* Grand Total */}
-              <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
-                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{bookings?.amount_full?.toFixed(2) || '0.00'}</span>
+              <div className="flex justify-between items-center py-3 bg-[#f5f4f0] px-4 rounded-lg mt-2">
+                <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>Grand Total</span>
+                <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>₹{bookings?.amount_full?.toFixed(2) || '0.00'}</span>
               </div>
             </div>
 
@@ -767,7 +766,7 @@ export const AmenityBookingDetailsClubPage = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-[#E5E0D3]">
+                      <tr className="bg-[#f5f4f0]">
                         <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
                         <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name</th>
                         <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Mobile</th>
@@ -813,7 +812,7 @@ export const AmenityBookingDetailsClubPage = () => {
       content: (
         <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#f5f4f0] text-[rgba(26,26,24,0.68)]">
               <Logs className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">LOGS</h3>
@@ -858,7 +857,6 @@ export const AmenityBookingDetailsClubPage = () => {
             bookings?.current_status === 'Confirmed' && (
               <Button
                 variant="outline"
-                className="border-[#C72030] text-[#C72030] hover:bg-red-50"
                 onClick={handleSendInvoice}
                 disabled={sendingInvoice}
               >
@@ -869,8 +867,6 @@ export const AmenityBookingDetailsClubPage = () => {
           {/* {
             bookings?.current_status === 'Pending' && ( */}
           <Button
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-red-50"
             onClick={() => navigate(`/club-management/amenities-booking-club/${id}/edit`)}
           >
             <Edit className="w-4 h-4 mr-1" />
@@ -889,7 +885,6 @@ export const AmenityBookingDetailsClubPage = () => {
           {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
             <Button
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-red-50"
               onClick={() => setShowCancelModal(true)}
             >
               Cancel Booking
@@ -1078,10 +1073,10 @@ export const AmenityBookingDetailsClubPage = () => {
                 )}
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+            <DialogFooter className="fm-action-bar">
+              <button type="button" onClick={handlePayment} disabled={paymentLoading} className="fm-action-primary">
                 {paymentLoading ? 'Processing...' : 'Submit Payment'}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1106,10 +1101,10 @@ export const AmenityBookingDetailsClubPage = () => {
                 </div>
               )}
             </div>
-            <DialogFooter className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+            <DialogFooter className="fm-action-bar">
+              <button type="button" onClick={() => setShowCancelModal(false)} className="fm-action-secondary">
                 Go Back
-              </Button>
+              </button>
               <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
                 Cancel Booking
               </Button>

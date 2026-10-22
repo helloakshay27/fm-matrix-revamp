@@ -1,8 +1,11 @@
+import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Gift, Trophy, Tag, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Gift, Trophy, Tag, Loader2, User as UserIcon, ClipboardList } from "lucide-react";
+import { FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import { toast } from "sonner";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
@@ -37,24 +40,7 @@ interface User {
 
 const REWARD_TYPES = ["coupon", "points", "none"];
 
-const fieldSx = {
-    "& .MuiOutlinedInput-root": {
-        backgroundColor: "white",
-        "& fieldset": { borderColor: "#e5e7eb" },
-        "&:hover fieldset": { borderColor: "#C72030" },
-        "&.Mui-focused fieldset": { borderColor: "#C72030" },
-    },
-    "& .MuiInputLabel-root.Mui-focused": { color: "#C72030" },
-};
-
-const SectionHeader = ({ icon: Icon, title }: { icon: any; title: string }) => (
-    <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
-        <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
-            <Icon className="w-5 h-5 text-[#C72030]" />
-        </div>
-        <h2 className="text-base font-semibold text-[#1A1A1A]">{title}</h2>
-    </div>
-);
+const selectSx = { "& .MuiInputBase-root": assetFieldStyles };
 
 const PulseContestRewardCreate = () => {
     const pulseEvents = usePulseEvents();
@@ -242,39 +228,13 @@ const PulseContestRewardCreate = () => {
 
     return (
         <div className="p-4 sm:p-6">
-            {/* Page Header */}
-            <div className="mb-6">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 mb-4 text-sm transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back
-                </button>
-
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-brand flex items-center justify-center shadow-sm">
-                            <Gift className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">
-                                Create Reward
-                            </h1>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                                Assign a contest reward manually
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PulsePageHeader title="New Reward" icon={Gift} parent={{ label: "Rewards", to: "/pulse/rewards" }} />
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Left column — main form (2/3 width) */}
-                <div className="xl:col-span-2 space-y-6">
+                <div className="xl:col-span-2 space-y-4 sm:space-y-6">
                     {/* Contest & Prize Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <SectionHeader icon={Trophy} title="Contest & Prize" />
+                    <FormSection title="Contest & prize" icon={Trophy}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Contest */}
                             <div>
@@ -282,7 +242,7 @@ const PulseContestRewardCreate = () => {
                                     fullWidth
                                     size="small"
                                     error={!!errors.contest_id}
-                                    sx={fieldSx}
+                                    sx={selectSx}
                                 >
                                     <InputLabel>Contest *</InputLabel>
                                     <MuiSelect
@@ -324,7 +284,7 @@ const PulseContestRewardCreate = () => {
                                     fullWidth
                                     size="small"
                                     error={!!errors.prize_id}
-                                    sx={fieldSx}
+                                    sx={selectSx}
                                 >
                                     <InputLabel>Prize *</InputLabel>
                                     <MuiSelect
@@ -352,18 +312,17 @@ const PulseContestRewardCreate = () => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </FormSection>
 
                     {/* User Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <SectionHeader icon={Trophy} title="User" />
+                    <FormSection title="User" icon={UserIcon}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <FormControl
                                     fullWidth
                                     size="small"
                                     error={!!errors.user_id}
-                                    sx={fieldSx}
+                                    sx={selectSx}
                                 >
                                     <InputLabel>User *</InputLabel>
                                     <MuiSelect
@@ -397,11 +356,10 @@ const PulseContestRewardCreate = () => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </FormSection>
 
                     {/* Reward Details Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <SectionHeader icon={Tag} title="Reward Details" />
+                    <FormSection title="Reward details" icon={Tag}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Reward Type */}
                             <div>
@@ -409,7 +367,7 @@ const PulseContestRewardCreate = () => {
                                     fullWidth
                                     size="small"
                                     error={!!errors.reward_type}
-                                    sx={fieldSx}
+                                    sx={selectSx}
                                 >
                                     <InputLabel>Reward Type *</InputLabel>
                                     <MuiSelect
@@ -445,7 +403,7 @@ const PulseContestRewardCreate = () => {
                                     placeholder="e.g. WIN2024"
                                     error={!!errors.coupon_code}
                                     helperText={errors.coupon_code}
-                                    sx={fieldSx}
+                                    InputProps={{ sx: assetFieldStyles }}
                                     disabled
                                 />
                             )}
@@ -463,19 +421,20 @@ const PulseContestRewardCreate = () => {
                                     inputProps={{ min: 0 }}
                                     error={!!errors.points_value}
                                     helperText={errors.points_value}
-                                    sx={fieldSx}
+                                    InputProps={{ sx: assetFieldStyles }}
                                 />
                             )}
                         </div>
-                    </div>
+                    </FormSection>
                 </div>
 
                 {/* Right column — summary card (1/3 width) */}
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 sticky top-6">
-                        <h3 className="text-sm font-semibold text-[#1A1A1A] mb-4 uppercase tracking-wide">
-                            Summary
-                        </h3>
+                    <DetailCard
+                        title="Summary"
+                        icon={<ClipboardList className="w-[18px] h-[18px] text-gray-500" />}
+                        className="sticky top-6"
+                    >
 
                         <div className="space-y-3 text-sm">
                             <SummaryRow
@@ -524,31 +483,15 @@ const PulseContestRewardCreate = () => {
                             )}
                         </div>
 
-                        <div className="mt-6 pt-5 border-t border-gray-100 space-y-3">
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                                className="w-full bg-[#C72030] hover:bg-[#B01D2A] text-white flex items-center justify-center gap-2"
-                            >
-                                {submitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Creating...
-                                    </>
-                                ) : (
-                                    "Create Reward"
-                                )}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => navigate(-1)}
-                                disabled={submitting}
-                                className="w-full border-gray-300 text-gray-600"
-                            >
-                                Cancel
-                            </Button>
+                        <div className="mt-6 pt-1 border-t border-gray-100">
+                            <FormActionBar
+                                onCancel={() => navigate(-1)}
+                                onSubmit={handleSubmit}
+                                submitLabel="Create Reward"
+                                isSubmitting={submitting}
+                            />
                         </div>
-                    </div>
+                    </DetailCard>
                 </div>
             </div>
         </div>

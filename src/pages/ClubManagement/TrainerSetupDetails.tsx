@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { ArrowLeft, Pencil, Trash2, UserRound, CalendarDays, Paperclip, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTrainer, mapTrainerApiData, type TrainerSetup } from "./trainerSetupMockData";
 import { apiClient } from "@/utils/apiClient";
+import { ClassFormSection } from "./ClassFormSection";
 
 const getStatusBadge = (status: string) => (
   <span
@@ -46,37 +46,51 @@ const ReadOnlyField = ({ label, value }: { label: string; value: string | number
   />
 );
 
-const downloadAttachment = async (url: string, fileName = "download") => {
-  if (!url) return;
+const saveBlob = (blob: Blob, fileName: string) => {
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+};
 
-  try {
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = fileName;
-    anchor.style.display = "none";
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(blobUrl);
+// Prefer the API's download_url (sent with the auth header via apiClient), then the raw
+// S3 url as a blob, and finally just open the file so the user can still get it.
+const downloadAttachment = async (
+  { downloadUrl, url }: { downloadUrl?: string; url?: string },
+  fileName = "download"
+) => {
+  if (!downloadUrl && !url) {
+    toast.error("No file available to download");
     return;
-  } catch (error) {
-    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
   }
 
-  const fallback = document.createElement("a");
-  fallback.href = url;
-  fallback.download = fileName;
-  fallback.target = "_self";
-  fallback.rel = "noopener noreferrer";
-  fallback.style.display = "none";
-  document.body.appendChild(fallback);
-  fallback.click();
-  document.body.removeChild(fallback);
+  if (downloadUrl) {
+    try {
+      const response = await apiClient.get(downloadUrl, { responseType: "blob" });
+      saveBlob(response.data, fileName);
+      return;
+    } catch (error) {
+      console.warn("download_url failed, falling back to file url:", error);
+    }
+  }
+
+  if (url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      saveBlob(await response.blob(), fileName);
+      return;
+    } catch (error) {
+      console.warn("Blob download from file url failed, opening file instead:", error);
+    }
+  }
+
+  window.open(url || downloadUrl, "_blank", "noopener,noreferrer");
 };
 
 const normalizeShiftTimingLabel = (value: string | number | undefined): string | number | undefined => {
@@ -185,16 +199,10 @@ export const TrainerSetupDetails = () => {
           </div> */}
         </div>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <UserRound className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Trainer Profile & Details</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-white space-y-6">
+        <ClassFormSection title="Trainer Profile & Details" icon={<UserRound />}>
+          <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-[#F2EEE9] flex items-center justify-center text-xl font-semibold text-gray-600 overflow-hidden shrink-0">
+              <div className="w-16 h-16 rounded-full bg-[#f5f4f0] flex items-center justify-center text-xl font-semibold text-gray-600 overflow-hidden shrink-0">
                 {trainer.imageUrl ? (
                   <img src={trainer.imageUrl} alt={trainer.name} className="w-full h-full object-cover" />
                 ) : (
@@ -267,17 +275,11 @@ export const TrainerSetupDetails = () => {
               </FormControl>
             </div>
 
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <CalendarDays className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Facility Operational Timings &amp; Booking</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-6 bg-white p-6 md:grid-cols-3">
+        <ClassFormSection title="Facility Operational Timings & Booking" icon={<CalendarDays />}>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <ReadOnlyField label="Facility Slot ID" value={trainer.facilitySlotId} />
             <ReadOnlyField label="Start Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].startTime.hour}:${trainer.availabilitySlots[0].startTime.minute}` : ""} />
             <ReadOnlyField label="End Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].endTime.hour}:${trainer.availabilitySlots[0].endTime.minute}` : ""} />
@@ -288,17 +290,11 @@ export const TrainerSetupDetails = () => {
             <ReadOnlyField label="Advance Booking" value={formatDuration(trainer.advanceBooking)} />
             <ReadOnlyField label="Can Cancel Before Schedule" value={formatDuration(trainer.canCancelBefore)} />
             <ReadOnlyField label="Max Bookings Per User Per Day" value={trainer.facilityBookedTimes} />
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
 
-        <Card className="border-gray-200 rounded-lg overflow-hidden shadow-none">
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-200 flex-row items-center gap-3 space-y-0 p-4">
-            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] shrink-0">
-              <Paperclip className="h-4 w-4" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Attachments &amp; Files</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-white">
+        <ClassFormSection title="Attachments & Files" icon={<Paperclip />}>
+          <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Uploaded Professional Credentials</h3>
             {trainer.credentials.length === 0 ? (
               <p className="text-sm text-gray-400">No credentials uploaded.</p>
@@ -310,7 +306,7 @@ export const TrainerSetupDetails = () => {
                     className="flex items-center justify-between gap-3 border border-gray-200 rounded-md p-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-md bg-[#F6F4EE] text-[#C72030] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-md bg-[#f5f4f0] text-[rgba(26,26,24,0.68)] flex items-center justify-center shrink-0">
                         <FileText className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -320,7 +316,7 @@ export const TrainerSetupDetails = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => downloadAttachment(cred.url || "", cred.name || "trainer-credential")}
+                      onClick={() => downloadAttachment(cred, cred.name || "trainer-credential")}
                       className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded shrink-0"
                       title="Download"
                     >
@@ -330,8 +326,8 @@ export const TrainerSetupDetails = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </ClassFormSection>
       </div>
     </div>
   );

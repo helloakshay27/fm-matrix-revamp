@@ -788,21 +788,23 @@ export const EditMembershipPlanPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-center gap-4">
-            <Button
-              variant="outline"
+          <div className="fm-action-bar pt-4 sm:pt-6">
+            <button
+              type="button"
               onClick={handleClose}
               disabled={isSubmitting}
+              className="fm-action-secondary"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleSave}
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              className="fm-action-primary"
             >
               {isSubmitting ? "Updating..." : "Update"}
-            </Button>
+            </button>
           </div>
         </div>
       </div>

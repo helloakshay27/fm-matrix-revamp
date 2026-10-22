@@ -11,6 +11,7 @@ import {
   type TrainerCredential,
   type TrainerSetup,
 } from "./trainerSetupMockData";
+import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
 const blankDuration = (): DurationValue => ({ day: "", hour: "", minute: "" });
 
@@ -21,37 +22,49 @@ const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
   slotBy: 15,
 });
 
-const downloadAttachment = async (url: string, fileName = "download") => {
-  if (!url) return;
+const saveBlob = (blob: Blob, fileName: string) => {
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+};
 
-  try {
-    const response = await fetch(url, { credentials: "include" });
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = fileName;
-    anchor.style.display = "none";
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(blobUrl);
+const downloadAttachment = async (
+  { downloadUrl, url }: { downloadUrl?: string; url?: string },
+  fileName = "download"
+) => {
+  if (!downloadUrl && !url) {
+    toast.error("No file available to download");
     return;
-  } catch (error) {
-    console.warn("Direct blob download failed, falling back to anchor navigation:", error);
   }
 
-  const fallback = document.createElement("a");
-  fallback.href = url;
-  fallback.download = fileName;
-  fallback.target = "_self";
-  fallback.rel = "noopener noreferrer";
-  fallback.style.display = "none";
-  document.body.appendChild(fallback);
-  fallback.click();
-  document.body.removeChild(fallback);
+  if (downloadUrl) {
+    try {
+      const response = await apiClient.get(downloadUrl, { responseType: "blob" });
+      saveBlob(response.data, fileName);
+      return;
+    } catch (error) {
+      console.warn("download_url failed, falling back to file url:", error);
+    }
+  }
+
+  if (url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+      saveBlob(await response.blob(), fileName);
+      return;
+    } catch (error) {
+      console.warn("Blob download from file url failed, opening file instead:", error);
+    }
+  }
+
+  window.open(url || downloadUrl, "_blank", "noopener,noreferrer");
 };
 
 // Allows only positive integers, matching the pattern used on the Amenity Booking Setup form.
@@ -97,8 +110,6 @@ const mapSetupOptions = (responseData: any, collectionKeys: string[], labelKeys:
     });
 };
 
-// Matches the Section pattern used by CreditNoteClubAdd/Edit and ClassSetupForm (bg-[#F6F4EE]
-// header bar, circular bg-[#E5E0D3] icon badge in the brand red).
 const Section = ({
   title,
   icon,
@@ -108,35 +119,10 @@ const Section = ({
   icon: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <section className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-      <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-        {icon}
-      </div>
-      <span className="font-semibold text-lg text-gray-800">{title}</span>
-    </div>
-    <div className="p-6 bg-white">{children}</div>
-  </section>
+  <ClassFormSection title={title} icon={icon}>
+    {children}
+  </ClassFormSection>
 );
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": { color: "#C72030" },
-  },
-};
-
-const requiredLabelSx = {
-  "& .MuiFormLabel-asterisk": { color: "#DA7756" },
-};
 
 export interface TrainerSetupFormState {
   firstName: string;
@@ -408,8 +394,7 @@ export const TrainerSetupForm = ({
         <Section title="Trainer Details" icon={<UserRound className="w-5 h-5" />}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
-              label="First Name"
-              required
+              label={<RequiredLabel>First Name</RequiredLabel>}
               placeholder="Enter first name"
               value={form.firstName}
               onChange={(e) => {
@@ -420,13 +405,11 @@ export const TrainerSetupForm = ({
               }}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
-              label="Last Name"
-              required
+              label={<RequiredLabel>Last Name</RequiredLabel>}
               placeholder="Enter last name"
               value={form.lastName}
               onChange={(e) => {
@@ -437,9 +420,8 @@ export const TrainerSetupForm = ({
               }}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
               label="Email"
@@ -450,23 +432,20 @@ export const TrainerSetupForm = ({
               fullWidth
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
-              label="Specialization"
-              required
+              label={<RequiredLabel>Specialization</RequiredLabel>}
               placeholder="e.g. Pilates, Yoga, Strength"
               value={form.specialization}
               onChange={(e) => setField("specialization", e.target.value)}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
-              label="Experience (Years)"
-              required
+              label={<RequiredLabel>Experience (Years)</RequiredLabel>}
               placeholder="e.g. 5"
               value={form.experience}
               onChange={(e) => setField("experience", e.target.value.replace(/\D/g, ""))}
@@ -475,10 +454,9 @@ export const TrainerSetupForm = ({
               }}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
               inputProps={{ inputMode: "numeric", pattern: "[0-9]*", min: 0 }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
 
             {/* <TextField
@@ -494,17 +472,15 @@ export const TrainerSetupForm = ({
               InputProps={{ sx: fieldStyles }}
             /> */}
             <TextField
-              label="Contact Number"
-              required
+              label={<RequiredLabel>Contact Number</RequiredLabel>}
               placeholder="Enter contact"
               value={form.contactNumber}
               onChange={(e) => setField("contactNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
               fullWidth
               variant="outlined"
-              sx={requiredLabelSx}
               slotProps={{ inputLabel: { shrink: true } }}
               inputProps={{ inputMode: "numeric", maxLength: 10 }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <TextField
               label="Emergency Contact"
@@ -515,15 +491,16 @@ export const TrainerSetupForm = ({
               variant="outlined"
               slotProps={{ inputLabel: { shrink: true } }}
               inputProps={{ inputMode: "numeric", maxLength: 10 }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: classFieldStyles }}
             />
             <FormControl
               fullWidth
               variant="outlined"
-              required
-              sx={{ "& .MuiInputBase-root": fieldStyles, ...requiredLabelSx }}
+              sx={{ "& .MuiInputBase-root": classFieldStyles }}
             >
-              <InputLabel shrink>Status</InputLabel>
+              <InputLabel shrink>
+                <RequiredLabel>Status</RequiredLabel>
+              </InputLabel>
               <MuiSelect
                 value={form.status}
                 onChange={(e) => setField("status", e.target.value as "Active" | "Inactive")}
@@ -535,7 +512,7 @@ export const TrainerSetupForm = ({
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
               <InputLabel shrink>Shift</InputLabel>
               <MuiSelect
                 value={form.shift}
@@ -558,7 +535,7 @@ export const TrainerSetupForm = ({
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": fieldStyles }}>
+            <FormControl fullWidth variant="outlined" sx={{ "& .MuiInputBase-root": classFieldStyles }}>
               <InputLabel shrink>Roster</InputLabel>
               <MuiSelect
                 value={form.roster}
@@ -609,7 +586,7 @@ export const TrainerSetupForm = ({
             <Button
               type="button"
               onClick={addAvailabilitySlot}
-              className="bg-purple-600 hover:bg-purple-700 mb-4"
+              className="mb-4"
             >
               Add
             </Button>
@@ -934,7 +911,7 @@ export const TrainerSetupForm = ({
               {initialValues.existingTrainerImageUrl && (
                 <button
                   type="button"
-                  onClick={() => downloadAttachment(initialValues.existingTrainerImageUrl!, "current-trainer-image")}
+                  onClick={() => downloadAttachment({ url: initialValues.existingTrainerImageUrl }, "current-trainer-image")}
                   className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                 >
                   <span className="flex min-w-0 items-center gap-2">
@@ -951,7 +928,7 @@ export const TrainerSetupForm = ({
                     <button
                       key={attachment.id}
                       type="button"
-                      onClick={() => downloadAttachment(attachment.url || "", attachment.name || "attachment")}
+                      onClick={() => downloadAttachment(attachment, attachment.name || "attachment")}
                       className="flex w-full items-center justify-between rounded border bg-gray-50 p-2 text-left text-sm transition-colors hover:border-brand"
                     >
                       <span className="flex min-w-0 items-center gap-2">
@@ -997,22 +974,23 @@ export const TrainerSetupForm = ({
         </Section>
       </div>
 
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="fm-button-fix fm-button-brand px-8 py-2"
-        >
-          {isSubmitting ? submittingLabel : submitLabel}
-        </Button>
-        <Button
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          variant="outline"
-          className="fm-button-fix px-8 py-2"
+          className="fm-action-secondary"
         >
           Cancel
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-action-primary"
+        >
+          {isSubmitting ? submittingLabel : submitLabel}
+        </button>
       </div>
     </div>
   );

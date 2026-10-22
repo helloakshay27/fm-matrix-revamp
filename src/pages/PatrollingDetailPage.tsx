@@ -878,6 +878,57 @@ export const PatrollingDetailPage: React.FC = () => {
   };
   // ────────────────────────────────────────────────────────────────────────────
 
+  // ── Questions table: EnhancedTable columns + cell renderer ────────────────
+  const questionTableColumns: ColumnConfig[] = [
+    { key: "qnumber", label: "Q#", sortable: false, draggable: false, defaultVisible: true },
+    { key: "task", label: "Question", sortable: false, draggable: false, defaultVisible: true },
+    { key: "type", label: "Type", sortable: false, draggable: false, defaultVisible: true },
+    { key: "mandatory", label: "Mandatory", sortable: false, draggable: false, defaultVisible: true },
+    { key: "options", label: "Options", sortable: false, draggable: false, defaultVisible: true },
+    { key: "created_at", label: "Created On", sortable: false, draggable: false, defaultVisible: true },
+  ];
+
+  const renderQuestionCell = (question: any, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case "qnumber":
+        return (
+          <Badge variant="outline" className="text-xs">
+            Q{question.qnumber}
+          </Badge>
+        );
+      case "task":
+        return question.task;
+      case "type":
+        return (
+          <Badge variant="outline" className="text-xs">
+            {question.type}
+          </Badge>
+        );
+      case "mandatory":
+        return question.mandatory ? (
+          <Badge variant="destructive" className="text-xs">Required</Badge>
+        ) : (
+          <Badge variant="secondary" className="text-xs">Optional</Badge>
+        );
+      case "options":
+        return question.options?.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {question.options.map((option: string, index: number) => (
+              <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                {option}
+              </span>
+            ))}
+          </div>
+        ) : (
+          "—"
+        );
+      case "created_at":
+        return <span className="text-xs text-gray-600">{formatDateTime(question.created_at)}</span>;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6 min-h-screen flex items-center justify-center">
@@ -1520,85 +1571,18 @@ export const PatrollingDetailPage: React.FC = () => {
                 <CardContent className="pt-0">
          
 
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Q#</TableHead>
-                          <TableHead>Question</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Mandatory</TableHead>
-                          <TableHead>Options</TableHead>
-                          <TableHead>Created on</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody className="bg-white">
-                        {patrolling.questions &&
-                        patrolling.questions.length > 0 ? (
-                          patrolling.questions.map((question) => (
-                            <TableRow key={question.id}>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  Q{question.qnumber}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{question.task}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  {question.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {question.mandatory ? (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-xs"
-                                  >
-                                    Required
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    Optional
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {question.options.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {question.options.map((option, index) => (
-                                      <span
-                                        key={index}
-                                        className="text-xs bg-gray-100 px-2 py-1 rounded"
-                                      >
-                                        {option}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  "—"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-xs text-gray-600">
-                                {formatDateTime(question.created_at)}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={7}
-                              className="text-center text-gray-600"
-                            >
-                              No questions available.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <EnhancedTable
+                    data={patrolling.questions || []}
+                    columns={questionTableColumns}
+                    getItemId={(q: { id: number }) => String(q.id)}
+                    renderCell={renderQuestionCell}
+                    storageKey="patrolling-questions-table"
+                    hideTableSearch
+                    hideTableExport
+                    hideColumnsButton
+                    pagination={false}
+                    emptyMessage="No questions available."
+                  />
                 </CardContent>
               </Card>
             )}

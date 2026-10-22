@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 
 interface ExceptionReportRow {
   id: string;
@@ -100,6 +101,7 @@ const MOCK_ROWS: ExceptionReportRow[] = [
 ];
 
 const ExceptionReport: React.FC = () => {
+  useAccountingReportViewed("exception");
   const defaultFrom = "2026-03-01";
   const defaultTo = "2026-03-31";
 
@@ -189,12 +191,16 @@ const ExceptionReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+              accountingEvents.onReportGenerated("exception", {
+                from_date: filters.fromDate,
+                to_date: filters.toDate,
+              });
+            }}
           >
             View
           </Button>

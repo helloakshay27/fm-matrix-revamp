@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import { Tabs, TabsContent } from './ui/tabs'
+import { AssetTabsList, AssetTabsTrigger } from './common/AssetTabBar'
 import CommunityWaitingList from "./CommunityWaitingList";
 import CommunityApprovedList from "./CommunityApprovedList";
 import CommunityPendingList from "./CommunityPendingList";
@@ -10,11 +11,11 @@ const CommunityPendingRequestTab = ({ communityId }: { communityId: string }) =>
     return (
         <div className=" bg-white min-h-screen">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6 bg-white border">
-                    <TabsTrigger value="waitingList" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Waiting List</TabsTrigger>
-                    <TabsTrigger value="approved" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Approved</TabsTrigger>
-                    <TabsTrigger value="pending" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none">Pending</TabsTrigger>
-                </TabsList>
+                <AssetTabsList className="grid grid-cols-3 mb-6">
+                    <AssetTabsTrigger value="waitingList">Waiting List</AssetTabsTrigger>
+                    <AssetTabsTrigger value="approved">Approved</AssetTabsTrigger>
+                    <AssetTabsTrigger value="pending">Pending</AssetTabsTrigger>
+                </AssetTabsList>
 
                 <TabsContent value="waitingList">
                     <CommunityWaitingList communityId={communityId} />

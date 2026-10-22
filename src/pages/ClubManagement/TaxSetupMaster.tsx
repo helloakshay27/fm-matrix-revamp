@@ -8,6 +8,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
+import { accountingEvents, useAccountingListViewed } from '@/components/PostHogAccountingEvents';
 
 interface Tax {
   id: number;
@@ -108,6 +109,7 @@ export const TaxSetupMaster: React.FC = () => {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const reportListLoaded = useAccountingListViewed('tax_setup');
   const lock_account_id = localStorage.getItem("lock_account_id");
 
   // Fetch all taxes
@@ -121,6 +123,7 @@ export const TaxSetupMaster: React.FC = () => {
       const data: Tax[] = await response.json();
       setTaxes(data);
       setTotalRecords(data.length);
+      reportListLoaded(data.length, data.length);
       setTotalPages(Math.ceil(data.length / perPage));
     } catch (error) {
       console.error('Error fetching taxes:', error);
@@ -265,6 +268,7 @@ export const TaxSetupMaster: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       toast.success('Tax added successfully');
+      accountingEvents.onRecordCreated('tax_setup', null);
       setAddModalOpen(false);
       setAddForm({
         name: '',
@@ -281,6 +285,7 @@ export const TaxSetupMaster: React.FC = () => {
     } catch (error) {
       console.error('Error creating tax:', error);
       toast.error('Failed to add tax');
+      accountingEvents.onSaveFailed('tax_setup', 'create', error);
     } finally {
       setAddSubmitting(false);
     }
@@ -316,12 +321,14 @@ export const TaxSetupMaster: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       toast.success('Tax updated successfully');
+      accountingEvents.onRecordUpdated('tax_setup', editForm.id);
       setEditModalOpen(false);
       setSections([]);
       fetchTaxes();
     } catch (error) {
       console.error('Error updating tax:', error);
       toast.error('Failed to update tax');
+      accountingEvents.onSaveFailed('tax_setup', 'update', error, { record_id: editForm.id });
     } finally {
       setEditSubmitting(false);
     }
@@ -336,10 +343,12 @@ export const TaxSetupMaster: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       toast.success('Tax deleted successfully');
+      accountingEvents.onRecordDeleted('tax_setup', id);
       fetchTaxes();
     } catch (error) {
       console.error('Error deleting tax:', error);
       toast.error('Failed to delete tax');
+      accountingEvents.onSaveFailed('tax_setup', 'delete', error, { record_id: id });
     }
   };
 

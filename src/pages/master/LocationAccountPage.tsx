@@ -64,7 +64,7 @@ const filterRows = <T extends Record<string, any>>(rows: T[], term: string, fiel
 };
 
 const brandSwitchClass = 'data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300';
-const addButtonClass = 'bg-brand hover:bg-brand-hover text-white';
+const addButtonClass = 'bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium';
 
 // List of all world countries
 const worldCountries = [
@@ -597,13 +597,10 @@ export const LocationAccountPage = () => {
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-center">
-                <Button
-                  onClick={handleSubmitCompany}
-                  className="bg-brand hover:bg-brand-hover text-white px-8"
-                >
+              <div className="fm-action-bar pt-4">
+                <button type="button" className="fm-action-primary" onClick={handleSubmitCompany}>
                   Submit
-                </Button>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -638,7 +635,7 @@ export const LocationAccountPage = () => {
             leftActions={
             <Dialog open={isAddCountryOpen} onOpenChange={setIsAddCountryOpen}>
               <DialogTrigger asChild>
-                <Button className={addButtonClass}>
+                <Button size="sm" className={addButtonClass}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Countries
                 </Button>
@@ -671,16 +668,13 @@ export const LocationAccountPage = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
+                  <div className="fm-action-bar">
+                    <button type="button" className="fm-action-secondary" onClick={() => setIsAddCountryOpen(false)}>
                       Cancel
-                    </Button>
-                    <Button
-                      className="bg-brand hover:bg-brand-hover text-white"
-                      onClick={handleAddCountry}
-                    >
+                    </button>
+                    <button type="button" className="fm-action-primary" onClick={handleAddCountry}>
                       Add Country
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </DialogContent>
@@ -718,7 +712,7 @@ export const LocationAccountPage = () => {
             leftActions={
             <Dialog open={isAddRegionOpen} onOpenChange={setIsAddRegionOpen}>
               <DialogTrigger asChild>
-                <Button className={addButtonClass}>
+                <Button size="sm" className={addButtonClass}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Region
                 </Button>
@@ -763,16 +757,13 @@ export const LocationAccountPage = () => {
                       placeholder="Enter region name"
                     />
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
+                  <div className="fm-action-bar">
+                    <button type="button" className="fm-action-secondary" onClick={() => setIsAddRegionOpen(false)}>
                       Cancel
-                    </Button>
-                    <Button
-                      className="bg-brand hover:bg-brand-hover text-white"
-                      onClick={handleAddRegion}
-                    >
+                    </button>
+                    <button type="button" className="fm-action-primary" onClick={handleAddRegion}>
                       Add Region
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </DialogContent>
@@ -818,7 +809,7 @@ export const LocationAccountPage = () => {
             <div className="flex gap-2">
               <Dialog open={isAddZoneOpen} onOpenChange={setIsAddZoneOpen}>
                 <DialogTrigger asChild>
-                  <Button className={addButtonClass}>
+                  <Button size="sm" className={addButtonClass}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Zone
                   </Button>
@@ -878,23 +869,20 @@ export const LocationAccountPage = () => {
                         placeholder="Enter zone name"
                       />
                     </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" onClick={() => setIsAddZoneOpen(false)}>
+                    <div className="fm-action-bar">
+                      <button type="button" className="fm-action-secondary" onClick={() => setIsAddZoneOpen(false)}>
                         Cancel
-                      </Button>
-                      <Button
-                        className="bg-brand hover:bg-brand-hover text-white"
-                        onClick={handleAddZone}
-                      >
+                      </button>
+                      <button type="button" className="fm-action-primary" onClick={handleAddZone}>
                         Add Zone
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
               </Dialog>
               <Dialog open={isEditZoneOpen} onOpenChange={setIsEditZoneOpen}>
                 <DialogTrigger asChild>
-                  <Button className={addButtonClass}>
+                  <Button size="sm" variant="outline" className="h-9 px-4 text-sm font-medium">
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Zone
                   </Button>
@@ -928,13 +916,10 @@ export const LocationAccountPage = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="flex justify-end pt-4">
-                      <Button
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                        onClick={handleEditSelectedZones}
-                      >
+                    <div className="fm-action-bar pt-4">
+                      <button type="button" className="fm-action-primary" onClick={handleEditSelectedZones}>
                         Edit Selected Zone
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </DialogContent>
@@ -995,20 +980,17 @@ export const LocationAccountPage = () => {
                   />
                   <Button
                     onClick={handleSubmitEntity}
-                    className="bg-brand hover:bg-brand-hover text-white px-6"
                   >
                     Submit
                   </Button>
                   <Button
                     onClick={handleSampleFormat}
                     variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
                   >
                     ðŸ“ Sample Format
                   </Button>
                   <Button
                     onClick={handleImportEntity}
-                    className="bg-brand hover:bg-brand-hover text-white px-6"
                   >
                     + Import
                   </Button>
@@ -1049,6 +1031,7 @@ export const LocationAccountPage = () => {
             pageSize={10}
             leftActions={
               <Button
+                size="sm"
                 className={addButtonClass}
                 onClick={() => setShowEntityForm(!showEntityForm)}
               >
@@ -1094,7 +1077,7 @@ export const LocationAccountPage = () => {
             leftActions={
             <Dialog open={isAddUserCategoryOpen} onOpenChange={setIsAddUserCategoryOpen}>
               <DialogTrigger asChild>
-                <Button className={addButtonClass}>
+                <Button size="sm" className={addButtonClass}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add User Category
                 </Button>
@@ -1116,16 +1099,13 @@ export const LocationAccountPage = () => {
                       placeholder="Enter user category name"
                     />
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddUserCategoryOpen(false)}>
+                  <div className="fm-action-bar">
+                    <button type="button" className="fm-action-secondary" onClick={() => setIsAddUserCategoryOpen(false)}>
                       Cancel
-                    </Button>
-                    <Button
-                      className="bg-brand hover:bg-brand-hover text-white"
-                      onClick={handleSubmitUserCategory}
-                    >
+                    </button>
+                    <button type="button" className="fm-action-primary" onClick={handleSubmitUserCategory}>
                       Add User Category
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </DialogContent>
@@ -1152,16 +1132,13 @@ export const LocationAccountPage = () => {
                     placeholder="Enter user category name"
                   />
                 </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsEditUserCategoryOpen(false)}>
+                <div className="fm-action-bar">
+                  <button type="button" className="fm-action-secondary" onClick={() => setIsEditUserCategoryOpen(false)}>
                     Cancel
-                  </Button>
-                  <Button
-                    className="bg-brand hover:bg-brand-hover text-white"
-                    onClick={handleUpdateUserCategory}
-                  >
+                  </button>
+                  <button type="button" className="fm-action-primary" onClick={handleUpdateUserCategory}>
                     Update User Category
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>
@@ -1234,13 +1211,10 @@ export const LocationAccountPage = () => {
               onRemove={() => setZoneImageFile(null)}
             />
 
-            <div className="flex justify-end pt-4">
-              <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
-                onClick={handleSaveZoneChanges}
-              >
+            <div className="fm-action-bar pt-4">
+              <button type="button" className="fm-action-primary" onClick={handleSaveZoneChanges}>
                 Save Changes
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

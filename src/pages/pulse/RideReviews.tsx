@@ -1,8 +1,11 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Star, Loader2, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { Tabs } from "@/components/ui/tabs";
+import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
 
 interface ApiReview {
   id: number;
@@ -111,23 +114,7 @@ export const RideReviews: React.FC = () => {
 
   return (
     <div className="bg-[#F5F5F0] min-h-screen px-6 py-4">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate(-1)}
-        >
-          Carpool
-        </span>{" "}
-        &gt;{" "}
-        <span
-          className="cursor-pointer hover:text-gray-700"
-          onClick={() => navigate(`/pulse/carpool/ride-detail?id=${rideId}`)}
-        >
-          Ride Detail
-        </span>{" "}
-        &gt; <span className="text-gray-700">Reviews</span>
-      </div>
+      <PulsePageHeader title="Reviews" parent={{ label: "Ride Detail", to: rideId ? `/pulse/carpool/ride-detail?id=${rideId}` : "/pulse/carpool/rides" }} />
 
       {/* Loading */}
       {loading && (
@@ -150,7 +137,7 @@ export const RideReviews: React.FC = () => {
           <div className="flex gap-4 mb-4">
             {/* Average rating card */}
             <div className="bg-white border border-gray-200 rounded p-6 flex flex-col items-center justify-center w-48 shrink-0">
-              <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded bg-[#C4B89D54] flex items-center justify-center mb-3">
                 <Star className="w-7 h-7 fill-[#C4A96A] text-[#C4A96A]" />
               </div>
               <p className="text-3xl font-bold text-gray-900 mb-2">
@@ -200,8 +187,8 @@ export const RideReviews: React.FC = () => {
                   {driverData.firstname} {driverData.lastname}
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-14 h-14 rounded bg-[#C4B89D54] flex items-center justify-center">
+                <svg className="w-6 h-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z" />
                 </svg>
@@ -215,8 +202,8 @@ export const RideReviews: React.FC = () => {
                 <p className="text-3xl font-bold text-gray-900">{positiveReviews}</p>
                 <p className="text-xs text-gray-400 mt-1">4+ stars</p>
               </div>
-              <div className="w-10 h-10 rounded-sm bg-[#E8F5E9] flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-14 h-14 rounded bg-[#C4B89D54] flex items-center justify-center">
+                <svg className="w-6 h-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
@@ -225,35 +212,23 @@ export const RideReviews: React.FC = () => {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setActiveFilter(opt.value)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-medium border transition-colors ${
-                  activeFilter === opt.value
-                    ? "bg-[#C72030] text-white border-[#C72030]"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-                }`}
-              >
-                {opt.label}
-                {opt.value !== 0 && (
-                  <Star
-                    className={`w-3.5 h-3.5 ${
-                      activeFilter === opt.value
-                        ? "fill-white text-white"
-                        : "fill-[#C4A96A] text-[#C4A96A]"
-                    }`}
-                  />
-                )}
-                {opt.value !== 0 && (
-                  <span className={`text-xs ${activeFilter === opt.value ? "text-white/80" : "text-gray-400"}`}>
-                    ({ratingCounts[opt.value] || 0})
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+          <Tabs value={String(activeFilter)} onValueChange={(v) => setActiveFilter(Number(v))} className="w-full mb-4">
+            <AssetTabsList>
+              {FILTER_OPTIONS.map((opt) => (
+                <AssetTabsTrigger key={opt.value} value={String(opt.value)} className="flex items-center justify-center gap-1.5">
+                  {opt.label}
+                  {opt.value !== 0 && (
+                    <Star className="w-3.5 h-3.5 fill-[#C4A96A] text-[#C4A96A]" />
+                  )}
+                  {opt.value !== 0 && (
+                    <span className="text-xs text-gray-400">
+                      ({ratingCounts[opt.value] || 0})
+                    </span>
+                  )}
+                </AssetTabsTrigger>
+              ))}
+            </AssetTabsList>
+          </Tabs>
 
           {/* Review cards */}
           <div className="space-y-3">

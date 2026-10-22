@@ -2,13 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import {
+import { Plus,
     Eye,
     Trophy,
     Circle,
     Ban,
     AlertCircle,
-    Plus,
 } from "lucide-react";
 import {
     Pagination,
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { TextField, InputAdornment, Switch } from "@mui/material";
+import { Switch } from "@/components/ui/switch";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRef } from "react";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
@@ -356,8 +355,8 @@ const PulseContests: React.FC = () => {
                             }}
                             className="bg-[#F6F4EE] p-6 rounded-lg cursor-pointer shadow hover:shadow-md flex gap-4"
                         >
-                            <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                                <Icon className="w-6 h-6 text-[#C72030]" />
+                            <div className="w-14 h-14 bg-[#C4B89D54] rounded flex items-center justify-center">
+                                <Icon className="w-6 h-6 text-brand" />
                             </div>
                             <div>
                                 <div className="text-2xl font-semibold">
@@ -411,17 +410,8 @@ const PulseContests: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <Switch
                                     checked={contest.isActive}
-                                    onChange={() => handleToggleActive(contest.id, contest.isActive)}
+                                    onCheckedChange={() => handleToggleActive(contest.id, contest.isActive)}
                                     disabled={togglingId === contest.id || contest.status === "Expired"}
-                                    size="small"
-                                    sx={{
-                                        "& .MuiSwitch-switchBase.Mui-checked": {
-                                            color: "#22c55e",
-                                        },
-                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                                            backgroundColor: "#22c55e",
-                                        },
-                                    }}
                                 />
                                 <span className="text-sm font-medium">
                                     {contest.isActive ? "Active" : "Inactive"}
@@ -439,13 +429,7 @@ const PulseContests: React.FC = () => {
                     loadingMessage={searchLoading ? "Searching contests..." : "Loading contests..."}
                     leftActions={
                         <div className="flex items-center gap-2">
-                            <Button
-                                onClick={() => navigate("/pulse/contests/create")}
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-none transition-colors duration-200 flex items-center gap-2"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Create Contest
-                            </Button>
+                            <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/contests/create")}><Plus className="w-4 h-4 mr-2" />Create Contest</Button>
                         </div>
                     }
                     storageKey="contest-table"

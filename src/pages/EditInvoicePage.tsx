@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { accountingEvents, useAccountingFormOpened } from '@/components/PostHogAccountingEvents';
 import { format, parseISO } from 'date-fns';
 import {
     BankRecord,
@@ -166,6 +167,7 @@ interface ExternalUser {
 export const EditInvoicePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    useAccountingFormOpened('invoice', 'edit', id);
 
     const lock_account_id = localStorage.getItem("lock_account_id");
     const baseUrl = localStorage.getItem('baseUrl');
@@ -1276,11 +1278,17 @@ export const EditInvoicePage: React.FC = () => {
                 }
             });
 
+            accountingEvents.onRecordUpdated('invoice', id, {
+                amount: totalAmount2,
+                item_count: items.length,
+                status: saveAsDraft ? 'draft' : 'sent',
+            });
             toast.success(`Invoice updated successfully!`);
             navigate('/accounting/invoices/list');
         } catch (error) {
             console.error('Error updating invoice:', error);
             toast.error('Failed to update invoice');
+            accountingEvents.onSaveFailed('invoice', 'update', error, { record_id: id });
         } finally {
             setIsSubmitting(false);
         }

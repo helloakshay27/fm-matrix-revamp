@@ -41,6 +41,7 @@ import {
   Heart,
   Car,
 } from "lucide-react";
+import "@/styles/pulse-design-system.css";
 
 // Pulse-specific module configuration
 const modulesByPackage = {
@@ -92,17 +93,7 @@ const modulesByPackage = {
       href: "/pulse/events",
     },
     {
-      name: "Contests",
-      icon: Target,
-      href: "/pulse/contests",
-    },
-    {
-      name: "Rewards",
-      icon: Trophy,
-      href: "/pulse/rewards",
-    },
-    {
-      name: "Services",
+      name: "Curated Services",
       icon: Gift,
       href: "/pulse/curated-services",
       subItems: [
@@ -110,11 +101,7 @@ const modulesByPackage = {
           name: "Service Category",
           href: "/pulse/curated-services/service-category",
         },
-        { name: "Curated Service", href: "/pulse/curated-services/service" },
-        {
-          name: "Supported Service",
-          href: "/pulse/supported-services/service",
-        },
+        { name: "Service", href: "/pulse/curated-services/service" },
       ],
     },
     {
@@ -123,10 +110,6 @@ const modulesByPackage = {
       href: "/pulse/pulse-privilege",
       subItems: [
         { name: "Plus Service", href: "/pulse/pulse-privilege/plus-service" },
-        {
-          name: "Service Category",
-          href: "/pulse/pulse-privilege/service-category",
-        },
       ],
     },
     {
@@ -169,7 +152,27 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Notification",
+      name: "Plus Service Category",
+      icon: Shield,
+      href: "/pulse/pulse-privilege/service-category",
+    },
+    {
+      name: "Services",
+      icon: Gift,
+      href: "/pulse/curated-services",
+    },
+    {
+      name: "Contests",
+      icon: Target,
+      href: "/pulse/contests",
+    },
+    {
+      name: "Rewards",
+      icon: Trophy,
+      href: "/pulse/rewards",
+    },
+    {
+      name: "Notifications",
       icon: Bell,
       href: "/pulse/notifications",
     },
@@ -224,7 +227,7 @@ const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "Admin Users",
+          name: "FM Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },
@@ -451,6 +454,13 @@ export const PulseSidebar = () => {
     setExpandedItems([]);
   }, []);
 
+  // Scope the Business Genie design layer (pulse-design-system.css) to the
+  // Pulse shell. On body so portalled dialogs, menus and toasts get it too.
+  React.useEffect(() => {
+    document.body.classList.add("pulse-app");
+    return () => document.body.classList.remove("pulse-app");
+  }, []);
+
   const toggleExpanded = (itemName: string) => {
     setExpandedItems((prev) =>
       prev.includes(itemName)
@@ -497,7 +507,10 @@ export const PulseSidebar = () => {
     } else if (path.startsWith("/pulse") || !currentSection) {
       setCurrentSection("Pulse Privilege");
     }
-  }, [location.pathname, setCurrentSection, showPulseUsageAnalytics, currentSection]);
+    // Only re-sync on route change - with currentSection as a dep, a header tab
+    // click would re-run this and snap the section back to the route's section.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, setCurrentSection, showPulseUsageAnalytics]);
 
   const currentModules = dynamicModulesByPackage[currentSection as keyof typeof dynamicModulesByPackage] || [];
 

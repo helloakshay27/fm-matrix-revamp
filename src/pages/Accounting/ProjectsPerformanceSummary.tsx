@@ -4,6 +4,7 @@ import { Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { accountingEvents, useAccountingReportViewed } from "@/components/PostHogAccountingEvents";
 import { useAppSelector } from "@/store/hooks";
 
 interface ProjectsPerformanceSummaryRow {
@@ -119,6 +120,7 @@ const ProjectsPerformanceSummary: React.FC = () => {
     fromDate: defaultFrom,
     toDate: defaultTo,
   });
+  useAccountingReportViewed("projects_performance_summary");
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -191,12 +193,13 @@ const ProjectsPerformanceSummary: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() =>
+            onClick={() => {
+              accountingEvents.onReportGenerated("projects_performance_summary", { from_date: filters.fromDate, to_date: filters.toDate });
               setApplied({
                 fromDate: filters.fromDate,
                 toDate: filters.toDate,
-              })
-            }
+              });
+            }}
           >
             View
           </Button>

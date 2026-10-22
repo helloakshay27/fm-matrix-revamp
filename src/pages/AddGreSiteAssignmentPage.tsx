@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, UserCheck } from "lucide-react";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { toast } from "sonner";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 
 interface GreUser {
   id: number;
@@ -16,18 +16,6 @@ interface SiteItem {
   name?: string;
   site_name?: string;
 }
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#ddd" },
-    "&:hover fieldset": { borderColor: "#C72030" },
-    "&.Mui-focused fieldset": { borderColor: "#C72030" },
-  },
-};
 
 export const AddGreSiteAssignmentPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -187,34 +175,32 @@ export const AddGreSiteAssignmentPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={() => navigate("/pulse/gre-site-assignment-setup")}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>GRE Site Assignment Setup</span>
+          <span>GRE Site Assignment List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">
-            {isEditMode ? "Edit" : "Add"}
-          </span>
+          <span className="text-gray-900 font-medium">{isEditMode ? "Edit Assignment" : "Create New Assignment"}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEditMode ? "EDIT GRE SITE ASSIGNMENT" : "NEW GRE SITE ASSIGNMENT"}
-        </h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{isEditMode ? "EDIT GRE SITE ASSIGNMENT" : "NEW GRE SITE ASSIGNMENT"}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Assignment Details</h2>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormControl fullWidth variant="outlined">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <FormSection title="ASSIGNMENT DETAILS" icon={UserCheck}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={{ "& .MuiInputBase-root": assetFieldStyles }}
+            >
               <InputLabel shrink>GRE User</InputLabel>
               <Select
                 value={formData.user_id}
@@ -223,7 +209,6 @@ export const AddGreSiteAssignmentPage = () => {
                 }
                 label="GRE User"
                 displayEmpty
-                sx={fieldStyles}
               >
                 <MenuItem value="" disabled>
                   <em>
@@ -240,7 +225,11 @@ export const AddGreSiteAssignmentPage = () => {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth variant="outlined">
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={{ "& .MuiInputBase-root": assetFieldStyles }}
+            >
               <InputLabel shrink>Site</InputLabel>
               <Select
                 value={formData.pms_site_id}
@@ -252,7 +241,6 @@ export const AddGreSiteAssignmentPage = () => {
                 }
                 label="Site"
                 displayEmpty
-                sx={fieldStyles}
               >
                 <MenuItem value="" disabled>
                   <em>
@@ -269,25 +257,14 @@ export const AddGreSiteAssignmentPage = () => {
               </Select>
             </FormControl>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="flex gap-4 justify-center pt-2">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="bg-[#C72030] hover:bg-[#A01828] text-white px-8 py-2"
-          >
-            {loading ? "Saving..." : isEditMode ? "Update" : "Save"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/pulse/gre-site-assignment-setup")}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={() => navigate("/pulse/gre-site-assignment-setup")}
+          submitLabel={isEditMode ? "Update" : "Save"}
+          isSubmitting={loading}
+          submitAsFormSubmit
+        />
       </form>
     </div>
   );

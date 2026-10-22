@@ -41,7 +41,7 @@ export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
   }, [usersQuery.error]);
 
   const handleDownload = async () => {
-    if (isDownloading || !filters.enabled) return;
+    if (isDownloading || !filters.enabled || usersQuery.isLoading || usersQuery.isFetching) return;
     setIsDownloading(true);
     try {
       const blob = await downloadRecentActiveUsers(filters);
@@ -62,14 +62,16 @@ export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
           className="iconbtn recent-activity-download"
           aria-label="Download recent activity"
           title="Download recent activity"
-          disabled={isDownloading || !filters.enabled}
+          disabled={isDownloading || !filters.enabled || usersQuery.isLoading || usersQuery.isFetching}
           onClick={handleDownload}
         >
           <Download aria-hidden="true" />
         </button>
       </div>
-      {!filters.enabled || usersQuery.isLoading ? (
+      {!filters.enabled || usersQuery.isLoading || usersQuery.isFetching ? (
         <p className="recent-activity-state">Loading…</p>
+      ) : usersQuery.isError ? (
+        <p className="recent-activity-state">Activity unavailable.</p>
       ) : users.length === 0 ? (
         <p className="recent-activity-state">No recent activity yet.</p>
       ) : (
