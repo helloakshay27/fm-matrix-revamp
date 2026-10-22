@@ -69,6 +69,7 @@ interface ParkingSlotCategoryProps {
   isStack?: boolean;
   customSlotNames: Record<string, string>;
   onSlotCountChange: (categoryId: number, type: SlotType, value: number) => void;
+  onSlotRemove: (categoryId: number, type: SlotType, index: number) => void;
   onSlotNameChange: (categoryId: number, type: SlotType, index: number, newName: string) => void;
 }
 
@@ -86,6 +87,7 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
   isStack = false,
   customSlotNames,
   onSlotCountChange,
+  onSlotRemove,
   onSlotNameChange,
 }) => {
   // Local, uncommitted value — typing here must NOT touch the actual slot
@@ -121,7 +123,7 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
   };
 
   const handleAddClick = () => {
-    const parsed = Math.max(0, parseInt(draftCount, 10) || 0);
+    const parsed = Math.max(0, parseFloat(draftCount) || 0);
     onSlotCountChange(categoryId, type, parsed);
   };
 
@@ -153,8 +155,13 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
                     placeholder="Slot name"
                   />
                   <button
+                    type="button"
                     className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                    onClick={() => onSlotCountChange(categoryId, type, count - 1)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onSlotRemove(categoryId, type, index);
+                    }}
                   >
                     &#x2715;
                   </button>
@@ -169,6 +176,7 @@ const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
           onChange={(e) => setDraftCount(e.target.value)}
           className="w-16 h-8 text-center"
           min="0"
+          step={type === 'stack' ? '0.5' : '1'}
         />
         <Button
           size="sm"
@@ -471,24 +479,20 @@ export const EditSlotConfigurationPage = () => {
       slotNumber++;
     }
 
-    // Stack slots (come in pairs)
-    for (let i = 0; i < categoryData.stack; i++) {
-      const keyA = `${categoryId}_stack_${i * 2}`;
-      const keyB = `${categoryId}_stack_${i * 2 + 1}`;
-      const customNameA = customSlotNames[keyA];
-      const customNameB = customSlotNames[keyB];
+    // Stack count is measured in pairs, but a user can remove one displayed
+    // slot at a time, leaving a half pair (for example, 2.5 means 5 slots).
+    const stackedSlotCount = Math.round(categoryData.stack * 2);
+    for (let index = 0; index < stackedSlotCount; index++) {
+      const pairNumber = Math.floor(index / 2) + 1;
+      const suffix = index % 2 === 0 ? 'A' : 'B';
+      const customName = customSlotNames[`${categoryId}_stack_${index}`];
       slots.push({
-        parking_name: customNameA || `${prefix}${slotNumber}A`,
+        parking_name: customName || `${prefix}${slotNumber + pairNumber - 1}${suffix}`,
         reserved: false,
         stacked: true
       });
-      slots.push({
-        parking_name: customNameB || `${prefix}${slotNumber}B`,
-        reserved: false,
-        stacked: true
-      });
-      slotNumber++;
     }
+    slotNumber += Math.ceil(stackedSlotCount / 2);
 
     // Reserved slots
     for (let i = 0; i < categoryData.reserved; i++) {
@@ -525,6 +529,61 @@ export const EditSlotConfigurationPage = () => {
         }
       }
     }));
+  };
+
+  const handleSlotRemove = (
+    categoryId: number,
+    type: SlotType,
+    index: number
+  ) => {
+    // Stack counts use pairs, while each displayed slot can be removed alone.
+    const firstRemovedIndex = index;
+    const removedSlots = 1;
+    setFormData(prev => {
+      const category = prev.categories[categoryId];
+      if (!category) return prev;
+
+      return {
+        ...prev,
+        categories: {
+          ...prev.categories,
+          [categoryId]: {
+            ...category,
+            [type]: Math.max(0, category[type] - (type === 'stack' ? 0.5 : 1)),
+          },
+        },
+      };
+    });
+
+    setCustomSlotNames(prev => {
+      const next = { ...prev };
+      const prefix = `${categoryId}_${type}_`;
+
+      // Rebuild this slot type's indexed names from the previous state. This
+      // avoids index collisions while compacting names after the removed slot.
+      const indexedNames = Object.keys(prev)
+        .filter(key => key.startsWith(prefix))
+        .map(key => ({
+          index: Number(key.slice(prefix.length)),
+          name: prev[key],
+        }))
+        .filter(({ index: slotIndex }) =>
+          slotIndex < firstRemovedIndex || slotIndex >= firstRemovedIndex + removedSlots
+        );
+
+      Object.keys(next).forEach(key => {
+        if (key.startsWith(prefix)) delete next[key];
+      });
+
+      indexedNames.forEach(({ index: slotIndex, name }) => {
+        const nextIndex = slotIndex >= firstRemovedIndex + removedSlots
+          ? slotIndex - removedSlots
+          : slotIndex;
+        next[`${prefix}${nextIndex}`] = name;
+      });
+
+      return next;
+    });
   };
 
   const handleSlotNameChange = (
@@ -678,6 +737,7 @@ export const EditSlotConfigurationPage = () => {
                   stackCount={formData.categories[category.id]?.stack || 0}
                   customSlotNames={customSlotNames}
                   onSlotCountChange={handleSlotCountChange}
+                  onSlotRemove={handleSlotRemove}
                   onSlotNameChange={handleSlotNameChange}
                   buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
@@ -690,6 +750,7 @@ export const EditSlotConfigurationPage = () => {
                   stackCount={formData.categories[category.id]?.stack || 0}
                   customSlotNames={customSlotNames}
                   onSlotCountChange={handleSlotCountChange}
+                  onSlotRemove={handleSlotRemove}
                   onSlotNameChange={handleSlotNameChange}
                   buttonColorClass="bg-brand hover:bg-brand-hover"
                   isStack
@@ -703,6 +764,7 @@ export const EditSlotConfigurationPage = () => {
                   stackCount={formData.categories[category.id]?.stack || 0}
                   customSlotNames={customSlotNames}
                   onSlotCountChange={handleSlotCountChange}
+                  onSlotRemove={handleSlotRemove}
                   onSlotNameChange={handleSlotNameChange}
                   buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
