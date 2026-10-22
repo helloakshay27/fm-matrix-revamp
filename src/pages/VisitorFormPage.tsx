@@ -26,6 +26,7 @@ import {
   ticketManagementAPI,
   UserOption,
 } from "@/services/ticketManagementAPI";
+import { fetchVisitorSetup, VisitPurpose } from "@/services/visitorSetupAPI";
 import { useSelector } from 'react-redux';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
@@ -191,6 +192,24 @@ export const VisitorFormPage = () => {
   } | null>(null);
   const [loadingVisitorInfo, setLoadingVisitorInfo] = useState(false);
   const [showVisitorInfo, setShowVisitorInfo] = useState(false);
+
+  const [visitPurposes, setVisitPurposes] = useState<VisitPurpose[]>([]);
+
+  useEffect(() => {
+    const loadVisitPurposes = async () => {
+      try {
+        const setup = await fetchVisitorSetup();
+        // Only active purposes are selectable
+        setVisitPurposes(
+          (setup.visit_purposes || []).filter((p) => Boolean(p.active))
+        );
+      } catch (error) {
+        console.error("Failed to load visit purposes:", error);
+        toast.error("Failed to load visit purposes");
+      }
+    };
+    loadVisitPurposes();
+  }, []);
 
   useEffect(() => {
     getCameraDevices();
@@ -1469,10 +1488,11 @@ export const VisitorFormPage = () => {
                     displayEmpty
                   >
                     <MenuItem value="">Select Purpose</MenuItem>
-                    <MenuItem value="Courier">Courier</MenuItem>
-                    <MenuItem value="Personal">Personal</MenuItem>
-                    <MenuItem value="Meeting">Meeting</MenuItem>
-                    <MenuItem value="Vendor">Vendor</MenuItem>
+                    {visitPurposes.map((purpose) => (
+                      <MenuItem key={purpose.id} value={purpose.purpose}>
+                        {purpose.purpose}
+                      </MenuItem>
+                    ))}
                   </MuiSelect>
                 </FormControl>
               )}

@@ -32,6 +32,21 @@ import {
   type VisitingPurposeFilters,
 } from '@/components/VisitingPurposeFilterDialog';
 
+// Format the API's ISO created_at (e.g. 2026-10-21T15:58:11.000+05:30) for display
+const formatCreatedOn = (createdAt?: string): string => {
+  if (!createdAt) return '-';
+  const date = new Date(createdAt);
+  if (isNaN(date.getTime())) return '-';
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 45 },
   backgroundColor: '#fff',
@@ -271,14 +286,7 @@ export const VisitingPurposePage = () => {
             id: purpose.id,
             purpose: purpose.purpose,
             status: Boolean(purpose.active),
-            createdOn: new Date().toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }),
+            createdOn: formatCreatedOn(purpose.created_at),
             createdBy: 'System',
             active: purpose.active
           }));
@@ -290,14 +298,7 @@ export const VisitingPurposePage = () => {
             id: purpose.id,
             purpose: purpose.purpose,
             status: Boolean(purpose.active),
-            createdOn: new Date().toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }),
+            createdOn: formatCreatedOn(purpose.created_at),
             createdBy: 'System',
             active: purpose.active
           }));
@@ -310,14 +311,7 @@ export const VisitingPurposePage = () => {
             staffType: staffType.related_to || 'Unknown', // related_to becomes Staff Type column
             workType: staffType.staff_type, // staff_type becomes Work Type column
             status: Boolean(staffType.active),
-            createdOn: new Date().toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }),
+            createdOn: formatCreatedOn(staffType.created_at),
             createdBy: 'System',
             active: staffType.active
           }));
@@ -330,14 +324,7 @@ export const VisitingPurposePage = () => {
             id: visitorSetupResponse.visitor_comment.id,
             comment: visitorSetupResponse.visitor_comment.description,
             status: Boolean(visitorSetupResponse.visitor_comment.active),
-            createdOn: new Date().toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }),
+            createdOn: formatCreatedOn(visitorSetupResponse.visitor_comment.created_at),
             createdBy: 'System',
             description: visitorSetupResponse.visitor_comment.description,
             active: visitorSetupResponse.visitor_comment.active

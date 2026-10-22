@@ -4,12 +4,14 @@ export interface VisitPurpose {
   id: number;
   purpose: string;
   active: number;
+  created_at?: string;
 }
 
 export interface MoveInOutPurpose {
   id: number;
   purpose: string;
   active: number;
+  created_at?: string;
 }
 
 export interface StaffType {
@@ -17,12 +19,14 @@ export interface StaffType {
   staff_type: string;
   related_to: string | null;
   active: number;
+  created_at?: string;
 }
 
 export interface VisitorComment {
   id: number;
   description: string;
   active: boolean;
+  created_at?: string;
 }
 
 export interface VisitorSetupResponse {
