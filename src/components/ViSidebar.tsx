@@ -141,7 +141,7 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
     {
       name: "Report",
       icon: Download,
-      href: "/safety",
+      href: "/safety/report",
       subItems: [
         {
           name: "Msafe User Report",
