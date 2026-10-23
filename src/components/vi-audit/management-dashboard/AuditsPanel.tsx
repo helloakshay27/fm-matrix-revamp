@@ -1,4 +1,4 @@
-import { AUDITS, CHARTS, fmt } from "./data";
+import { AUDITS, CHARTS, fmt, type ChartSpec } from "./data";
 import { AuditChart } from "./AuditChart";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
@@ -11,6 +11,17 @@ interface AuditsPanelProps {
   onDrill: (key: string) => void;
   onAudit: (index: number) => void;
 }
+
+// Draft is hidden from the Audit Status chart (donut and bar); the first entry is skipped.
+const AUDIT_STATUS_SPEC: ChartSpec = {
+  ...CHARTS.auditStatus,
+  labels: CHARTS.auditStatus.labels.slice(1),
+  datasets: CHARTS.auditStatus.datasets.map((series) => ({
+    ...series,
+    data: series.data.slice(1),
+    pieColors: series.pieColors?.slice(1),
+  })),
+};
 
 export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit }: AuditsPanelProps) {
   return (
@@ -28,22 +39,22 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
         </div>
       </div>
       <div className="g g3">
-        <ChartCard title="Audit Status" sub="Draft · Open · Closed" spec={CHARTS.auditStatus} options={["donut", "bar"]}>
+        <ChartCard title="Audit Status" sub="Open · Closed" spec={AUDIT_STATUS_SPEC} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
               <div className="donut-c">
-                <AuditChart spec={CHARTS.auditStatus} type={type} compactDonut />
+                <AuditChart spec={AUDIT_STATUS_SPEC} type={type} compactDonut />
                 <div className="donut-center">
                   <div className="dh-val">52.2%</div>
                   <div className="dh-lbl">Closed</div>
                 </div>
               </div>
               <div className="donut-legend">
-                <div className="dl-row" onClick={() => onDrill("kpi-draft")}>
+                {/* <div className="dl-row" onClick={() => onDrill("kpi-draft")}>
                   <span className="dl-sw" style={{ background: "#F4795F" }} />
                   <span className="dl-lbl">Draft</span>
                   <span className="dl-val">{fmt(values[1])}</span>
-                </div>
+                </div> */}
                 <div className="dl-row" onClick={() => onDrill("kpi-open")}>
                   <span className="dl-sw" style={{ background: "var(--vi-red)" }} />
                   <span className="dl-lbl">Open</span>
