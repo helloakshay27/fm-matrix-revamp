@@ -673,33 +673,145 @@ const KRCCFormListDashboard = lazy(() =>
   }))
 );
 // Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
-const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
-const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
-const AuditorEditAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorEditAuditPage"));
-const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
-const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
-const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
-const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
-const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
-const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
-const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
-const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
-const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
-const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
-const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
-const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
-const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
-const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
-const IncidentReporterListPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterListPage"));
-const IncidentReporterAddPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterAddPage"));
-const IncidentReporterDetailPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterDetailPage"));
-const IncidentSpocListPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocListPage"));
-const IncidentSpocDetailPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocDetailPage"));
-const IncidentSpocActionPlanPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage"));
-const IncidentActionOwnerListPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage"));
-const IncidentActionOwnerDetailPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage"));
-const IncidentActionOwnerActionTakenPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"));
-const IncidentFunctionalHeadListPage = lazy(() => import("./pages/vi-incident/IncidentRolePlaceholderPage").then((m) => ({ default: m.IncidentFunctionalHeadListPage })));
+const AuditorAuditListPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditListPage")
+);
+const AuditorAddAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAddAuditPage")
+);
+const AuditorEditAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorEditAuditPage")
+);
+const AuditorAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditDetailPage")
+);
+const AuditorObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorObservationDetailPage")
+);
+const SpocAuditListPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditListPage")
+);
+const SpocAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditDetailPage")
+);
+const SpocObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocObservationDetailPage")
+);
+const SpocActionPlanPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanPage")
+);
+const ActionOwnerAuditListPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage")
+);
+const ActionOwnerAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage")
+);
+const ActionOwnerObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage")
+);
+const ActionOwnerActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage")
+);
+const ActionOwnerActionTakenPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage")
+);
+const FunctionalHeadAuditListPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage")
+);
+const FunctionalHeadAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage")
+);
+const FunctionalHeadObservationDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"
+    )
+);
+
+const IncidentReporterListPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
+);
+const IncidentReporterAddPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterAddPage")
+);
+const IncidentReporterDetailPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterDetailPage")
+);
+const IncidentSpocListPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocListPage")
+);
+const IncidentSpocDetailPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocDetailPage")
+);
+const IncidentSpocActionPlanPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage")
+);
+const IncidentActionOwnerListPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage")
+);
+const IncidentActionOwnerDetailPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage")
+);
+const IncidentActionOwnerActionTakenPage = lazy(
+  () =>
+    import(
+      "./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"
+    )
+);
+const IncidentFunctionalHeadListPage = lazy(
+  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadListPage")
+);
+const IncidentFunctionalHeadDetailPage = lazy(
+  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadDetailPage")
+);
+const IncidentFunctionalHeadPlanDetailPage = lazy(
+  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadPlanDetailPage")
+);
+const InspectionInspectorListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionInspectorListPage,
+  }))
+);
+const InspectionInspectorDetailPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionInspectorDetailPage,
+  }))
+);
+const InspectionSpocDetailPage = lazy(
+  () => import("./pages/vi-inspection/spoc/InspectionSpocDetailPage")
+);
+const InspectionSpocActionPlanPage = lazy(
+  () => import("./pages/vi-inspection/spoc/InspectionSpocActionPlanPage")
+);
+const InspectionActionOwnerDetailPage = lazy(
+  () => import("./pages/vi-inspection/action-owner/InspectionActionOwnerDetailPage")
+);
+const InspectionActionOwnerActionTakenPage = lazy(
+  () => import("./pages/vi-inspection/action-owner/InspectionActionOwnerActionTakenPage")
+);
+const InspectionFunctionalHeadDetailPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionFunctionalHeadDetailPage,
+  }))
+);
+const InspectionInspectorAddPage = lazy(
+  () => import("./pages/vi-inspection/InspectionInspectorAddPage")
+);
+const InspectionSpocListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionSpocListPage,
+  }))
+);
+const InspectionActionOwnerListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionActionOwnerListPage,
+  }))
+);
+const InspectionFunctionalHeadListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionFunctionalHeadListPage,
+  }))
+);
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -5912,6 +6024,58 @@ function App() {
                             <Route
                               path="/safety/vi-incident/functional-head"
                               element={<IncidentFunctionalHeadListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id"
+                              element={<IncidentFunctionalHeadDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id/plans/:planId"
+                              element={<IncidentFunctionalHeadPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector"
+                              element={<InspectionInspectorListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector/add"
+                              element={<InspectionInspectorAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc"
+                              element={<InspectionSpocListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner"
+                              element={<InspectionActionOwnerListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/functional-head"
+                              element={<InspectionFunctionalHeadListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector/:id"
+                              element={<InspectionInspectorDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc/:id"
+                              element={<InspectionSpocDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc/:id/action-plan"
+                              element={<InspectionSpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner/:id"
+                              element={<InspectionActionOwnerDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner/:id/action-taken"
+                              element={<InspectionActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/functional-head/:id"
+                              element={<InspectionFunctionalHeadDetailPage />}
                             />
                             <Route
                               path="/safety/audit-list"

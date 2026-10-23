@@ -112,14 +112,15 @@ export const VI_INCIDENT_LIST: ViIncidentRecord[] = Array.from({ length: 12 }, (
 export const getViIncident = (id: string | undefined): ViIncidentRecord =>
   VI_INCIDENT_LIST.find((incident) => String(incident.id) === id) ?? VI_INCIDENT_LIST[0];
 
-/** Status tone classes for the incident status pill. */
+/** Status tone classes for the incident status pill — same ticket palette as the audit pills. */
 export const VI_INCIDENT_STATUS_TONE: Record<string, string> = {
-  Draft: "bg-[#FBE3D8] text-[#B5502A]",
-  Open: "bg-[#DCE8F4] text-[#2F5F8F]",
-  Closed: "bg-[#DDEBD3] text-[#4A6B2E]",
-  "Pending By SPOC": "bg-[#F5B5A6] text-[#8A2F1B]",
-  "Pending By Action Owner": "bg-[#F8E4C7] text-[#8A5A12]",
-  "Closed By Action Owner": "bg-[#DDEBD3] text-[#4A6B2E]",
+  Draft: "bg-yellow-100 text-yellow-700",
+  Open: "bg-blue-100 text-blue-700",
+  Closed: "bg-green-100 text-green-700",
+  "Pending By SPOC": "bg-yellow-100 text-yellow-700",
+  "Pending By Action Owner": "bg-yellow-100 text-yellow-700",
+  "Closed By Action Owner": "bg-green-100 text-green-700",
+  default: "bg-orange-100 text-orange-700",
 };
 
 /** Dropdown options for the injury section — placeholders until the masters API provides them. */
@@ -210,3 +211,15 @@ export const VI_INCIDENT_STATUSES: ViIncidentStatus[] = [
   "Pending By Action Owner",
   "Closed By Action Owner",
 ];
+
+/** Incident-card fields (ID, Status, Classification, Location) — the list columns in the role designs. */
+export const INCIDENT_CARD_COLUMNS: ColumnConfig[] = [
+  { key: "incidentId", label: "Incident ID", sortable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  { key: "classification", label: "Classification", sortable: true, defaultVisible: true },
+  { key: "incidentLocation", label: "Incident Location", sortable: true, defaultVisible: true },
+];
+
+/** Due label shown on an action plan card, e.g. "Due 18 Sep". */
+export const viIncidentPlanDueLabel = (plan: ViIncidentActionPlan) =>
+  plan.taken ? undefined : `Due ${plan.targetDate.replace(/\s\d{4}$/, "")}`;

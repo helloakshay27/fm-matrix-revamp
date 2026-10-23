@@ -4,7 +4,10 @@ import { toast } from "sonner";
 import { ArrowLeft, Paperclip, ShieldCheck, X } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  auditFieldSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import { getViIncident, getViIncidentActionPlans } from "@/components/vi-incident/viIncidentData";
 import { saveSubmittedActionTaken } from "@/components/vi-incident/viIncidentActionTakenStore";
@@ -76,18 +79,18 @@ const IncidentActionOwnerActionTakenPage = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={() => navigate(incidentPath)}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident</h1>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Taken</span>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident</h1>
+        <span className="text-sm text-gray-500">Action Taken</span>
       </div>
 
       <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
@@ -95,8 +98,8 @@ const IncidentActionOwnerActionTakenPage = () => {
           {plans.map((plan, index) => {
             const entry = entries[index];
             return (
-              <div key={plan.id} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
-                <div className="mb-4 text-sm font-semibold text-[#1A1A18]">
+              <div key={plan.id} className={index > 0 ? "border-t border-gray-200 pt-6" : ""}>
+                <div className="mb-4 text-sm font-semibold text-gray-900">
                   {index + 1}. {plan.cause}
                 </div>
                 <div className="space-y-5">
@@ -108,6 +111,7 @@ const IncidentActionOwnerActionTakenPage = () => {
                     placeholder="Describe immediate actions to be taken..."
                     value={entry.corrective}
                     onChange={(e) => updateEntry(index, { corrective: e.target.value })}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                   <TextField
@@ -118,10 +122,11 @@ const IncidentActionOwnerActionTakenPage = () => {
                     placeholder="Describe immediate actions to be taken..."
                     value={entry.preventive}
                     onChange={(e) => updateEntry(index, { preventive: e.target.value })}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                   <div>
-                    <label className="fm-action-secondary inline-flex cursor-pointer">
+                    <label className="inline-flex items-center justify-center gap-2 h-9 px-4 text-sm border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50 cursor-pointer">
                       <Paperclip className="w-4 h-4" />
                       Upload Attachment
                       <input
@@ -147,7 +152,7 @@ const IncidentActionOwnerActionTakenPage = () => {
                         {entry.attachments.map((file, fileIndex) => (
                           <span
                             key={`${file.name}-${fileIndex}`}
-                            className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]"
+                            className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900"
                           >
                             <span className="truncate">{file.name}</span>
                             <button
@@ -155,7 +160,7 @@ const IncidentActionOwnerActionTakenPage = () => {
                               onClick={() =>
                                 updateEntry(index, { attachments: entry.attachments.filter((_, i) => i !== fileIndex) })
                               }
-                              className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18]"
+                              className="text-gray-500 hover:text-gray-900"
                               aria-label={`Remove ${file.name}`}
                             >
                               <X className="w-3 h-3" />
@@ -172,6 +177,7 @@ const IncidentActionOwnerActionTakenPage = () => {
                       label={requiredLabel("Select closure Date")}
                       value={entry.closureDate}
                       onChange={(e) => updateEntry(index, { closureDate: e.target.value })}
+                      sx={auditFieldSx}
                       InputLabelProps={{ shrink: true }}
                     />
                   </div>
@@ -182,11 +188,11 @@ const IncidentActionOwnerActionTakenPage = () => {
         </div>
       </DetailCard>
 
-      <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
+      <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSaveDraft}>
           Save Draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={handleSubmit}>
+        <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmit}>
           Submit
         </button>
       </div>
