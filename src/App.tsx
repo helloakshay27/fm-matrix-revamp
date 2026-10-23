@@ -1972,6 +1972,9 @@ const FunctionalHeadObservationDetailPage = lazy(
 const ViAuditManagementDashboardPage = lazy(
   () => import("./pages/vi-audit/dashboard/ViAuditManagementDashboardPage")
 );
+const ViIncidentManagementDashboardPage = lazy(
+  () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -4944,6 +4947,10 @@ function App() {
                           <Route
                             path="/vi-audit/management-dashboard"
                             element={<ViAuditManagementDashboardPage />}
+                          />
+                          <Route
+                            path="/vi-incident/management-dashboard"
+                            element={<ViIncidentManagementDashboardPage />}
                           />
 
                           {/* Backend Routes */}
