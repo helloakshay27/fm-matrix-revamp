@@ -122,7 +122,7 @@ export function ViIncidentManagementDashboardPage() {
             <h2>{title}</h2>
             <div className="sub"><span className="live-dot" />Live · Last synced 2 min ago · <span>{scope.scope}</span></div>
           </div>
-          <button type="button" className="tb-icon-btn" title="Export" onClick={() => notify("Excel export started — Incident dashboard")}><DownloadIcon /></button>
+          {/* <button type="button" className="tb-icon-btn" title="Export" onClick={() => notify("Excel export started — Incident dashboard")}><DownloadIcon /></button> */}
         </div>
         <IncidentOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
         <IncidentsPanel values={scope.k} highlighted={highlight === "acc-inc"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onRow={openRow} />

@@ -19,8 +19,8 @@ export function InvestigationPanel({ highlighted, onDownload, onDrill }: { highl
         <ChartCard title="Top Contributing Causes" sub="Most selected causes across all groups" spec={CHARTS.invCauses} options={["bar"]} />
         <ChartCard title="Waiting for SPOC Review · Aging" sub="Days since the incident was submitted" spec={CHARTS.invAging} options={["bar", "donut"]} />
       </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
-        <div className="card">
+      <div className="g" style={{ marginTop: 16 }}>
+        {/* <div className="card">
           <div className="card-hd"><div><div className="card-title">Incident Progress</div><div className="card-sub">Share of reported incidents reaching each stage</div></div></div>
           <div style={{ padding: "4px 0" }}>
             {PROGRESS.map(([label, value, color]) => (
@@ -31,7 +31,7 @@ export function InvestigationPanel({ highlighted, onDownload, onDrill }: { highl
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
         <div className="card">
           <div className="card-hd"><div><div className="card-title">SPOCs with Most Pending Reviews</div><div className="card-sub">Incidents assigned and not yet reviewed</div></div></div>
           {spocs.map((item, index) => (

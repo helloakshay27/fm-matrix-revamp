@@ -1,4 +1,4 @@
-import { CHARTS, RECENT, fmt } from "./data";
+import { CHARTS, RECENT, fmt, type ChartSpec } from "./data";
 import { ChartCard } from "./ChartCard";
 import { IncidentChart } from "./IncidentChart";
 import { DownloadIcon } from "./icons";
@@ -13,6 +13,17 @@ interface IncidentsPanelProps {
 
 const badge = (status: string) => (status === "Closed" ? "b-info" : status === "Open" ? "b-err" : "b-warn");
 
+// Draft is hidden from the Incident Status chart (donut and bar); the first entry is skipped.
+const INC_STATUS_SPEC: ChartSpec = {
+  ...CHARTS.incStatus,
+  labels: CHARTS.incStatus.labels.slice(1),
+  datasets: CHARTS.incStatus.datasets.map((series) => ({
+    ...series,
+    data: series.data.slice(1),
+    pieColors: series.pieColors?.slice(1),
+  })),
+};
+
 export function IncidentsPanel({ values, highlighted, onDownload, onDrill, onRow }: IncidentsPanelProps) {
   const closedPct = values[0] ? `${((values[3] / values[0]) * 100).toFixed(1)}%` : "0%";
   return (
@@ -22,15 +33,15 @@ export function IncidentsPanel({ values, highlighted, onDownload, onDrill, onRow
         <div className="acc-hd-actions"><button type="button" className="acc-dl-btn" onClick={() => onDownload("Incidents")}><DownloadIcon size={13} />Excel</button></div>
       </div>
       <div className="g g3">
-        <ChartCard title="Incident Status" sub="Draft · Open · Closed" spec={CHARTS.incStatus} options={["donut", "bar"]}>
+        <ChartCard title="Incident Status" sub="Open · Closed" spec={INC_STATUS_SPEC} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
               <div className="donut-c">
-                <IncidentChart spec={CHARTS.incStatus} type={type} compactDonut />
+                <IncidentChart spec={INC_STATUS_SPEC} type={type} compactDonut />
                 <div className="donut-center"><div className="dh-val">{closedPct}</div><div className="dh-lbl">Closed</div></div>
               </div>
               <div className="donut-legend">
-                <Legend swatch="#F4795F" label="Draft" value={fmt(values[1])} onClick={() => onDrill("inc-draft")} />
+                {/* <Legend swatch="#F4795F" label="Draft" value={fmt(values[1])} onClick={() => onDrill("inc-draft")} /> */}
                 <Legend swatch="var(--vi-red)" label="Open" value={fmt(values[2])} onClick={() => onDrill("inc-open")} />
                 <Legend swatch="#0D47A1" label="Closed" value={fmt(values[3])} onClick={() => onDrill("inc-closed")} />
               </div>
@@ -61,8 +72,8 @@ export function IncidentsPanel({ values, highlighted, onDownload, onDrill, onRow
         <ChartCard title="Incident Classification" sub="Classification chosen by the Reporter" spec={CHARTS.incClass} options={["donut", "bar"]} />
         <ChartCard title="Incidents by Category" sub="Category and sub-category roll-up" spec={CHARTS.incCategory} options={["bar", "donut", "table"]} />
       </div>
-      <div className="g g3" style={{ marginTop: 16 }}>
-        <ChartCard title="Incidents by Type of Facility" sub="Type of Facility on the report" spec={CHARTS.incFacility} options={["bar", "donut"]} />
+      <div className="g g2" style={{ marginTop: 16 }}>
+        {/* <ChartCard title="Incidents by Type of Facility" sub="Type of Facility on the report" spec={CHARTS.incFacility} options={["bar", "donut"]} /> */}
         <ChartCard title="Incidents by Function" sub="Function selected on the report" spec={CHARTS.incFunc} options={["donut", "bar"]} />
         <ChartCard title="Incidents by Time of Day" sub="Time of Incident, 4-hour bands" spec={CHARTS.incTime} options={["bar", "donut"]} />
       </div>
