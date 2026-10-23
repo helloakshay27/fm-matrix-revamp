@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
-import { BulkUploadExternalUsersModal } from "./BulkUploadExternalUsersModal";
+import { BulkUploadExternalUsersModal, type ViBulkUploadUserType } from "./BulkUploadExternalUsersModal";
 import {
   Users,
   Car,
@@ -33,7 +33,7 @@ interface ModuleItem {
   icon?: any;
   href?: string;
   /** Opens a modal instead of navigating (handled in ViSidebar). */
-  action?: "bulk-upload-external-users";
+  action?: "bulk-upload-external-users" | "bulk-upload-internal-users";
   subItems?: ModuleItem[];
   color?: string;
 }
@@ -308,6 +308,11 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       name: "Bulk Upload For External User",
       action: "bulk-upload-external-users",
     },
+    {
+      icon: UserPlus,
+      name: "Bulk Upload For Internal User",
+      action: "bulk-upload-internal-users",
+    },
   ],
 };
 
@@ -322,11 +327,16 @@ const ViSidebar: React.FC = () => {
     isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [isExternalUsersUploadOpen, setIsExternalUsersUploadOpen] = useState(false);
+  // Users bulk-upload modal: which list it uploads (kept while closing so the title doesn't flip).
+  const [bulkUploadType, setBulkUploadType] = useState<ViBulkUploadUserType>("external");
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sidebar items with an `action` open a modal instead of navigating.
   const runItemAction = (action: ModuleItem["action"]) => {
-    if (action === "bulk-upload-external-users") setIsExternalUsersUploadOpen(true);
+    if (action === "bulk-upload-external-users" || action === "bulk-upload-internal-users") {
+      setBulkUploadType(action === "bulk-upload-internal-users" ? "internal" : "external");
+      setIsBulkUploadOpen(true);
+    }
   };
 
   // Helper function to find the deepest navigable sub-item
@@ -569,8 +579,9 @@ const ViSidebar: React.FC = () => {
         </nav>
       </div>
       <BulkUploadExternalUsersModal
-        isOpen={isExternalUsersUploadOpen}
-        onClose={() => setIsExternalUsersUploadOpen(false)}
+        isOpen={isBulkUploadOpen}
+        userType={bulkUploadType}
+        onClose={() => setIsBulkUploadOpen(false)}
       />
     </div>
   );

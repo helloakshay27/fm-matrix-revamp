@@ -1,13 +1,43 @@
 import { useState, type DragEvent } from "react";
-import { FileSpreadsheet, Upload, X } from "lucide-react";
+import { Download, FileSpreadsheet, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
-// Bulk upload of Vi external (Non-FTE) users. Follows the base URL of the logged-in site
-// (live-api on production, vi-uat-api on UAT).
-const BULK_UPLOAD_EXTERNAL_USERS_ENDPOINT = "/smts/vi_bulk_upload_external_users.json";
-// The external-users import only accepts Excel .xlsx files.
+// Bulk upload of Vi users — internal (FTE) or external (Non-FTE). Follows the base URL of the
+// logged-in site (live-api on production, vi-uat-api on UAT).
+export type ViBulkUploadUserType = "internal" | "external";
+
+const UPLOAD_CONFIG: Record<
+  ViBulkUploadUserType,
+  {
+    endpoint: string;
+    /** Blank template to fill in — GET, served as .xlsx. */
+    sampleEndpoint: string;
+    label: string;
+    title: string;
+    description: string;
+    inputId: string;
+  }
+> = {
+  external: {
+    endpoint: "/smts/vi_bulk_upload_external_users.json",
+    sampleEndpoint: "/vi_external_employee_bulkupload_format.xlsx",
+    label: "External users",
+    title: "Bulk Upload For External User",
+    description: "Upload an Excel (.xlsx) file with the external (Non-FTE) users to add.",
+    inputId: "external-users-bulk-upload",
+  },
+  internal: {
+    endpoint: "/smts/vi_bulk_upload_internal_users.json",
+    sampleEndpoint: "/vi_internal_employee_bulkupload_format.xlsx",
+    label: "Internal users",
+    title: "Bulk Upload For Internal User",
+    description: "Upload an Excel (.xlsx) file with the internal (FTE) users to add.",
+    inputId: "internal-users-bulk-upload",
+  },
+};
+// Both imports only accept Excel .xlsx files.
 const ACCEPTED_EXTENSIONS = ["xlsx"];
 const ACCEPT = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -34,7 +64,8 @@ const fileNameFromResponse = (response: Response) => {
   return disposition.match(/filename="?([^";]+)"?/i)?.[1]?.trim() || "";
 };
 
-const resultFileName = () => `external_users_upload_result_${new Date().toISOString().split("T")[0]}.xlsx`;
+const resultFileName = (userType: ViBulkUploadUserType) =>
+  `${userType}_users_upload_result_${new Date().toISOString().split("T")[0]}.xlsx`;
 
 const downloadBlob = (blob: Blob, fileName: string) => {
   const url = window.URL.createObjectURL(blob);
@@ -80,15 +111,39 @@ const responseMessage = (body: unknown): string => {
 export const BulkUploadExternalUsersModal = ({
   isOpen,
   onClose,
+  userType = "external",
 }: {
   isOpen: boolean;
   onClose: () => void;
+  userType?: ViBulkUploadUserType;
 }) => {
+  const config = UPLOAD_CONFIG[userType];
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDownloadingSample, setIsDownloadingSample] = useState(false);
 
-  const pickFile = (candidate: File | undefined) => {
+  // Blank template for this user type, e.g. GET /vi_internal_employee_bulkupload_format.xlsx.
+  const handleDownloadSample = async () => {
+    if (isDownloadingSample) return;
+    setIsDownloadingSample(true);
+    try {
+      const response = await fetch(getFullUrl(config.sampleEndpoint), {
+        headers: { Authorization: getAuthHeader() },
+      });
+      if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+      const blob = await response.blob();
+      downloadBlob(blob, fileNameFromResponse(response) || config.sampleEndpoint.split("/").pop() || "sample.xlsx");
+      toast.success("Sample format downloaded");
+    } catch (error) {
+      console.error(`${config.label} sample download failed:`, error);
+      toast.error("Failed to download sample format");
+    } finally {
+      setIsDownloadingSample(false);
+    }
+  };
+
+  const pickFile =(candidate: File | undefined) => {
     if (!candidate) return;
     if (!isAcceptedFile(candidate)) {
       toast.error(`${candidate.name} is not supported. Only .xlsx files can be uploaded.`);
@@ -115,7 +170,7 @@ export const BulkUploadExternalUsersModal = ({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(getFullUrl(BULK_UPLOAD_EXTERNAL_USERS_ENDPOINT), {
+      const response = await fetch(getFullUrl(config.endpoint), {
         method: "POST",
         headers: { Authorization: getAuthHeader() },
         body: formData,
@@ -128,18 +183,20 @@ export const BulkUploadExternalUsersModal = ({
       // On success (201) the API returns the processed Excel file — download it.
       if (isFileResponse(response)) {
         const blob = await response.blob();
-        downloadBlob(blob, fileNameFromResponse(response) || resultFileName());
-        toast.success("External users uploaded. The result file has been downloaded.");
+        downloadBlob(blob, fileNameFromResponse(response) || resultFileName(userType));
+        toast.success(`${config.label} uploaded. The result file has been downloaded.`);
       } else {
         const result = await response.json().catch(() => null);
-        toast.success(responseMessage(result) || "External users uploaded successfully");
+        toast.success(responseMessage(result) || `${config.label} uploaded successfully`);
       }
       setFile(null);
       onClose();
     } catch (error) {
-      console.error("External users bulk upload failed:", error);
+      console.error(`${config.label} bulk upload failed:`, error);
       // Import errors (e.g. 422 missing headers) can be long — keep the toast up long enough to read.
-      toast.error(error instanceof Error ? error.message : "Failed to upload external users", { duration: 10000 });
+      toast.error(error instanceof Error ? error.message : `Failed to upload ${config.label.toLowerCase()}`, {
+        duration: 10000,
+      });
     } finally {
       setIsUploading(false);
     }
@@ -149,14 +206,25 @@ export const BulkUploadExternalUsersModal = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
       <DialogContent className="sm:max-w-lg rounded-2xl p-8">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-[#1A1A18]">Bulk Upload For External User</DialogTitle>
-          <DialogDescription className="text-sm text-[rgba(26,26,24,0.48)]">
-            Upload an Excel (.xlsx) file with the external (Non-FTE) users to add.
-          </DialogDescription>
+          <DialogTitle className="text-lg font-semibold text-[#1A1A18]">{config.title}</DialogTitle>
+          <DialogDescription className="text-sm text-[rgba(26,26,24,0.48)]">{config.description}</DialogDescription>
         </DialogHeader>
 
+        <div className="flex items-center justify-between gap-3 rounded-[12px] bg-[#F5F4F0] px-4 py-3">
+          <span className="text-sm text-[rgba(26,26,24,0.68)]">Use the sample format to fill in the users.</span>
+          <button
+            type="button"
+            className="fm-action-secondary shrink-0"
+            onClick={handleDownloadSample}
+            disabled={isDownloadingSample || isUploading}
+          >
+            <Download className="w-4 h-4" />
+            {isDownloadingSample ? "Downloading..." : "Download Sample Format"}
+          </button>
+        </div>
+
         <label
-          htmlFor="external-users-bulk-upload"
+          htmlFor={config.inputId}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -175,7 +243,7 @@ export const BulkUploadExternalUsersModal = ({
           </span>
           <span className="text-xs text-[rgba(26,26,24,0.48)]">Only .xlsx files</span>
           <input
-            id="external-users-bulk-upload"
+            id={config.inputId}
             type="file"
             accept={ACCEPT}
             className="hidden"
