@@ -85,12 +85,12 @@ export const IncidentFilterDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-lg bg-white">
+      <DialogContent className="sm:max-w-2xl rounded-2xl p-8">
         <DialogHeader>
-          <DialogTitle>Filters</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-[#1A1A18]">Filters</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 py-2 max-h-[65vh] overflow-y-auto pr-1">
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5">
           <TextField
             fullWidth
             type="date"
@@ -107,68 +107,56 @@ export const IncidentFilterDialog = ({
             onChange={(e) => set({ timeOfIncident: e.target.value })}
             InputLabelProps={{ shrink: true }}
           />
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Status"
-              value={draft.status}
-              onChange={(v) => set({ status: v })}
-              options={VI_INCIDENT_STATUSES}
-              placeholder="Select status"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Circle"
-              value={draft.circle}
-              onChange={(v) => set({ circle: v })}
-              options={labelOptions(masters.clusters)}
-              loading={loading}
-              placeholder="Select incident circle"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Incident classification"
-              value={draft.classification}
-              onChange={(v) => set({ classification: v })}
-              options={labelOptions(masters.classifications)}
-              loading={loading}
-              placeholder="Select classification"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Personnel Area"
-              value={draft.personnelArea}
-              onChange={(v) => set({ personnelArea: v })}
-              options={labelOptions(masters.circles)}
-              loading={loading}
-              placeholder="Select personnel area"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Work Location"
-              value={draft.workLocation}
-              onChange={(v) => set({ workLocation: v })}
-              options={labelOptions(masters.workLocations)}
-              loading={loading}
-              placeholder="Select work location"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <SelectField
-              label="Type of Facility"
-              value={draft.facilityType}
-              onChange={(v) => set({ facilityType: v })}
-              options={labelOptions(masters.visitBusinessAreas)}
-              loading={loading}
-              placeholder="Select type of facility"
-            />
-          </div>
+          <SelectField
+            label="Status"
+            value={draft.status}
+            onChange={(v) => set({ status: v })}
+            options={VI_INCIDENT_STATUSES}
+            placeholder="Select status"
+          />
+          <SelectField
+            label="Circle"
+            value={draft.circle}
+            onChange={(v) => set({ circle: v })}
+            options={labelOptions(masters.clusters)}
+            loading={loading}
+            placeholder="Select incident circle"
+          />
+          <SelectField
+            label="Incident classification"
+            value={draft.classification}
+            onChange={(v) => set({ classification: v })}
+            options={labelOptions(masters.classifications)}
+            loading={loading}
+            placeholder="Select classification"
+          />
+          <SelectField
+            label="Personnel Area"
+            value={draft.personnelArea}
+            onChange={(v) => set({ personnelArea: v })}
+            options={labelOptions(masters.circles)}
+            loading={loading}
+            placeholder="Select personnel area"
+          />
+          <SelectField
+            label="Work Location"
+            value={draft.workLocation}
+            onChange={(v) => set({ workLocation: v })}
+            options={labelOptions(masters.workLocations)}
+            loading={loading}
+            placeholder="Select work location"
+          />
+          <SelectField
+            label="Type of Facility"
+            value={draft.facilityType}
+            onChange={(v) => set({ facilityType: v })}
+            options={labelOptions(masters.visitBusinessAreas)}
+            loading={loading}
+            placeholder="Select type of facility"
+          />
         </div>
 
-        <div className="fm-action-bar pt-2">
+        <div className="fm-action-bar pt-4">
           <button
             type="button"
             className="fm-action-secondary"
