@@ -20,7 +20,7 @@ const InspectionActionOwnerDetailPage = () => {
         canAddActionTaken ? (
           <button
             type="button"
-            className="fm-action-primary w-full sm:w-auto"
+            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
             onClick={() => navigate(`${INSPECTION_ACTION_OWNER_PATH}/${id}/action-taken`)}
           >
             Add Action Taken

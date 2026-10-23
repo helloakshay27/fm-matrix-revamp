@@ -8,7 +8,10 @@ import { DetailCard } from "@/components/ui/detail-card";
 import { useViAuditMasters } from "@/components/vi-audit/useViAuditMasters";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { AutocompleteLabel, UserSelectField } from "@/components/vi-audit/ViUserPicker";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  auditFieldSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { InfoRow, SelectField, getLoggedInUser, requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import {
   CHECKLIST_ANSWERS,
@@ -38,9 +41,9 @@ const AttachmentPreview = ({ file, onRemove }: { file: File; onRemove: () => voi
   return (
     <div className="relative" title={file.name}>
       {isImage ? (
-        <img src={url} alt={file.name} className="h-20 w-24 rounded-[10px] object-cover border border-[rgba(26,26,24,0.09)]" />
+        <img src={url} alt={file.name} className="h-20 w-24 rounded-[10px] object-cover border border-gray-200" />
       ) : (
-        <div className="flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-[10px] bg-[#F5F4F0] px-1 text-[rgba(26,26,24,0.48)]">
+        <div className="flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-[10px] bg-gray-100 px-1 text-gray-500">
           <FileText className="w-5 h-5" />
           <span className="w-full truncate text-center text-[10px]">{file.name}</span>
         </div>
@@ -48,7 +51,7 @@ const AttachmentPreview = ({ file, onRemove }: { file: File; onRemove: () => voi
       <button
         type="button"
         onClick={onRemove}
-        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[rgba(26,26,24,0.68)] shadow hover:text-[#1A1A18]"
+        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-gray-600 shadow hover:text-gray-900"
         aria-label={`Remove ${file.name}`}
       >
         <X className="w-3 h-3" />
@@ -165,22 +168,22 @@ const InspectionInspectorAddPage = () => {
   if (error) return <div className="p-6" role="alert">Unable to load draft. <button onClick={retry}>Retry</button></div>;
   if (loading) return <div className="p-6" role="status">Loading draft...</div>;
   return (
-    <fieldset disabled={saving} className="p-6 min-h-screen">
+    <fieldset disabled={saving} className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={handleBack}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Inspection</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Inspection</h1>
       </div>
 
       {/* Stepper: n of 3 steps — completed steps show a check */}
       <div className="mb-6 max-w-md">
-        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">
+        <p className="mb-2 text-xs text-gray-500">
           {step} of {TOTAL_STEPS} steps
         </p>
         <div className="flex items-center">
@@ -189,14 +192,14 @@ const InspectionInspectorAddPage = () => {
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                   n <= step
-                    ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] text-[#1A1A18]"
-                    : "border border-[rgba(26,26,24,0.12)] bg-white text-[rgba(26,26,24,0.48)]"
+                    ? "border-[1.5px] border-gray-900 bg-[#EDEAE3] text-gray-900"
+                    : "border border-gray-200 bg-white text-gray-500"
                 }`}
               >
                 {n < step ? <Check className="w-4 h-4" /> : n}
               </span>
               {n < TOTAL_STEPS && (
-                <span className={`mx-2 h-px flex-1 ${n < step ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`} />
+                <span className={`mx-2 h-px flex-1 ${n < step ? "bg-gray-900" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
@@ -222,6 +225,7 @@ const InspectionInspectorAddPage = () => {
                 value={basic.dateOfInspection}
                 onChange={(e) => setBasic((p) => ({ ...p, dateOfInspection: e.target.value }))}
                 inputProps={{ max: todayIso() }}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -257,6 +261,7 @@ const InspectionInspectorAddPage = () => {
                 placeholder="Enter inspection location"
                 value={basic.location}
                 onChange={(e) => setBasic((p) => ({ ...p, location: e.target.value }))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -296,20 +301,20 @@ const InspectionInspectorAddPage = () => {
             {INSPECTION_CHECKLIST.map((q, index) => {
               const entry = answers[q.id];
               return (
-                <div key={q.id} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
-                  <p className="mb-3 text-sm font-medium text-[#1A1A18]">
+                <div key={q.id} className={index > 0 ? "border-t border-gray-200 pt-6" : ""}>
+                  <p className="mb-3 text-sm font-medium text-gray-900">
                     {index + 1}. {requiredLabel(q.question)}
                   </p>
                   <div className="mb-3 flex flex-wrap gap-6">
                     {CHECKLIST_ANSWERS.map((option) => (
-                      <label key={option} className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A18]">
+                      <label key={option} className="flex cursor-pointer items-center gap-2 text-sm text-gray-900">
                         <input
                           type="radio"
                           name={`checklist-${q.id}`}
                           value={option}
                           checked={entry.answer === option}
                           onChange={() => updateAnswer(q.id, { answer: option })}
-                          className="h-4 w-4 accent-[#1A1A18]"
+                          className="h-4 w-4 accent-gray-900"
                         />
                         {option}
                       </label>
@@ -323,6 +328,7 @@ const InspectionInspectorAddPage = () => {
                     placeholder="Enter remarks"
                     value={entry.remarks}
                     onChange={(e) => updateAnswer(q.id, { remarks: e.target.value })}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                   {entry.attachments.length > 0 && (
@@ -339,7 +345,7 @@ const InspectionInspectorAddPage = () => {
                     </div>
                   )}
                   <div className="mt-3 flex justify-end">
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[#1A1A18] underline-offset-2 hover:underline">
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-900 underline-offset-2 hover:underline">
                       <Paperclip className="w-4 h-4" />
                       Attachment
                       <input
@@ -394,16 +400,16 @@ const InspectionInspectorAddPage = () => {
         </DetailCard>
       )}
 
-      <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
+      <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSaveDraft}>
           Save draft
         </button>
         {step < TOTAL_STEPS ? (
-          <button type="button" className="fm-action-primary" onClick={handleNext}>
+          <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleNext}>
             Next
           </button>
         ) : (
-          <button type="button" className="fm-action-primary" onClick={handleSubmit}>
+          <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmit}>
             Submit
           </button>
         )}

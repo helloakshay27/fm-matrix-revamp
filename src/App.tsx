@@ -761,17 +761,11 @@ const IncidentActionOwnerActionTakenPage = lazy(
 const IncidentFunctionalHeadListPage = lazy(
   () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadListPage")
 );
-const IncidentFunctionalHeadDetailPage = lazy(
-  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadDetailPage")
-);
-const IncidentFunctionalHeadPlanDetailPage = lazy(
-  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadPlanDetailPage")
-);
-const InspectionInspectorListPage = lazy(() =>
-  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
-    default: m.InspectionInspectorListPage,
-  }))
-);
+// const InspectionInspectorListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionInspectorListPage,
+//   }))
+// );
 const InspectionInspectorDetailPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionInspectorDetailPage,
@@ -780,15 +774,11 @@ const InspectionInspectorDetailPage = lazy(() =>
 const InspectionSpocDetailPage = lazy(
   () => import("./pages/vi-inspection/spoc/InspectionSpocDetailPage")
 );
-const InspectionSpocActionPlanPage = lazy(
-  () => import("./pages/vi-inspection/spoc/InspectionSpocActionPlanPage")
-);
+
 const InspectionActionOwnerDetailPage = lazy(
   () => import("./pages/vi-inspection/action-owner/InspectionActionOwnerDetailPage")
 );
-const InspectionActionOwnerActionTakenPage = lazy(
-  () => import("./pages/vi-inspection/action-owner/InspectionActionOwnerActionTakenPage")
-);
+
 const InspectionFunctionalHeadDetailPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionFunctionalHeadDetailPage,
@@ -797,11 +787,7 @@ const InspectionFunctionalHeadDetailPage = lazy(() =>
 const InspectionInspectorAddPage = lazy(
   () => import("./pages/vi-inspection/InspectionInspectorAddPage")
 );
-const InspectionSpocListPage = lazy(() =>
-  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
-    default: m.InspectionSpocListPage,
-  }))
-);
+
 const InspectionActionOwnerListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionActionOwnerListPage,
@@ -815,6 +801,43 @@ const InspectionFunctionalHeadListPage = lazy(() =>
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
+const IncidentFunctionalHeadPlanDetailPage = lazy(
+  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadPlanDetailPage")
+);
+const InspectionInspectorListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionInspectorListPage,
+  }))
+);
+
+
+const InspectionSpocActionPlanPage = lazy(
+  () => import("./pages/vi-inspection/spoc/InspectionSpocActionPlanPage")
+);
+
+const InspectionActionOwnerActionTakenPage = lazy(
+  () => import("./pages/vi-inspection/action-owner/InspectionActionOwnerActionTakenPage")
+);
+
+
+const InspectionSpocListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionSpocListPage,
+  }))
+);
+// const InspectionActionOwnerListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionActionOwnerListPage,
+//   }))
+// );
+// const InspectionFunctionalHeadListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionFunctionalHeadListPage,
+//   }))
+// );
+// const KRCCFormDetail = lazy(() =>
+//   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
+// );
 
 // Import Edit Roster Template page
 const EditRosterTemplatePage = lazy(() => import("./pages/setup/EditRosterTemplatePage").then(m => ({ default: m.EditRosterTemplatePage })));
@@ -6024,14 +6047,6 @@ function App() {
                             <Route
                               path="/safety/vi-incident/functional-head"
                               element={<IncidentFunctionalHeadListPage />}
-                            />
-                            <Route
-                              path="/safety/vi-incident/functional-head/:id"
-                              element={<IncidentFunctionalHeadDetailPage />}
-                            />
-                            <Route
-                              path="/safety/vi-incident/functional-head/:id/plans/:planId"
-                              element={<IncidentFunctionalHeadPlanDetailPage />}
                             />
                             <Route
                               path="/safety/vi-inspection/inspector"

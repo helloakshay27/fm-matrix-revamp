@@ -135,8 +135,8 @@ export const IncidentListView = ({
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">{title}</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {buildStats(data).map(({ title: statTitle, value, icon: Icon }) => (
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-[14px] mb-6">
+        {buildIncidentStats(data).map(({ title: statTitle, value, icon: Icon }) => (
           <StatsCard
             key={statTitle}
             title={statTitle}

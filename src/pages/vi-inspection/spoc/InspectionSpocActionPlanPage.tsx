@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { ArrowLeft, ListChecks, Plus, Trash2 } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  auditFieldSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
@@ -76,13 +79,13 @@ const InspectionSpocActionPlanPage = () => {
   const renderPlanSection = (findingIndex: number, kind: PlanKind) => {
     const entries = plans[findingIndex][kind];
     return (
-      <div className="rounded-xl border border-[rgba(26,26,24,0.09)] p-4">
+      <div className="rounded-xl border border-gray-200 p-4">
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#1A1A18]">{PLAN_LABEL[kind]}</span>
+          <span className="text-sm font-semibold text-gray-900">{PLAN_LABEL[kind]}</span>
           <button
             type="button"
             onClick={() => updateEntries(findingIndex, kind, (prev) => [...prev, emptyEntry()])}
-            className="inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-[#1A1A18] hover:bg-[#F5F4F0]"
+            className="inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-gray-900 hover:bg-gray-100"
           >
             <Plus className="w-4 h-4" />
             Add
@@ -90,14 +93,14 @@ const InspectionSpocActionPlanPage = () => {
         </div>
         <div className="space-y-6">
           {entries.map((entry, entryIndex) => (
-            <div key={entryIndex} className={entryIndex > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+            <div key={entryIndex} className={entryIndex > 0 ? "border-t border-gray-200 pt-6" : ""}>
               {entries.length > 1 && (
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-[13px] font-semibold text-[#1A1A18]">Plan {entryIndex + 1}</span>
+                  <span className="text-[13px] font-semibold text-gray-900">Plan {entryIndex + 1}</span>
                   <button
                     type="button"
                     onClick={() => updateEntries(findingIndex, kind, (prev) => prev.filter((_, i) => i !== entryIndex))}
-                    className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                    className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                     aria-label={`Remove plan ${entryIndex + 1}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -113,6 +116,7 @@ const InspectionSpocActionPlanPage = () => {
                   placeholder="Describe immediate actions to be taken..."
                   value={entry.description}
                   onChange={(e) => updateEntry(findingIndex, kind, entryIndex, { description: e.target.value })}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -131,6 +135,7 @@ const InspectionSpocActionPlanPage = () => {
                     value={entry.targetDate}
                     onChange={(e) => updateEntry(findingIndex, kind, entryIndex, { targetDate: e.target.value })}
                     inputProps={{ min: todayIso() }}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -145,18 +150,18 @@ const InspectionSpocActionPlanPage = () => {
   if (error) return <div className="p-6" role="alert">Unable to load draft. <button onClick={retry}>Retry</button></div>;
   if (loading) return <div className="p-6" role="status">Loading draft...</div>;
   return (
-    <fieldset disabled={saving} className="p-6 min-h-screen">
+    <fieldset disabled={saving} className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={() => navigate(inspectionPath)}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Inspection</h1>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Plan</span>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Inspection</h1>
+        <span className="text-sm text-gray-500">Action Plan</span>
       </div>
 
       {findings.map((finding, findingIndex) => (
@@ -173,11 +178,11 @@ const InspectionSpocActionPlanPage = () => {
         </DetailCard>
       ))}
 
-      <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
+      <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSaveDraft}>
           Save Draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={handleSubmit}>
+        <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmit}>
           Submit
         </button>
       </div>

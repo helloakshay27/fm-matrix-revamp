@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { ArrowLeft, ListChecks, Paperclip, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  auditFieldSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import { getViInspection } from "@/components/vi-inspection/viInspectionData";
 import { INSPECTION_ACTION_OWNER_PATH } from "./InspectionActionOwnerDetailPage";
@@ -92,13 +95,13 @@ const InspectionActionOwnerActionTakenPage = () => {
   const renderTakenSection = (findingIndex: number, kind: TakenKind) => {
     const entries = taken[findingIndex][kind];
     return (
-      <div className="rounded-xl border border-[rgba(26,26,24,0.09)] p-4">
+      <div className="rounded-xl border border-gray-200 p-4">
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#1A1A18]">{TAKEN_LABEL[kind]}</span>
+          <span className="text-sm font-semibold text-gray-900">{TAKEN_LABEL[kind]}</span>
           <button
             type="button"
             onClick={() => updateEntries(findingIndex, kind, (prev) => [...prev, emptyEntry()])}
-            className="inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-[#1A1A18] hover:bg-[#F5F4F0]"
+            className="inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-gray-900 hover:bg-gray-100"
           >
             <Plus className="w-4 h-4" />
             Add
@@ -106,14 +109,14 @@ const InspectionActionOwnerActionTakenPage = () => {
         </div>
         <div className="space-y-6">
           {entries.map((entry, entryIndex) => (
-            <div key={entryIndex} className={entryIndex > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+            <div key={entryIndex} className={entryIndex > 0 ? "border-t border-gray-200 pt-6" : ""}>
               {entries.length > 1 && (
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-[13px] font-semibold text-[#1A1A18]">Action {entryIndex + 1}</span>
+                  <span className="text-[13px] font-semibold text-gray-900">Action {entryIndex + 1}</span>
                   <button
                     type="button"
                     onClick={() => updateEntries(findingIndex, kind, (prev) => prev.filter((_, i) => i !== entryIndex))}
-                    className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                    className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                     aria-label={`Remove action ${entryIndex + 1}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -129,10 +132,11 @@ const InspectionActionOwnerActionTakenPage = () => {
                   placeholder="Describe the action taken..."
                   value={entry.description}
                   onChange={(e) => updateEntry(findingIndex, kind, entryIndex, { description: e.target.value })}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
                 <div>
-                  <label className="fm-action-secondary inline-flex cursor-pointer">
+                  <label className="inline-flex items-center justify-center gap-2 h-9 px-4 text-sm border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50 cursor-pointer">
                     <Paperclip className="w-4 h-4" />
                     Upload Attachment
                     <input
@@ -151,7 +155,7 @@ const InspectionActionOwnerActionTakenPage = () => {
                       {entry.attachments.map((file, fileIndex) => (
                         <span
                           key={`${file.name}-${fileIndex}`}
-                          className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]"
+                          className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900"
                         >
                           <span className="truncate">{file.name}</span>
                           <button
@@ -161,7 +165,7 @@ const InspectionActionOwnerActionTakenPage = () => {
                                 attachments: entry.attachments.filter((_, i) => i !== fileIndex),
                               })
                             }
-                            className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18]"
+                            className="text-gray-500 hover:text-gray-900"
                             aria-label={`Remove ${file.name}`}
                           >
                             <X className="w-3 h-3" />
@@ -178,6 +182,7 @@ const InspectionActionOwnerActionTakenPage = () => {
                     label={requiredLabel("Closure Date")}
                     value={entry.closureDate}
                     onChange={(e) => updateEntry(findingIndex, kind, entryIndex, { closureDate: e.target.value })}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -192,22 +197,22 @@ const InspectionActionOwnerActionTakenPage = () => {
   if (error) return <div className="p-6" role="alert">Unable to load draft. <button onClick={retry}>Retry</button></div>;
   if (loading) return <div className="p-6" role="status">Loading draft...</div>;
   return (
-    <fieldset disabled={saving} className="p-6 min-h-screen">
+    <fieldset disabled={saving} className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={() => navigate(inspectionPath)}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Inspection</h1>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Taken</span>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Inspection</h1>
+        <span className="text-sm text-gray-500">Action Taken</span>
       </div>
 
       <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
-        <p className="text-sm text-[rgba(26,26,24,0.48)]">
+        <p className="text-sm text-gray-500">
           Add the corrective and preventive action taken for each checklist finding.
         </p>
       </DetailCard>
@@ -226,11 +231,11 @@ const InspectionActionOwnerActionTakenPage = () => {
         </DetailCard>
       ))}
 
-      <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
+      <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSaveDraft}>
           Save Draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={handleSubmit}>
+        <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmit}>
           Submit
         </button>
       </div>

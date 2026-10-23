@@ -19,7 +19,7 @@ export const InspectionInspectorListPage = () => {
       storageKey="vi-inspection-list-inspector"
       leftActions={
         <Button
-          className="bg-brand hover:bg-brand-hover text-white"
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
           onClick={() => navigate(`${INSPECTION_INSPECTOR_PATH}/add`)}
         >
           <Plus className="w-4 h-4 mr-2" />
