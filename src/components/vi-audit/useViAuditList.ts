@@ -7,6 +7,8 @@ import type { ViAuditListRecord } from "./viAuditListData";
 export const VI_AUDIT_LIST_ENDPOINTS = {
   auditor: "/vi_audits.json",
   spoc: "/vi_audits/spoc_audits.json",
+  actionOwner: "/vi_audits/action_owner_audits.json",
+  functionalHead: "/vi_audits/functional_head_audits.json",
 } as const;
 export const VI_AUDIT_LIST_PER_PAGE = 20;
 

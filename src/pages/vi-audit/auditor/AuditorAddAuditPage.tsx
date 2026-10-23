@@ -28,7 +28,12 @@ import {
   toId,
   type OtherPerson,
 } from "@/components/vi-audit/AuditFormFields";
-import { apiErrorMessage } from "@/components/vi-audit/viAuditApi";
+import {
+  ATTACHMENT_ACCEPT,
+  apiErrorMessage,
+  fileToNamedDataUrl,
+  isAllowedAttachment,
+} from "@/components/vi-audit/viAuditApi";
 import {
   AuditTypeSelectModal,
   isViAuditType,
@@ -37,37 +42,6 @@ import {
 
 // Create-audit endpoint. Confirm with the backend team — the Audit API is not live yet.
 const VI_AUDIT_CREATE_ENDPOINT = "/vi_audits.json";
-
-// Observation attachments: the audit API only accepts PDF, JPEG, JPG and PNG.
-const ALLOWED_ATTACHMENT_EXTENSIONS = ["pdf", "jpeg", "jpg", "png"];
-const ALLOWED_ATTACHMENT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-const ATTACHMENT_ACCEPT = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png";
-
-const isAllowedAttachment = (file: File) => {
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  // Check the extension (what the API validates on) and, when the browser reports one, the MIME type.
-  return (
-    ALLOWED_ATTACHMENT_EXTENSIONS.includes(extension) &&
-    (!file.type || ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.type))
-  );
-};
-
-/**
- * Reads a file as the attachment format the audit API expects:
- * `data:<mime>;name=<filename>;base64,<data>` (one entry per file — any number per observation).
- */
-const fileToNamedDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result ?? "");
-      // ";" and "," delimit the data-URL header, so keep them out of the file name.
-      const safeName = file.name.replace(/[;,]/g, "_");
-      resolve(dataUrl.replace(/^data:([^;,]*)/, (_, mime) => `data:${mime || "application/octet-stream"};name=${safeName}`));
-    };
-    reader.onerror = () => reject(reader.error ?? new Error(`Could not read ${file.name}`));
-    reader.readAsDataURL(file);
-  });
 
 // Basic Details / Observation Classification dropdowns come from GET /vi_audits/masters.json
 // (see useViAuditMasters); people pickers search the users API (useViUserSearch) — all FTE /
