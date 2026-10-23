@@ -743,6 +743,9 @@ const ViIncidentManagementDashboardPage = lazy(
 const ViInspectionManagementDashboardPage = lazy(
   () => import("./pages/vi-inspection/dashboard/ViInspectionManagementDashboardPage")
 );
+const ViAuditManagementDashboardPage = lazy(
+  () => import("./pages/vi-audit/dashboard/ViAuditManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -2047,6 +2050,10 @@ function App() {
                           <Route
                             path="/dashboard-revamp"
                             element={<RevampDashboardPage />}
+                          />
+                          <Route
+                            path="/vi-audit/management-dashboard"
+                            element={<ViAuditManagementDashboardPage />}
                           />
 
                           <Route
