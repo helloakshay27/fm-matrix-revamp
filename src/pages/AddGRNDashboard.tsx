@@ -544,6 +544,22 @@ export const AddGRNDashboard = () => {
         return false;
       }
     }
+    if (!transportDetail.driver_name) {
+      toast.error("Please enter driver name");
+      return false;
+    }
+    if (!transportDetail.mobile_number) {
+      toast.error("Please enter mobile number");
+      return false;
+    }
+    if (!transportDetail.gate_entry_date) {
+      toast.error("Please enter gate entry date");
+      return false;
+    }
+    if (!transportDetail.gate_entry_number) {
+      toast.error("Please enter gate entry number");
+      return false;
+    }
     if (selectedFiles.length === 0) {
       toast.error("Please upload at least one attachment");
       return false;
@@ -928,7 +944,7 @@ export const AddGRNDashboard = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
-              label="Driver Name"
+              label="Driver Name*"
               placeholder="Enter Driver Name"
               value={transportDetail.driver_name}
               onChange={(e) => setTransportDetail({ ...transportDetail, driver_name: e.target.value })}
@@ -939,7 +955,7 @@ export const AddGRNDashboard = () => {
               sx={{ mt: 1 }}
             />
             <TextField
-              label="Mobile Number"
+              label="Mobile Number*"
               placeholder="Enter Mobile Number"
               value={transportDetail.mobile_number}
               onChange={(e) => setTransportDetail({ ...transportDetail, mobile_number: e.target.value })}
@@ -961,7 +977,7 @@ export const AddGRNDashboard = () => {
               sx={{ mt: 1 }}
             />
             <TextField
-              label="Gate Entry Date"
+              label="Gate Entry Date*"
               type="date"
               value={transportDetail.gate_entry_date}
               onChange={(e) => setTransportDetail({ ...transportDetail, gate_entry_date: e.target.value })}
@@ -972,7 +988,7 @@ export const AddGRNDashboard = () => {
               sx={{ mt: 1 }}
             />
             <TextField
-              label="Gate Entry Number"
+              label="Gate Entry Number*"
               placeholder="Enter Gate Entry Number"
               value={transportDetail.gate_entry_number}
               onChange={(e) => setTransportDetail({ ...transportDetail, gate_entry_number: e.target.value })}
