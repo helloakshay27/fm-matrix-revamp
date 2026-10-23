@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, type LucideIcon } from "lucide-react";
+import { Eye, Pencil, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
@@ -37,6 +37,7 @@ export const AuditListView = ({
   data,
   loading = false,
   pagination,
+  editDrafts = false,
 }: {
   title: string;
   stats: AuditListStat[];
@@ -52,6 +53,8 @@ export const AuditListView = ({
   loading?: boolean;
   /** Server-side pagination — the table shows `data` as one page and asks for others. */
   pagination?: { currentPage: number; totalPages: number; onPageChange: (page: number) => void };
+  /** Draft rows also get an edit button, opening `${detailBasePath}/${audit.id}/edit`. */
+  editDrafts?: boolean;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,15 +84,28 @@ export const AuditListView = ({
   };
 
   const renderActions = (item: ViAuditListRecord) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-      onClick={() => navigate(`${detailBasePath}/${item.id}`)}
-      title="View audit"
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+        onClick={() => navigate(`${detailBasePath}/${item.id}`)}
+        title="View audit"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      {editDrafts && String(item.status).toLowerCase() === "draft" && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+          onClick={() => navigate(`${detailBasePath}/${item.id}/edit`)}
+          title="Edit draft"
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
   );
 
   return (
