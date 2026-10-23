@@ -444,7 +444,8 @@ export const AMCDetailsPage = () => {
     }
   };
 
-  const fetchOccurrences = async (page: number = 1) => {
+  // `status` is the selected status card's label, sent as q[task_status_eq] (e.g. Open, Closed).
+  const fetchOccurrences = async (page: number = 1, status: string = occurrenceStatusFilter) => {
     const assetIds =
       amcDetails?.amc_assets?.map((a: any) => a.asset_id).filter(Boolean) ?? [];
     if (!assetIds.length) return;
@@ -454,8 +455,11 @@ export const AMCDetailsPage = () => {
     setOccurrencesLoading(true);
     try {
       const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
-      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=15`;
-      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      const statusQs = status ? `&q[task_status_eq]=${encodeURIComponent(status)}` : "";
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}${statusQs}&page=${page}&per_page=15`;
+      const res = await fetch(url, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
       const data = await res.json();
       const items = Array.isArray(data)
@@ -612,10 +616,10 @@ export const AMCDetailsPage = () => {
 
   useEffect(() => {
     if (amcDetails?.amc_assets?.length) {
-      fetchOccurrences(occurrencePage);
+      fetchOccurrences(occurrencePage, occurrenceStatusFilter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amcDetails?.amc_assets, occurrencePage]);
+  }, [amcDetails?.amc_assets, occurrencePage, occurrenceStatusFilter]);
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return "—";
@@ -1443,9 +1447,8 @@ export const AMCDetailsPage = () => {
                     { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
                   ];
 
-                  const filtered = occurrences.filter(
-                    (o) => o.task_status === occurrenceStatusFilter
-                  );
+                  // Already filtered by the API (q[task_status_eq] = selected card).
+                  const filtered = occurrences;
 
                   const totalPages = occurrenceTotalPages;
 
