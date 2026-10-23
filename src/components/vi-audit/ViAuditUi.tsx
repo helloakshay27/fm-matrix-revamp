@@ -21,6 +21,27 @@ export const AuditStatusPill = ({ status }: { status: string }) => (
   </span>
 );
 
+// CAPA progress tone from the API key (capa_plan_not_started / …_in_progress / …_completed);
+// unknown keys fall back to neutral.
+const capaProgressTone = (progressKey = "") => {
+  const key = progressKey.toLowerCase();
+  if (key.includes("not_started")) return VI_AUDIT_STATUS_TONE.Draft;
+  if (key.includes("complete") || key.includes("closed") || key.includes("done")) return VI_AUDIT_STATUS_TONE.Completed;
+  if (key.includes("progress") || key.includes("started")) return VI_AUDIT_STATUS_TONE.Open;
+  return VI_AUDIT_STATUS_TONE.Closed;
+};
+
+// Badge for an action plan's CAPA progress (capa_progress label, toned by capa_progress_key).
+export const CapaProgressPill = ({ label, progressKey }: { label: string; progressKey?: string }) => (
+  <span
+    className={`inline-flex items-center whitespace-nowrap rounded-full px-[10px] py-[3px] text-[11px] font-medium ${capaProgressTone(
+      progressKey,
+    )}`}
+  >
+    {label}
+  </span>
+);
+
 // Read-only label / value grid used inside the detail cards.
 export const FieldGrid = ({
   fields,
@@ -48,7 +69,8 @@ export const DueLabel = ({ label }: { label?: string }) =>
   label ? <span className="text-xs font-medium text-[#B04A55] whitespace-nowrap">{label}</span> : null;
 
 // One corrective / preventive action-plan record (ID, due date, description, owner,
-// target date, status). Pass `onClick` to make the whole record open its detail page.
+// target date, CAPA progress — or status when the API sends no CAPA progress). Pass `onClick`
+// to make the whole record open its detail page.
 export const ActionPlanRecord = ({
   plan,
   onClick,
@@ -76,7 +98,11 @@ export const ActionPlanRecord = ({
         </div>
       </div>
       <div className="mt-3">
-        <AuditStatusPill status={plan.status} />
+        {plan.capaProgress ? (
+          <CapaProgressPill label={plan.capaProgress} progressKey={plan.capaProgressKey} />
+        ) : (
+          <AuditStatusPill status={plan.status} />
+        )}
       </div>
     </>
   );

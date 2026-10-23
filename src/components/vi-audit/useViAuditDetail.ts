@@ -12,7 +12,7 @@ import type {
 type Raw = Record<string, unknown>;
 
 export const obj = (value: unknown): Raw => (value && typeof value === "object" && !Array.isArray(value) ? (value as Raw) : {});
-const arr = (...values: unknown[]): Raw[] => {
+export const arr = (...values: unknown[]): Raw[] => {
   for (const value of values) if (Array.isArray(value)) return value as Raw[];
   return [];
 };
@@ -23,7 +23,7 @@ export const text = (...values: unknown[]) => {
   }
   return "";
 };
-const personName = (value: unknown) => {
+export const personName = (value: unknown) => {
   const p = obj(value);
   return text(p.full_name, p.name, [text(p.firstname), text(p.lastname)].filter(Boolean).join(" "), p.email);
 };
@@ -38,7 +38,7 @@ const statusLabel = (value: unknown) =>
     .join(" ");
 
 // Attachments may be URLs, data URLs or { url, file_name / name } objects.
-const toAttachment = (value: unknown) => {
+export const toAttachment = (value: unknown) => {
   if (typeof value === "string") {
     const nameFromDataUrl = value.match(/^data:[^;,]*;name=([^;,]+)/)?.[1];
     return { name: nameFromDataUrl || decodeURIComponent(value.split("?")[0].split("/").pop() || "attachment"), url: value };
@@ -55,6 +55,8 @@ export const toActionPlan = (raw: Raw, index: number, prefix: string): ViActionP
   actionOwner: text(personName(raw.responsible_person ?? raw.action_owner), raw.responsible_person_name, raw.action_owner_name),
   targetDate: text(raw.extend_target_date, raw.extended_target_date, raw.target_date),
   status: (statusLabel(raw.status) || "Pending By Action Owner") as ViActionPlanStatus,
+  capaProgress: text(raw.capa_progress) || undefined,
+  capaProgressKey: text(raw.capa_progress_key) || undefined,
 });
 
 const toObservation = (raw: Raw, index: number): ViObservation => {

@@ -300,6 +300,14 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             newErrors.postingDate = 'Posting date is required.';
             isValid = false;
         }
+        if (!fromDate || !toDate) {
+            toast.error("Bill period is required. Please select both From Date and To Date.");
+            isValid = false;
+        }
+        if (!billDeskDetail.location.trim()) {
+            toast.error("Location is required.");
+            isValid = false;
+        }
 
         // BOQ: every row must have a BOQ selected and a quantity entered
         const newBoqErrors: Record<string, { selectedBOQ: string; quantity: string }> = {};
@@ -507,13 +515,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                             <Box sx={{ flex: '2 1 500px', minWidth: '420px' }}>
                                 <Typography variant="body2" sx={{ mb: 2, color: 'hsl(var(--label-text))', fontWeight: 500 }}>
-                                    Bill Period
+                                    Bill Period <span style={{ color: '#d32f2f' }}>*</span>
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                                     <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
                                         <StyledTextField
                                             fullWidth
-                                            label="From Date"
+                                            label="From Date *"
                                             type="date"
                                             value={fromDate}
                                             onChange={(e) => setFromDate(e.target.value)}
@@ -524,7 +532,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                     <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
                                         <StyledTextField
                                             fullWidth
-                                            label="To Date"
+                                            label="To Date *"
                                             type="date"
                                             value={toDate}
                                             onChange={(e) => setToDate(e.target.value)}

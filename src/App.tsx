@@ -1879,6 +1879,7 @@ const KRCCFormListDashboard = lazy(() =>
 // Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
 const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
 const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorEditAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorEditAuditPage"));
 const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
 const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
 const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
@@ -1893,6 +1894,16 @@ const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-ow
 const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
 const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
 const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
+const IncidentReporterListPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterListPage"));
+const IncidentReporterAddPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterAddPage"));
+const IncidentReporterDetailPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterDetailPage"));
+const IncidentSpocListPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocListPage"));
+const IncidentSpocDetailPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocDetailPage"));
+const IncidentSpocActionPlanPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage"));
+const IncidentActionOwnerListPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage"));
+const IncidentActionOwnerDetailPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage"));
+const IncidentActionOwnerActionTakenPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"));
+const IncidentFunctionalHeadListPage = lazy(() => import("./pages/vi-incident/IncidentRolePlaceholderPage").then((m) => ({ default: m.IncidentFunctionalHeadListPage })));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -4395,6 +4406,7 @@ const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCr
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const ViPosthogDashboardPage = lazy(() => import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(m => ({ default: m.ViPosthogDashboardPage })));
 const CalendarPosthogDashboardPage = lazy(() => import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(m => ({ default: m.CalendarPosthogDashboardPage })));
+const AccountingPosthogDashboardPage = lazy(() => import("./features/accounting-posthog-dashboard/AccountingPosthogDashboardPage").then(m => ({ default: m.AccountingPosthogDashboardPage })));
 const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
@@ -4777,6 +4789,10 @@ function App() {
                           <Route
                             path="/calendar-posthog-dashboard"
                             element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/accounting-dashboard"
+                            element={<AccountingPosthogDashboardPage />}
                           />
                           <Route
                             path="/smartsecure-dashboard"
@@ -9097,12 +9113,56 @@ function App() {
                               element={<KRCCFormListDashboard />}
                             />
                             <Route
+                              path="/safety/vi-incident/reporter"
+                              element={<IncidentReporterListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/add"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/:id"
+                              element={<IncidentReporterDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc"
+                              element={<IncidentSpocListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id"
+                              element={<IncidentSpocDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id/action-plan"
+                              element={<IncidentSpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner"
+                              element={<IncidentActionOwnerListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id"
+                              element={<IncidentActionOwnerDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id/action-taken"
+                              element={<IncidentActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head"
+                              element={<IncidentFunctionalHeadListPage />}
+                            />
+                            <Route
                               path="/safety/audit-list"
                               element={<AuditorAuditListPage />}
                             />
                             <Route
                               path="/safety/audit-list/add"
                               element={<AuditorAddAuditPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/edit"
+                              element={<AuditorEditAuditPage />}
                             />
                             <Route
                               path="/safety/audit-list/:id"

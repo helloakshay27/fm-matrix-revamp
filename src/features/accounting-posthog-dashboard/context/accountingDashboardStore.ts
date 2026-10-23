@@ -1,0 +1,103 @@
+import { createContext, useContext } from 'react';
+import type { ChartPalette, DashboardTheme } from '@/features/analytics-dashboard-shared/palette';
+import type { DateRange, Device } from '../data/constants';
+import type { PageKey } from '../data/pages';
+import type { AdoptionSample, TrafficSample, WorkflowSample } from '../data/sampleData';
+import type { AccountingQueryFilters } from '../api/queries';
+
+/**
+ * Context object, its types, and the consumer hook.
+ *
+ * Deliberately separate from the provider component: a module that exports a component
+ * alongside other values can't be state-preserved by React Fast Refresh, and re-executing it
+ * mints a brand-new context object that live consumers no longer match.
+ */
+
+/** Which measure the "Usage over time" tabs are showing. */
+export type SessTab = 'visitors' | 'views' | 'sessions';
+
+export interface ViewModel {
+  traffic: TrafficSample;
+  adopt: AdoptionSample;
+  flows: WorkflowSample;
+  sessTab: SessTab;
+  /** Platform filter — every count is scaled by it. */
+  dev: Device;
+  /** Provider filter. */
+  provider: string;
+  /** Whether the previous-period overlay is on. */
+  prev: boolean;
+  range: { from: string; to: string };
+  /** Label under the page title. */
+  scopeLabel: string;
+  /** Currently selected module from the live modules API (null = All Modules). */
+  selectedModule: string | null;
+  /** Selected submodule from the selected module's live API tree (null = all submodules). */
+  selectedSubModule: string | null;
+}
+
+export interface AccountingDashboardValue {
+  vm: ViewModel;
+  queryFilters: AccountingQueryFilters;
+  errors: {
+    traffic: Error | null;
+    adopt: Error | null;
+    flows: Error | null;
+  };
+
+  /** filters */
+  provider: string;
+  setProvider: (provider: string) => void;
+  setPreset: (date: DateRange) => void;
+  /** Explicit from/to, bypassing the 7/30/90 presets. Both YYYY-MM-DD. */
+  setCustomRange: (from: string, to: string) => void;
+  /** The custom window currently applied, or null when a preset is active. */
+  customRange: { from: string; to: string } | null;
+  setDev: (dev: Device) => void;
+  setSessTab: (tab: SessTab) => void;
+  /** Selected workflow key from the Calendar catalogue (see data/sampleData.ts). */
+  workflow: string;
+  setWorkflow: (key: string) => void;
+  togglePrev: () => void;
+
+  /** Module pills — live from the modules API */
+  selectedModule: string | null;
+  setSelectedModule: (m: string | null) => void;
+  selectedSubModule: string | null;
+  setSelectedSubModule: (subModule: string | null) => void;
+  /** Flat list of { name, users } from the modules API tree, for rendering pills. */
+  modulesList: Array<{ name: string; users: number }>;
+  /** Flat list of the selected module's API-returned submodule nodes. */
+  subModulesList: Array<{ name: string; users: number }>;
+  modulesLoading: boolean;
+  subModulesLoading: boolean;
+
+  /** navigation + chrome */
+  page: PageKey;
+  setPage: (page: PageKey) => void;
+  theme: DashboardTheme;
+  toggleTheme: () => void;
+  navCollapsed: boolean;
+  toggleNav: () => void;
+  palette: ChartPalette;
+
+  /** user-defined KPI targets — local only, never sent anywhere */
+  getBenchmark: (id: string) => number | null;
+  setBenchmark: (id: string, value: number | null) => void;
+
+  /** Live API status & section loading states */
+  isLive: boolean;
+  isLoading: boolean;
+  trafficLoading: boolean;
+  adoptLoading: boolean;
+  flowsLoading: boolean;
+  refetch: () => void;
+}
+
+export const AccountingDashboardContext = createContext<AccountingDashboardValue | null>(null);
+
+export function useAccountingDashboard(): AccountingDashboardValue {
+  const ctx = useContext(AccountingDashboardContext);
+  if (!ctx) throw new Error('useAccountingDashboard must be used inside <AccountingDashboardProvider>');
+  return ctx;
+}

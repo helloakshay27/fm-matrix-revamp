@@ -1379,6 +1379,11 @@ export const VisitorsDashboard = () => {
         return updatedVisitors;
       });
 
+      // If unflagging, refresh from API to get proper positioning
+      if (currentFlagStatus) {
+        await fetchVisitorHistory(historyPagination.currentPage, visitorFilters, searchTerm);
+      }
+
       toast.success(data?.message || `Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
       // F3 · Visitor Flag Toggled
       visitorEvents.onVisitorFlagToggled(visitorId, !currentFlagStatus);

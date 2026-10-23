@@ -38,6 +38,7 @@ const AuditorAuditListPage = () => {
       storageKey="vi-audit-list-auditor"
       data={audits}
       loading={loading}
+      editDrafts
       pagination={{
         currentPage: pagination.currentPage,
         totalPages: pagination.totalPages,
