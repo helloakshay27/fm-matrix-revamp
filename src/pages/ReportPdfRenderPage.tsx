@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const AllContent = React.lazy(() => import('@/components/fm-pdf/AllContent'));
 const WeeklyReport = React.lazy(() => import('@/components/WeeklyReport'));
-const DailyReport = React.lazy(() => import('@/components/DailyReport'));
+const DailyReport = React.lazy(() => import('@/components/DailyReportPdf'));
 
 type ReportType = 'monthly' | 'weekly' | 'daily';
 
@@ -46,6 +46,28 @@ const READY_TIMEOUT_MS = 60000;
  *   Then check document.title — on PDF_EXPORT_ERROR, read #pdf-export-error-message
  *   for details instead of generating a PDF.
  */
+const normalizeDayBoundary = (rawValue: string | null, boundary: 'start' | 'end') => {
+  if (!rawValue) return null;
+
+  const value = rawValue.trim();
+  if (!value) return null;
+
+  if (value.includes('T') || value.includes(' ')) {
+    return value;
+  }
+
+  const baseDate = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(baseDate.getTime())) return value;
+
+  if (boundary === 'start') {
+    baseDate.setHours(0, 0, 0, 0);
+  } else {
+    baseDate.setHours(23, 59, 59, 999);
+  }
+
+  return baseDate.toISOString();
+};
+
 const ReportPdfRenderPage: React.FC = () => {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -56,6 +78,8 @@ const ReportPdfRenderPage: React.FC = () => {
   const selectedCompany = params.get('selected_company');
   const siteId = params.get('site_id');
   const siteName = params.get('site_name');
+  const startDate = normalizeDayBoundary(params.get('start_date'), 'start');
+  const endDate = normalizeDayBoundary(params.get('end_date'), 'end');
 
   const [error, setError] = useState<string>('');
   const [seeded, setSeeded] = useState(false);
@@ -79,6 +103,8 @@ const ReportPdfRenderPage: React.FC = () => {
 
     localStorage.setItem('token', token);
     localStorage.setItem('baseUrl', baseUrl);
+    if (startDate) localStorage.setItem('reportStartDate', startDate);
+    if (endDate) localStorage.setItem('reportEndDate', endDate);
     if (selectedCompany) localStorage.setItem('selectedCompany', selectedCompany);
     if (siteId) {
       localStorage.setItem('selectedSiteId', siteId);
@@ -89,7 +115,7 @@ const ReportPdfRenderPage: React.FC = () => {
       }
     }
     setSeeded(true);
-  }, [token, baseUrl, selectedCompany, siteId, siteName, reportType]);
+  }, [token, baseUrl, selectedCompany, siteId, siteName, reportType, startDate, endDate]);
 
   useEffect(() => {
     if (error) document.title = ERROR_TITLE;
