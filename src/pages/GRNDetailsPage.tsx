@@ -117,6 +117,27 @@ const itemsColumns: ColumnConfig[] = [
   },
 ];
 
+const paymentDetailsColumns: ColumnConfig[] = [
+  { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  { key: "payment_mode", label: "Payment Mode", sortable: true, draggable: true },
+  { key: "payment_reference_number", label: "Payment Reference Number", sortable: true, draggable: true },
+  { key: "amount", label: "Amount", sortable: true, draggable: true },
+  { key: "created_at", label: "Created On", sortable: true, draggable: true },
+  { key: "updated_at", label: "Updated On", sortable: true, draggable: true },
+  { key: "amount_of", label: "Amount Of", sortable: true, draggable: true },
+  { key: "note", label: "Note", sortable: true, draggable: true },
+  { key: "payment_date", label: "Payment Date", sortable: true, draggable: true },
+  { key: "ponumber", label: "PO Number", sortable: true, draggable: true },
+  { key: "vendorcode", label: "Vendor Code", sortable: true, draggable: true },
+  { key: "grnyear", label: "GRN Year", sortable: true, draggable: true },
+  { key: "external_id", label: "External ID", sortable: true, draggable: true },
+  { key: "billdesk_number", label: "Billdesk Number", sortable: true, draggable: true },
+  { key: "clearing_doc_number", label: "Clearing Doc Number", sortable: true, draggable: true },
+  { key: "clearing_doc_date", label: "Clearing Doc Date", sortable: true, draggable: true },
+  { key: "doc_number", label: "Doc Number", sortable: true, draggable: true },
+];
+
 const debitNoteColumns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
   { key: "amount", label: "Amount", sortable: true, draggable: true },
@@ -1269,6 +1290,31 @@ export const GRNDetailsPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Payment Details Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Receipt className="w-[18px] h-[18px]" />
+          </div>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+        </div>
+        <EnhancedTable
+          data={grnDetails.grn_payment_details || []}
+          columns={paymentDetailsColumns}
+          storageKey="grn-payment-details-table"
+          emptyMessage="No payment details available"
+          pagination={true}
+          pageSize={10}
+          hideColumnsButton={true}
+          hideTableExport={true}
+          hideTableSearch={true}
+          renderCell={(item: any, columnKey: string) => {
+            if (columnKey === "amount") return formatIndian(item[columnKey]);
+            return item[columnKey] ?? "-";
+          }}
+        />
+      </div>
 
       {/* Debit Note Details Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
