@@ -504,6 +504,10 @@ export const AddGRNDashboard = () => {
       toast.error("Please enter Invoice Number");
       return false;
     }
+    if (!invoiceType) {
+      toast.error("Please select Invoice Type");
+      return false;
+    }
     if (!grnDetails.invoiceDate || !grnDetails.postingDate) {
       toast.error("Please provide valid Invoice and Posting Dates");
       return false;
@@ -741,9 +745,9 @@ export const AddGRNDashboard = () => {
             /> */}
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-  <InputLabel shrink>Invoice Type</InputLabel>
+  <InputLabel shrink>Invoice Type*</InputLabel>
   <MuiSelect
-    label="Invoice Type"
+    label="Invoice Type*"
     value={invoiceType}
     onChange={(e) => setInvoiceType(e.target.value as string)}
     displayEmpty
