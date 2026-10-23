@@ -78,7 +78,7 @@ const SpocActionPlanPage = () => {
       for (const [index, entry] of plans[kind].entries()) {
         const label = plans[kind].length > 1 ? `${title} ${index + 1}` : title;
         if (!entry.description.trim() || !entry.responsiblePerson || !entry.targetDate) {
-          toast.error(`${label}: Action Plan, Responsible Person and Target Date are required`);
+          toast.error(`${label}: Action Plan, Action Owner and Target Date are required`);
           return false;
         }
         if (entry.extendTargetDate && entry.extendTargetDate < entry.targetDate) {
@@ -215,12 +215,12 @@ const SpocActionPlanPage = () => {
                   />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <UserSelectField
-                      label="Responsible Person"
+                      label="Action Owner"
                       required
                       employeeType="internal"
                       value={entry.responsiblePerson}
                       onChange={(user) => updateEntry(kind, index, { responsiblePerson: user })}
-                      placeholder="Search responsible person by email or mobile"
+                      placeholder="Search action owner by email or mobile"
                     />
                     <TextField
                       fullWidth

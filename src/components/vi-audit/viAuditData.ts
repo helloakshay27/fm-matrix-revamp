@@ -20,10 +20,38 @@ export interface ViActionPlan {
   /** CAPA progress from the API: label ("CAPA Plan Not Started") and key ("capa_plan_not_started"). */
   capaProgress?: string;
   capaProgressKey?: string;
+  /** e.g. "capa_plan_not_closed_by_action_owner" / "capa_plan_closed_by_action_owner". */
+  capaClosureKey?: string;
+  /** From the API: whether the action owner can still add action taken (CAPA) on this plan. */
+  canAddCapa?: boolean;
+  /** Actions taken (CAPAs) already recorded against this plan. */
+  capas?: ViActionTaken[];
 }
+
+export interface ViActionTaken {
+  id: string;
+  description: string;
+  closureDate: string;
+  attachments: { name: string; url: string }[];
+}
+
+/** True once an action taken (CAPA) has been submitted against the plan — it is submitted only once. */
+export const hasSubmittedActionTaken = (plan: ViActionPlan) => (plan.capas?.length ?? 0) > 0;
+
+/**
+ * True while the action owner still has to act on the plan: the API's `can_add_capa` when sent,
+ * otherwise the CAPA closure key / status says it isn't closed by the action owner yet.
+ */
+export const isPlanPendingByActionOwner = (plan: ViActionPlan) => {
+  if (typeof plan.canAddCapa === "boolean") return plan.canAddCapa;
+  if (plan.capaClosureKey) return plan.capaClosureKey !== "capa_plan_closed_by_action_owner";
+  return plan.status !== "Closed By Action Owner";
+};
 
 export interface ViObservation {
   id: string;
+  /** Display number from the API, e.g. "Obs01" (id stays the server id used in URLs). */
+  observationNo?: string;
   title?: string;
   area?: string;
   description: string;

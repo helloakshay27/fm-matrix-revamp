@@ -148,7 +148,7 @@ export const AuditDetailView = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{obs.id}</span>
+                      <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{obs.observationNo ?? obs.id}</span>
                       <DueLabel label={obs.dueLabel} />
                     </div>
                     {obs.title && (

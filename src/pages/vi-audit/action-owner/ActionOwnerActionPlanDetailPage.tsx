@@ -1,13 +1,52 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardCheck, FileText, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, Paperclip, Plus, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
+import {
+  hasSubmittedActionTaken,
+  isPlanPendingByActionOwner,
+  viAuditBasePath,
+  type ViActionTaken,
+} from "@/components/vi-audit/viAuditData";
 import { ActionPlanRecord, AuditLoadingState, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
 import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
   "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
+
+// Actions already taken against the plan (its CAPAs): description, closure date, attachments.
+const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
+  <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+    {actions.map((action) => (
+      <div key={action.id} className="px-4 py-4">
+        <p className="text-sm text-[#1A1A18] whitespace-pre-line">{action.description || "-"}</p>
+        <div className="mt-3">
+          <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Closure Date</div>
+          <div className="text-sm font-medium text-[#1A1A18]">{action.closureDate || "-"}</div>
+        </div>
+        {action.attachments.length > 0 && (
+          <div className="mt-3">
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-2">Attachments</div>
+            <div className="flex flex-wrap gap-2">
+              {action.attachments.map((file, index) => (
+                <a
+                  key={`${file.name}-${index}`}
+                  href={file.url || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18] hover:bg-[#EDEAE3]"
+                >
+                  <Paperclip className="w-3 h-3 shrink-0 text-[rgba(26,26,24,0.48)]" />
+                  <span className="truncate">{file.name}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+);
 
 // Action Owner: one corrective / preventive action plan, with "Add Action Taken".
 // Plan from GET /vi_audit_action_plans/:planId.json; parent audit / observation cards from
@@ -40,8 +79,13 @@ const ActionOwnerActionPlanDetailPage = () => {
     );
   }
 
-  const { plan, kind, canEdit } = found;
-  const isClosed = plan.status === "Closed By Action Owner" || canEdit === false;
+  const { plan, kind } = found;
+  // "Add Action Taken" while the plan is still pending by the action owner, or while the
+  // observation is still "Pending By SPOC" — and only until an action taken has been submitted.
+  const isPending =
+    !hasSubmittedActionTaken(plan) &&
+    (isPlanPendingByActionOwner(plan) || observation?.status === "Pending By SPOC");
+  const actionTaken = plan.capas ?? [];
 
   return (
     <div className="p-6 min-h-screen">
@@ -103,7 +147,18 @@ const ActionOwnerActionPlanDetailPage = () => {
         </div>
       </DetailCard>
 
-      {!isClosed && (
+      {/* Actions taken so far (CAPAs) */}
+      {actionTaken.length > 0 && (
+        <DetailCard
+          icon={sectionIcon(CheckCircle2)}
+          title={kind === "corrective" ? "Corrective Action Taken" : "Preventive Action Taken"}
+          className="mb-5"
+        >
+          <ActionTakenList actions={actionTaken} />
+        </DetailCard>
+      )}
+
+      {isPending && (
         <div className="fm-action-bar pt-4 sm:pt-6">
           <button
             type="button"

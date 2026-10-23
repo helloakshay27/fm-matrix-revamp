@@ -1,28 +1,34 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Paperclip, Plus, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Paperclip, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { hasSubmittedActionTaken, isPlanPendingByActionOwner, viAuditBasePath } from "@/components/vi-audit/viAuditData";
+import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
+import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 import {
-  findViActionPlan,
-  getViAuditDetail,
-  markViActionPlanClosed,
-  viAuditBasePath,
-} from "@/components/vi-audit/viAuditData";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+  ATTACHMENT_ACCEPT,
+  apiErrorMessage,
+  fileToNamedDataUrl,
+  isAllowedAttachment,
+} from "@/components/vi-audit/viAuditApi";
 
-// Action-taken endpoint. Confirm with the backend team — the Audit API is not live yet.
-const actionTakenEndpoint = (planId: string) => `/pms/vi_audit_action_plans/${planId}/actions_taken.json`;
+// POST /vi_audit_capas.json creates ONE action taken (CAPA) against an action plan:
+// { action_plan_id, vi_audit_capa: { action_taken, attachments: ["data:<mime>;name=<file>;base64,..."] } }
+const CAPA_CREATE_ENDPOINT = "/vi_audit_capas.json";
 
 interface ActionTakenEntry {
   description: string;
   attachments: File[];
-  closureDate: string;
+  /** Already created on the server — skipped if Submit is retried after a partial failure. */
+  created?: boolean;
 }
 
-const emptyEntry = (): ActionTakenEntry => ({ description: "", attachments: [], closureDate: "" });
+const emptyEntry = (): ActionTakenEntry => ({ description: "", attachments: [] });
 
 const requiredLabel = (text: string) => (
   <>
@@ -31,17 +37,21 @@ const requiredLabel = (text: string) => (
 );
 
 // Action Owner: record the action taken against a corrective / preventive plan (step 4 of 4).
+// Plan from GET /vi_audit_action_plans/:planId.json, audit / observation from GET /vi_audits/:id.json.
 const ActionOwnerActionTakenPage = () => {
   const navigate = useNavigate();
   const { id, observationId, planId } = useParams();
-  const audit = useMemo(() => getViAuditDetail(id), [id]);
-  const observation = audit.observations.find((o) => o.id === observationId);
-  const found = observation ? findViActionPlan(observation, planId) : null;
+  const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
+  const { audit, loading: auditLoading } = useViAuditDetail(id);
+  const observation = audit?.observations.find((o) => o.id === observationId);
 
-  const planPath = `${viAuditBasePath("action-owner")}/${audit.id}/observations/${observationId}/plans/${planId}`;
+  const observationPath = `${viAuditBasePath("action-owner")}/${id}/observations/${observationId}`;
+  const planPath = `${observationPath}/plans/${planId}`;
 
   const [entries, setEntries] = useState<ActionTakenEntry[]>([emptyEntry()]);
   const [submitting, setSubmitting] = useState(false);
+  // "Action Taken Submitted" popup after a successful submit.
+  const [showSubmitted, setShowSubmitted] = useState(false);
 
   const kind = found?.kind ?? "corrective";
   const sectionTitle =
@@ -51,62 +61,66 @@ const ActionOwnerActionTakenPage = () => {
     setEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
 
   const validate = () => {
-    const invalid = entries.findIndex((e) => !e.description.trim() || !e.closureDate);
+    const invalid = entries.findIndex((e) => !e.description.trim());
     if (invalid !== -1) {
       toast.error(
-        entries.length > 1
-          ? `Action ${invalid + 1}: please describe the action taken and add the Closure Date`
-          : "Please describe the action taken and add the Closure Date",
+        entries.length > 1 ? `Action ${invalid + 1}: please describe the action taken` : "Please describe the action taken",
       );
       return false;
     }
     return true;
   };
 
-  const buildPayload = (status: "draft" | "submitted") => {
-    const payload = new FormData();
-    payload.append("action_taken[audit_id]", audit.id);
-    payload.append("action_taken[observation_id]", observationId ?? "");
-    payload.append("action_taken[action_plan_id]", planId ?? "");
-    payload.append("action_taken[plan_type]", kind);
-    payload.append("action_taken[status]", status);
-    entries.forEach((entry, i) => {
-      payload.append(`action_taken[actions][${i}][description]`, entry.description);
-      payload.append(`action_taken[actions][${i}][closure_date]`, entry.closureDate);
-      entry.attachments.forEach((file) => payload.append(`action_taken[actions][${i}][attachments][]`, file));
-    });
-    return payload;
-  };
-
-  const save = async (status: "draft" | "submitted") => {
-    if (submitting) return;
-    if (status === "submitted" && !validate()) return;
+  // One POST /vi_audit_capas.json per entry, in order.
+  const submit = async () => {
+    if (submitting || !planId || !validate()) return;
     setSubmitting(true);
     try {
-      const response = await fetch(getFullUrl(actionTakenEndpoint(planId ?? "")), {
-        method: "POST",
-        headers: { Authorization: getAuthHeader() },
-        body: buildPayload(status),
-      });
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-      if (status === "submitted") {
-        // Plan is now closed by the action owner — show the SPOC observation view with the update.
-        markViActionPlanClosed(audit.id, observationId ?? "", planId ?? "");
-        toast.success("Action taken submitted successfully");
-        navigate(`${viAuditBasePath("spoc")}/${audit.id}/observations/${observationId}`);
-      } else {
-        toast.success("Action taken saved to draft");
-        navigate(planPath);
+      for (const [index, entry] of entries.entries()) {
+        if (entry.created) continue;
+        const response = await fetch(getFullUrl(CAPA_CREATE_ENDPOINT), {
+          method: "POST",
+          headers: { Authorization: getAuthHeader(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action_plan_id: planId,
+            vi_audit_capa: {
+              action_taken: entry.description.trim(),
+              attachments: await Promise.all(entry.attachments.map(fileToNamedDataUrl)),
+            },
+          }),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          const reason = apiErrorMessage(result) || `request failed with status ${response.status}`;
+          throw new Error(entries.length > 1 ? `Action ${index + 1}: ${reason}` : reason);
+        }
+        updateEntry(index, { created: true });
       }
+      setShowSubmitted(true);
     } catch (error) {
-      console.error("Action taken save failed:", error);
-      toast.error(status === "draft" ? "Failed to save draft" : "Failed to submit action taken");
+      console.error("Action taken submit failed:", error);
+      const message = error instanceof Error ? error.message : "";
+      toast.error(message ? `Failed to submit action taken: ${message}` : "Failed to submit action taken");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!observation || !found) {
+  if (planLoading || auditLoading) return <AuditLoadingState message="Loading action plan..." />;
+
+  // Already closed by the action owner — nothing left to add.
+  // (Same rule as the plan page: pending by the action owner, or observation "Pending By SPOC".)
+  const canAddActionTaken = found
+    ? !hasSubmittedActionTaken(found.plan) &&
+      (isPlanPendingByActionOwner(found.plan) || observation?.status === "Pending By SPOC")
+    : false;
+  if (found && !canAddActionTaken && !showSubmitted) {
+    return (
+      <AuditLoadingState message="Action taken has already been submitted for this plan." onBack={() => navigate(planPath)} />
+    );
+  }
+
+  if (!found) {
     return (
       <div className="p-6 min-h-screen">
         <button
@@ -120,6 +134,12 @@ const ActionOwnerActionTakenPage = () => {
       </div>
     );
   }
+
+  // e.g. "Audit01/Obs02/Ca01"
+  const planRef = [audit?.auditCode, observation?.id ?? observationId, found.plan.actionNo ?? found.plan.id]
+    .filter(Boolean)
+    .join("/");
+  const actionLabel = kind === "corrective" ? "Corrective Action Taken" : "Preventive Action Taken";
 
   return (
     <div className="p-6 min-h-screen">
@@ -135,7 +155,7 @@ const ActionOwnerActionTakenPage = () => {
         </button>
         <h1 className="text-xl font-semibold text-[#1A1A18]">Audit</h1>
         <span className="text-sm text-[rgba(26,26,24,0.48)]">
-          {audit.auditCode}/{observation.id}/{found.plan.id}
+          {planRef}
         </span>
       </div>
 
@@ -201,10 +221,20 @@ const ActionOwnerActionTakenPage = () => {
                     <input
                       type="file"
                       multiple
+                      accept={ATTACHMENT_ACCEPT}
                       className="hidden"
                       onChange={(e) => {
                         const files = Array.from(e.target.files || []);
-                        updateEntry(index, { attachments: [...entry.attachments, ...files] });
+                        const allowed = files.filter(isAllowedAttachment);
+                        const rejected = files.filter((file) => !isAllowedAttachment(file));
+                        if (rejected.length) {
+                          toast.error(
+                            `${rejected.map((file) => file.name).join(", ")} ${
+                              rejected.length === 1 ? "is" : "are"
+                            } not allowed. Only PDF, JPEG, JPG and PNG files are accepted.`,
+                          );
+                        }
+                        if (allowed.length) updateEntry(index, { attachments: [...entry.attachments, ...allowed] });
                         e.target.value = "";
                       }}
                     />
@@ -234,16 +264,6 @@ const ActionOwnerActionTakenPage = () => {
                     </div>
                   )}
                 </div>
-                <div className="max-w-sm">
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label={requiredLabel("Closure Date")}
-                    value={entry.closureDate}
-                    onChange={(e) => updateEntry(index, { closureDate: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </div>
               </div>
             </div>
           ))}
@@ -261,13 +281,34 @@ const ActionOwnerActionTakenPage = () => {
       </DetailCard>
 
       <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={() => save("draft")} disabled={submitting}>
-          Save Draft
+        <button type="button" className="fm-action-secondary" onClick={() => navigate(planPath)} disabled={submitting}>
+          Cancel
         </button>
-        <button type="button" className="fm-action-primary" onClick={() => save("submitted")} disabled={submitting}>
+        <button type="button" className="fm-action-primary" onClick={submit} disabled={submitting}>
           {submitting ? "Submitting..." : "Submit"}
         </button>
       </div>
+
+      {/* Submitted popup — closing it (or either button) leaves the form */}
+      <Dialog open={showSubmitted} onOpenChange={(open) => !open && navigate(planPath)}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-8 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#F5F4F0]">
+            <CheckCircle2 className="w-6 h-6 text-[rgba(26,26,24,0.68)]" />
+          </div>
+          <DialogTitle className="text-center text-lg font-semibold text-[#1A1A18]">{actionLabel} Submitted</DialogTitle>
+          <DialogDescription className="text-center text-sm text-[rgba(26,26,24,0.48)]">
+            ID: {planRef}
+          </DialogDescription>
+          <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+            <button type="button" className="fm-action-secondary" onClick={() => navigate(planPath)}>
+              View Details
+            </button>
+            <button type="button" className="fm-action-primary" onClick={() => navigate(observationPath)}>
+              View Action Plans
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
