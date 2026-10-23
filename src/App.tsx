@@ -690,6 +690,16 @@ const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-ow
 const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
 const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
 const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
+const IncidentReporterListPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterListPage"));
+const IncidentReporterAddPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterAddPage"));
+const IncidentReporterDetailPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterDetailPage"));
+const IncidentSpocListPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocListPage"));
+const IncidentSpocDetailPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocDetailPage"));
+const IncidentSpocActionPlanPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage"));
+const IncidentActionOwnerListPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage"));
+const IncidentActionOwnerDetailPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage"));
+const IncidentActionOwnerActionTakenPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"));
+const IncidentFunctionalHeadListPage = lazy(() => import("./pages/vi-incident/IncidentRolePlaceholderPage").then((m) => ({ default: m.IncidentFunctionalHeadListPage })));
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -5862,6 +5872,46 @@ function App() {
                             <Route
                               path="/safety/m-safe/krcc-form-list"
                               element={<KRCCFormListDashboard />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter"
+                              element={<IncidentReporterListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/add"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/:id"
+                              element={<IncidentReporterDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc"
+                              element={<IncidentSpocListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id"
+                              element={<IncidentSpocDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id/action-plan"
+                              element={<IncidentSpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner"
+                              element={<IncidentActionOwnerListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id"
+                              element={<IncidentActionOwnerDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id/action-taken"
+                              element={<IncidentActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head"
+                              element={<IncidentFunctionalHeadListPage />}
                             />
                             <Route
                               path="/safety/audit-list"

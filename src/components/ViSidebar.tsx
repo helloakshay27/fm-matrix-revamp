@@ -24,6 +24,8 @@ import {
   Mail,
   Upload,
   ClipboardCheck,
+  UserPlus,
+  AlertTriangle,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -108,6 +110,17 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
         { name: "Action Owner", href: "/safety/audit/action-owner", color: "text-[#1a1a1a]" },
         { name: "Functional Head", href: "/safety/audit/functional-head", color: "text-[#1a1a1a]" },
+      ],
+    },
+    {
+      name: "Incident",
+      icon: AlertTriangle,
+      href: "/safety/vi-incident",
+      subItems: [
+        { name: "Reporter", href: "/safety/vi-incident/reporter", color: "text-[#1a1a1a]" },
+        { name: "SPOC", href: "/safety/vi-incident/spoc", color: "text-[#1a1a1a]" },
+        { name: "Action Owner", href: "/safety/vi-incident/action-owner", color: "text-[#1a1a1a]" },
+        { name: "Functional Head", href: "/safety/vi-incident/functional-head", color: "text-[#1a1a1a]" },
       ],
     },
     {
