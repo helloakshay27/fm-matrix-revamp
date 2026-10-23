@@ -675,6 +675,7 @@ const KRCCFormListDashboard = lazy(() =>
 // Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
 const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
 const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
+const AuditorEditAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorEditAuditPage"));
 const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
 const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
 const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
@@ -5869,6 +5870,10 @@ function App() {
                             <Route
                               path="/safety/audit-list/add"
                               element={<AuditorAddAuditPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/edit"
+                              element={<AuditorEditAuditPage />}
                             />
                             <Route
                               path="/safety/audit-list/:id"

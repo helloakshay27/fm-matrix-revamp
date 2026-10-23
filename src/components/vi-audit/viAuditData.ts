@@ -15,6 +15,9 @@ export interface ViActionPlan {
   targetDate: string;
   dueLabel?: string;
   status: ViActionPlanStatus;
+  /** CAPA progress from the API: label ("CAPA Plan Not Started") and key ("capa_plan_not_started"). */
+  capaProgress?: string;
+  capaProgressKey?: string;
 }
 
 export interface ViObservation {
