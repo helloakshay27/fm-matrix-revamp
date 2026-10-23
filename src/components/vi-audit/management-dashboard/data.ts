@@ -324,7 +324,7 @@ export const ANALYTICS_CATALOG: CatalogItem[] = [
   { id: "obsStatus", type: "chart", label: "Observation Status" },
   { id: "obsClass", type: "chart", label: "Observation Classification" },
   { id: "obsCategory", type: "chart", label: "Observations by Category" },
-  { id: "obsFacility", type: "chart", label: "Observations by Type of Facility" },
+  // { id: "obsFacility", type: "chart", label: "Observations by Type of Facility" },
   { id: "obsTrend", type: "chart", label: "Observations Raised vs Closed" },
   { id: "obsVendor", type: "chart", label: "Observations by Vendor" },
   { id: "capaStatus", type: "chart", label: "Corrective vs Preventive Status" },

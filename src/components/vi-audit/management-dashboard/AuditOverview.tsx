@@ -13,7 +13,7 @@ interface AuditOverviewProps {
 export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill }: AuditOverviewProps) {
   return (
     <>
-      <div className="alert-strip">
+      {/* <div className="alert-strip">
         <span className="a-lbl">⚡ Priority Actions</span>
         <button type="button" className="alert-chip" onClick={() => onDrill("alert-spoc")}>
           155 observations awaiting a SPOC action plan &gt; 7 days
@@ -27,7 +27,7 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
         <button type="button" className="alert-chip warn" onClick={() => onDrill("alert-draft")}>
           29 draft audits older than 15 days
         </button>
-      </div>
+      </div> */}
 
       <div className="sec" id="sec-overview">
         <div className="sec-hd">
@@ -36,7 +36,10 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
         </div>
         <div className="flow-hint">Click any KPI to jump to its full section below · numbers follow the audit journey: Audit → Observation → Action plan → Action taken</div>
         <div className="kpi-grid flow-kpi-grid">
-          {KPI_CONFIG.map((kpi, index) => (
+          {KPI_CONFIG.map((kpi, index) => {
+            // Draft Audits card is hidden; index is kept so values still line up.
+            if (kpi.id === "kpi-draft") return null;
+            return (
             <div
               key={kpi.id}
               className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`}
@@ -66,12 +69,13 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
               <div className="kpi-val">{fmt(values[index])}</div>
               <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div className="sec" id="sec-heatmap">
-        <div className="g g-3-2">
+        <div className="g">
           <div className="card">
             <div className="card-hd">
               <div>
@@ -113,7 +117,7 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
               </div>
             </div>
           </div>
-          <div className="card">
+          {/* <div className="card">
             <div className="card-hd">
               <div>
                 <div className="card-title">
@@ -135,7 +139,7 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

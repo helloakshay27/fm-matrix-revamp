@@ -32,7 +32,7 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
           </button>
         </div>
       </div>
-      <div className="g g3">
+      <div className="g g2">
         <ChartCard title="Observation Status" sub="Where each observation is now" spec={CHARTS.obsStatus} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
@@ -63,7 +63,7 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
             </div>
           )}
         </ChartCard>
-        <div className="card">
+        {/* <div className="card">
           <div className="card-hd">
             <div>
               <div className="card-title">Observation Progress</div>
@@ -81,12 +81,12 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
         <ChartCard title="Observation Classification" sub="Classification chosen by the Auditor" spec={CHARTS.obsClass} options={["donut", "bar"]} />
       </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
+      <div className="g" style={{ marginTop: 16 }}>
         <ChartCard title="Observations by Category" sub="Category and sub-category roll-up" spec={CHARTS.obsCategory} options={["bar", "donut", "table"]} />
-        <ChartCard title="Observations by Type of Facility" sub="Type of Facility on the audit" spec={CHARTS.obsFacility} options={["bar", "donut"]} />
+        {/* <ChartCard title="Observations by Type of Facility" sub="Type of Facility on the audit" spec={CHARTS.obsFacility} options={["bar", "donut"]} /> */}
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <ChartCard title="Observations Raised vs Closed · 12 Months" sub="Monthly volume" spec={CHARTS.obsTrend} options={["line", "bar"]} />
