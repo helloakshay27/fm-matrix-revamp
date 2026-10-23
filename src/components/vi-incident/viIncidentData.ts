@@ -200,3 +200,13 @@ export const getViIncidentActionPlans = (incident: ViIncidentRecord): ViIncident
       : undefined,
   }));
 };
+
+/** Status options for the incident filters. */
+export const VI_INCIDENT_STATUSES: ViIncidentStatus[] = [
+  "Draft",
+  "Open",
+  "Closed",
+  "Pending By SPOC",
+  "Pending By Action Owner",
+  "Closed By Action Owner",
+];

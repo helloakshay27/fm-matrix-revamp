@@ -10,10 +10,15 @@ import {
   Pencil,
   type LucideIcon,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import {
+  EMPTY_INCIDENT_FILTERS,
+  IncidentFilterDialog,
+  matchesIncidentFilters,
+  type IncidentFilters,
+} from "./IncidentFilterDialog";
 import { INCIDENT_COLUMNS, VI_INCIDENT_LIST, VI_INCIDENT_STATUS_TONE, type ViIncidentRecord } from "./viIncidentData";
 
 export interface IncidentListStat {
@@ -75,8 +80,11 @@ export const IncidentListView = ({
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<IncidentFilters>(EMPTY_INCIDENT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filtered = data.filter((incident) => {
+    if (!matchesIncidentFilters(incident, filters)) return false;
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -152,8 +160,15 @@ export const IncidentListView = ({
         emptyMessage="No incidents found"
         pagination
         pageSize={10}
-        onFilterClick={() => toast.info("Incident filters coming soon")}
+        onFilterClick={() => setFilterOpen(true)}
         leftActions={leftActions}
+      />
+
+      <IncidentFilterDialog
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        filters={filters}
+        onApply={setFilters}
       />
     </div>
   );
