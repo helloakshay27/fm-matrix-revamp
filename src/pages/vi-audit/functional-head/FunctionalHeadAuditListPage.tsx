@@ -1,10 +1,26 @@
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardCheck, ClipboardList, Clock, ListChecks } from "lucide-react";
 import { AuditListView, type AuditListStat } from "@/components/vi-audit/AuditListView";
 import { AUDIT_CARD_COLUMNS } from "@/components/vi-audit/viAuditListData";
 import { dashboardCount, useViAuditDashboard, workflowCount } from "@/components/vi-audit/useViAuditDashboard";
+import {
+  AuditFilterDialog,
+  EMPTY_AUDIT_FILTERS,
+  type AuditStatusOption,
+  type ViAuditFilters,
+} from "@/components/vi-audit/AuditFilterDialog";
+
+const STATUS_OPTIONS: AuditStatusOption[] = [
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];
 
 // Functional Head: CAPA progress across audits.
 const FunctionalHeadAuditListPage = () => {
+  // Filter dialog state. The table is still placeholder data (no list API yet), so these filters
+  // are kept here to be sent with the list request once the endpoint is wired (auditFiltersToParams).
+  const [filters, setFilters] = useState<ViAuditFilters>(EMPTY_AUDIT_FILTERS);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   // Overall totals for the stats cards — GET /vi_audits/dashboard.json?role=functional_head
   const { counts } = useViAuditDashboard("functional_head");
   const pendingByOwner = workflowCount(counts, "pending_by_action_owner");
@@ -25,7 +41,16 @@ const FunctionalHeadAuditListPage = () => {
       columns={AUDIT_CARD_COLUMNS}
       detailBasePath="/safety/audit/functional-head"
       storageKey="vi-audit-list-functional-head"
-    />
+      onFilterClick={() => setIsFilterOpen(true)}
+    >
+      <AuditFilterDialog
+        open={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        filters={filters}
+        statusOptions={STATUS_OPTIONS}
+        onApply={setFilters}
+      />
+    </AuditListView>
   );
 };
 
