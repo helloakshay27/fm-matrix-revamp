@@ -1,6 +1,9 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { PulseDashboardProvider, usePulseDashboard } from "../../contexts/PulseDashboardContext";
+import {
+  PulseDashboardProvider,
+  usePulseDashboard,
+} from "../../contexts/PulseDashboardContext";
 import { Topbar } from "./Topbar";
 import { Sidebar } from "./Sidebar";
 import { Footer } from "./Footer";
@@ -12,7 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/pulse/": "Traffic & Session",
   "/pulse/traffic-session": "Traffic & Session",
   "/pulse/adoption-engagement": "Adoption & Engagement",
-  "/pulse/workflow-usage": "Workflow Usage"
+  "/pulse/workflow-usage": "Workflow Usage",
 };
 
 const DashboardContent: React.FC = () => {
@@ -35,7 +38,7 @@ const DashboardContent: React.FC = () => {
           </div>
           <FilterBar />
           <Outlet />
-          <Footer />
+          {/* <Footer /> */}
         </main>
       </div>
     </div>

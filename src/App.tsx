@@ -144,16 +144,44 @@ const ClubWalletsPage = lazy(() =>
     default: m.ClubWalletsPage,
   }))
 );
-const ClubUsageDashboard = lazy(() =>
-  import("./pages/ClubManagement/usage/ClubUsageDashboard")
+const ClubUsageDashboard = lazy(
+  () => import("./pages/ClubManagement/usage/ClubUsageDashboard")
 );
-const PulseAddFacilityBookingPage = lazy(() => import("./pages/pulse/forms/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
-const PulseEditDocumentPage = lazy(() => import("./pages/pulse/forms/EditDocumentPage").then(m => ({ default: m.EditDocumentPage })));
-const PulseAddDocumentDashboard = lazy(() => import("./pages/pulse/forms/AddDocumentDashboard").then(m => ({ default: m.AddDocumentDashboard })));
-const PulseEditBroadcastPage = lazy(() => import("./pages/pulse/forms/EditBroadcastPage").then(m => ({ default: m.EditBroadcastPage })));
-const PulseAddBroadcastPage = lazy(() => import("./pages/pulse/forms/AddBroadcastPage").then(m => ({ default: m.AddBroadcastPage })));
-const PulseEditEventPage = lazy(() => import("./pages/pulse/forms/EditEventPage").then(m => ({ default: m.EditEventPage })));
-const PulseAddEventPage = lazy(() => import("./pages/pulse/forms/AddEventPage").then(m => ({ default: m.AddEventPage })));
+const PulseAddFacilityBookingPage = lazy(() =>
+  import("./pages/pulse/forms/AddFacilityBookingPage").then((m) => ({
+    default: m.AddFacilityBookingPage,
+  }))
+);
+const PulseEditDocumentPage = lazy(() =>
+  import("./pages/pulse/forms/EditDocumentPage").then((m) => ({
+    default: m.EditDocumentPage,
+  }))
+);
+const PulseAddDocumentDashboard = lazy(() =>
+  import("./pages/pulse/forms/AddDocumentDashboard").then((m) => ({
+    default: m.AddDocumentDashboard,
+  }))
+);
+const PulseEditBroadcastPage = lazy(() =>
+  import("./pages/pulse/forms/EditBroadcastPage").then((m) => ({
+    default: m.EditBroadcastPage,
+  }))
+);
+const PulseAddBroadcastPage = lazy(() =>
+  import("./pages/pulse/forms/AddBroadcastPage").then((m) => ({
+    default: m.AddBroadcastPage,
+  }))
+);
+const PulseEditEventPage = lazy(() =>
+  import("./pages/pulse/forms/EditEventPage").then((m) => ({
+    default: m.EditEventPage,
+  }))
+);
+const PulseAddEventPage = lazy(() =>
+  import("./pages/pulse/forms/AddEventPage").then((m) => ({
+    default: m.AddEventPage,
+  }))
+);
 const AddTicketDashboard = lazy(() =>
   import("./pages/AddTicketDashboard").then((m) => ({
     default: m.AddTicketDashboard,
@@ -220,10 +248,20 @@ const CostApprovalStandalonePage = lazy(() =>
 );
 
 // Import Maintenance pages
-const AssetDashboard = lazy(() => import("./pages/AssetDashboard").then(m => ({ default: m.AssetDashboard })));
-const EquipmentDataDashboard = lazy(() => import("./pages/EquipmentDataDashboard").then(m => ({ default: m.EquipmentDataDashboard })));
+const AssetDashboard = lazy(() =>
+  import("./pages/AssetDashboard").then((m) => ({ default: m.AssetDashboard }))
+);
+const EquipmentDataDashboard = lazy(() =>
+  import("./pages/EquipmentDataDashboard").then((m) => ({
+    default: m.EquipmentDataDashboard,
+  }))
+);
 
-const AssetDetailsPage = lazy(() => import("./pages/AssetDetailsPage").then(m => ({ default: m.AssetDetailsPage })));
+const AssetDetailsPage = lazy(() =>
+  import("./pages/AssetDetailsPage").then((m) => ({
+    default: m.AssetDetailsPage,
+  }))
+);
 const AddAssetPage = lazy(() => import("./pages/AddAssetPage"));
 const InActiveAssetsDashboard = lazy(() =>
   import("./pages/InActiveAssetsDashboard").then((m) => ({
@@ -1877,33 +1915,95 @@ const KRCCFormListDashboard = lazy(() =>
   }))
 );
 // Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
-const AuditorAuditListPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditListPage"));
-const AuditorAddAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAddAuditPage"));
-const AuditorEditAuditPage = lazy(() => import("./pages/vi-audit/auditor/AuditorEditAuditPage"));
-const AuditorAuditDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorAuditDetailPage"));
-const AuditorObservationDetailPage = lazy(() => import("./pages/vi-audit/auditor/AuditorObservationDetailPage"));
-const SpocAuditListPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditListPage"));
-const SpocAuditDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocAuditDetailPage"));
-const SpocObservationDetailPage = lazy(() => import("./pages/vi-audit/spoc/SpocObservationDetailPage"));
-const SpocActionPlanPage = lazy(() => import("./pages/vi-audit/spoc/SpocActionPlanPage"));
-const ActionOwnerAuditListPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage"));
-const ActionOwnerAuditDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage"));
-const ActionOwnerObservationDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage"));
-const ActionOwnerActionPlanDetailPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage"));
-const ActionOwnerActionTakenPage = lazy(() => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage"));
-const FunctionalHeadAuditListPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage"));
-const FunctionalHeadAuditDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage"));
-const FunctionalHeadObservationDetailPage = lazy(() => import("./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"));
-const IncidentReporterListPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterListPage"));
-const IncidentReporterAddPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterAddPage"));
-const IncidentReporterDetailPage = lazy(() => import("./pages/vi-incident/reporter/IncidentReporterDetailPage"));
-const IncidentSpocListPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocListPage"));
-const IncidentSpocDetailPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocDetailPage"));
-const IncidentSpocActionPlanPage = lazy(() => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage"));
-const IncidentActionOwnerListPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage"));
-const IncidentActionOwnerDetailPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage"));
-const IncidentActionOwnerActionTakenPage = lazy(() => import("./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"));
-const IncidentFunctionalHeadListPage = lazy(() => import("./pages/vi-incident/IncidentRolePlaceholderPage").then((m) => ({ default: m.IncidentFunctionalHeadListPage })));
+const AuditorAuditListPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditListPage")
+);
+const AuditorAddAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAddAuditPage")
+);
+const AuditorEditAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorEditAuditPage")
+);
+const AuditorAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditDetailPage")
+);
+const AuditorObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorObservationDetailPage")
+);
+const SpocAuditListPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditListPage")
+);
+const SpocAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditDetailPage")
+);
+const SpocObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocObservationDetailPage")
+);
+const SpocActionPlanPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanPage")
+);
+const ActionOwnerAuditListPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage")
+);
+const ActionOwnerAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage")
+);
+const ActionOwnerObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage")
+);
+const ActionOwnerActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage")
+);
+const ActionOwnerActionTakenPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage")
+);
+const FunctionalHeadAuditListPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage")
+);
+const FunctionalHeadAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage")
+);
+const FunctionalHeadObservationDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"
+    )
+);
+const IncidentReporterListPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
+);
+const IncidentReporterAddPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterAddPage")
+);
+const IncidentReporterDetailPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterDetailPage")
+);
+const IncidentSpocListPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocListPage")
+);
+const IncidentSpocDetailPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocDetailPage")
+);
+const IncidentSpocActionPlanPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage")
+);
+const IncidentActionOwnerListPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage")
+);
+const IncidentActionOwnerDetailPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage")
+);
+const IncidentActionOwnerActionTakenPage = lazy(
+  () =>
+    import(
+      "./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"
+    )
+);
+const IncidentFunctionalHeadListPage = lazy(() =>
+  import("./pages/vi-incident/IncidentRolePlaceholderPage").then((m) => ({
+    default: m.IncidentFunctionalHeadListPage,
+  }))
+);
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
@@ -3878,10 +3978,12 @@ const TransportSuppliersPage = lazy(
   () => import("./features/transport-suppliers/pages/TransportSuppliers")
 );
 const TransportSupplierDetailsPage = lazy(
-  () => import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
+  () =>
+    import("./features/transport-suppliers/pages/TransportSupplierDetailsPage")
 );
 const VisitorAppConfiguration = lazy(
-  () => import("./features/visitor-app-configuration/pages/VisitorAppConfiguration")
+  () =>
+    import("./features/visitor-app-configuration/pages/VisitorAppConfiguration")
 );
 const GateIntegrationPage = lazy(
   () => import("./features/gate-integration/pages/GateIntegration")
@@ -4400,15 +4502,45 @@ const RecurringBillEdit = lazy(() =>
   }))
 );
 const PulseContests = lazy(() => import("./pages/PulseContests.tsx"));
-const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx"));
-const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
-const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
-const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
-const ViPosthogDashboardPage = lazy(() => import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(m => ({ default: m.ViPosthogDashboardPage })));
-const CalendarPosthogDashboardPage = lazy(() => import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(m => ({ default: m.CalendarPosthogDashboardPage })));
-const AccountingPosthogDashboardPage = lazy(() => import("./features/accounting-posthog-dashboard/AccountingPosthogDashboardPage").then(m => ({ default: m.AccountingPosthogDashboardPage })));
-const SmartSecureDashboardPage = lazy(() => import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(m => ({ default: m.SmartSecureDashboardPage })));
-const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
+const PulseContestRewards = lazy(
+  () => import("./pages/PulseContestRewards.tsx")
+);
+const PulseContestRewardsDetails = lazy(
+  () => import("./pages/PulseContestRewardsDetails.tsx")
+);
+const PulseContestRewardCreate = lazy(
+  () => import("./pages/PulseContestRewardCreate.tsx")
+);
+const PosthogDashboardPage = lazy(() =>
+  import("./features/posthog-dashboard/PosthogDashboardPage").then((m) => ({
+    default: m.PosthogDashboardPage,
+  }))
+);
+const ViPosthogDashboardPage = lazy(() =>
+  import("./features/vi-posthog-dashboard/ViPosthogDashboardPage").then(
+    (m) => ({ default: m.ViPosthogDashboardPage })
+  )
+);
+const CalendarPosthogDashboardPage = lazy(() =>
+  import(
+    "./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage"
+  ).then((m) => ({ default: m.CalendarPosthogDashboardPage }))
+);
+const AccountingPosthogDashboardPage = lazy(() =>
+  import(
+    "./features/accounting-posthog-dashboard/AccountingPosthogDashboardPage"
+  ).then((m) => ({ default: m.AccountingPosthogDashboardPage }))
+);
+const SmartSecureDashboardPage = lazy(() =>
+  import("./features/smartsecure-dashboard/SmartSecureDashboardPage").then(
+    (m) => ({ default: m.SmartSecureDashboardPage })
+  )
+);
+const FmAdoptionDashboardPage = lazy(() =>
+  import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(
+    (m) => ({ default: m.FmAdoptionDashboardPage })
+  )
+);
 const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
 
 const queryClient = new QueryClient();
@@ -4584,11 +4716,11 @@ function App() {
   const location = useLocation();
   const isSettingsRoute = Boolean(
     location.pathname.startsWith("/settings") ||
-    location.pathname.startsWith("/setup") ||
-    location.pathname.includes("/setup") ||
-    location.pathname === "/holiday-calendar" ||
-    location.pathname.startsWith("/holiday-calendar") ||
-    location.pathname.includes("space-management/setup")
+      location.pathname.startsWith("/setup") ||
+      location.pathname.includes("/setup") ||
+      location.pathname === "/holiday-calendar" ||
+      location.pathname.startsWith("/holiday-calendar") ||
+      location.pathname.includes("space-management/setup")
   );
   // Same check Layout uses to render ClubSidebar — every Club Management / Settings
   // module under that sidebar gets the settings-style toast.
@@ -4637,7 +4769,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -4783,11 +4915,11 @@ function App() {
                             element={<PosthogDashboardPage />}
                           />
                           <Route
-                            path="/vi-posthog-dashboard"
+                            path="/vi-usage-dashboard"
                             element={<ViPosthogDashboardPage />}
                           />
                           <Route
-                            path="/calendar-posthog-dashboard"
+                            path="/calendar-usage-dashboard"
                             element={<CalendarPosthogDashboardPage />}
                           />
                           <Route
@@ -5001,7 +5133,15 @@ function App() {
 
                           {/* Login Route */}
                           <Route path="/thepdf" element={<AllContent />} />
-                          <Route path="/dailypdf" element={<DailyReport selectedDateId={undefined} setSelectedDateId={undefined} />} />
+                          <Route
+                            path="/dailypdf"
+                            element={
+                              <DailyReport
+                                selectedDateId={undefined}
+                                setSelectedDateId={undefined}
+                              />
+                            }
+                          />
                           <Route path="/weeklypdf" element={<WeeklyReport />} />
                           <Route
                             path="/reports/pdf-render"
@@ -5448,10 +5588,12 @@ function App() {
                               element={<BusinessCard />}
                             />
                             <Route path="/ask-ai" element={<AskAI />} />
-
                             {/* AI Framework. `/ai/agents/new` is declared before
                                 `/ai/agents/:id` so "new" is not read as an id. */}
-                            <Route path="/ai/charges" element={<AiChargesPage />} />
+                            <Route
+                              path="/ai/charges"
+                              element={<AiChargesPage />}
+                            />
                             {/* <Route path="/ai/agents" element={<AiAgentsPage />} /> */}
                             {/* <Route
                               path="/ai/agents/new"
@@ -5948,7 +6090,7 @@ function App() {
                               path="/crm/broadcast"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                  hostname === "localhost" ? (
+                                hostname === "localhost" ? (
                                   <ClubBroadcastDashboard />
                                 ) : (
                                   <BroadcastDashboard />
@@ -5959,7 +6101,7 @@ function App() {
                               path="/crm/broadcast/add"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                  hostname === "localhost" ? (
+                                hostname === "localhost" ? (
                                   <AddClubBroadcastPage />
                                 ) : (
                                   <AddBroadcastPage />
@@ -5970,7 +6112,7 @@ function App() {
                               path="/crm/broadcast/details/:id"
                               element={
                                 hostname === "vi-web.gophygital.work" ||
-                                  hostname === "localhost" ? (
+                                hostname === "localhost" ? (
                                   <ClubBroadcastDetailsPage />
                                 ) : (
                                   <BroadcastDetailsPage />
@@ -7389,7 +7531,11 @@ function App() {
                             />
                             <Route
                               path="/maintenance/ticket/add"
-                              element={<PulseTicketRoute fallback={<AddTicketDashboard />} />}
+                              element={
+                                <PulseTicketRoute
+                                  fallback={<AddTicketDashboard />}
+                                />
+                              }
                             />
                             <Route
                               path="/maintenance/ticket/employee/add"
@@ -7429,7 +7575,11 @@ function App() {
                             />
                             <Route
                               path="/maintenance/ticket/add"
-                              element={<PulseTicketRoute fallback={<AddTicketDashboard />} />}
+                              element={
+                                <PulseTicketRoute
+                                  fallback={<AddTicketDashboard />}
+                                />
+                              }
                             />
                             <Route
                               path="/maintenance/ticket/assign"
@@ -9908,7 +10058,11 @@ function App() {
 
                             <Route
                               path="/pulse/notices"
-                              element={<div className="pulse-notices-page"><BroadcastDashboard /></div>}
+                              element={
+                                <div className="pulse-notices-page">
+                                  <BroadcastDashboard />
+                                </div>
+                              }
                             />
                             <Route
                               path="/pulse/notices/add"
@@ -10098,7 +10252,12 @@ function App() {
                             {/* Plus curated Service Routes */}
                             <Route
                               path="/pulse/curated-services"
-                              element={<Navigate to="/pulse/curated-services/service" replace />}
+                              element={
+                                <Navigate
+                                  to="/pulse/curated-services/service"
+                                  replace
+                                />
+                              }
                             />
                             <Route
                               path="/pulse/curated-services/service"
@@ -10242,7 +10401,10 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <div data-settings-scope="true" className="settings-module-root w-full h-full">
+                                  <div
+                                    data-settings-scope="true"
+                                    className="settings-module-root w-full h-full"
+                                  >
                                     <Outlet />
                                   </div>
                                 </Layout>
@@ -10789,13 +10951,21 @@ function App() {
                       </Suspense>
                       <Toaster />
                       <SonnerToaster
-                        position={showSettingsToast ? "bottom-center" : "top-right"}
+                        position={
+                          showSettingsToast ? "bottom-center" : "top-right"
+                        }
                         richColors
                         closeButton
-                        className={showSettingsToast ? "toaster group settings-toaster" : "toaster group"}
+                        className={
+                          showSettingsToast
+                            ? "toaster group settings-toaster"
+                            : "toaster group"
+                        }
                         toastOptions={{
                           duration: 4000,
-                          className: showSettingsToast ? "settings-toast" : undefined,
+                          className: showSettingsToast
+                            ? "settings-toast"
+                            : undefined,
                           style: showSettingsToast
                             ? {
                                 background: "#1a1a18",

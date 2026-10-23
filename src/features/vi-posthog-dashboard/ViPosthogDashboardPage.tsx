@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
-import './vi-posthog-dashboard.css';
-import { ControlBar } from './components/ControlBar';
-import { Footer } from './components/Footer';
-import { Sidebar } from './components/Sidebar';
-import { Topbar } from './components/Topbar';
-import { ViDashboardProvider } from './context/ViDashboardContext';
-import { useViDashboard } from './context/viDashboardStore';
-import { PAGE_TITLES } from './data/pages';
-import { AdoptionSection } from './sections/AdoptionSection';
-import { TrafficSection } from './sections/TrafficSection';
-import { WorkflowSection } from './sections/WorkflowSection';
+import { useEffect } from "react";
+import "./vi-posthog-dashboard.css";
+import { ControlBar } from "./components/ControlBar";
+import { Footer } from "./components/Footer";
+import { Sidebar } from "./components/Sidebar";
+import { Topbar } from "./components/Topbar";
+import { ViDashboardProvider } from "./context/ViDashboardContext";
+import { useViDashboard } from "./context/viDashboardStore";
+import { PAGE_TITLES } from "./data/pages";
+import { AdoptionSection } from "./sections/AdoptionSection";
+import { TrafficSection } from "./sections/TrafficSection";
+import { WorkflowSection } from "./sections/WorkflowSection";
 
 function DashboardLayout() {
   const { vm, page, theme, navCollapsed, toggleNav } = useViDashboard();
@@ -17,19 +17,28 @@ function DashboardLayout() {
   /* `[` toggles the navigation rail. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== '[' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key !== "[" || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       const tag = t?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        t?.isContentEditable
+      )
+        return;
       e.preventDefault();
       toggleNav();
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [toggleNav]);
 
   return (
-    <div className={`vi-ph${navCollapsed ? ' nav-collapsed' : ''}`} data-theme={theme}>
+    <div
+      className={`vi-ph${navCollapsed ? " nav-collapsed" : ""}`}
+      data-theme={theme}
+    >
       <Topbar />
       <div className="shell">
         <Sidebar />
@@ -43,11 +52,11 @@ function DashboardLayout() {
 
           <ControlBar />
 
-          {page === 'pgTraffic' && <TrafficSection />}
-          {page === 'pgAdopt' && <AdoptionSection />}
-          {page === 'pgFlows' && <WorkflowSection />}
+          {page === "pgTraffic" && <TrafficSection />}
+          {page === "pgAdopt" && <AdoptionSection />}
+          {page === "pgFlows" && <WorkflowSection />}
 
-          <Footer />
+          {/* <Footer /> */}
         </main>
       </div>
     </div>
