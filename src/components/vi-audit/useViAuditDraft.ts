@@ -4,6 +4,7 @@ import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import type { ViActiveUserOption } from "./useViActiveUsers";
 import { isViAuditType, type ViAuditType } from "./AuditTypeSelectModal";
 import { arr, obj, personName, text, toAttachment } from "./useViAuditDetail";
+import { OTHER_OPTION_VALUE } from "./viAuditApi";
 
 export interface ViAuditDraftObservation {
   /** Server id — sent back so the PUT updates the observation instead of adding one. */
@@ -13,6 +14,18 @@ export interface ViAuditDraftObservation {
   functionalHead: ViActiveUserOption | null;
   /** Names of attachments already saved on the server (read-only in the form). */
   existingAttachments: string[];
+  /** Per-observation classification / people / vendor (falls back to the audit-level values). */
+  classification: string;
+  category: string;
+  subCategory: string;
+  /** Free text saved for "Others" (classification_other / category_other / sub_category_other). */
+  classificationOther: string;
+  categoryOther: string;
+  subCategoryOther: string;
+  fteUsers: ViActiveUserOption[];
+  otherPeople: { name: string; designation: string }[];
+  vendorName: string;
+  subVendorName: string;
 }
 
 /** An audit from GET /vi_audits/:id.json, shaped as the Add Audit form's values (ids, not names). */
@@ -50,6 +63,28 @@ const toUserOption = (r: Raw, key: string): ViActiveUserOption | null => {
   return { id, name, email: text(person.email) || undefined };
 };
 
+// A classification field of an observation: its master id, "Others" when only the *_other text
+// is saved, else the audit-level id (older drafts kept these on the audit).
+const classificationField = (o: Raw, audit: Raw, key: string) => {
+  const id = masterId(o, key);
+  const other = text(o[`${key}_other`]);
+  return {
+    value: id || (other ? OTHER_OPTION_VALUE : masterId(audit, key)),
+    other: id ? "" : other,
+  };
+};
+
+// People interacted with, split into FTE users and others.
+const toPeople = (people: Raw[]) => ({
+  fteUsers: people
+    .filter((p) => text(p.type) !== "other")
+    .map((p) => toUserOption(p, "user"))
+    .filter((u): u is ViActiveUserOption => u !== null),
+  otherPeople: people
+    .filter((p) => text(p.type) === "other")
+    .map((p) => ({ name: text(p.name), designation: text(p.role, p.designation) })),
+});
+
 const toDraft = (json: unknown, fallbackId: string): ViAuditDraft => {
   const root = obj(json);
   const r = obj(root.vi_audit ?? root.audit ?? root.data ?? root);
@@ -74,21 +109,35 @@ const toDraft = (json: unknown, fallbackId: string): ViAuditDraft => {
       category: masterId(r, "category"),
       subCategory: masterId(r, "sub_category"),
     },
-    fteUsers: people
-      .filter((p) => text(p.type) !== "other")
-      .map((p) => toUserOption(p, "user"))
-      .filter((u): u is ViActiveUserOption => u !== null),
-    otherPeople: people
-      .filter((p) => text(p.type) === "other")
-      .map((p) => ({ name: text(p.name), designation: text(p.role, p.designation) })),
+    ...toPeople(people),
     vendor: { vendorName: text(r.vendor_name), subVendorName: text(r.sub_vendor_name) },
-    observations: arr(r.observations, r.observations_attributes, r.vi_audit_observations).map((o) => ({
-      id: text(o.id),
-      observation: text(o.observation, o.description),
-      spoc: toUserOption(o, "spoc"),
-      functionalHead: toUserOption(o, "functional_head"),
-      existingAttachments: arr(o.attachments, o.documents).map((a) => toAttachment(a).name),
-    })),
+    observations: arr(r.observations, r.observations_attributes, r.vi_audit_observations).map((o) => {
+      // Saved per observation when the API sends it; otherwise the audit-level values.
+      const ownPeople = arr(o.people_interacted_with, o.people);
+      return {
+        id: text(o.id),
+        observation: text(o.observation, o.description),
+        spoc: toUserOption(o, "spoc"),
+        functionalHead: toUserOption(o, "functional_head"),
+        existingAttachments: arr(o.attachments, o.documents).map((a) => toAttachment(a).name),
+        ...(() => {
+          const c = classificationField(o, r, "classification");
+          const cat = classificationField(o, r, "category");
+          const sub = classificationField(o, r, "sub_category");
+          return {
+            classification: c.value,
+            classificationOther: c.other,
+            category: cat.value,
+            categoryOther: cat.other,
+            subCategory: sub.value,
+            subCategoryOther: sub.other,
+          };
+        })(),
+        ...toPeople(ownPeople.length ? ownPeople : people),
+        vendorName: text(o.vendor_name, r.vendor_name),
+        subVendorName: text(o.sub_vendor_name, r.sub_vendor_name),
+      };
+    }),
   };
 };
 

@@ -1,11 +1,37 @@
 import type { LucideIcon } from "lucide-react";
-import { VI_AUDIT_STATUS_TONE, type ViActionPlan } from "./viAuditData";
+import { VI_AUDIT_STATUS_TONE, isPlanDateBreached, type ViActionPlan } from "./viAuditData";
 
 // Standard recessed tab strip with a raised neutral active segment.
 export const auditTabsListClass =
   "inline-flex h-auto flex-wrap gap-1 rounded-[12px] border border-[rgba(26,26,24,0.06)] bg-[#F5F4F0] p-1";
 export const auditTabTriggerClass =
   "rounded-[9px] px-4 py-2 text-[13px] font-semibold text-[rgba(26,26,24,0.68)] shadow-none transition-colors hover:text-[#1A1A18] data-[state=active]:bg-white data-[state=active]:text-[#1A1A18] data-[state=active]:shadow-[0_1px_3px_rgba(26,26,24,0.08)]";
+
+/**
+ * For multiline TextFields: MUI's TextareaAutosize renders a hidden copy of the textarea
+ * (aria-hidden) to measure height, positioned with an inline `position: absolute`. The global
+ * `[class*="MuiFormControl"] textarea { position: relative !important }` rules pull that copy
+ * back into the layout, so the visible textarea only gets half the width. This puts the hidden
+ * copy back out of the flow (more specific + !important) so the textarea fills the field.
+ */
+export const auditTextareaSx = {
+  "& textarea[aria-hidden='true']": {
+    position: "absolute !important",
+    visibility: "hidden",
+    top: 0,
+    left: 0,
+    width: "100% !important",
+    height: "0 !important",
+    minHeight: "0 !important",
+    maxHeight: "0 !important",
+    padding: "0 !important",
+    overflow: "hidden !important",
+    pointerEvents: "none",
+  },
+  "& textarea:not([aria-hidden='true'])": {
+    width: "100% !important",
+  },
+} as const;
 
 export const sectionIcon = (Icon: LucideIcon) => (
   <Icon className="w-[18px] h-[18px]" style={{ color: "rgba(26, 26, 24, 0.68)" }} />
@@ -84,10 +110,10 @@ export const ActionPlanRecord = ({
     <>
       <div className="mb-1 flex items-center justify-between gap-3">
         <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{plan.actionNo ?? plan.id}</span>
-        <DueLabel label={plan.dueLabel} />
+        <DueLabel label={plan.dueLabel ?? (isPlanDateBreached(plan) ? "Date breached" : undefined)} />
       </div>
       <p className={`text-sm text-[#1A1A18] ${clampDescription ? "line-clamp-2" : ""}`}>{plan.description}</p>
-      <div className="mt-3 grid grid-cols-2 gap-4 sm:max-w-md">
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:max-w-2xl">
         <div>
           <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Action Owner</div>
           <div className="text-sm font-medium text-[#1A1A18]">{plan.actionOwner}</div>
@@ -96,7 +122,20 @@ export const ActionPlanRecord = ({
           <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Target Date</div>
           <div className="text-sm font-medium text-[#1A1A18]">{plan.targetDate}</div>
         </div>
+        {/* Shown only when the target date has been extended */}
+        {plan.extendedTargetDate && (
+          <div>
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Extended Target Date</div>
+            <div className="text-sm font-medium text-[#1A1A18]">{plan.extendedTargetDate}</div>
+          </div>
+        )}
       </div>
+      {plan.extendedTargetDate && plan.extensionReason && (
+        <div className="mt-3">
+          <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Reason for Extension</div>
+          <p className={`text-sm text-[#1A1A18] ${clampDescription ? "line-clamp-2" : ""}`}>{plan.extensionReason}</p>
+        </div>
+      )}
       <div className="mt-3">
         {plan.capaProgress ? (
           <CapaProgressPill label={plan.capaProgress} progressKey={plan.capaProgressKey} />

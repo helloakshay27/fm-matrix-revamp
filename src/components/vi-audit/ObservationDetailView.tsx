@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ClipboardCheck, FileText, Image as ImageIcon, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileText, Image as ImageIcon, Layers, ShieldCheck, Store, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetailCard } from "@/components/ui/detail-card";
 import {
@@ -25,21 +25,26 @@ import { useViActionPlans, type ViActionPlanDetail } from "./useViActionPlanDeta
 const ActionPlanList = ({
   plans,
   onSelect,
+  renderPlanFooter,
 }: {
   plans: ViActionPlan[];
   onSelect?: (plan: ViActionPlan) => void;
+  /** Extra content under a record (e.g. SPOC's extend-target-date form for a breached plan). */
+  renderPlanFooter?: (plan: ViActionPlan) => ReactNode;
 }) =>
   plans.length === 0 ? (
     <p className="text-sm text-[rgba(26,26,24,0.48)]">No action plans added.</p>
   ) : (
     <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
       {plans.map((plan) => (
-        <ActionPlanRecord
-          key={plan.id}
-          plan={plan}
-          clampDescription={!!onSelect}
-          onClick={onSelect ? () => onSelect(plan) : undefined}
-        />
+        <div key={plan.id}>
+          <ActionPlanRecord
+            plan={plan}
+            clampDescription={!!onSelect}
+            onClick={onSelect ? () => onSelect(plan) : undefined}
+          />
+          {renderPlanFooter?.(plan)}
+        </div>
       ))}
     </div>
   );
@@ -79,6 +84,7 @@ export const ObservationDetailView = ({
   observationId,
   auditPath,
   onSelectPlan,
+  renderPlanFooter,
   footer,
   audit: auditFromApi,
   loading = false,
@@ -91,6 +97,8 @@ export const ObservationDetailView = ({
   /** Audit detail route — back arrow and "View More". */
   auditPath: string;
   onSelectPlan?: (plan: ViActionPlan, ctx: ObservationViewContext) => void;
+  /** Extra content under each corrective / preventive plan record. */
+  renderPlanFooter?: (plan: ViActionPlan) => ReactNode;
   footer?: (ctx: ObservationViewContext) => ReactNode;
 }) => {
   const navigate = useNavigate();
@@ -150,11 +158,11 @@ export const ObservationDetailView = ({
         >
           <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Observation — {observation.id}</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Observation — {observation.observationNo ?? observation.id}</h1>
         <AuditStatusPill status={observation.status} />
       </div>
       <p className="mb-6 pl-11 text-sm text-[rgba(26,26,24,0.48)]">
-        ID: {audit.auditCode}/{observation.id}
+        ID: {audit.auditCode}/{observation.observationNo ?? observation.id}
       </p>
 
       {/* Parent audit summary */}
@@ -205,7 +213,7 @@ export const ObservationDetailView = ({
               </div>
               <FieldGrid
                 fields={[
-                  { label: "Observation ID", value: observation.id },
+                  { label: "Observation ID", value: observation.observationNo ?? observation.id },
                   { label: "Assigned SPOC", value: observation.assignedSpoc },
                   { label: "Functional Head", value: observation.functionalHead },
                 ]}
@@ -264,17 +272,51 @@ export const ObservationDetailView = ({
               </div>
             </div>
           </DetailCard>
+
+          {/* Classification, people and vendor belong to each observation (API: observation fields). */}
+          <DetailCard icon={sectionIcon(Layers)} title="Observation Classification" className="mb-5">
+            <FieldGrid
+              fields={[
+                { label: "Classification", value: observation.classification?.classification },
+                { label: "Category", value: observation.classification?.category },
+                { label: "Sub Category", value: observation.classification?.subCategory },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard icon={sectionIcon(Users)} title="People Interacted With" className="mb-5">
+            <FieldGrid
+              columns={2}
+              fields={[
+                { label: "FTE / Non-FTE", value: observation.people?.fte.join(", ") },
+                {
+                  label: "Others",
+                  value: observation.people?.others.map((p) => `${p.name} (${p.designation})`).join(", "),
+                },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard icon={sectionIcon(Store)} title="Vendor Details" className="mb-5">
+            <FieldGrid
+              columns={2}
+              fields={[
+                { label: "Vendor Name", value: observation.vendor?.vendorName },
+                { label: "Sub Vendor Name", value: observation.vendor?.subVendorName },
+              ]}
+            />
+          </DetailCard>
         </TabsContent>
 
         <TabsContent value="corrective" className="mt-0">
           <DetailCard icon={sectionIcon(ShieldCheck)} title="Corrective Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} />
+            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
           </DetailCard>
         </TabsContent>
 
         <TabsContent value="preventive" className="mt-0">
           <DetailCard icon={sectionIcon(ShieldCheck)} title="Preventive Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} />
+            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
           </DetailCard>
         </TabsContent>
       </Tabs>
