@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -7,26 +7,40 @@ import {
   Clock,
   Eye,
   FileEdit,
+  HeartPulse,
   Pencil,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   EMPTY_INCIDENT_FILTERS,
   IncidentFilterDialog,
-  matchesIncidentFilters,
+  incidentFiltersToQuery,
   type IncidentFilters,
 } from "./IncidentFilterDialog";
-import { INCIDENT_COLUMNS, VI_INCIDENT_LIST, VI_INCIDENT_STATUS_TONE, type ViIncidentRecord } from "./viIncidentData";
+import {
+  dashboardCount,
+  dashboardGroupCount,
+  dashboardGroupLabel,
+  dashboardWorkflowOptions,
+  useViIncidentDashboard,
+  useViIncidentList,
+} from "./viIncidentApi";
+import { INCIDENT_COLUMNS, VI_INCIDENT_STATUS_TONE, type ViIncidentRecord, type ViIncidentRole } from "./viIncidentData";
 
 export interface IncidentListStat {
   title: string;
   value: number;
   icon: LucideIcon;
 }
+
+/** Builds a role's stat cards from its dashboard counters (GET /vi_incidents/<role>_dashboard.json). */
+export type IncidentStatsBuilder = (dashboard: Record<string, unknown>) => IncidentListStat[];
 
 // Same summary-card standard as the audit lists.
 const summaryCardClass =
@@ -39,69 +53,91 @@ export const IncidentStatusPill = ({ status }: { status: string }) => (
       VI_INCIDENT_STATUS_TONE[status] ?? VI_INCIDENT_STATUS_TONE.Closed
     }`}
   >
-    {status}
+    {status || "-"}
   </span>
 );
 
-/** Stats shown on top of every incident list (Total / Closed / Open / Pending / Closed by AO / Draft). */
-export const buildIncidentStats = (records: ViIncidentRecord[]): IncidentListStat[] => {
-  const count = (status: string) => records.filter((r) => r.status === status).length;
-  return [
-    { title: "Total Incidents", value: records.length, icon: ClipboardList },
-    { title: "Closed Incident", value: count("Closed"), icon: CheckCircle2 },
-    { title: "Open Incident", value: count("Open") + count("Pending By SPOC"), icon: AlertTriangle },
-    { title: "Pending By Action Owner", value: count("Pending By Action Owner"), icon: Clock },
-    { title: "Closed By Action Owner", value: count("Closed By Action Owner"), icon: CheckCircle2 },
-    { title: "Draft", value: count("Draft"), icon: FileEdit },
-  ];
-};
+/** Reporter stats (GET /vi_incidents/reporter_dashboard.json). */
+export const buildIncidentStats: IncidentStatsBuilder = (d) => [
+  { title: "Total Incidents", value: dashboardCount(d, "total_incidents", "total_assigned_incidents"), icon: ClipboardList },
+  { title: "Closed Incident", value: dashboardCount(d, "closed_incidents"), icon: CheckCircle2 },
+  { title: "Open Incident", value: dashboardCount(d, "open_incidents"), icon: AlertTriangle },
+  // Workflow cards use the API's labels; the text here is only a fallback.
+  {
+    title: dashboardGroupLabel(d, "workflow", "pending_by_spoc", "Pending By SPOC"),
+    value: dashboardGroupCount(d, "workflow", "pending_by_spoc"),
+    icon: Search,
+  },
+  {
+    title: dashboardGroupLabel(d, "workflow", "pending_by_action_owner", "Pending By Action Owner"),
+    value: dashboardGroupCount(d, "workflow", "pending_by_action_owner"),
+    icon: Clock,
+  },
+  {
+    title: dashboardGroupLabel(d, "workflow", "closed_by_action_owner", "Closed By Action Owner"),
+    value: dashboardGroupCount(d, "workflow", "closed_by_action_owner"),
+    icon: CheckCircle2,
+  },
+  { title: "Draft", value: dashboardCount(d, "draft_incidents"), icon: FileEdit },
+  { title: "Injury Records", value: dashboardCount(d, "total_injury_records"), icon: HeartPulse },
+];
 
 /**
  * Shared layout for the incident list pages (stats cards + incident table). Each role page
- * (Reporter, SPOC, Action Owner, Functional Head) supplies its own title, detail route and actions.
+ * (Reporter, SPOC, Action Owner, Functional Head) supplies its role, title, detail route and actions.
+ * Paging, search (incident ID) and filters run on the server.
  */
 export const IncidentListView = ({
+  role,
   title,
   detailBasePath,
   storageKey,
   leftActions,
-  data = VI_INCIDENT_LIST,
-  loading = false,
   editDrafts = false,
   buildStats = buildIncidentStats,
   columns = INCIDENT_COLUMNS,
+  extraQuery,
 }: {
+  role: ViIncidentRole;
   title: string;
   /** The eye button opens `${detailBasePath}/${incident.id}`. */
   detailBasePath: string;
   storageKey: string;
-  leftActions?: ReactNode;
-  data?: ViIncidentRecord[];
-  loading?: boolean;
-  /** Draft rows also get an edit button, opening `${detailBasePath}/${incident.id}/edit`. */
+  /** Toolbar content; a function receives the role's dashboard (e.g. for dashboard-driven filters). */
+  leftActions?: ReactNode | ((dashboard: Record<string, unknown>) => ReactNode);
+  /** Editable drafts also get an edit button, opening `${detailBasePath}/${incident.id}/edit`. */
   editDrafts?: boolean;
-  /** Stat cards for this role — defaults to the standard six. */
-  buildStats?: (records: ViIncidentRecord[]) => IncidentListStat[];
+  /** Stat cards for this role — defaults to the reporter's six. */
+  buildStats?: IncidentStatsBuilder;
   /** Table columns — defaults to the full incident column set. */
   columns?: ColumnConfig[];
+  /** Role-specific list params (e.g. the action owner's assignment_status); a change goes back to page 1. */
+  extraQuery?: Record<string, string>;
 }) => {
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm.trim(), 400);
   const [filters, setFilters] = useState<IncidentFilters>(EMPTY_INCIDENT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const filtered = data.filter((incident) => {
-    if (!matchesIncidentFilters(incident, filters)) return false;
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return true;
-    return (
-      String(incident.incidentId).includes(term) ||
-      incident.classification.toLowerCase().includes(term) ||
-      incident.category.toLowerCase().includes(term) ||
-      incident.incidentLocation.toLowerCase().includes(term) ||
-      incident.spoc.toLowerCase().includes(term)
-    );
-  });
+  const extraKey = JSON.stringify(extraQuery ?? {});
+  const [appliedExtraKey, setAppliedExtraKey] = useState(extraKey);
+  if (appliedExtraKey !== extraKey) {
+    setAppliedExtraKey(extraKey);
+    setPage(1);
+  }
+
+  const query = useMemo(
+    () => ({
+      ...incidentFiltersToQuery(filters),
+      ...(debouncedSearch ? { "q[incident_no_cont]": debouncedSearch } : {}),
+      ...Object.fromEntries(Object.entries(JSON.parse(extraKey) as Record<string, string>).filter(([, v]) => v)),
+    }),
+    [filters, debouncedSearch, extraKey],
+  );
+  const { incidents, pagination, loading } = useViIncidentList(role, page, query);
+  const { dashboard } = useViIncidentDashboard(role);
 
   const renderCell = (item: ViIncidentRecord, columnKey: string) => {
     if (columnKey === "status") return <IncidentStatusPill status={item.status} />;
@@ -119,7 +155,7 @@ export const IncidentListView = ({
       >
         <Eye className="w-4 h-4" />
       </Button>
-      {editDrafts && item.status === "Draft" && (
+      {editDrafts && item.canEdit && (
         <Button
           variant="ghost"
           size="sm"
@@ -138,7 +174,7 @@ export const IncidentListView = ({
       <h1 className="text-xl font-semibold text-[#1A1A18] mb-4">{title}</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
-        {buildStats(data).map(({ title: statTitle, value, icon: Icon }) => (
+        {buildStats(dashboard).map(({ title: statTitle, value, icon: Icon }) => (
           <StatsCard
             key={statTitle}
             title={statTitle}
@@ -151,31 +187,41 @@ export const IncidentListView = ({
       </div>
 
       <EnhancedTable
-        data={filtered}
+        data={incidents}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
         storageKey={storageKey}
         enableSearch
         searchTerm={searchTerm}
+        onSearchChange={(term) => {
+          setSearchTerm(term);
+          setPage(1);
+        }}
+        disableClientSearch
         loading={loading}
         loadingMessage="Loading incidents..."
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search..."
+        searchPlaceholder="Search by incident ID..."
         enableExport
         exportFileName={storageKey}
         emptyMessage="No incidents found"
         pagination
-        pageSize={10}
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        onPageChange={setPage}
         onFilterClick={() => setFilterOpen(true)}
-        leftActions={leftActions}
+        leftActions={typeof leftActions === "function" ? leftActions(dashboard) : leftActions}
       />
 
       <IncidentFilterDialog
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
         filters={filters}
-        onApply={setFilters}
+        statusOptions={dashboardWorkflowOptions(dashboard)}
+        onApply={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
       />
     </div>
   );

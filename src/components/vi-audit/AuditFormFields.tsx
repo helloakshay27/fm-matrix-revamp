@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Users } from "lucide-react";
-import { MenuItem, TextField } from "@mui/material";
+import { MenuItem, TextField, type MenuProps } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import type { MasterOption } from "./useViAuditMasters";
 import type { ViActiveUserOption } from "./useViActiveUsers";
@@ -48,6 +48,7 @@ export function SelectField({
   placeholder,
   disabled,
   loading,
+  menuProps,
 }: {
   label: string;
   required?: boolean;
@@ -57,6 +58,8 @@ export function SelectField({
   placeholder: string;
   disabled?: boolean;
   loading?: boolean;
+  /** Extra MUI Menu props (e.g. anchorOrigin) merged over the defaults. */
+  menuProps?: Partial<MenuProps>;
 }) {
   const normalized: MasterOption[] = options.map((option) =>
     typeof option === "string" ? { value: option, label: option } : option,
@@ -75,7 +78,10 @@ export function SelectField({
       InputLabelProps={{ shrink: true }}
       SelectProps={{
         displayEmpty: true,
-        MenuProps: { PaperProps: { style: { maxHeight: 320 } } },
+        MenuProps: {
+          ...menuProps,
+          PaperProps: { ...menuProps?.PaperProps, style: { maxHeight: 320, ...menuProps?.PaperProps?.style } },
+        },
         renderValue: (selected) =>
           selected ? (
             labelFor(selected as string)
@@ -84,11 +90,18 @@ export function SelectField({
           ),
       }}
     >
-      {normalized.map((option) => (
-        <MenuItem key={option.value} value={option.value} sx={{ whiteSpace: "normal" }}>
-          {option.label}
+      {normalized.length ? (
+        normalized.map((option) => (
+          <MenuItem key={option.value} value={option.value} sx={{ whiteSpace: "normal" }}>
+            {option.label}
+          </MenuItem>
+        ))
+      ) : (
+        // An empty list would open as a blank box — say so instead.
+        <MenuItem disabled value="__no_options__" sx={{ fontSize: 14, fontStyle: "italic" }}>
+          No options available
         </MenuItem>
-      ))}
+      )}
     </TextField>
   );
 }
