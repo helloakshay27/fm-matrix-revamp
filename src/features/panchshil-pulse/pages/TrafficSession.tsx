@@ -3,6 +3,7 @@ import { usePulseDashboard } from "../contexts/PulseDashboardContext";
 import { KpiTile } from "../components/common/KpiTile";
 import { LineChart } from "../components/charts/LineChart";
 import { SectionState } from "../components/common/SectionState";
+import { TrafficSkeleton } from "../components/common/PulseSkeletons";
 import { tileToKpi } from "../utils/tileAdapter";
 import { useChartColors } from "../utils/chartColors";
 
@@ -57,7 +58,7 @@ export const TrafficSession: React.FC = () => {
         </ul>
       </div>
 
-      <SectionState status={vm.status.traffic} label="traffic data">
+      <SectionState status={vm.status.traffic} label="traffic data" skeleton={<TrafficSkeleton />}>
         {/* KPI Tiles */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)" }} id="tilesTraffic">
           <KpiTile

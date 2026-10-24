@@ -52,7 +52,7 @@ export function TrafficSection() {
 
       <Tiles specs={traffic.tiles} columns={3} id="tilesTraffic" loading={trafficLoading} />
 
-      <div className="grid2">
+      <div className="grid32">
         <ChartCard
           id="card-trafficActive"
           eyebrow="Usage over time · SVG chart"
@@ -168,7 +168,7 @@ export function TrafficSection() {
           )}
           <div className="kv" style={{ marginTop: 14 }}>
             <div>
-              <div className="k">Views / session</div>
+              <div className="k">Views / Session</div>
               <div className="v" style={{ fontSize: 18 }}>
                 {trafficLoading ? '...' : traffic.viewsPerSession}
               </div>
