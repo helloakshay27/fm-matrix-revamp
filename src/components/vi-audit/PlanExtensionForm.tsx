@@ -4,7 +4,10 @@ import { toast } from "sonner";
 import { TextField } from "@mui/material";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { apiErrorMessage } from "./viAuditApi";
-import { auditTextareaSx } from "./ViAuditUi";
+import {
+  auditTextareaSx,
+  auditFieldSx,
+} from "./ViAuditUi";
 import { localTodayIso, type ViActionPlan } from "./viAuditData";
 
 const requiredLabel = (text: string) => (
@@ -73,6 +76,7 @@ export const PlanExtensionForm = ({ plan, onExtended }: { plan: ViActionPlan; on
           label={requiredLabel("Extend Target Date")}
           value={date}
           onChange={(e) => setDate(e.target.value)}
+          sx={auditFieldSx}
           InputLabelProps={{ shrink: true }}
           inputProps={{ min: minDate }}
         />
@@ -89,7 +93,7 @@ export const PlanExtensionForm = ({ plan, onExtended }: { plan: ViActionPlan; on
         InputLabelProps={{ shrink: true }}
       />
       <div className="flex justify-end">
-        <button type="button" className="fm-action-primary" onClick={submit} disabled={saving}>
+        <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={submit} disabled={saving}>
           {saving ? "Submitting..." : "Submit"}
         </button>
       </div>

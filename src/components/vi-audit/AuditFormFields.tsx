@@ -388,6 +388,7 @@ export function ObservationClassificationFields({
               placeholder={`Enter ${label.toLowerCase()}`}
               value={value[otherKey]}
               onChange={(e) => onChange({ [otherKey]: e.target.value })}
+              sx={auditFieldSx}
               InputLabelProps={{ shrink: true }}
             />
           )}

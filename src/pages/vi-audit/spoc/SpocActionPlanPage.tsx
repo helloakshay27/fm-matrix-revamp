@@ -6,7 +6,12 @@ import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
-import { AuditLoadingState, sectionIcon, auditTextareaSx } from "@/components/vi-audit/ViAuditUi";
+import {
+  AuditLoadingState,
+  sectionIcon,
+  auditTextareaSx,
+  auditFieldSx,
+} from "@/components/vi-audit/ViAuditUi";
 import { arr, obj, personName, text } from "@/components/vi-audit/useViAuditDetail";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
@@ -62,7 +67,7 @@ const PLAN_SECTIONS: { kind: PlanKind; title: string; window: string }[] = [
 
 const requiredLabel = (text: string) => (
   <>
-    {text} <span className="fm-required-mark">*</span>
+    {text} <span className="text-red-500 ml-0.5">*</span>
   </>
 );
 
@@ -207,19 +212,19 @@ const SpocActionPlanPage = () => {
   if (loadingDraft) return <AuditLoadingState message="Loading action plan..." />;
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={() => navigate(observationPath)}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back to observation"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Audit</h1>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Audit</h1>
+        <span className="text-sm text-gray-500">
           {observationId} · Action Plan
         </span>
         {hasDraft && (
@@ -231,18 +236,18 @@ const SpocActionPlanPage = () => {
 
       {/* Stepper: 3 of 3 — audit and observation steps done, action plan current (neutral states) */}
       <div className="mb-6 max-w-md">
-        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">3 of 3 steps</p>
+        <p className="mb-2 text-xs text-gray-500">3 of 3 steps</p>
         <div className="flex items-center">
           {[1, 2, 3].map((n) => (
             <div key={n} className={`flex items-center ${n < 3 ? "flex-1" : ""}`}>
               <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold border-[1.5px] border-[#1A1A18] ${
-                  n < 3 ? "bg-[#F1EEE7] text-[#1A1A18]" : "bg-white text-[#1A1A18]"
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold border-[1.5px] border-gray-900 ${
+                  n < 3 ? "bg-[#EDEAE3] text-gray-900" : "bg-white text-gray-900"
                 }`}
               >
                 {n < 3 ? <Check className="w-4 h-4" /> : n}
               </span>
-              {n < 3 && <span className="mx-2 h-px flex-1 bg-[#1A1A18]" />}
+              {n < 3 && <span className="mx-2 h-px flex-1 bg-gray-900" />}
             </div>
           ))}
         </div>
@@ -254,15 +259,15 @@ const SpocActionPlanPage = () => {
             {plans[kind].map((entry, index) => (
               <div
                 key={index}
-                className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}
+                className={index > 0 ? "border-t border-gray-200 pt-6" : ""}
               >
                 {plans[kind].length > 1 && !entry.id && (
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-semibold text-[#1A1A18]">Action {index + 1}</span>
+                    <span className="text-[13px] font-semibold text-gray-900">Action {index + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeEntry(kind, index)}
-                      className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                      className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                       aria-label={`Remove action ${index + 1}`}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -302,6 +307,7 @@ const SpocActionPlanPage = () => {
                       label={requiredLabel("Select Target Date")}
                       value={entry.targetDate}
                       onChange={(e) => updateEntry(kind, index, { targetDate: e.target.value })}
+                      sx={auditFieldSx}
                       InputLabelProps={{ shrink: true }}
                     />
                     {entry.id && (
@@ -311,6 +317,7 @@ const SpocActionPlanPage = () => {
                         label="Extend Target Date"
                         value={entry.extendTargetDate}
                         onChange={(e) => updateEntry(kind, index, { extendTargetDate: e.target.value })}
+                        sx={auditFieldSx}
                         InputLabelProps={{ shrink: true }}
                         inputProps={{ min: entry.targetDate || undefined }}
                       />
@@ -336,7 +343,7 @@ const SpocActionPlanPage = () => {
               <button
                 type="button"
                 onClick={() => addEntry(kind)}
-                className="inline-flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-[#1A1A18] hover:bg-[#F5F4F0]"
+                className="inline-flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-gray-900 hover:bg-gray-100"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -346,11 +353,11 @@ const SpocActionPlanPage = () => {
         </DetailCard>
       ))}
 
-      <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={() => save(false)} disabled={submitting}>
+      <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => save(false)} disabled={submitting}>
           Save draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={() => save(true)} disabled={submitting}>
+        <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => save(true)} disabled={submitting}>
           {submitting ? "Submitting..." : "Submit"}
         </button>
       </div>

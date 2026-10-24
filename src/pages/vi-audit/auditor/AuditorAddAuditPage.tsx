@@ -15,7 +15,11 @@ import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { useViAuditMasters } from "@/components/vi-audit/useViAuditMasters";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
-import { sectionIcon, auditTextareaSx } from "@/components/vi-audit/ViAuditUi";
+import {
+  sectionIcon,
+  auditTextareaSx,
+  auditFieldSx,
+} from "@/components/vi-audit/ViAuditUi";
 import {
   AddMoreButton,
   InfoRow,
@@ -234,14 +238,14 @@ const AuditorAddAuditPage = () => {
       <button
         type="button"
         onClick={handleBack}
-        className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+        className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
         aria-label="Back"
       >
-        <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+        <ArrowLeft className="w-4 h-4 text-gray-600" />
       </button>
-      <h1 className="text-xl font-semibold text-[#1A1A18]">Audit</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Audit</h1>
       {auditType && (
-        <span className="ml-1 inline-flex items-center rounded-full bg-[#F5F4F0] px-[10px] py-[3px] text-[11px] font-medium text-[rgba(26,26,24,0.68)]">
+        <span className="ml-1 inline-flex items-center rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600">
           {auditType === "corporate" ? "Corporate" : "Circle"} audit
         </span>
       )}
@@ -251,7 +255,7 @@ const AuditorAddAuditPage = () => {
   // --- No type in the URL (page opened directly): ask for it in the same modal --
   if (auditType === null) {
     return (
-      <div className="p-6 min-h-screen">
+      <div className="p-4 sm:p-6 min-h-screen">
         {header}
         <AuditTypeSelectModal
           open
@@ -264,27 +268,27 @@ const AuditorAddAuditPage = () => {
 
   // --- Two-step form -------------------------------------------------------
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {header}
 
       {/* Stepper: 1 of 2 steps — neutral current / done states (solid ink is for CTAs) */}
       <div className="mb-6 max-w-md">
-        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">{step} of 2 steps</p>
+        <p className="mb-2 text-xs text-gray-500">{step} of 2 steps</p>
         <div className="flex items-center">
           {[1, 2].map((n) => (
             <div key={n} className={`flex items-center ${n === 1 ? "flex-1" : ""}`}>
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                   n <= step
-                    ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] text-[#1A1A18]"
-                    : "border border-[rgba(26,26,24,0.12)] bg-white text-[rgba(26,26,24,0.48)]"
+                    ? "border-[1.5px] border-gray-900 bg-[#EDEAE3] text-gray-900"
+                    : "border border-gray-200 bg-white text-gray-500"
                 }`}
               >
                 {n}
               </span>
               {n === 1 && (
                 <span
-                  className={`mx-2 h-px flex-1 ${step === 2 ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`}
+                  className={`mx-2 h-px flex-1 ${step === 2 ? "bg-gray-900" : "bg-gray-200"}`}
                 />
               )}
             </div>
@@ -310,6 +314,7 @@ const AuditorAddAuditPage = () => {
                 label={requiredLabel("Date of Audit")}
                 value={basic.dateOfAudit}
                 onChange={(e) => setBasic((p) => ({ ...p, dateOfAudit: e.target.value }))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -354,6 +359,7 @@ const AuditorAddAuditPage = () => {
                 placeholder="Enter location"
                 value={basic.location}
                 onChange={(e) => setBasic((p) => ({ ...p, location: e.target.value }))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -368,11 +374,11 @@ const AuditorAddAuditPage = () => {
             </div>
           </DetailCard>
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
-            <button type="button" className="fm-action-secondary" onClick={() => sendAudit("draft")} disabled={submitting}>
+          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+            <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => sendAudit("draft")} disabled={submitting}>
               Save draft
             </button>
-            <button type="button" className="fm-action-primary" onClick={handleNext} disabled={submitting}>
+            <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleNext} disabled={submitting}>
               Next
             </button>
           </div>
@@ -430,6 +436,7 @@ const AuditorAddAuditPage = () => {
                   placeholder="Enter vendor name"
                   value={entry.vendorName}
                   onChange={(e) => updateObservation(index, { vendorName: e.target.value })}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
                 <TextField
@@ -438,6 +445,7 @@ const AuditorAddAuditPage = () => {
                   placeholder="Enter sub vendor name"
                   value={entry.subVendorName}
                   onChange={(e) => updateObservation(index, { subVendorName: e.target.value })}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>
@@ -456,7 +464,7 @@ const AuditorAddAuditPage = () => {
                   InputLabelProps={{ shrink: true }}
                 />
                 <div>
-                  <label className="fm-action-secondary inline-flex cursor-pointer">
+                  <label className="inline-flex items-center justify-center gap-2 h-9 px-4 text-sm border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50 cursor-pointer">
                     <Paperclip className="w-4 h-4" />
                     Upload Attachments
                     <input
@@ -488,7 +496,7 @@ const AuditorAddAuditPage = () => {
                       {entry.attachments.map((file, fileIndex) => (
                         <span
                           key={`${file.name}-${fileIndex}`}
-                          className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]"
+                          className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900"
                         >
                           <span className="truncate">{file.name}</span>
                           <button
@@ -498,7 +506,7 @@ const AuditorAddAuditPage = () => {
                                 attachments: entry.attachments.filter((_, i) => i !== fileIndex),
                               })
                             }
-                            className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18]"
+                            className="text-gray-500 hover:text-gray-900"
                             aria-label={`Remove ${file.name}`}
                           >
                             <X className="w-3 h-3" />
@@ -540,11 +548,11 @@ const AuditorAddAuditPage = () => {
             </div>
           ))}
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
-            <button type="button" className="fm-action-secondary" onClick={() => sendAudit("draft")} disabled={submitting}>
+          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+            <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => sendAudit("draft")} disabled={submitting}>
               Save draft
             </button>
-            <button type="button" className="fm-action-primary" onClick={handleSubmit} disabled={submitting}>
+            <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmit} disabled={submitting}>
               {submitting ? "Submitting..." : "Submit"}
             </button>
           </div>
