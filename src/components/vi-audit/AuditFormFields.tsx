@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Users } from "lucide-react";
 import { MenuItem, TextField, type MenuProps } from "@mui/material";
@@ -7,6 +7,7 @@ import type { MasterOption } from "./useViAuditMasters";
 import type { ViActiveUserOption } from "./useViActiveUsers";
 import { AutocompleteLabel, UserAutocomplete } from "./ViUserPicker";
 import { sectionIcon } from "./ViAuditUi";
+import { OTHER_OPTION_VALUE } from "./viAuditApi";
 
 // Shared fields / sections of the Vi Audit forms (Add Audit and Edit Audit pages).
 
@@ -130,6 +131,16 @@ export function AddMoreButton({ label, onClick }: { label: string; onClick: () =
   );
 }
 
+// Sub-section heading inside a section card (e.g. Add Audit step 2): brand-coloured title,
+// optionally preceded by a divider that separates it from the previous sub-section.
+export function SubSectionTitle({ children, divider = false }: { children: ReactNode; divider?: boolean }) {
+  return (
+    <div className={divider ? "mt-6 border-t border-gray-200 pt-6" : ""}>
+      <h3 className="mb-4 text-[15px] font-semibold text-brand">{children}</h3>
+    </div>
+  );
+}
+
 export interface OtherPerson {
   name: string;
   designation: string;
@@ -144,7 +155,10 @@ export function PeopleInteractedSection({
   onFteUsersChange,
   otherPeople,
   onOtherPeopleChange,
+  bare = false,
 }: {
+  /** Render only the content (no card), for use inside another section card. */
+  bare?: boolean;
   fteUsers: ViActiveUserOption[];
   onFteUsersChange: (users: ViActiveUserOption[]) => void;
   otherPeople: OtherPerson[];
@@ -153,8 +167,7 @@ export function PeopleInteractedSection({
   const [showFtePicker, setShowFtePicker] = useState(false);
   const [otherDraft, setOtherDraft] = useState<OtherPerson | null>(null);
 
-  return (
-    <DetailCard icon={sectionIcon(Users)} title="People Interacted With" className="mb-5">
+  const content = (
       <div className="space-y-6">
         {/* FTE / Non-FTE */}
         <div>
@@ -271,6 +284,108 @@ export function PeopleInteractedSection({
           )}
         </div>
       </div>
+  );
+
+  if (bare) return content;
+  return (
+    <DetailCard icon={sectionIcon(Users)} title="People Interacted With" className="mb-5">
+      {content}
     </DetailCard>
+  );
+}
+
+// --- Observation classification (Classification / Category / Sub Category + "Others") -------
+
+/** One observation's classification values; `*Other` holds the text typed for "Others". */
+export interface ObservationClassificationValue {
+  classification: string;
+  category: string;
+  subCategory: string;
+  classificationOther: string;
+  categoryOther: string;
+  subCategoryOther: string;
+}
+
+// Masters options plus a single "Others" choice at the end (a master literally named "Others"
+// is replaced by it, so the API gets the free text instead of that id).
+const withOthersOption = (options: MasterOption[]): MasterOption[] => [
+  ...options.filter((option) => option.label.trim().toLowerCase() !== "others"),
+  { value: OTHER_OPTION_VALUE, label: "Others" },
+];
+
+/** API fields for one observation: `*_id`, or blank id + `*_other` text when "Others" is picked. */
+export const classificationPayload = (v: ObservationClassificationValue) => {
+  const pick = (id: string, other: string, key: "classification" | "category" | "sub_category") =>
+    id === OTHER_OPTION_VALUE
+      ? { [`${key}_id`]: null, [`${key}_other`]: other.trim() }
+      : { [`${key}_id`]: toId(id) };
+  return {
+    ...pick(v.classification, v.classificationOther, "classification"),
+    ...pick(v.category, v.categoryOther, "category"),
+    ...pick(v.subCategory, v.subCategoryOther, "sub_category"),
+  };
+};
+
+/** Labels of the classification fields still missing (a value, or the "Others" text). */
+export const missingClassification = (v: ObservationClassificationValue) =>
+  [
+    (!v.classification || (v.classification === OTHER_OPTION_VALUE && !v.classificationOther.trim())) && "Classification",
+    (!v.category || (v.category === OTHER_OPTION_VALUE && !v.categoryOther.trim())) && "Category",
+    (!v.subCategory || (v.subCategory === OTHER_OPTION_VALUE && !v.subCategoryOther.trim())) && "Sub Category",
+  ].filter(Boolean) as string[];
+
+/** Classification / Category / Sub Category dropdowns; picking "Others" shows a textbox below. */
+export function ObservationClassificationFields({
+  value,
+  onChange,
+  classifications,
+  categories,
+  subCategories,
+  loading,
+}: {
+  value: ObservationClassificationValue;
+  onChange: (patch: Partial<ObservationClassificationValue>) => void;
+  classifications: MasterOption[];
+  categories: MasterOption[];
+  subCategories: MasterOption[];
+  loading?: boolean;
+}) {
+  const fields: {
+    label: string;
+    key: "classification" | "category" | "subCategory";
+    otherKey: "classificationOther" | "categoryOther" | "subCategoryOther";
+    options: MasterOption[];
+    placeholder: string;
+  }[] = [
+    { label: "Classification", key: "classification", otherKey: "classificationOther", options: classifications, placeholder: "Select observation classification" },
+    { label: "Category", key: "category", otherKey: "categoryOther", options: categories, placeholder: "Select observation category" },
+    { label: "Sub Category", key: "subCategory", otherKey: "subCategoryOther", options: subCategories, placeholder: "Select observation sub-category" },
+  ];
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {fields.map(({ label, key, otherKey, options, placeholder }) => (
+        <div key={key} className="space-y-3">
+          <SelectField
+            label={label}
+            required
+            value={value[key]}
+            onChange={(v) => onChange({ [key]: v, ...(v !== OTHER_OPTION_VALUE ? { [otherKey]: "" } : {}) })}
+            options={withOthersOption(options)}
+            loading={loading}
+            placeholder={placeholder}
+          />
+          {value[key] === OTHER_OPTION_VALUE && (
+            <TextField
+              fullWidth
+              label={requiredLabel(`Other ${label}`)}
+              placeholder={`Enter ${label.toLowerCase()}`}
+              value={value[otherKey]}
+              onChange={(e) => onChange({ [otherKey]: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

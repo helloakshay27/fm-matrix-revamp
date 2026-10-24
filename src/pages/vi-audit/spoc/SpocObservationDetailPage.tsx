@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { FilePenLine, Plus } from "lucide-react";
 import { ObservationDetailView } from "@/components/vi-audit/ObservationDetailView";
 import { useMemo } from "react";
 import {
@@ -7,9 +7,15 @@ import {
   useViAuditDetail,
   useViObservationDetail,
 } from "@/components/vi-audit/useViAuditDetail";
-import type { ViActionPlan, ViObservation } from "@/components/vi-audit/viAuditData";
+import { isPlanDateBreached, type ViActionPlan, type ViObservation } from "@/components/vi-audit/viAuditData";
+import { PlanExtensionForm } from "@/components/vi-audit/PlanExtensionForm";
 
 const isDraftPlan = (plan: ViActionPlan) => String(plan.status).toLowerCase() === "draft";
+
+// Draft action plans saved with "Save draft" — the button then reads "Continue Draft" and opens
+// the action plan form with them preselected.
+const hasDraftActionPlans = (observation: ViObservation) =>
+  [...observation.correctiveActions, ...observation.preventiveActions].some(isDraftPlan);
 
 // The SPOC creates the action plan once per observation: when at least one corrective and one
 // preventive plan have been submitted (none left in draft), there is nothing more to create.
@@ -67,6 +73,11 @@ const SpocObservationDetailPage = () => {
       audit={auditWithObservation}
       loading={auditLoading || observationLoading}
       auditPath={auditPath}
+      // Breached plan (target date passed, not closed by the action owner): SPOC extends it.
+      // navigate(0) reloads the page so the plan shows its new date and reason.
+      renderPlanFooter={(plan) =>
+        isPlanDateBreached(plan) ? <PlanExtensionForm plan={plan} onExtended={() => navigate(0)} /> : null
+      }
       footer={({ observation, allPlansClosed }) =>
         allPlansClosed || hasSubmittedActionPlans(observation) ? null : (
           <div className="fm-action-bar pt-4 sm:pt-6">
@@ -75,8 +86,17 @@ const SpocObservationDetailPage = () => {
               className="fm-action-primary"
               onClick={() => navigate(`${auditPath}/observations/${observation.id}/action-plan`)}
             >
-              <Plus className="w-4 h-4" />
-              Create Action Plan
+              {hasDraftActionPlans(observation) ? (
+                <>
+                  <FilePenLine className="w-4 h-4" />
+                  Continue Draft
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create Action Plan
+                </>
+              )}
             </button>
           </div>
         )
