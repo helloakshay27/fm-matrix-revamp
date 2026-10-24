@@ -5,7 +5,7 @@ import { MenuItem, TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import type { MasterOption } from "./useViAuditMasters";
 import type { ViActiveUserOption } from "./useViActiveUsers";
-import { AutocompleteLabel, UserAutocomplete } from "./ViUserPicker";
+import { UserAutocomplete } from "./ViUserPicker";
 import { sectionIcon } from "./ViAuditUi";
 
 // Shared fields / sections of the Vi Audit forms (Add Audit and Edit Audit pages).
@@ -31,9 +31,13 @@ export function getLoggedInUser(): { name: string; email: string; designation: s
   }
 }
 
+// Ticket-form field look — defined in ViAuditUi (shared with the user pickers), re-exported here.
+export { auditFieldSx } from "./ViAuditUi";
+import { auditFieldSx } from "./ViAuditUi";
+
 export const requiredLabel = (text: string) => (
   <>
-    {text} <span className="fm-required-mark">*</span>
+    {text} <span className="text-red-500 ml-0.5">*</span>
   </>
 );
 
@@ -72,6 +76,7 @@ export function SelectField({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled || loading}
+      sx={auditFieldSx}
       InputLabelProps={{ shrink: true }}
       SelectProps={{
         displayEmpty: true,
@@ -80,7 +85,7 @@ export function SelectField({
           selected ? (
             labelFor(selected as string)
           ) : (
-            <span className="text-[rgba(26,26,24,0.3)]">{loading ? "Loading..." : placeholder}</span>
+            <span className="text-gray-400">{loading ? "Loading..." : placeholder}</span>
           ),
       }}
     >
@@ -96,9 +101,9 @@ export function SelectField({
 export function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start gap-3 text-sm">
-      <span className="w-28 shrink-0 text-[rgba(26,26,24,0.48)]">{label}</span>
-      <span className="text-[rgba(26,26,24,0.48)]">:</span>
-      <span className="font-medium text-[#1A1A18]">{value || "-"}</span>
+      <span className="w-28 shrink-0 text-gray-500">{label}</span>
+      <span className="text-gray-500">:</span>
+      <span className="font-medium text-gray-900">{value || "-"}</span>
     </div>
   );
 }
@@ -109,7 +114,7 @@ export function AddMoreButton({ label, onClick }: { label: string; onClick: () =
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-[#1A1A18] hover:bg-[#F5F4F0]"
+      className="inline-flex items-center gap-1.5 rounded-[8px] px-2 py-1 text-[13px] font-semibold text-gray-900 hover:bg-gray-100"
     >
       <Plus className="w-4 h-4" />
       {label}
@@ -146,14 +151,14 @@ export function PeopleInteractedSection({
         {/* FTE / Non-FTE */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[#1A1A18]">FTE / Non-FTE</span>
+            <span className="text-[13px] font-semibold text-gray-900">FTE / Non-FTE</span>
             <AddMoreButton label="Add more" onClick={() => setShowFtePicker(true)} />
           </div>
           {showFtePicker && (
             <div className="mb-3 max-w-md">
               {/* Searchable — the active FTE / Non-FTE list can be long */}
-              <AutocompleteLabel>Person</AutocompleteLabel>
               <UserAutocomplete
+                label="Person"
                 excludeIds={fteUsers.map((u) => u.id)}
                 value={null}
                 onChange={(user) => {
@@ -167,17 +172,17 @@ export function PeopleInteractedSection({
             </div>
           )}
           {fteUsers.length > 0 ? (
-            <div className="divide-y divide-[rgba(26,26,24,0.08)] rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+            <div className="divide-y divide-gray-200 rounded-lg border border-gray-200">
               {fteUsers.map((user) => (
                 <div key={user.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                  <span className="text-[#1A1A18]">
+                  <span className="text-gray-900">
                     {user.name}
-                    {user.email && <span className="text-[rgba(26,26,24,0.48)]"> · {user.email}</span>}
+                    {user.email && <span className="text-gray-500"> · {user.email}</span>}
                   </span>
                   <button
                     type="button"
                     onClick={() => onFteUsersChange(fteUsers.filter((s) => s.id !== user.id))}
-                    className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                    className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                     aria-label={`Remove ${user.name}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -186,14 +191,14 @@ export function PeopleInteractedSection({
               ))}
             </div>
           ) : (
-            !showFtePicker && <p className="text-sm text-[rgba(26,26,24,0.48)]">No FTE / Non-FTE people added.</p>
+            !showFtePicker && <p className="text-sm text-gray-500">No FTE / Non-FTE people added.</p>
           )}
         </div>
 
         {/* Others */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-[13px] font-semibold text-[#1A1A18]">Others</span>
+            <span className="text-[13px] font-semibold text-gray-900">Others</span>
             <AddMoreButton label="Add more" onClick={() => setOtherDraft({ name: "", designation: "" })} />
           </div>
           {otherDraft && (
@@ -204,6 +209,7 @@ export function PeopleInteractedSection({
                 placeholder="Enter person name"
                 value={otherDraft.name}
                 onChange={(e) => setOtherDraft((p) => (p ? { ...p, name: e.target.value } : p))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -212,15 +218,16 @@ export function PeopleInteractedSection({
                 placeholder="Enter designation"
                 value={otherDraft.designation}
                 onChange={(e) => setOtherDraft((p) => (p ? { ...p, designation: e.target.value } : p))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <div className="flex gap-2">
-                <button type="button" className="fm-action-secondary" onClick={() => setOtherDraft(null)}>
+                <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => setOtherDraft(null)}>
                   Cancel
                 </button>
                 <button
                   type="button"
-                  className="fm-action-primary"
+                  className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                   onClick={() => {
                     if (!otherDraft.name.trim() || !otherDraft.designation.trim()) {
                       toast.error("Please enter name and designation");
@@ -236,16 +243,16 @@ export function PeopleInteractedSection({
             </div>
           )}
           {otherPeople.length > 0 ? (
-            <div className="divide-y divide-[rgba(26,26,24,0.08)] rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+            <div className="divide-y divide-gray-200 rounded-lg border border-gray-200">
               {otherPeople.map((person, index) => (
                 <div key={`${person.name}-${index}`} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                  <span className="text-[#1A1A18]">
-                    {person.name} <span className="text-[rgba(26,26,24,0.48)]">· {person.designation}</span>
+                  <span className="text-gray-900">
+                    {person.name} <span className="text-gray-500">· {person.designation}</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => onOtherPeopleChange(otherPeople.filter((_, i) => i !== index))}
-                    className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                    className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                     aria-label={`Remove ${person.name}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -254,7 +261,7 @@ export function PeopleInteractedSection({
               ))}
             </div>
           ) : (
-            !otherDraft && <p className="text-sm text-[rgba(26,26,24,0.48)]">No other people added.</p>
+            !otherDraft && <p className="text-sm text-gray-500">No other people added.</p>
           )}
         </div>
       </div>
