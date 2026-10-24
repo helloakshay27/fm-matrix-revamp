@@ -18,11 +18,13 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
+  isAssignmentDraft,
   todayIso,
   type ViIncidentActionPlan,
   type ViIncidentAssignment,
   type ViIncidentAttachment,
 } from "@/components/vi-incident/viIncidentData";
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
 
 interface ActionTakenEntry {
@@ -142,6 +144,9 @@ const IncidentActionOwnerActionTakenPage = () => {
         </button>
         <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
         <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Taken</span>
+        {rows.some(({ assignment }) => isAssignmentDraft(assignment)) && (
+          <IncidentStatusPill status="Draft" />
+        )}
       </div>
 
       <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">

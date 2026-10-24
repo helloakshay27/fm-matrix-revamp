@@ -148,10 +148,13 @@ export const IncidentInvestigationCard = ({ incident }: { incident: ViIncidentRe
 export const IncidentHeader = ({
   incident,
   onBack,
+  draft = false,
   children,
 }: {
   incident: ViIncidentRecord;
   onBack: () => void;
+  /** Adds a "Draft" pill (unless the status already reads Draft). */
+  draft?: boolean;
   children?: ReactNode;
 }) => {
   const pending = incidentPendingWith(incident);
@@ -168,6 +171,7 @@ export const IncidentHeader = ({
         </button>
         <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
         <IncidentStatusPill status={incident.status} />
+        {draft && incident.status !== "Draft" && <IncidentStatusPill status="Draft" />}
         {children}
       </div>
       {/* Whose end the incident is waiting on */}
@@ -204,11 +208,14 @@ export const IncidentDetailView = ({
   loading,
   listPath,
   footer,
+  draft = false,
   children,
 }: {
   incident: ViIncidentRecord | null;
   loading: boolean;
   listPath: string;
+  /** The viewing role has saved its part as a draft — shown as a "Draft" pill in the heading. */
+  draft?: boolean;
   /** Sticky action bar content, e.g. the SPOC's "Create Action Plan" button. */
   footer?: ReactNode;
   /** Extra content after the incident cards (e.g. the investigation and action plans). */
@@ -221,7 +228,7 @@ export const IncidentDetailView = ({
 
   return (
     <div className="p-6 min-h-screen">
-      <IncidentHeader incident={incident} onBack={() => navigate(listPath)} />
+      <IncidentHeader incident={incident} onBack={() => navigate(listPath)} draft={draft} />
 
       <IncidentInfoCards incident={incident} />
 

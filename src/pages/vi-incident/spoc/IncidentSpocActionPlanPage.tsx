@@ -19,10 +19,12 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
+  hasSpocDraft,
   todayIso,
   type ViIncidentActionType,
   type ViIncidentChecklistItem,
 } from "@/components/vi-incident/viIncidentData";
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { INCIDENT_SPOC_PATH } from "./IncidentSpocListPage";
 
 const ACTION_TYPES: ViIncidentActionType[] = ["corrective", "preventive"];
@@ -290,6 +292,7 @@ const IncidentSpocActionPlanPage = () => {
         </button>
         <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
         <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Plan</span>
+        {hasSpocDraft(incident) && <IncidentStatusPill status="Draft" />}
       </div>
 
       {step === 1 && (

@@ -125,6 +125,8 @@ export interface ViIncidentRecord {
   actionPlans: ViIncidentActionPlan[];
   /** Assignment ids belonging to the logged-in action owner (action owner list rows). */
   myAssignmentIds: string[];
+  /** Statuses (open / draft / closed) of those assignments. */
+  myAssignmentStatuses: string[];
   /** Counters the list endpoints add to each row. */
   injuriesCount: number;
   actionPlansCount: number;
@@ -212,6 +214,43 @@ export const pendingOwnerNames = (plans: ViIncidentActionPlan[]) => [
       .map((a) => a.owner?.name || "Unassigned"),
   ),
 ];
+
+/** An owner's action taken saved but not submitted: "draft", or still open with an action taken filled in. */
+export const isAssignmentDraft = (a: ViIncidentAssignment) =>
+  a.status === "draft" || (a.status !== "closed" && Boolean(a.actionTaken));
+
+/**
+ * The logged-in owner (`isMine`) holds a draft action taken on this still-open incident — from the
+ * row's my_assignments, or the plans' assignments.
+ */
+export const hasMyActionDraft = (incident: ViIncidentRecord, isMine: (a: ViIncidentAssignment) => boolean) =>
+  incident.storedStatus !== "closed" &&
+  (incident.myAssignmentStatuses.includes("draft") ||
+    incident.actionPlans.some((plan) => plan.assignments.some((a) => isMine(a) && isAssignmentDraft(a))));
+
+/**
+ * The SPOC saved the investigation as a draft (anything filled in on the action plan form) and the
+ * incident is still waiting on them. List rows may leave the investigation out — check the detail.
+ */
+export const hasSpocDraft = (incident: ViIncidentRecord) => {
+  const inv = incident.investigation;
+  return (
+    incident.storedStatus === "open" &&
+    !inv.submitted &&
+    Boolean(
+      incident.actionPlans.length ||
+        incident.actionPlansCount ||
+        incident.checklistItems.length ||
+        inv.summary ||
+        inv.notRequiredReason ||
+        inv.daysAwayFromWork ||
+        inv.restrictedWorkDays ||
+        inv.breach ||
+        inv.breachSafetyRuleId ||
+        inv.conclusionId,
+    )
+  );
+};
 
 /**
  * Whose end the incident is waiting on, from its workflow stage: the reporter (draft), the SPOC

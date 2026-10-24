@@ -34,6 +34,7 @@ const IncidentReporterDetailPage = () => {
       incident={incident}
       loading={loading}
       listPath={INCIDENT_REPORTER_PATH}
+      draft={incident?.storedStatus === "draft"}
       footer={
         incident?.canEdit ? (
           <>

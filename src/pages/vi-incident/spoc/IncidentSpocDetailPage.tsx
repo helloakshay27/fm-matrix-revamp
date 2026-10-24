@@ -14,6 +14,7 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
+  hasSpocDraft,
   isPlanExpired,
   planDeadline,
   todayIso,
@@ -123,7 +124,7 @@ const IncidentSpocDetailPage = () => {
   const isOpen = incident?.storedStatus === "open";
   // The SPOC works on the investigation while the incident is open and it hasn't been submitted.
   const canCreatePlan = Boolean(incident && isOpen && !incident.investigation.submitted);
-  const hasDraftPlan = Boolean(incident && (incident.actionPlans.length || incident.investigation.summary));
+  const hasDraftPlan = Boolean(incident && hasSpocDraft(incident));
 
   return (
     <>
@@ -131,6 +132,7 @@ const IncidentSpocDetailPage = () => {
         incident={incident}
         loading={loading}
         listPath={INCIDENT_SPOC_PATH}
+        draft={hasDraftPlan}
         footer={
           canCreatePlan ? (
             <button

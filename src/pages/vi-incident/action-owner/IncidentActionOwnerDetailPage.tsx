@@ -11,6 +11,7 @@ import {
   useViIncidentDetail,
   useViIncidentMyAssignmentIds,
 } from "@/components/vi-incident/viIncidentApi";
+import { hasMyActionDraft } from "@/components/vi-incident/viIncidentData";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
 
 const ViewMoreToggle = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
@@ -48,10 +49,12 @@ const IncidentActionOwnerDetailPage = () => {
   const canAddActionTaken =
     incident.storedStatus === "open" &&
     plans.some((plan) => plan.assignments.some((a) => isMine(a) && a.status !== "closed"));
+  // Saved but not submitted: same rule as the list's edit button.
+  const hasMyDraft = hasMyActionDraft(incident, isMine);
 
   return (
     <div className="p-6 min-h-screen">
-      <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} />
+      <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} draft={hasMyDraft} />
 
       <DetailCard icon={sectionIcon(FileText)} title="Incident Summary" className="mb-5">
         <div className="mb-3 flex justify-end">

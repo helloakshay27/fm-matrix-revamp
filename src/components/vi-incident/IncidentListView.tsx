@@ -29,6 +29,7 @@ import {
   dashboardGroupLabel,
   dashboardWorkflowOptions,
   useViIncidentDashboard,
+  useViIncidentDetails,
   useViIncidentList,
 } from "./viIncidentApi";
 import { INCIDENT_COLUMNS, VI_INCIDENT_STATUS_TONE, type ViIncidentRecord, type ViIncidentRole } from "./viIncidentData";
@@ -93,8 +94,9 @@ export const IncidentListView = ({
   detailBasePath,
   storageKey,
   leftActions,
-  editDrafts = false,
-  buildStats = buildIncidentStats,
+  editPath,
+  needsDetail,
+  buildStats =buildIncidentStats,
   columns = INCIDENT_COLUMNS,
   extraQuery,
 }: {
@@ -105,8 +107,10 @@ export const IncidentListView = ({
   storageKey: string;
   /** Toolbar content; a function receives the role's dashboard (e.g. for dashboard-driven filters). */
   leftActions?: ReactNode | ((dashboard: Record<string, unknown>) => ReactNode);
-  /** Editable drafts also get an edit button, opening `${detailBasePath}/${incident.id}/edit`. */
-  editDrafts?: boolean;
+  /** Route for the edit button on an incident this role saved as a draft; null → no edit button. */
+  editPath?: (incident: ViIncidentRecord) => string | null;
+  /** Rows whose list data can't tell `editPath` enough; their full record is fetched and used instead. */
+  needsDetail?: (incident: ViIncidentRecord) => boolean;
   /** Stat cards for this role — defaults to the reporter's six. */
   buildStats?: IncidentStatsBuilder;
   /** Table columns — defaults to the full incident column set. */
@@ -138,9 +142,23 @@ export const IncidentListView = ({
   );
   const { incidents, pagination, loading } = useViIncidentList(role, page, query);
   const { dashboard } = useViIncidentDashboard(role);
+  const detailIds = useMemo(
+    () => (needsDetail ? incidents.filter(needsDetail).map((incident) => incident.id) : []),
+    [incidents, needsDetail],
+  );
+  const details = useViIncidentDetails(detailIds);
 
   const renderCell = (item: ViIncidentRecord, columnKey: string) => {
-    if (columnKey === "status") return <IncidentStatusPill status={item.status} />;
+    if (columnKey === "status") {
+      // A row with an edit button is this role's draft.
+      const draft = item.status !== "Draft" && Boolean(editPath?.(details.get(item.id) ?? item));
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          <IncidentStatusPill status={item.status} />
+          {draft && <IncidentStatusPill status="Draft" />}
+        </div>
+      );
+    }
     return <span>{String(item[columnKey as keyof ViIncidentRecord] ?? "") || "-"}</span>;
   };
 
@@ -155,12 +173,12 @@ export const IncidentListView = ({
       >
         <Eye className="w-4 h-4" />
       </Button>
-      {editDrafts && item.canEdit && (
+      {editPath?.(details.get(item.id) ?? item) && (
         <Button
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-          onClick={() => navigate(`${detailBasePath}/${item.id}/edit`)}
+          onClick={() => navigate(editPath(details.get(item.id) ?? item)!)}
           title="Edit draft"
         >
           <Pencil className="w-4 h-4" />

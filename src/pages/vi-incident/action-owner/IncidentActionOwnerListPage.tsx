@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -15,7 +15,10 @@ import {
   dashboardAssignmentStatusOptions,
   dashboardCount,
   dashboardGroupCount,
+  isMyAssignment,
+  useViIncidentMyDraftIncidentIds,
 } from "@/components/vi-incident/viIncidentApi";
+import { hasMyActionDraft, type ViIncidentRecord } from "@/components/vi-incident/viIncidentData";
 
 export const INCIDENT_ACTION_OWNER_PATH = "/safety/vi-incident/action-owner";
 
@@ -41,9 +44,30 @@ const buildActionOwnerStats: IncidentStatsBuilder = (d) => [
 ];
 
 // Action Owner: incidents with action plans assigned to them (GET /vi_incidents/action_owner_incidents.json),
-// optionally narrowed by the status of their own assignments (assignment_status). Open one to add the action taken.
+// optionally narrowed by the status of their own assignments (assignment_status). Open one to add the action taken;
+// a saved draft can be edited straight from the list.
 const IncidentActionOwnerListPage = () => {
   const [assignmentStatus, setAssignmentStatus] = useState("");
+  // The owner's own assignments say which incidents hold a draft, without loading each incident.
+  const draftIncidentIds = useViIncidentMyDraftIncidentIds();
+  // Or the row's my_assignments / plans (the incident detail, when the list row has neither).
+  const editPath = useCallback(
+    (incident: ViIncidentRecord) =>
+      incident.storedStatus !== "closed" &&
+      (draftIncidentIds.has(String(incident.id)) || hasMyActionDraft(incident, isMyAssignment(incident)))
+        ? `${INCIDENT_ACTION_OWNER_PATH}/${incident.id}/action-taken`
+        : null,
+    [draftIncidentIds],
+  );
+  // Rows nothing above has marked as a draft and whose list data has no assignments: read the detail.
+  const needsDetail = useCallback(
+    (incident: ViIncidentRecord) =>
+      incident.storedStatus !== "closed" &&
+      !draftIncidentIds.has(String(incident.id)) &&
+      !incident.myAssignmentStatuses.length &&
+      !incident.actionPlans.length,
+    [draftIncidentIds],
+  );
   return (
     <IncidentListView
       role="action_owner"
@@ -51,6 +75,8 @@ const IncidentActionOwnerListPage = () => {
       detailBasePath={INCIDENT_ACTION_OWNER_PATH}
       storageKey="vi-incident-list-action-owner"
       buildStats={buildActionOwnerStats}
+      editPath={editPath}
+      needsDetail={needsDetail}
       extraQuery={{ assignment_status: assignmentStatus }}
       // Options come from the action owner dashboard's counters (pending / draft / completed actions,
       // with live counts); "All actions" only clears the filter.

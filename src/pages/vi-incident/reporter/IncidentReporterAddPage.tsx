@@ -23,6 +23,7 @@ import {
   useViIncidentMasters,
 } from "@/components/vi-incident/viIncidentApi";
 import { todayIso, type ViIncidentAttachment } from "@/components/vi-incident/viIncidentData";
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { INCIDENT_REPORTER_PATH } from "./IncidentReporterListPage";
 
 interface InjuryEntry {
@@ -287,6 +288,7 @@ const IncidentReporterAddPage = () => {
           <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
         <h1 className="text-xl font-semibold text-[#1A1A18]">Incident{incident ? ` — ${incident.incidentNo}` : ""}</h1>
+        {incident?.storedStatus === "draft" && <IncidentStatusPill status="Draft" />}
       </div>
 
       {/* Stepper: 1 of 2 steps */}
