@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, Paperclip, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, Paperclip, FilePenLine, Plus, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
 import {
   hasSubmittedActionTaken,
@@ -12,21 +12,27 @@ import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDeta
 import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
-  "shrink-0 text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-600";
+  "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
 
 // Actions already taken against the plan (its CAPAs): description, closure date, attachments.
 const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
-  <div className="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200">
+  <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
     {actions.map((action) => (
       <div key={action.id} className="px-4 py-4">
-        <p className="text-sm text-gray-900 whitespace-pre-line">{action.description || "-"}</p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm text-[#1A1A18] whitespace-pre-line">{action.description || "-"}</p>
+          {/* CAPA status (draft / open / closed) */}
+          {action.status && (
+            <AuditStatusPill status={action.status === "closed" ? "Closed" : action.status === "open" ? "Open" : "Draft"} />
+          )}
+        </div>
         <div className="mt-3">
-          <div className="text-xs text-gray-500 mb-1">Closure Date</div>
-          <div className="text-sm font-medium text-gray-900">{action.closureDate || "-"}</div>
+          <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Closure Date</div>
+          <div className="text-sm font-medium text-[#1A1A18]">{action.closureDate || "-"}</div>
         </div>
         {action.attachments.length > 0 && (
           <div className="mt-3">
-            <div className="text-xs text-gray-500 mb-2">Attachments</div>
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-2">Attachments</div>
             <div className="flex flex-wrap gap-2">
               {action.attachments.map((file, index) => (
                 <a
@@ -34,9 +40,9 @@ const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
                   href={file.url || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900 hover:bg-[#EDEAE3]"
+                  className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18] hover:bg-[#EDEAE3]"
                 >
-                  <Paperclip className="w-3 h-3 shrink-0 text-gray-500" />
+                  <Paperclip className="w-3 h-3 shrink-0 text-[rgba(26,26,24,0.48)]" />
                   <span className="truncate">{file.name}</span>
                 </a>
               ))}
@@ -66,15 +72,15 @@ const ActionOwnerActionPlanDetailPage = () => {
 
   if (!found) {
     return (
-      <div className="p-4 sm:p-6 min-h-screen">
+      <div className="p-6 min-h-screen">
         <button
           type="button"
           onClick={() => navigate(observationPath)}
-          className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="mb-4 inline-flex items-center gap-2 text-sm text-[rgba(26,26,24,0.68)] hover:text-[#1A1A18]"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        <p className="text-sm text-gray-500">Action plan not found.</p>
+        <p className="text-sm text-[rgba(26,26,24,0.48)]">Action plan not found.</p>
       </div>
     );
   }
@@ -86,24 +92,26 @@ const ActionOwnerActionPlanDetailPage = () => {
     !hasSubmittedActionTaken(plan) &&
     (isPlanPendingByActionOwner(plan) || observation?.status === "Pending By SPOC");
   const actionTaken = plan.capas ?? [];
+  // A CAPA saved with "Save Draft" (not submitted yet) — the button continues it.
+  const hasDraftActionTaken = actionTaken.some((capa) => capa.status && capa.status !== "closed");
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3 mb-2">
         <button
           type="button"
           onClick={() => navigate(observationPath)}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
           aria-label="Back to observation"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Audit</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Audit</h1>
         <AuditStatusPill status={plan.status} />
       </div>
-      <p className="mb-6 pl-11 text-sm text-gray-500">
-        ID: {[audit?.auditCode, observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
+      <p className="mb-6 pl-11 text-sm text-[rgba(26,26,24,0.48)]">
+        ID: {[audit?.auditCode, observation?.observationNo ?? observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
       </p>
 
       {/* Parent audit */}
@@ -111,9 +119,9 @@ const ActionOwnerActionPlanDetailPage = () => {
       <DetailCard icon={sectionIcon(ClipboardCheck)} title={audit.auditCode} className="mb-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-sm font-semibold text-gray-900">{audit.auditType} Audit</div>
-            <div className="text-sm text-gray-600">{audit.basic.auditLocation}</div>
-            <div className="flex items-center gap-2 pt-1 text-sm text-gray-500">
+            <div className="text-sm font-semibold text-[#1A1A18]">{audit.auditType} Audit</div>
+            <div className="text-sm text-[rgba(26,26,24,0.68)]">{audit.basic.auditLocation}</div>
+            <div className="flex items-center gap-2 pt-1 text-sm text-[rgba(26,26,24,0.48)]">
               Status: <AuditStatusPill status={audit.status} />
             </div>
           </div>
@@ -126,9 +134,9 @@ const ActionOwnerActionPlanDetailPage = () => {
 
       {/* Parent observation */}
       {observation && (
-      <DetailCard icon={sectionIcon(FileText)} title={observation.id} className="mb-5">
+      <DetailCard icon={sectionIcon(FileText)} title={observation.observationNo ?? observation.id} className="mb-5">
         <div className="flex items-start justify-between gap-4">
-          <p className="line-clamp-2 text-sm text-gray-900">{observation.description}</p>
+          <p className="line-clamp-2 text-sm text-[#1A1A18]">{observation.description}</p>
           <button type="button" onClick={() => navigate(observationPath)} className={viewMoreClass}>
             View More
           </button>
@@ -142,7 +150,7 @@ const ActionOwnerActionPlanDetailPage = () => {
         title={kind === "corrective" ? "Corrective Action Plan" : "Preventive Action Plan"}
         className="mb-5"
       >
-        <div className="overflow-hidden rounded-lg border border-gray-200">
+        <div className="overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
           <ActionPlanRecord plan={plan} />
         </div>
       </DetailCard>
@@ -159,14 +167,23 @@ const ActionOwnerActionPlanDetailPage = () => {
       )}
 
       {isPending && (
-        <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+        <div className="fm-action-bar pt-4 sm:pt-6">
           <button
             type="button"
-            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            className="fm-action-primary"
             onClick={() => navigate(`${observationPath}/plans/${plan.id}/action-taken`)}
           >
-            <Plus className="w-4 h-4" />
-            Add Action Taken
+            {hasDraftActionTaken ? (
+              <>
+                <FilePenLine className="w-4 h-4" />
+                Continue Draft
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add Action Taken
+              </>
+            )}
           </button>
         </div>
       )}

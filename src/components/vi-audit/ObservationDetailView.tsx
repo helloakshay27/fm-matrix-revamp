@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ClipboardCheck, FileText, Image as ImageIcon, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileText, Image as ImageIcon, Layers, ShieldCheck, Store, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetailCard } from "@/components/ui/detail-card";
 import {
@@ -13,10 +13,8 @@ import {
   AuditStatusPill,
   ActionPlanRecord,
   FieldGrid,
-  auditTabContentClass,
   auditTabTriggerClass,
   auditTabsListClass,
-  auditTabsWrapperClass,
   sectionIcon,
   AuditLoadingState,
 } from "./ViAuditUi";
@@ -27,21 +25,26 @@ import { useViActionPlans, type ViActionPlanDetail } from "./useViActionPlanDeta
 const ActionPlanList = ({
   plans,
   onSelect,
+  renderPlanFooter,
 }: {
   plans: ViActionPlan[];
   onSelect?: (plan: ViActionPlan) => void;
+  /** Extra content under a record (e.g. SPOC's extend-target-date form for a breached plan). */
+  renderPlanFooter?: (plan: ViActionPlan) => ReactNode;
 }) =>
   plans.length === 0 ? (
-    <p className="text-sm text-gray-500">No action plans added.</p>
+    <p className="text-sm text-[rgba(26,26,24,0.48)]">No action plans added.</p>
   ) : (
-    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200">
+    <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
       {plans.map((plan) => (
-        <ActionPlanRecord
-          key={plan.id}
-          plan={plan}
-          clampDescription={!!onSelect}
-          onClick={onSelect ? () => onSelect(plan) : undefined}
-        />
+        <div key={plan.id}>
+          <ActionPlanRecord
+            plan={plan}
+            clampDescription={!!onSelect}
+            onClick={onSelect ? () => onSelect(plan) : undefined}
+          />
+          {renderPlanFooter?.(plan)}
+        </div>
       ))}
     </div>
   );
@@ -81,6 +84,7 @@ export const ObservationDetailView = ({
   observationId,
   auditPath,
   onSelectPlan,
+  renderPlanFooter,
   footer,
   audit: auditFromApi,
   loading = false,
@@ -93,6 +97,8 @@ export const ObservationDetailView = ({
   /** Audit detail route — back arrow and "View More". */
   auditPath: string;
   onSelectPlan?: (plan: ViActionPlan, ctx: ObservationViewContext) => void;
+  /** Extra content under each corrective / preventive plan record. */
+  renderPlanFooter?: (plan: ViActionPlan) => ReactNode;
   footer?: (ctx: ObservationViewContext) => ReactNode;
 }) => {
   const navigate = useNavigate();
@@ -120,15 +126,15 @@ export const ObservationDetailView = ({
 
   if (!observation) {
     return (
-      <div className="p-4 sm:p-6 min-h-screen">
+      <div className="p-6 min-h-screen">
         <button
           type="button"
           onClick={backToAudit}
-          className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="mb-4 inline-flex items-center gap-2 text-sm text-[rgba(26,26,24,0.68)] hover:text-[#1A1A18]"
         >
           <ArrowLeft className="w-4 h-4" /> Back to audit
         </button>
-        <p className="text-sm text-gray-500">Observation not found.</p>
+        <p className="text-sm text-[rgba(26,26,24,0.48)]">Observation not found.</p>
       </div>
     );
   }
@@ -141,46 +147,46 @@ export const ObservationDetailView = ({
   const openPlan = onSelectPlan ? (plan: ViActionPlan) => onSelectPlan(plan, ctx) : undefined;
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3 mb-2">
         <button
           type="button"
           onClick={backToAudit}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
           aria-label="Back to audit"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Observation — {observation.id}</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Observation — {observation.observationNo ?? observation.id}</h1>
         <AuditStatusPill status={observation.status} />
       </div>
-      <p className="mb-6 pl-11 text-sm text-gray-500">
-        ID: {audit.auditCode}/{observation.id}
+      <p className="mb-6 pl-11 text-sm text-[rgba(26,26,24,0.48)]">
+        ID: {audit.auditCode}/{observation.observationNo ?? observation.id}
       </p>
 
       {/* Parent audit summary */}
       <DetailCard icon={sectionIcon(ClipboardCheck)} title={audit.auditCode} className="mb-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-sm font-semibold text-gray-900">{audit.auditType} Audit</div>
-            <div className="text-sm text-gray-600">{audit.basic.auditLocation}</div>
-            <div className="flex items-center gap-2 pt-1 text-sm text-gray-500">
+            <div className="text-sm font-semibold text-[#1A1A18]">{audit.auditType} Audit</div>
+            <div className="text-sm text-[rgba(26,26,24,0.68)]">{audit.basic.auditLocation}</div>
+            <div className="flex items-center gap-2 pt-1 text-sm text-[rgba(26,26,24,0.48)]">
               Status: <AuditStatusPill status={audit.status} />
             </div>
           </div>
           <button
             type="button"
             onClick={backToAudit}
-            className="text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-600"
+            className="text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]"
           >
             View More
           </button>
         </div>
       </DetailCard>
 
-      <Tabs defaultValue="observation" className={`w-full ${auditTabsWrapperClass}`}>
-        <TabsList className={auditTabsListClass}>
+      <Tabs defaultValue="observation" className="w-full">
+        <TabsList className={`${auditTabsListClass} mb-5`}>
           <TabsTrigger value="observation" className={auditTabTriggerClass}>
             Observation Details
           </TabsTrigger>
@@ -192,30 +198,30 @@ export const ObservationDetailView = ({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="observation" className={`mt-0 ${auditTabContentClass}`}>
+        <TabsContent value="observation" className="mt-0">
           <DetailCard icon={sectionIcon(FileText)} title="Observation Details" className="mb-5">
             <div className="space-y-5">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Observation</div>
+                <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Observation</div>
                 {observation.title && (
-                  <div className="mb-0.5 text-sm font-semibold text-gray-900">{observation.title}</div>
+                  <div className="mb-0.5 text-sm font-semibold text-[#1A1A18]">{observation.title}</div>
                 )}
                 {observation.area && (
-                  <div className="mb-2 text-xs text-gray-500">{observation.area}</div>
+                  <div className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">{observation.area}</div>
                 )}
-                <p className="text-sm text-gray-900">{observation.description}</p>
+                <p className="text-sm text-[#1A1A18]">{observation.description}</p>
               </div>
               <FieldGrid
                 fields={[
-                  { label: "Observation ID", value: observation.id },
+                  { label: "Observation ID", value: observation.observationNo ?? observation.id },
                   { label: "Assigned SPOC", value: observation.assignedSpoc },
                   { label: "Functional Head", value: observation.functionalHead },
                 ]}
               />
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Attachments</span>
-                  <span className="text-xs font-medium text-gray-600">
+                  <span className="text-xs text-[rgba(26,26,24,0.48)]">Attachments</span>
+                  <span className="text-xs font-medium text-[rgba(26,26,24,0.68)]">
                     {observation.attachments.length}{" "}
                     {observation.attachments.length === 1 ? "photo" : "photos"}
                   </span>
@@ -226,18 +232,18 @@ export const ObservationDetailView = ({
                       ({ name, url }, fileIndex) => {
                         const isImage = /\.(png|jpe?g)$/i.test(name) || /^data:image\//i.test(url);
                         const tileClass =
-                          "flex h-24 w-32 flex-col items-center justify-center gap-1 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 px-2 text-center";
+                          "flex h-24 w-32 flex-col items-center justify-center gap-1 overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)] bg-[#F5F4F0] px-2 text-center";
                         const content =
                           url && isImage ? (
                             <img src={url} alt={name} className="h-full w-full object-cover" />
                           ) : (
                             <>
                               {/\.pdf$/i.test(name) ? (
-                                <FileText className="w-5 h-5 text-gray-500" />
+                                <FileText className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
                               ) : (
-                                <ImageIcon className="w-5 h-5 text-gray-500" />
+                                <ImageIcon className="w-5 h-5 text-[rgba(26,26,24,0.48)]" />
                               )}
-                              <span className="w-full truncate text-[11px] text-gray-600">{name}</span>
+                              <span className="w-full truncate text-[11px] text-[rgba(26,26,24,0.68)]">{name}</span>
                             </>
                           );
                         // Real attachments (from the API) open in a new tab; placeholders are static tiles.
@@ -261,22 +267,56 @@ export const ObservationDetailView = ({
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No attachments.</p>
+                  <p className="text-sm text-[rgba(26,26,24,0.48)]">No attachments.</p>
                 )}
               </div>
             </div>
           </DetailCard>
-        </TabsContent>
 
-        <TabsContent value="corrective" className={`mt-0 ${auditTabContentClass}`}>
-          <DetailCard icon={sectionIcon(ShieldCheck)} title="Corrective Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} />
+          {/* Classification, people and vendor belong to each observation (API: observation fields). */}
+          <DetailCard icon={sectionIcon(Layers)} title="Observation Classification" className="mb-5">
+            <FieldGrid
+              fields={[
+                { label: "Classification", value: observation.classification?.classification },
+                { label: "Category", value: observation.classification?.category },
+                { label: "Sub Category", value: observation.classification?.subCategory },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard icon={sectionIcon(Users)} title="People Interacted With" className="mb-5">
+            <FieldGrid
+              columns={2}
+              fields={[
+                { label: "FTE / Non-FTE", value: observation.people?.fte.join(", ") },
+                {
+                  label: "Others",
+                  value: observation.people?.others.map((p) => `${p.name} (${p.designation})`).join(", "),
+                },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard icon={sectionIcon(Store)} title="Vendor Details" className="mb-5">
+            <FieldGrid
+              columns={2}
+              fields={[
+                { label: "Vendor Name", value: observation.vendor?.vendorName },
+                { label: "Sub Vendor Name", value: observation.vendor?.subVendorName },
+              ]}
+            />
           </DetailCard>
         </TabsContent>
 
-        <TabsContent value="preventive" className={`mt-0 ${auditTabContentClass}`}>
+        <TabsContent value="corrective" className="mt-0">
+          <DetailCard icon={sectionIcon(ShieldCheck)} title="Corrective Action Plan" className="mb-5">
+            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="preventive" className="mt-0">
           <DetailCard icon={sectionIcon(ShieldCheck)} title="Preventive Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} />
+            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
           </DetailCard>
         </TabsContent>
       </Tabs>

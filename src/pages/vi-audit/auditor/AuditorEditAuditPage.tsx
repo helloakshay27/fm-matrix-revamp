@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, ClipboardList, FileText, Paperclip, Store, Trash2, User } from "lucide-react";
+import { ArrowLeft, FileText, Paperclip, Trash2, User } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { useViAuditMasters } from "@/components/vi-audit/useViAuditMasters";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
-import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon, auditTextareaSx } from "@/components/vi-audit/ViAuditUi";
 import { apiErrorMessage } from "@/components/vi-audit/viAuditApi";
 import { useViAuditDraft } from "@/components/vi-audit/useViAuditDraft";
 import {
-  auditFieldSx,
   AddMoreButton,
   InfoRow,
   PeopleInteractedSection,
   SelectField,
+  ObservationClassificationFields,
+  SubSectionTitle,
+  classificationPayload,
   getLoggedInUser,
+  missingClassification,
   requiredLabel,
   toId,
   type OtherPerson,
@@ -26,9 +29,23 @@ import {
 const AUDIT_LIST_PATH = "/safety/audit-list";
 const viAuditUpdateEndpoint = (auditId: string) => `/vi_audits/${encodeURIComponent(auditId)}.json`;
 
+// One observation card (step 2): its own classification, people, vendor and details.
 interface ObservationEntry {
+  /** Stable React key for the card. */
+  key: string;
   /** Server id of an observation already saved on the draft — sent so it is updated, not re-created. */
   id?: string;
+  classification: string;
+  category: string;
+  subCategory: string;
+  /** Free text when "Others" is picked (sent as classification_other / category_other / sub_category_other). */
+  classificationOther: string;
+  categoryOther: string;
+  subCategoryOther: string;
+  fteUsers: ViActiveUserOption[];
+  otherPeople: OtherPerson[];
+  vendorName: string;
+  subVendorName: string;
   observation: string;
   spoc: ViActiveUserOption | null;
   functionalHead: ViActiveUserOption | null;
@@ -36,12 +53,30 @@ interface ObservationEntry {
   existingAttachments: string[];
 }
 
+let observationKeySeq = 0;
 const emptyObservation = (): ObservationEntry => ({
+  key: `obs-${++observationKeySeq}`,
+  classification: "",
+  category: "",
+  subCategory: "",
+  classificationOther: "",
+  categoryOther: "",
+  subCategoryOther: "",
+  fteUsers: [],
+  otherPeople: [],
+  vendorName: "",
+  subVendorName: "",
   observation: "",
   spoc: null,
   functionalHead: null,
   existingAttachments: [],
 });
+
+// people_interacted_with entries for one observation card.
+const peoplePayload = (o: ObservationEntry) => [
+  ...o.fteUsers.map((user) => ({ type: "user", user_id: toId(user.id) })),
+  ...o.otherPeople.map((person) => ({ type: "other", name: person.name, role: person.designation })),
+];
 
 /**
  * Auditor: edit a draft audit (/safety/audit-list/:id/edit). The draft is loaded from
@@ -65,21 +100,19 @@ const AuditorEditAuditPage = () => {
     location: "",
     function: "",
   });
-  const [classification, setClassification] = useState({ classification: "", category: "", subCategory: "" });
-  const [fteUsers, setFteUsers] = useState<ViActiveUserOption[]>([]);
-  const [otherPeople, setOtherPeople] = useState<OtherPerson[]>([]);
-  const [vendor, setVendor] = useState({ vendorName: "", subVendorName: "" });
-  const [observations, setObservations] = useState<ObservationEntry[]>([emptyObservation()]);
+  const [observations, setObservations] = useState<ObservationEntry[]>(() => [emptyObservation()]);
 
   // Preselect the draft's saved values once it has loaded.
   useEffect(() => {
     if (!draft) return;
     setBasic(draft.basic);
-    setClassification(draft.classification);
-    setFteUsers(draft.fteUsers);
-    setOtherPeople(draft.otherPeople);
-    setVendor(draft.vendor);
-    setObservations(draft.observations.length ? draft.observations : [emptyObservation()]);
+    // Each saved observation preselects its own classification / people / vendor (the draft
+    // loader falls back to the audit-level values when the API doesn't send them per observation).
+    setObservations(
+      draft.observations.length
+        ? draft.observations.map((o) => ({ ...emptyObservation(), ...o }))
+        : [emptyObservation()],
+    );
   }, [draft]);
 
   const updateObservation = (index: number, patch: Partial<ObservationEntry>) =>
@@ -89,14 +122,12 @@ const AuditorEditAuditPage = () => {
     const missing = [
       !basic.dateOfAudit && "Date of Audit",
       !basic.circle && "Circle",
-      !basic.personnelArea && "Personnel Area",
+      // circle_id is required only for circle audits
+      draft?.auditType === "circle" && !basic.personnelArea && "Personnel Area",
       !basic.workLocation && "Work Location",
       !basic.facilityType && "Type of Facility",
       !basic.location.trim() && "Location",
       !basic.function && "Function",
-      !classification.classification && "Classification",
-      !classification.category && "Category",
-      !classification.subCategory && "Sub Category",
     ].filter(Boolean);
     if (missing.length) {
       toast.error(`Please fill: ${missing.join(", ")}`);
@@ -105,17 +136,30 @@ const AuditorEditAuditPage = () => {
     return true;
   };
 
+  // Step 2: every observation card needs its classification, details, SPOC and Functional Head
+  // (people / vendor are optional).
   const validateStepTwo = () => {
-    const invalidIndex = observations.findIndex((o) => !o.observation.trim() || !o.spoc || !o.functionalHead);
-    if (invalidIndex !== -1) {
-      toast.error(`Please complete Observation ${invalidIndex + 1}: details, SPOC and Functional Head`);
-      return false;
+    for (const [index, o] of observations.entries()) {
+      const missing = [
+        ...missingClassification(o),
+        !o.observation.trim() && "Observation",
+        !o.spoc && "SPOC",
+        !o.functionalHead && "Functional Head",
+      ].filter(Boolean);
+      if (missing.length) {
+        const label = observations.length > 1 ? `Observation ${index + 1}: ` : "";
+        toast.error(`${label}Please fill ${missing.join(", ")}`);
+        return false;
+      }
     }
     return true;
   };
 
   // Request body for PUT /vi_audits/:id.json. `submit: true` submits the draft on Update.
-  const buildPayload = () => ({
+  // Vendor, classification (or "Others" text) and people interacted with are observation
+  // fields — sent only inside each observations_attributes item.
+  const buildPayload = () => {
+    return {
     submit: true,
     vi_audit: {
       audit_type: draft?.auditType ?? "",
@@ -125,24 +169,20 @@ const AuditorEditAuditPage = () => {
       work_location_id: toId(basic.workLocation),
       audit_location: basic.location.trim(),
       department_id: toId(basic.function),
-      vendor_name: vendor.vendorName.trim(),
-      sub_vendor_name: vendor.subVendorName.trim(),
-      classification_id: toId(classification.classification),
-      category_id: toId(classification.category),
-      sub_category_id: toId(classification.subCategory),
       visit_business_area_id: toId(basic.facilityType),
-      people_interacted_with: [
-        ...fteUsers.map((user) => ({ type: "user", user_id: toId(user.id) })),
-        ...otherPeople.map((person) => ({ type: "other", name: person.name, role: person.designation })),
-      ],
       observations_attributes: observations.map((o) => ({
         ...(o.id ? { id: toId(o.id) } : {}),
         observation: o.observation.trim(),
+        ...classificationPayload(o),
+        vendor_name: o.vendorName.trim(),
+        sub_vendor_name: o.subVendorName.trim(),
+        people_interacted_with: peoplePayload(o),
         spoc_id: toId(o.spoc?.id),
         functional_head_id: toId(o.functionalHead?.id),
       })),
     },
-  });
+    };
+  };
 
   const handleUpdate = async () => {
     if (submitting || !id || !validateStepOne() || !validateStepTwo()) return;
@@ -182,20 +222,20 @@ const AuditorEditAuditPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Edit Audit</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Edit Audit</h1>
         {draft.auditType && (
-          <span className="ml-1 inline-flex items-center rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600">
+          <span className="ml-1 inline-flex items-center rounded-full bg-[#F5F4F0] px-[10px] py-[3px] text-[11px] font-medium text-[rgba(26,26,24,0.68)]">
             {draft.auditType === "corporate" ? "Corporate" : "Circle"} audit
           </span>
         )}
@@ -203,22 +243,22 @@ const AuditorEditAuditPage = () => {
 
       {/* Stepper: 1 of 2 steps — same as the Add Audit page */}
       <div className="mb-6 max-w-md">
-        <p className="mb-2 text-xs text-gray-500">{step} of 2 steps</p>
+        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">{step} of 2 steps</p>
         <div className="flex items-center">
           {[1, 2].map((n) => (
             <div key={n} className={`flex items-center ${n === 1 ? "flex-1" : ""}`}>
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                   n <= step
-                    ? "border-[1.5px] border-gray-900 bg-[#EDEAE3] text-gray-900"
-                    : "border border-gray-200 bg-white text-gray-500"
+                    ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] text-[#1A1A18]"
+                    : "border border-[rgba(26,26,24,0.12)] bg-white text-[rgba(26,26,24,0.48)]"
                 }`}
               >
                 {n}
               </span>
               {n === 1 && (
                 <span
-                  className={`mx-2 h-px flex-1 ${step === 2 ? "bg-gray-900" : "bg-gray-200"}`}
+                  className={`mx-2 h-px flex-1 ${step === 2 ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`}
                 />
               )}
             </div>
@@ -244,7 +284,6 @@ const AuditorEditAuditPage = () => {
                 label={requiredLabel("Date of Audit")}
                 value={basic.dateOfAudit}
                 onChange={(e) => setBasic((p) => ({ ...p, dateOfAudit: e.target.value }))}
-                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -258,7 +297,7 @@ const AuditorEditAuditPage = () => {
               />
               <SelectField
                 label="Personnel Area"
-                required
+                required={draft.auditType === "circle"}
                 value={basic.personnelArea}
                 onChange={(v) => setBasic((p) => ({ ...p, personnelArea: v }))}
                 options={masters.circles}
@@ -289,7 +328,6 @@ const AuditorEditAuditPage = () => {
                 placeholder="Enter location"
                 value={basic.location}
                 onChange={(e) => setBasic((p) => ({ ...p, location: e.target.value }))}
-                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <SelectField
@@ -304,55 +342,16 @@ const AuditorEditAuditPage = () => {
             </div>
           </DetailCard>
 
-          <DetailCard icon={sectionIcon(ClipboardList)} title="Observation Classification" className="mb-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <SelectField
-                label="Classification"
-                required
-                value={classification.classification}
-                onChange={(v) => setClassification((p) => ({ ...p, classification: v }))}
-                options={masters.classifications}
-                loading={mastersLoading}
-                placeholder="Select observation classification"
-              />
-              <SelectField
-                label="Category"
-                required
-                value={classification.category}
-                onChange={(v) => setClassification((p) => ({ ...p, category: v }))}
-                options={masters.categories}
-                loading={mastersLoading}
-                placeholder="Select observation category"
-              />
-              <SelectField
-                label="Sub Category"
-                required
-                value={classification.subCategory}
-                onChange={(v) => setClassification((p) => ({ ...p, subCategory: v }))}
-                options={masters.subCategories}
-                loading={mastersLoading}
-                placeholder="Select observation sub-category"
-              />
-            </div>
-          </DetailCard>
-
-          <PeopleInteractedSection
-            fteUsers={fteUsers}
-            onFteUsersChange={setFteUsers}
-            otherPeople={otherPeople}
-            onOtherPeopleChange={setOtherPeople}
-          />
-
-          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+          <div className="fm-action-bar pt-4 sm:pt-6">
             <button
               type="button"
-              className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              className="fm-action-secondary"
               onClick={() => navigate(AUDIT_LIST_PATH)}
               disabled={submitting}
             >
               Cancel
             </button>
-            <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleNext} disabled={submitting}>
+            <button type="button" className="fm-action-primary" onClick={handleNext} disabled={submitting}>
               Next
             </button>
           </div>
@@ -361,117 +360,133 @@ const AuditorEditAuditPage = () => {
 
       {step === 2 && (
         <>
-          <DetailCard icon={sectionIcon(Store)} title="Vendor Details" className="mb-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <TextField
-                fullWidth
-                label="Vendor"
-                placeholder="Enter vendor name"
-                value={vendor.vendorName}
-                onChange={(e) => setVendor((p) => ({ ...p, vendorName: e.target.value }))}
-                sx={auditFieldSx}
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField
-                fullWidth
-                label="Sub Vendor"
-                placeholder="Enter sub vendor name"
-                value={vendor.subVendorName}
-                onChange={(e) => setVendor((p) => ({ ...p, subVendorName: e.target.value }))}
-                sx={auditFieldSx}
-                InputLabelProps={{ shrink: true }}
-              />
-            </div>
-          </DetailCard>
-
-          <DetailCard icon={sectionIcon(ClipboardList)} title="Observation Details" className="mb-5">
-            <div className="space-y-6">
-              {observations.map((entry, index) => (
-                <div
-                  key={entry.id ?? `new-${index}`}
-                  className={index > 0 ? "border-t border-gray-200 pt-6" : ""}
-                >
-                  {observations.length > 1 && (
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-[13px] font-semibold text-gray-900">Observation {index + 1}</span>
-                      {/* Saved observations can't be removed through the update API — only newly added ones. */}
-                      {!entry.id && (
-                        <button
-                          type="button"
-                          onClick={() => setObservations((prev) => prev.filter((_, i) => i !== index))}
-                          className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                          aria-label={`Remove observation ${index + 1}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+          {/* Step 2: one card per observation (same as Add Audit) — Observation Classification,
+              People Interacted With, Vendor Details and Observation Details. "Add more
+              observation" adds a whole new card; each card's values are saved on its observation. */}
+          {observations.map((entry, index) => (
+            <div key={entry.key} className="mb-5 w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              {observations.length > 1 && (
+                <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
+                  <span className="text-[15px] font-semibold text-gray-900">Observation {index + 1}</span>
+                  {/* Saved observations can't be removed through the update API — only newly added ones. */}
+                  {!entry.id && (
+                    <button
+                      type="button"
+                      onClick={() => setObservations((prev) => prev.filter((_, i) => i !== index))}
+                      className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                      aria-label={`Remove observation ${index + 1}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   )}
-                  <div className="space-y-5">
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      label={requiredLabel("Observation")}
-                      placeholder="Enter observation details"
-                      value={entry.observation}
-                      onChange={(e) => updateObservation(index, { observation: e.target.value })}
-                      sx={auditFieldSx}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                    {entry.existingAttachments.length > 0 && (
-                      <div>
-                        <span className="mb-2 block text-[12px] font-semibold text-gray-600">
-                          Attachments
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {entry.existingAttachments.map((name, fileIndex) => (
-                            <span
-                              key={`${name}-${fileIndex}`}
-                              className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900"
-                            >
-                              <Paperclip className="w-3 h-3 shrink-0 text-gray-500" />
-                              <span className="truncate">{name}</span>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <UserSelectField
-                        label="SPOC"
-                        required
-                        value={entry.spoc}
-                        onChange={(user) => updateObservation(index, { spoc: user })}
-                        employeeType="internal"
-                        placeholder="Search SPOC by email or mobile"
-                      />
-                      <UserSelectField
-                        label="Functional Head"
-                        required
-                        value={entry.functionalHead}
-                        onChange={(user) => updateObservation(index, { functionalHead: user })}
-                        employeeType="internal"
-                        placeholder="Search functional head by email or mobile"
-                      />
-                    </div>
-                  </div>
                 </div>
-              ))}
-              <div className="flex justify-end">
-                <AddMoreButton
-                  label="Add Observation"
-                  onClick={() => setObservations((prev) => [...prev, emptyObservation()])}
+              )}
+
+              <SubSectionTitle>Observation Classification</SubSectionTitle>
+              <ObservationClassificationFields
+                value={entry}
+                onChange={(patch) => updateObservation(index, patch)}
+                classifications={masters.classifications}
+                categories={masters.categories}
+                subCategories={masters.subCategories}
+                loading={mastersLoading}
+              />
+
+              <SubSectionTitle divider>People Interacted With</SubSectionTitle>
+              <PeopleInteractedSection
+                bare
+                fteUsers={entry.fteUsers}
+                onFteUsersChange={(users) => updateObservation(index, { fteUsers: users })}
+                otherPeople={entry.otherPeople}
+                onOtherPeopleChange={(people) => updateObservation(index, { otherPeople: people })}
+              />
+
+              <SubSectionTitle divider>Vendor Details</SubSectionTitle>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <TextField
+                  fullWidth
+                  label="Vendor"
+                  placeholder="Enter vendor name"
+                  value={entry.vendorName}
+                  onChange={(e) => updateObservation(index, { vendorName: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="Sub Vendor"
+                  placeholder="Enter sub vendor name"
+                  value={entry.subVendorName}
+                  onChange={(e) => updateObservation(index, { subVendorName: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
-            </div>
-          </DetailCard>
 
-          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
-            <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => setStep(1)} disabled={submitting}>
+              <SubSectionTitle divider>Observation Details</SubSectionTitle>
+              <div className="space-y-5">
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  sx={auditTextareaSx}
+                  label={requiredLabel("Observation")}
+                  placeholder="Enter observation details"
+                  value={entry.observation}
+                  onChange={(e) => updateObservation(index, { observation: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+                {entry.existingAttachments.length > 0 && (
+                  <div>
+                    <span className="mb-2 block text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">Attachments</span>
+                    <div className="flex flex-wrap gap-2">
+                      {entry.existingAttachments.map((name, fileIndex) => (
+                        <span
+                          key={`${name}-${fileIndex}`}
+                          className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]"
+                        >
+                          <Paperclip className="w-3 h-3 shrink-0 text-[rgba(26,26,24,0.48)]" />
+                          <span className="truncate">{name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <UserSelectField
+                    label="SPOC"
+                    required
+                    value={entry.spoc}
+                    onChange={(user) => updateObservation(index, { spoc: user })}
+                    employeeType="internal"
+                    placeholder="Search SPOC by email or mobile"
+                  />
+                  <UserSelectField
+                    label="Functional Head"
+                    required
+                    value={entry.functionalHead}
+                    onChange={(user) => updateObservation(index, { functionalHead: user })}
+                    employeeType="internal"
+                    placeholder="Search functional head by email or mobile"
+                  />
+                </div>
+              </div>
+
+              {/* Add another full observation card (only under the last card) */}
+              {index === observations.length - 1 && (
+                <div className="mt-4 flex justify-end">
+                  <AddMoreButton
+                    label="Add more observation"
+                    onClick={() => setObservations((prev) => [...prev, emptyObservation()])}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="fm-action-bar pt-4 sm:pt-6">
+            <button type="button" className="fm-action-secondary" onClick={() => setStep(1)} disabled={submitting}>
               Back
             </button>
-            <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleUpdate} disabled={submitting}>
+            <button type="button" className="fm-action-primary" onClick={handleUpdate} disabled={submitting}>
               {submitting ? "Updating..." : "Update"}
             </button>
           </div>
