@@ -186,7 +186,6 @@
 /* ============ SHELL ============ */
 .cal-ph .shell{
   display:grid;grid-template-columns:var(--sidebar-w) 1fr;align-items:start;
-  max-width:1560px;margin:0 auto;
   transition:grid-template-columns .2s ease;
 }
 
@@ -308,7 +307,7 @@
 /* ============ DATE RANGE CONTROL ============ */
 .cal-ph .daterange{position:relative;display:inline-block}
 .cal-ph .daterange-pop{
-  position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:250px;
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:270px;
   background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
   box-shadow:var(--shadow-pop);padding:10px;display:none;
 }
@@ -321,13 +320,13 @@
 .cal-ph .dr-preset:hover{background:var(--surface-2)}
 .cal-ph .dr-preset.on{background:var(--surface-2);font-weight:500}
 .cal-ph .dr-custom-label{font-size:11.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
-.cal-ph .dr-custom-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cal-ph .dr-custom-row{display:grid;gap:6px;margin-bottom:8px}
+.cal-ph .dr-field{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .cal-ph .dr-custom-row input[type=date]{
-  flex:1;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--surface);
+  width:100%;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--surface);
   border:1px solid var(--border);border-radius:var(--r-xs);padding:5px 6px;
 }
 .cal-ph .dr-custom-row input[type=date]:focus{outline:none;border-color:var(--blue);box-shadow:var(--focus-ring)}
-.cal-ph .dr-to{color:var(--faint);font-size:12px}
 .cal-ph .dr-apply{
   width:100%;font:inherit;font-size:12.5px;font-weight:500;color:var(--on-ink);background:var(--ink);
   border:none;border-radius:var(--r-xs);padding:8px;cursor:pointer;

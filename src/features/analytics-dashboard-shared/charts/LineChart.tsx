@@ -69,11 +69,18 @@ export function LineChart({
   const Y = (v: number) => pt + (H - pt - pb) * (1 - (v - mn) / span);
   const base = H - pb;
   const vfmt = pctScale ? (v: number) => `${v.toFixed(1)}%` : fmtC;
+  /* Tooltips show exact values; only the y-axis uses compact "1.2K" labels. */
+  const tfmt = pctScale ? vfmt : (v: number) => Math.round(v).toLocaleString();
   const path = (arr: number[]) => arr.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
 
   const step = Math.max(1, Math.ceil(n / 6));
   const ticks: number[] = [];
   for (let i = 0; i < n; i += step) ticks.push(i);
+  /* Always label the final point so the axis visibly reaches the end of the range. */
+  if (n > 1 && ticks[ticks.length - 1] !== n - 1) {
+    if (n - 1 - ticks[ticks.length - 1] < step / 2) ticks.pop();
+    ticks.push(n - 1);
+  }
 
   const areaD = `${cur.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ')} L${X(n - 1).toFixed(1)} ${base} L${X(0).toFixed(1)} ${base} Z`;
 
@@ -138,7 +145,7 @@ export function LineChart({
           key={`x${i}`}
           x={X(i).toFixed(1)}
           y={H - 9}
-          textAnchor="middle"
+          textAnchor={i === n - 1 && n > 1 ? 'end' : 'middle'}
           fontSize="11"
           fill={palette.faint}
           fontFamily="Inter,-apple-system,Segoe UI,sans-serif"
@@ -157,9 +164,9 @@ export function LineChart({
           const label = labels?.[i] ?? `Point ${i + 1}`;
           const tooltipText = [
             label,
-            `Current: ${vfmt(value)}`,
+            `Current: ${tfmt(value)}`,
             ...(overlay && overlay[i] !== undefined
-              ? [`Previous: ${vfmt(overlay[i])}`]
+              ? [`Previous: ${tfmt(overlay[i])}`]
               : []),
           ].join('\n');
           const left = i === 0 ? pl : X(i) - xw / 2;
@@ -255,7 +262,7 @@ export function LineChart({
             fill="var(--on-ink, #f8fafc)"
             fontFamily="Inter,-apple-system,Segoe UI,sans-serif"
           >
-            {vfmt(tip.curVal)}
+            {tfmt(tip.curVal)}
             <tspan fontSize="10.5" fontWeight="400" fill="var(--on-ink, #f8fafc)" opacity="0.65"> current</tspan>
           </text>
 
@@ -271,7 +278,7 @@ export function LineChart({
                 opacity="0.75"
                 fontFamily="Inter,-apple-system,Segoe UI,sans-serif"
               >
-                {vfmt(tip.prevVal)}
+                {tfmt(tip.prevVal)}
                 <tspan fontSize="10" opacity="0.6"> previous</tspan>
               </text>
             </>
