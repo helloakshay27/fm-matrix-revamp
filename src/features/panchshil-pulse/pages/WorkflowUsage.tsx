@@ -2,6 +2,7 @@ import React from "react";
 import { usePulseDashboard } from "../contexts/PulseDashboardContext";
 import { KpiTile } from "../components/common/KpiTile";
 import { SectionState } from "../components/common/SectionState";
+import { ChipsSkeleton, WorkflowSkeleton } from "../components/common/PulseSkeletons";
 import { tileToKpi } from "../utils/tileAdapter";
 import { fmtC } from "../utils/calculations";
 import type { ModuleOption } from "../../posthog-dashboard/data/metrics";
@@ -93,7 +94,7 @@ const WorkflowNav: React.FC = () => {
             <RenderChips options={subModules} selected={subModule} onSelect={setSubModule} />
           </div>
         ) : status.flows.loading ? (
-          <span className="sd">Loading modules&hellip;</span>
+          <ChipsSkeleton />
         ) : (
           <span className="sd">No sub-paths recorded under /{module ?? "—"}</span>
         )}
@@ -129,7 +130,7 @@ export const WorkflowUsage: React.FC = () => {
       {/* Module nav — modules + sub-modules from the API tree */}
       <WorkflowNav />
 
-      <SectionState status={vm.status.flows} label="workflow data">
+      <SectionState status={vm.status.flows} label="workflow data" skeleton={<WorkflowSkeleton />}>
         {/* KPI Tiles — 4 tiles, grid-template-columns:repeat(4,1fr) exactly as HTML */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(4,1fr)" }} id="wfKpis">
           <KpiTile
