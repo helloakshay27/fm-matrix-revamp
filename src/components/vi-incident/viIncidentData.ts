@@ -1,30 +1,95 @@
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
+import type { ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 
-// Incident records shared by every role's list/detail pages.
-// Placeholder data — swap for a live API once the Incident backend endpoint is available.
+// Incident model shared by every role's list/detail pages. Records are mapped from the
+// VI Incident API in viIncidentApi.ts.
 
-export type ViIncidentStatus = "Draft" | "Open" | "Closed" | "Pending By SPOC" | "Pending By Action Owner" | "Closed By Action Owner";
+export type ViIncidentRole = "reporter" | "spoc" | "action_owner" | "functional_head";
+export type ViIncidentActionType = "corrective" | "preventive";
+
+export interface ViIncidentAttachment {
+  id: string;
+  name: string;
+  url: string;
+}
 
 export interface ViIncidentInjury {
+  id: string;
+  name: string;
   age: string;
+  personTypeId: string;
   personType: string;
+  natureOfInjuryId: string;
+  natureOfInjury: string;
+  bodyPartId: string;
+  bodyPart: string;
   vendor: string;
   subVendor: string;
-  natureOfInjury: string;
-  bodyPart: string;
+}
+
+/** One action owner's share of an action plan (open → draft → closed). */
+export interface ViIncidentAssignment {
+  id: string;
+  owner: ViActiveUserOption | null;
+  status: string;
+  actionTaken: string;
+  closureDate: string; // yyyy-mm-dd
+  attachments: ViIncidentAttachment[];
+}
+
+/** A corrective or preventive plan for one checklist item, with one assignment per owner. */
+export interface ViIncidentActionPlan {
+  id: string;
+  checklistItemId: string;
+  actionType: ViIncidentActionType;
+  description: string;
+  targetDate: string; // yyyy-mm-dd
+  extendTargetDate: string; // yyyy-mm-dd
+  extensionReason: string;
+  status: string;
+  assignments: ViIncidentAssignment[];
+}
+
+/** A root cause the SPOC selected (checklist sub-sub category). */
+export interface ViIncidentChecklistItem {
+  id: string;
+  name: string;
+  /** "Category / Sub Category" the item sits under. */
+  path: string;
+}
+
+export interface ViIncidentInvestigation {
+  submitted: boolean;
+  required: boolean;
+  notRequiredReason: string;
   daysAwayFromWork: string;
   restrictedWorkDays: string;
+  breach: boolean;
+  breachSafetyRuleId: string;
+  breachSafetyRule: string;
+  /** Free text entered when the "Others" safety rule was chosen. */
+  breachSafetyRuleOther: string;
+  summary: string;
+  conclusionId: string;
+  conclusion: string;
 }
 
 export interface ViIncidentRecord {
   id: number;
-  incidentId: number;
-  status: ViIncidentStatus;
+  incidentNo: string;
+  /** Workflow status label, e.g. "Pending By SPOC". */
+  status: string;
+  statusKey: string;
+  /** Stored status: draft / open / closed. */
+  storedStatus: string;
+  canEdit: boolean;
   reporter: { name: string; mailId: string; employer: string };
   dateOfReport: string;
   timeOfReport: string;
   dateOfIncident: string;
   timeOfIncident: string;
+  incidentDateIso: string;
+  incidentTime24: string;
   circle: string;
   personnelArea: string;
   workLocation: string;
@@ -34,102 +99,53 @@ export interface ViIncidentRecord {
   classification: string;
   category: string;
   subCategory: string;
+  /** Master ids, for prefilling the edit form. */
+  ids: {
+    circle: string;
+    personnelArea: string;
+    workLocation: string;
+    function: string;
+    facilityType: string;
+    classification: string;
+    category: string;
+    subCategory: string;
+  };
+  /** Free text entered when the "Others" master was chosen. */
+  otherValues: { classification: string; category: string; subCategory: string; facilityType: string };
   incident: string;
+  injuryHappened: boolean;
   spoc: string;
   functionalHead: string;
-  attachments: string[];
+  spocUser: ViActiveUserOption | null;
+  functionalHeadUser: ViActiveUserOption | null;
+  attachments: ViIncidentAttachment[];
   injuries: ViIncidentInjury[];
+  investigation: ViIncidentInvestigation;
+  checklistItems: ViIncidentChecklistItem[];
+  actionPlans: ViIncidentActionPlan[];
+  /** Assignment ids belonging to the logged-in action owner (action owner list rows). */
+  myAssignmentIds: string[];
+  /** Counters the list endpoints add to each row. */
+  injuriesCount: number;
+  actionPlansCount: number;
+  assignmentsCount: number;
+  pendingAssignmentsCount: number;
 }
 
-const LOREM =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-const TEMPLATE: Omit<ViIncidentRecord, "id" | "incidentId" | "status">[] = [
-  {
-    reporter: { name: "Sohail Ansari", mailId: "sohail.ansari@mail.com", employer: "Aquil H" },
-    dateOfReport: "23/03/2026",
-    timeOfReport: "01:39 PM",
-    dateOfIncident: "23/03/2026",
-    timeOfIncident: "01:20 PM",
-    circle: "Birla",
-    personnelArea: "Worli",
-    workLocation: "Worli",
-    facilityType: "Birla",
-    incidentLocation: "Birla Centurion Pvt. Ltd., Wing B, Floor 3, Room 203, Common Area",
-    function: "",
-    classification: "Non-Compliance",
-    category: "Fire Safety",
-    subCategory: "",
-    incident: LOREM,
-    spoc: "Shahab Mirza",
-    functionalHead: "Kshitij Rasal",
-    attachments: [],
-    injuries: [
-      {
-        age: "28",
-        personType: "FTE",
-        vendor: "Popatlal & Sons",
-        subVendor: "",
-        natureOfInjury: "Fracture",
-        bodyPart: "Hand",
-        daysAwayFromWork: "5",
-        restrictedWorkDays: "2",
-      },
-    ],
-  },
-  {
-    reporter: { name: "Sohail Ansari", mailId: "sohail.ansari@mail.com", employer: "Aquil H" },
-    dateOfReport: "18/04/2026",
-    timeOfReport: "10:05 AM",
-    dateOfIncident: "18/04/2026",
-    timeOfIncident: "09:40 AM",
-    circle: "Tata",
-    personnelArea: "Andheri",
-    workLocation: "Andheri",
-    facilityType: "Tata",
-    incidentLocation: "Tata Projects Pvt. Ltd., Wing A, Floor 1, Reception",
-    function: "Operations",
-    classification: "Near Miss",
-    category: "Electrical",
-    subCategory: "Wiring",
-    incident: LOREM,
-    spoc: "Veena Kumari",
-    functionalHead: "Kshitij Rasal",
-    attachments: [],
-    injuries: [],
-  },
-];
-
-const STATUS_CYCLE: ViIncidentStatus[] = ["Draft", "Pending By SPOC", "Closed", "Open", "Pending By Action Owner", "Closed By Action Owner"];
-
-export const VI_INCIDENT_LIST: ViIncidentRecord[] = Array.from({ length: 12 }, (_, i) => ({
-  ...TEMPLATE[i % TEMPLATE.length],
-  id: i + 1,
-  incidentId: 23 + i,
-  status: STATUS_CYCLE[i % STATUS_CYCLE.length],
-}));
-
-export const getViIncident = (id: string | undefined): ViIncidentRecord =>
-  VI_INCIDENT_LIST.find((incident) => String(incident.id) === id) ?? VI_INCIDENT_LIST[0];
-
-/** Status tone classes for the incident status pill — same ticket palette as the audit pills. */
+/** Status tone classes for the incident status pill. */
 export const VI_INCIDENT_STATUS_TONE: Record<string, string> = {
-  Draft: "bg-yellow-100 text-yellow-700",
-  Open: "bg-blue-100 text-blue-700",
-  Closed: "bg-green-100 text-green-700",
-  "Pending By SPOC": "bg-yellow-100 text-yellow-700",
-  "Pending By Action Owner": "bg-yellow-100 text-yellow-700",
-  "Closed By Action Owner": "bg-green-100 text-green-700",
-  default: "bg-orange-100 text-orange-700",
+  Draft: "bg-[#FBE3D8] text-[#B5502A]",
+  Open: "bg-[#DCE8F4] text-[#2F5F8F]",
+  Closed: "bg-[#DDEBD3] text-[#4A6B2E]",
+  "Pending By SPOC": "bg-[#F5B5A6] text-[#8A2F1B]",
+  "Pending By Action Owner": "bg-[#F8E4C7] text-[#8A5A12]",
+  "Closed By Action Owner": "bg-[#DDEBD3] text-[#4A6B2E]",
+  "Closed By SPOC": "bg-[#DDEBD3] text-[#4A6B2E]",
+  "Incident Closed": "bg-[#DDEBD3] text-[#4A6B2E]",
 };
 
-/** Dropdown options for the injury section — placeholders until the masters API provides them. */
-export const PERSON_IMPACTED_OPTIONS = ["FTE", "Non-FTE", "Vendor", "Visitor"];
-export const INJURY_TYPE_OPTIONS = ["Fracture", "Cut / Laceration", "Burn", "Sprain / Strain", "Bruise", "Other"];
-export const BODY_PART_OPTIONS = ["Head", "Eye", "Hand", "Arm", "Back", "Leg", "Foot", "Other"];
-
 export const INCIDENT_COLUMNS: ColumnConfig[] = [
-  { key: "incidentId", label: "Incident ID", sortable: true, defaultVisible: true },
+  { key: "incidentNo", label: "Incident ID", sortable: true, defaultVisible: true },
   { key: "status", label: "Status", sortable: true, defaultVisible: true },
   { key: "classification", label: "Classification", sortable: true, defaultVisible: true },
   { key: "category", label: "Category", sortable: true, defaultVisible: true },
@@ -139,87 +155,103 @@ export const INCIDENT_COLUMNS: ColumnConfig[] = [
   { key: "circle", label: "Circle", sortable: true, defaultVisible: true },
   { key: "spoc", label: "SPOC", sortable: true, defaultVisible: true },
   { key: "functionalHead", label: "Functional Head", sortable: true, defaultVisible: true },
-];
-
-/** Root-cause checklists on the SPOC's action plan form (Investigation Required). */
-export const ROOT_CAUSE_GROUPS: { key: string; title: string; options: string[] }[] = [
-  {
-    key: "substandardAct",
-    title: "Substandard Act",
-    options: ["Not Following SOP", "Improper PPE Usage", "Unsafe Behaviour", "Unauthorised Operations"],
-  },
-  {
-    key: "substandardCondition",
-    title: "Substandard Condition",
-    options: ["Poor Housekeeping", "Faulty Equipment", "Unsafe Environment", "Inadequate Guarding"],
-  },
-  { key: "personalFactor", title: "Personal Factor", options: ["Lack Of Knowledge", "Fatigue", "Negligence"] },
-  { key: "jobFactor", title: "Job Factor", options: ["Poor Supervision", "Lack Of Training", "Work Pressure"] },
-];
-
-/** A corrective/preventive plan the SPOC created for one root cause, plus what the action owner did about it. */
-export interface ViIncidentActionPlan {
-  id: string;
-  /** Root cause the plan addresses, e.g. "Not Following SOP". */
-  cause: string;
-  /** Checklist path shown under "Checklist Item". */
-  checklistPath: string;
-  corrective: string;
-  preventive: string;
-  actionOwner: string;
-  targetDate: string;
-  /** Filled once the action owner has submitted their action taken. */
-  taken?: {
-    corrective: string;
-    preventive: string;
-    closureDate: string;
-    attachments: string[];
-  };
-}
-
-const PLAN_TEXT =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-/** Placeholder action plans for an incident — swap for the live API once it exists. */
-export const getViIncidentActionPlans = (incident: ViIncidentRecord): ViIncidentActionPlan[] => {
-  const closed = incident.status === "Closed By Action Owner";
-  return ["Not Following SOP", "Improper PPE Usage"].map((cause, index) => ({
-    id: `CA0${index + 1}`,
-    cause,
-    checklistPath: `Substandard Act/${cause}`,
-    corrective: PLAN_TEXT,
-    preventive: PLAN_TEXT,
-    actionOwner: "Vama Shah",
-    targetDate: "18 Sep 2026",
-    taken: closed
-      ? {
-          corrective: PLAN_TEXT,
-          preventive: PLAN_TEXT,
-          closureDate: "18 Sep 2026",
-          attachments: ["photo-1.jpg", "photo-2.jpg", "photo-3.jpg"],
-        }
-      : undefined,
-  }));
-};
-
-/** Status options for the incident filters. */
-export const VI_INCIDENT_STATUSES: ViIncidentStatus[] = [
-  "Draft",
-  "Open",
-  "Closed",
-  "Pending By SPOC",
-  "Pending By Action Owner",
-  "Closed By Action Owner",
+  { key: "injuriesCount", label: "Injuries", sortable: true, defaultVisible: false },
+  { key: "actionPlansCount", label: "Action Plans", sortable: true, defaultVisible: false },
+  { key: "assignmentsCount", label: "Assignments", sortable: true, defaultVisible: false },
+  { key: "pendingAssignmentsCount", label: "Pending Assignments", sortable: true, defaultVisible: false },
 ];
 
 /** Incident-card fields (ID, Status, Classification, Location) — the list columns in the role designs. */
 export const INCIDENT_CARD_COLUMNS: ColumnConfig[] = [
-  { key: "incidentId", label: "Incident ID", sortable: true, defaultVisible: true },
+  { key: "incidentNo", label: "Incident ID", sortable: true, defaultVisible: true },
   { key: "status", label: "Status", sortable: true, defaultVisible: true },
   { key: "classification", label: "Classification", sortable: true, defaultVisible: true },
   { key: "incidentLocation", label: "Incident Location", sortable: true, defaultVisible: true },
 ];
 
-/** Due label shown on an action plan card, e.g. "Due 18 Sep". */
-export const viIncidentPlanDueLabel = (plan: ViIncidentActionPlan) =>
-  plan.taken ? undefined : `Due ${plan.targetDate.replace(/\s\d{4}$/, "")}`;
+export const ACTION_TYPE_LABEL: Record<ViIncidentActionType, string> = {
+  corrective: "Corrective",
+  preventive: "Preventive",
+};
+
+export const todayIso = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
+
+// "2026-09-18" -> "18 Sep 2026"
+export const formatIncidentDate = (iso: string) => {
+  const [year, month, day] = iso.split("-").map(Number);
+  if (!year || !month || !day) return iso;
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+/** The deadline in force: the extended date when set, else the target date. */
+export const planDeadline = (plan: ViIncidentActionPlan) => plan.extendTargetDate || plan.targetDate;
+
+export const isPlanClosed = (plan: ViIncidentActionPlan) =>
+  plan.status.toLowerCase() === "closed" ||
+  (plan.assignments.length > 0 && plan.assignments.every((a) => a.status === "closed"));
+
+/** The SPOC may extend a deadline only once it has passed and the plan is still open. */
+export const isPlanExpired = (plan: ViIncidentActionPlan) =>
+  !isPlanClosed(plan) && Boolean(planDeadline(plan)) && planDeadline(plan) < todayIso();
+
+/** Due label shown on an open action plan, e.g. "Due 18 Sep". */
+export const viIncidentPlanDueLabel = (plans: ViIncidentActionPlan[]) => {
+  const open = plans.filter((plan) => !isPlanClosed(plan) && planDeadline(plan)).map(planDeadline).sort();
+  return open.length ? `Due ${formatIncidentDate(open[0]).replace(/\s\d{4}$/, "")}` : undefined;
+};
+
+/** Owners who haven't submitted their action on the given plans (unique, in plan order). */
+export const pendingOwnerNames = (plans: ViIncidentActionPlan[]) => [
+  ...new Set(
+    plans
+      .flatMap((plan) => plan.assignments)
+      .filter((a) => a.status !== "closed")
+      .map((a) => a.owner?.name || "Unassigned"),
+  ),
+];
+
+/**
+ * Whose end the incident is waiting on, from its workflow stage: the reporter (draft), the SPOC
+ * (pending by SPOC) or every action owner who hasn't submitted yet. Empty once nothing is pending.
+ */
+export const incidentPendingWith = (incident: ViIncidentRecord): { role: string; names: string[] } | null => {
+  switch (incident.statusKey) {
+    case "draft":
+      return { role: "Reporter", names: [incident.reporter.name || "Reporter"] };
+    case "pending_by_spoc":
+      return { role: "SPOC", names: [incident.spoc || "SPOC"] };
+    case "pending_by_action_owner": {
+      const names = pendingOwnerNames(incident.actionPlans);
+      return names.length ? { role: names.length > 1 ? "Action Owners" : "Action Owner", names } : null;
+    }
+    default:
+      return null;
+  }
+};
+
+export interface ViIncidentPlanGroup {
+  item: ViIncidentChecklistItem;
+  corrective: ViIncidentActionPlan[];
+  preventive: ViIncidentActionPlan[];
+}
+
+/** Action plans grouped under the checklist item (root cause) they address, in selection order. */
+export const groupPlansByItem = (
+  items: ViIncidentChecklistItem[],
+  plans: ViIncidentActionPlan[],
+): ViIncidentPlanGroup[] => {
+  const known = new Map(items.map((item) => [item.id, item]));
+  const order = [...items.map((item) => item.id), ...plans.map((plan) => plan.checklistItemId)].filter(
+    (id, index, all) => all.indexOf(id) === index,
+  );
+  return order
+    .map((id) => ({
+      item: known.get(id) ?? { id, name: `Checklist item ${id}`, path: "" },
+      corrective: plans.filter((p) => p.checklistItemId === id && p.actionType === "corrective"),
+      preventive: plans.filter((p) => p.checklistItemId === id && p.actionType === "preventive"),
+    }))
+    .filter((group) => group.corrective.length || group.preventive.length);
+};

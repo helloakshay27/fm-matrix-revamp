@@ -53,6 +53,49 @@ const fetchUsers = async (params: URLSearchParams, signal: AbortSignal) => {
     .filter((option): option is ViActiveUserOption => option !== null);
 };
 
+// The preloaded list is shared: every picker on a page (e.g. one per action plan) reuses one
+// request per login + employee type, refreshed after BASE_LIST_TTL_MS. A failed request is
+// dropped so the next picker retries.
+const BASE_LIST_TTL_MS = 5 * 60 * 1000;
+
+// Cache keys are per login; a missing token must not throw during render (the request reports it).
+const authKey = () => {
+  try {
+    return getAuthHeader();
+  } catch {
+    return "";
+  }
+};
+const baseListCache = new Map<string, { at: number; promise: Promise<ViActiveUserOption[]> }>();
+
+const loadBaseList = (employeeType?: string) => {
+  const key = `${authKey()}|${employeeType ?? ""}`;
+  const cached = baseListCache.get(key);
+  if (cached && Date.now() - cached.at < BASE_LIST_TTL_MS) return cached.promise;
+  const params = new URLSearchParams();
+  if (employeeType) params.set("q[employee_type_cont]", employeeType);
+  // Not tied to one picker's lifetime, so no abort signal — unmounted pickers just ignore it.
+  const promise = fetchUsers(params, new AbortController().signal);
+  promise.catch(() => baseListCache.delete(key));
+  baseListCache.set(key, { at: Date.now(), promise });
+  return promise;
+};
+
+// Every user a picker has seen this session (preloaded list, search results, users already
+// picked), per login + employee type. The preloaded list is limited and the server search only
+// matches email / mobile, so without this a user found in one picker (e.g. the corrective plan's)
+// can't be found by name in the next one (the preventive plan's).
+const seenUsers = new Map<string, Map<string, ViActiveUserOption>>();
+const seenKey = (employeeType?: string) => `${authKey()}|${employeeType ?? ""}`;
+
+/** Remember users so preload pickers with the same employee type can offer them. */
+export const rememberViUsers = (users: ViActiveUserOption[], employeeType?: string) => {
+  const key = seenKey(employeeType);
+  const known = seenUsers.get(key) ?? new Map<string, ViActiveUserOption>();
+  users.forEach((user) => known.set(user.id, { ...known.get(user.id), ...user }));
+  seenUsers.set(key, known);
+};
+
 const matchesTerm = (user: ViActiveUserOption, q: string) =>
   [user.name, user.email, user.mobile].some((field) => field?.toLowerCase().includes(q));
 
@@ -78,27 +121,28 @@ export const useViUserSearch = (
   const q = term.trim();
   const searching = q.length >= VI_USER_SEARCH_MIN_CHARS;
 
-  // Base list (employee-type filter only), loaded once for preload pickers.
+  // Base list (employee-type filter only) for preload pickers — shared across pickers (loadBaseList).
   useEffect(() => {
     if (!preload) {
       setBaseList([]);
       return;
     }
-    const controller = new AbortController();
+    let active = true;
     setBaseLoading(true);
-    const params = new URLSearchParams();
-    if (employeeType) params.set("q[employee_type_cont]", employeeType);
-    fetchUsers(params, controller.signal)
-      .then(setBaseList)
+    loadBaseList(employeeType)
+      .then((users) => {
+        rememberViUsers(users, employeeType);
+        if (active) setBaseList(users);
+      })
       .catch((error) => {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         console.error("User list failed:", error);
         setBaseList([]);
       })
-      .finally(() => {
-        if (!controller.signal.aborted) setBaseLoading(false);
-      });
-    return () => controller.abort();
+      .finally(() => active && setBaseLoading(false));
+    return () => {
+      active = false;
+    };
   }, [employeeType, preload]);
 
   // Server-side search by email / mobile.
@@ -115,7 +159,9 @@ export const useViUserSearch = (
         const params = new URLSearchParams();
         if (employeeType) params.set("q[employee_type_cont]", employeeType);
         params.set("q[email_or_mobile_cont]", q);
-        setSearchResults(await fetchUsers(params, controller.signal));
+        const found = await fetchUsers(params, controller.signal);
+        rememberViUsers(found, employeeType);
+        setSearchResults(found);
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error("User search failed:", error);
@@ -132,11 +178,21 @@ export const useViUserSearch = (
 
   const options = useMemo(() => {
     const needle = q.toLowerCase();
-    const local = needle ? baseList.filter((user) => matchesTerm(user, needle)) : baseList;
+    // Preload pickers search the base list plus every user already seen this session.
+    const pool = preload
+      ? [
+          ...baseList,
+          ...[...(seenUsers.get(seenKey(employeeType))?.values() ?? [])].filter(
+            (user) => !baseList.some((b) => b.id === user.id),
+          ),
+        ]
+      : baseList;
+    // Without a term, keep the list as the API returned it.
+    const local = needle ? pool.filter((user) => matchesTerm(user, needle)) : baseList;
     if (!searching) return local;
     const seen = new Set(local.map((user) => user.id));
     return [...local, ...searchResults.filter((user) => !seen.has(user.id))];
-  }, [q, searching, baseList, searchResults]);
+  }, [q, searching, baseList, searchResults, preload, employeeType]);
 
   return { options, loading: baseLoading || searchLoading };
 };

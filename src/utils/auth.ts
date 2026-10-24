@@ -334,6 +334,19 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
+  if (isViUatSite) {
+    const response = await fetch(
+      `https://vi-uat-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
   if (isViSite) {
     const response = await fetch(
       `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`

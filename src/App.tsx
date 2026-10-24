@@ -6017,6 +6017,10 @@ function App() {
                               element={<IncidentReporterAddPage />}
                             />
                             <Route
+                              path="/safety/vi-incident/reporter/:id/edit"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
                               path="/safety/vi-incident/reporter/:id"
                               element={<IncidentReporterDetailPage />}
                             />

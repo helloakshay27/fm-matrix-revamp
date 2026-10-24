@@ -1,16 +1,15 @@
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Layers, ClipboardList, Paperclip, User, HeartPulse } from "lucide-react";
+import { ArrowLeft, Clock, FileText, Layers, ClipboardList, User, HeartPulse, Search } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AttachmentLinks } from "./IncidentFormFields";
 import { IncidentStatusPill } from "./IncidentListView";
-import { getViIncident, type ViIncidentRecord } from "./viIncidentData";
+import { incidentPendingWith, type ViIncidentRecord } from "./viIncidentData";
 
 /** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
-export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) => {
-  const injured = incident.injuries.length > 0;
-  return (
-    <>
+export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) => (
+  <>
     <DetailCard icon={sectionIcon(User)} title="Reporter Details" className="mb-5">
       <FieldGrid
         fields={[
@@ -25,7 +24,7 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
       <FieldGrid
         columns={4}
         fields={[
-          { label: "Incident ID", value: String(incident.incidentId) },
+          { label: "Incident ID", value: incident.incidentNo },
           { label: "Date of Report", value: incident.dateOfReport },
           { label: "Time of Report", value: incident.timeOfReport },
           { label: "Date of Incident", value: incident.dateOfIncident },
@@ -51,9 +50,9 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
     </DetailCard>
 
     <DetailCard icon={sectionIcon(ClipboardList)} title="Incident Details" className="mb-5">
-      <div className="mb-4 border-b border-gray-200 pb-4">
-        <div className="text-xs text-gray-500 mb-1">Incident</div>
-        <p className="text-sm text-gray-900 whitespace-pre-wrap">{incident.incident}</p>
+      <div className="mb-4 border-b border-[rgba(26,26,24,0.09)] pb-4">
+        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
+        <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{incident.incident || "-"}</p>
       </div>
       <FieldGrid
         columns={2}
@@ -63,33 +62,24 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
         ]}
       />
       <div className="mt-4">
-        <div className="text-xs text-gray-500 mb-1">
-          Attachments ({incident.attachments.length})
-        </div>
+        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Attachments ({incident.attachments.length})</div>
         {incident.attachments.length ? (
-          <div className="flex flex-wrap gap-2">
-            {incident.attachments.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900"
-              >
-                <Paperclip className="w-3 h-3" />
-                {name}
-              </span>
-            ))}
-          </div>
+          <AttachmentLinks attachments={incident.attachments} />
         ) : (
-          <span className="text-sm font-medium text-gray-900">-</span>
+          <span className="text-sm font-medium text-[#1A1A18]">-</span>
         )}
       </div>
       <div className="mt-4">
-        <FieldGrid columns={2} fields={[{ label: "An Injury Happened?", value: injured ? "Yes" : "No" }]} />
+        <FieldGrid
+          columns={2}
+          fields={[{ label: "An Injury Happened?", value: incident.injuryHappened ? "Yes" : "No" }]}
+        />
       </div>
     </DetailCard>
 
     {incident.injuries.map((injury, index) => (
       <DetailCard
-        key={index}
+        key={injury.id || index}
         icon={sectionIcon(HeartPulse)}
         title={incident.injuries.length > 1 ? `Injury Details ${index + 1}` : "Injury Details"}
         className="mb-5"
@@ -97,63 +87,148 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
         <FieldGrid
           columns={4}
           fields={[
+            { label: "Impacted Person", value: injury.name },
             { label: "Impacted Person's Age", value: injury.age },
             { label: "Nature of Person Impacted", value: injury.personType },
-            { label: "Vendor", value: injury.vendor },
-            { label: "Sub Vendor", value: injury.subVendor },
             { label: "Nature of Injury", value: injury.natureOfInjury },
             { label: "Body Part Affected", value: injury.bodyPart },
-            { label: "Days Away from Work", value: injury.daysAwayFromWork },
-            { label: "Restricted Work Days", value: injury.restrictedWorkDays },
+            { label: "Vendor", value: injury.vendor },
+            { label: "Sub Vendor", value: injury.subVendor },
           ]}
         />
       </DetailCard>
     ))}
-    </>
+  </>
+);
+
+/** The SPOC's investigation outcome — shown once it has been submitted. */
+export const IncidentInvestigationCard = ({ incident }: { incident: ViIncidentRecord }) => {
+  const inv = incident.investigation;
+  if (!inv.submitted) return null;
+  return (
+    <DetailCard icon={sectionIcon(Search)} title="Investigation" className="mb-5">
+      {inv.required ? (
+        <>
+          <FieldGrid
+            columns={4}
+            fields={[
+              { label: "Investigation Required?", value: "Yes" },
+              { label: "Days Away from Work", value: inv.daysAwayFromWork },
+              { label: "Restricted Work Days", value: inv.restrictedWorkDays },
+              { label: "Breach of Absolute Safety Rules", value: inv.breach ? "Yes" : "No" },
+              inv.breach
+                ? {
+                    label: "Safety Rule Breached",
+                    value: inv.breachSafetyRuleOther
+                      ? `${inv.breachSafetyRule || "Others"} — ${inv.breachSafetyRuleOther}`
+                      : inv.breachSafetyRule,
+                  }
+                : { label: "Investigation Conclusion", value: inv.conclusion },
+            ]}
+          />
+          <div className="mt-4 border-t border-[rgba(26,26,24,0.09)] pt-4">
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Investigation Summary</div>
+            <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{inv.summary || "-"}</p>
+          </div>
+        </>
+      ) : (
+        <FieldGrid
+          columns={2}
+          fields={[
+            { label: "Investigation Required?", value: "No" },
+            { label: "Reason", value: inv.notRequiredReason },
+          ]}
+        />
+      )}
+    </DetailCard>
   );
 };
 
+/** Page header: back arrow, "Incident — <no>" and the status pill. */
+export const IncidentHeader = ({
+  incident,
+  onBack,
+  children,
+}: {
+  incident: ViIncidentRecord;
+  onBack: () => void;
+  children?: ReactNode;
+}) => {
+  const pending = incidentPendingWith(incident);
+  return (
+    <div className="mb-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          aria-label="Back to incident list"
+        >
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+        </button>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
+        <IncidentStatusPill status={incident.status} />
+        {children}
+      </div>
+      {/* Whose end the incident is waiting on */}
+      {pending && <PendingWithLine role={pending.role} names={pending.names} className="mt-2 pl-11" />}
+    </div>
+  );
+};
+
+/** "Pending with (Action Owners): A, B" — clock icon, warning tone. */
+export const PendingWithLine = ({
+  role,
+  names,
+  className = "",
+}: {
+  role?: string;
+  names: string[];
+  className?: string;
+}) =>
+  names.length ? (
+    <p className={`flex items-center gap-1.5 text-xs font-medium text-[#8A5A12] ${className}`}>
+      <Clock className="w-3.5 h-3.5 shrink-0" />
+      <span>
+        Pending with{role ? ` (${role})` : ""}: <span className="font-semibold">{names.join(", ")}</span>
+      </span>
+    </p>
+  ) : null;
+
 /**
  * Shared incident detail layout (Reporter / Basic / Classification / Incident Details / Injury).
- * Each role page supplies its list route (back arrow) and optional footer actions.
+ * Each role page loads the incident (useViIncidentDetail) and supplies its list route and actions.
  */
 export const IncidentDetailView = ({
-  incidentId: id,
+  incident,
+  loading,
   listPath,
   footer,
   children,
 }: {
-  incidentId: string | undefined;
+  incident: ViIncidentRecord | null;
+  loading: boolean;
   listPath: string;
   /** Sticky action bar content, e.g. the SPOC's "Create Action Plan" button. */
   footer?: ReactNode;
-  /** Extra content after the incident cards (e.g. the action plans). */
+  /** Extra content after the incident cards (e.g. the investigation and action plans). */
   children?: ReactNode;
 }) => {
   const navigate = useNavigate();
-  const incident = useMemo(() => getViIncident(id), [id]);
+
+  if (loading) return <AuditLoadingState message="Loading incident..." />;
+  if (!incident) return <AuditLoadingState message="Incident not found." onBack={() => navigate(listPath)} />;
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <button
-          type="button"
-          onClick={() => navigate(listPath)}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
-          aria-label="Back to incident list"
-        >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
-        </button>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentId}</h1>
-        <IncidentStatusPill status={incident.status} />
-      </div>
+    <div className="p-6 min-h-screen">
+      <IncidentHeader incident={incident} onBack={() => navigate(listPath)} />
 
       <IncidentInfoCards incident={incident} />
 
       {children}
 
       {footer && (
-        <div className="flex flex-wrap gap-4 justify-center sticky bottom-0 -mx-6 mt-6 border-t border-gray-200 bg-white px-6 py-4">
+        <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">
           {footer}
         </div>
       )}
