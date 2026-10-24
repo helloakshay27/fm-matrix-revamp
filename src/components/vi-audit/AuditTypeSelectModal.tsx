@@ -30,8 +30,8 @@ export const AuditTypeSelectModal = ({
   <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
     <DialogContent className="sm:max-w-md rounded-2xl p-8">
       <DialogHeader className="items-center text-center">
-        <DialogTitle className="text-lg font-semibold text-[#1A1A18]">Audit</DialogTitle>
-        <DialogDescription className="text-sm text-[rgba(26,26,24,0.48)]">
+        <DialogTitle className="text-lg font-semibold text-gray-900">Audit</DialogTitle>
+        <DialogDescription className="text-sm text-gray-500">
           Select type of audit
         </DialogDescription>
       </DialogHeader>
@@ -41,10 +41,10 @@ export const AuditTypeSelectModal = ({
             key={value}
             type="button"
             onClick={() => onSelect(value)}
-            className="flex h-36 w-40 flex-col items-center justify-center gap-4 rounded-2xl border border-[rgba(26,26,24,0.12)] bg-white transition-colors hover:border-[#1A1A18] hover:bg-[#F7F6F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18]"
+            className="flex h-36 w-40 flex-col items-center justify-center gap-4 rounded-2xl border border-gray-200 bg-white transition-colors hover:border-gray-900 hover:bg-[#F6F4EE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
           >
-            <Icon className="h-12 w-12 text-[#1A1A18]" strokeWidth={1.5} />
-            <span className="text-[15px] font-medium text-[#1A1A18]">{label}</span>
+            <Icon className="h-12 w-12 text-gray-900" strokeWidth={1.5} />
+            <span className="text-[15px] font-medium text-gray-900">{label}</span>
           </button>
         ))}
       </div>

@@ -60,6 +60,8 @@ export interface ViObservation {
   assignedSpoc: string;
   functionalHead: string;
   attachments: string[];
+  /** Attachment files from the API (name + URL), when available. */
+  attachmentFiles?: { name: string; url: string }[];
   correctiveActions: ViActionPlan[];
   preventiveActions: ViActionPlan[];
 }
@@ -86,15 +88,18 @@ export interface ViAuditDetail {
   observations: ViObservation[];
 }
 
-// Standard tinted status pills — one tone per state, used on every audit screen.
+// Status badge tones — the ticket table palette (Pending yellow, Open blue, Closed green, else orange).
 export const VI_AUDIT_STATUS_TONE: Record<string, string> = {
-  Open: "bg-[rgba(107,155,204,0.15)] text-[#3F6E9E]",
-  Closed: "bg-[rgba(26,26,24,0.06)] text-[rgba(26,26,24,0.68)]",
-  Completed: "bg-[rgba(121,140,94,0.15)] text-[#56683F]",
-  Draft: "bg-[rgba(237,196,136,0.28)] text-[#8A6420]",
-  "Pending By SPOC": "bg-[rgba(231,132,142,0.15)] text-[#B04A55]",
-  "Pending By Action Owner": "bg-[rgba(237,196,136,0.28)] text-[#8A6420]",
-  "Closed By Action Owner": "bg-[rgba(121,140,94,0.15)] text-[#56683F]",
+  Open: "bg-blue-100 text-blue-700",
+  Submitted: "bg-blue-100 text-blue-700",
+  "In progress": "bg-blue-100 text-blue-700",
+  Draft: "bg-yellow-100 text-yellow-700",
+  "Pending By SPOC": "bg-yellow-100 text-yellow-700",
+  "Pending By Action Owner": "bg-yellow-100 text-yellow-700",
+  Closed: "bg-green-100 text-green-700",
+  Completed: "bg-green-100 text-green-700",
+  "Closed By Action Owner": "bg-green-100 text-green-700",
+  default: "bg-orange-100 text-orange-700",
 };
 
 const LOREM =

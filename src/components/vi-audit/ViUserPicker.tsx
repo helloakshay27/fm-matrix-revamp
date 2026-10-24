@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Autocomplete, CircularProgress, TextField } from "@mui/material";
+import { auditFieldSx } from "./ViAuditUi";
 import {
   VI_USER_SEARCH_MIN_CHARS,
   useViUserSearch,
@@ -10,22 +11,21 @@ import {
 // Head, Action Plan responsible person). Users come from
 // /pms/users/vi_fte_non_fte_active_users.json (see useViUserSearch).
 
-// Label rendered OUTSIDE the Autocomplete (same 12px/600 style as the global field standard).
-// An MUI `label` inside an Autocomplete gets lifted into the field's clickable root by the
-// global label-above CSS, which breaks MUI's focus handling — the popup opens and instantly
-// closes. Same pattern as the app's other Autocompletes (e.g. ReporteesReassignPage).
+// Label rendered above a field (kept for any caller that wants it). The pickers below use the
+// standard floating MUI label instead, so they line up with the other outlined fields.
 export function AutocompleteLabel({ children, required }: { children: ReactNode; required?: boolean }) {
   return (
-    <span className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
+    <span className="block mb-1.5 text-[12px] font-semibold text-gray-600">
       {children}
-      {required && <span className="fm-required-mark">*</span>}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
     </span>
   );
 }
 
 // Server-side user search (q[email_or_mobile_cont]) — same Autocomplete setup as the working
 // ReporteesReassignPage picker: controlled input, results from the API (no client filtering),
-// spinner while searching, no MUI label (see AutocompleteLabel).
+// spinner while searching. `label` is the floating (shrunk) MUI label on the border, like the
+// other outlined fields in the form.
 // `preload` lists users (employee-type filter only) before anything is typed.
 export function UserAutocomplete({
   value,
@@ -35,7 +35,9 @@ export function UserAutocomplete({
   excludeIds,
   placeholder,
   ariaLabel,
+  label,
 }: {
+  label?: ReactNode;
   value: ViActiveUserOption | null;
   onChange: (user: ViActiveUserOption | null) => void;
   employeeType?: string;
@@ -73,8 +75,8 @@ export function UserAutocomplete({
       renderOption={(props, user) => (
         <li {...props} key={user.id}>
           <div className="flex flex-col py-0.5">
-            <span className="text-sm text-[#1A1A18]">{user.name}</span>
-            {user.email && <span className="text-xs text-[rgba(26,26,24,0.48)]">{user.email}</span>}
+            <span className="text-sm text-gray-900">{user.name}</span>
+            {user.email && <span className="text-xs text-gray-500">{user.email}</span>}
           </div>
         </li>
       )}
@@ -85,8 +87,8 @@ export function UserAutocomplete({
       slotProps={{
         paper: {
           sx: {
-            border: "1px solid rgba(26,26,24,0.09)",
-            borderRadius: "12px",
+            border: "1px solid #e5e7eb",
+            borderRadius: "8px",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.08)",
           },
         },
@@ -94,8 +96,10 @@ export function UserAutocomplete({
       renderInput={(params) => (
         <TextField
           {...params}
-          label=""
+          label={label ?? ""}
           placeholder={placeholder}
+          sx={auditFieldSx}
+          InputLabelProps={{ ...params.InputLabelProps, shrink: true }}
           inputProps={{ ...params.inputProps, "aria-label": ariaLabel }}
           InputProps={{
             ...params.InputProps,
@@ -112,7 +116,7 @@ export function UserAutocomplete({
   );
 }
 
-// Labelled single-user picker (label above, searchable).
+// Labelled single-user picker (floating label on the border, searchable).
 export function UserSelectField({
   label,
   required,
@@ -132,8 +136,16 @@ export function UserSelectField({
 }) {
   return (
     <div>
-      <AutocompleteLabel required={required}>{label}</AutocompleteLabel>
       <UserAutocomplete
+        label={
+          required ? (
+            <>
+              {label} <span className="text-red-500">*</span>
+            </>
+          ) : (
+            label
+          )
+        }
         value={value}
         onChange={onChange}
         employeeType={employeeType}

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Pencil, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -15,11 +14,9 @@ export interface AuditListStat {
   icon: LucideIcon;
 }
 
-// Summary-card standard: #F5F4F0 card, 16px radius, 18px 20px padding, no shadow,
-// white 36x36 icon tile (10px radius) with a neutral 18px line icon.
-const summaryCardClass =
-  "!bg-[#F5F4F0] !rounded-2xl !px-5 !py-[18px] !shadow-none hover:!shadow-none !cursor-default";
-const summaryIconTileClass = "!w-9 !h-9 !bg-white !rounded-[10px]";
+// Summary cards use the plain StatsCard (ticket list look: #F6F4EE card, beige icon tile,
+// brand icon); they aren't clickable here.
+const summaryCardClass = "cursor-default hover:shadow-[0px_1px_8px_rgba(45,45,45,0.05)]";
 
 /**
  * Shared layout for the audit list pages (stats cards + audit table). Each role page
@@ -38,6 +35,7 @@ export const AuditListView = ({
   loading = false,
   pagination,
   editDrafts = false,
+  onFilterClick,
 }: {
   title: string;
   stats: AuditListStat[];
@@ -55,11 +53,14 @@ export const AuditListView = ({
   pagination?: { currentPage: number; totalPages: number; onPageChange: (page: number) => void };
   /** Draft rows also get an edit button, opening `${detailBasePath}/${audit.id}/edit`. */
   editDrafts?: boolean;
+  /** Opens the page's filter dialog from the table's filter button. */
+  onFilterClick?: () => void;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredAudits = VI_AUDIT_LIST.filter((a) => {
+  const rows = data ?? VI_AUDIT_LIST;
+  const filteredAudits = rows.filter((a) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -82,44 +83,44 @@ export const AuditListView = ({
     }
   };
 
+  // Action icons — same markup as the ticket list action column.
   const renderActions = (item: ViAuditListRecord) => (
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-        onClick={() => navigate(`${detailBasePath}/${item.id}`)}
+    <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
+      <button
+        type="button"
         title="View audit"
+        aria-label="View audit"
+        className="p-1 hover:bg-gray-100 rounded transition-colors"
+        onClick={() => navigate(`${detailBasePath}/${item.id}`)}
       >
-        <Eye className="w-4 h-4" />
-      </Button>
+        <Eye className="w-4 h-4 text-gray-600 cursor-pointer" />
+      </button>
       {editDrafts && String(item.status).toLowerCase() === "draft" && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-          onClick={() => navigate(`${detailBasePath}/${item.id}/edit`)}
+        <button
+          type="button"
           title="Edit draft"
+          aria-label="Edit draft"
+          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          onClick={() => navigate(`${detailBasePath}/${item.id}/edit`)}
         >
-          <Pencil className="w-4 h-4" />
-        </Button>
+          <Pencil className="w-4 h-4 text-gray-600 cursor-pointer hover:text-brand" />
+        </button>
       )}
     </div>
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-xl font-semibold text-[#1A1A18] mb-4">{title}</h1>
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">{title}</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map(({ title: statTitle, value, icon: Icon }) => (
           <StatsCard
             key={statTitle}
             title={statTitle}
             value={value}
-            icon={<Icon className="w-[18px] h-[18px]" style={{ color: "rgba(26, 26, 24, 0.48)" }} />}
+            icon={<Icon className="w-6 h-6 text-brand" />}
             className={summaryCardClass}
-            iconWrapperClassName={summaryIconTileClass}
           />
         ))}
       </div>
@@ -132,14 +133,19 @@ export const AuditListView = ({
         storageKey={storageKey}
         enableSearch
         searchTerm={searchTerm}
+        loading={loading}
+        loadingMessage="Loading audits..."
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search..."
         enableExport
         exportFileName={storageKey}
         emptyMessage="No audits found"
         pagination
-        pageSize={10}
-        onFilterClick={() => toast.info("Audit filters coming soon")}
+        pageSize={pagination ? undefined : 10}
+        currentPage={pagination?.currentPage}
+        totalPages={pagination?.totalPages}
+        onPageChange={pagination?.onPageChange}
+        onFilterClick={onFilterClick ?? (() => toast.info("Audit filters coming soon"))}
         leftActions={leftActions}
       />
 

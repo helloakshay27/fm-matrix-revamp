@@ -69,10 +69,10 @@ const SpocObservationDetailPage = () => {
       auditPath={auditPath}
       footer={({ observation, allPlansClosed }) =>
         allPlansClosed || hasSubmittedActionPlans(observation) ? null : (
-          <div className="fm-action-bar pt-4 sm:pt-6">
+          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
             <button
               type="button"
-              className="fm-action-primary"
+              className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={() => navigate(`${auditPath}/observations/${observation.id}/action-plan`)}
             >
               <Plus className="w-4 h-4" />

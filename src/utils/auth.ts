@@ -293,7 +293,7 @@ const isViSite =
   hostname.includes("lockated.gophygital.work") ||
   hostname.includes("community.gophygital.work")
 
-const isViUatSite = hostname === "vi-uat.gophygital.work";
+const isViUatSite = hostname === "vi-uat.gophygital.work" ||   hostname === "localhost";
 
 // OTP verify / resend: Vi UAT has its own API host; every other site uses live-api.
 export const getViOtpApiBase = () =>
@@ -302,8 +302,8 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com" ||
-  hostname === "localhost";
+  hostname === "fm-matrix.lockated.com" 
+
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
