@@ -71,10 +71,10 @@ const ExtendTargetDateDialog = ({
     <Dialog open={Boolean(plan)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg rounded-2xl p-8">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-[#1A1A18]">Extend Target Date</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">Extend Target Date</DialogTitle>
         </DialogHeader>
         {plan && (
-          <p className="text-sm text-[rgba(26,26,24,0.68)]">
+          <p className="text-sm text-gray-600">
             {ACTION_TYPE_LABEL[plan.actionType]} action plan — current target: {planTargetLabel(plan)}
           </p>
         )}
@@ -99,11 +99,11 @@ const ExtendTargetDateDialog = ({
             InputLabelProps={{ shrink: true }}
           />
         </div>
-        <div className="fm-action-bar pt-4">
-          <button type="button" className="fm-action-secondary" onClick={onClose} disabled={saving}>
+        <div className="flex flex-wrap gap-4 justify-center pt-4">
+          <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={onClose} disabled={saving}>
             Cancel
           </button>
-          <button type="button" className="fm-action-primary" onClick={submit} disabled={saving}>
+          <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={submit} disabled={saving}>
             Extend
           </button>
         </div>
@@ -135,7 +135,7 @@ const IncidentSpocDetailPage = () => {
           canCreatePlan ? (
             <button
               type="button"
-              className="fm-action-primary w-full sm:w-auto"
+              className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
               onClick={() => navigate(`${INCIDENT_SPOC_PATH}/${id}/action-plan`)}
             >
               {hasDraftPlan ? "Continue Action Plan" : "Create Action Plan"}
@@ -150,7 +150,7 @@ const IncidentSpocDetailPage = () => {
               incident={incident}
               renderPlanActions={(plan) =>
                 isOpen && isPlanExpired(plan) ? (
-                  <button type="button" className="fm-action-secondary" onClick={() => setExtending(plan)}>
+                  <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => setExtending(plan)}>
                     <CalendarClock className="w-4 h-4" />
                     Extend Target Date
                   </button>

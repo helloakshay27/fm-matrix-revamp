@@ -6,7 +6,12 @@ import { Switch, TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
-import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  AuditLoadingState,
+  sectionIcon,
+  auditFieldSx,
+  auditSwitchSx,
+} from "@/components/vi-audit/ViAuditUi";
 import {
   AddMoreButton,
   InfoRow,
@@ -265,47 +270,47 @@ const IncidentReporterAddPage = () => {
   }
 
   const actionBar = (primary: { label: string; onClick: () => void }) => (
-    <div className="fm-action-bar pt-4 sm:pt-6">
-      <button type="button" className="fm-action-secondary" onClick={() => save(false)} disabled={saving}>
+    <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+      <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => save(false)} disabled={saving}>
         Save draft
       </button>
-      <button type="button" className="fm-action-primary" onClick={primary.onClick} disabled={saving}>
+      <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={primary.onClick} disabled={saving}>
         {primary.label}
       </button>
     </div>
   );
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={handleBack}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident{incident ? ` — ${incident.incidentNo}` : ""}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident{incident ? ` — ${incident.incidentNo}` : ""}</h1>
       </div>
 
       {/* Stepper: 1 of 2 steps */}
       <div className="mb-6 max-w-md">
-        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">{step} of 2 steps</p>
+        <p className="mb-2 text-xs text-gray-500">{step} of 2 steps</p>
         <div className="flex items-center">
           {[1, 2].map((n) => (
             <div key={n} className={`flex items-center ${n === 1 ? "flex-1" : ""}`}>
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                   n <= step
-                    ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] text-[#1A1A18]"
-                    : "border border-[rgba(26,26,24,0.12)] bg-white text-[rgba(26,26,24,0.48)]"
+                    ? "border-[1.5px] border-gray-900 bg-[#EDEAE3] text-gray-900"
+                    : "border border-gray-200 bg-white text-gray-500"
                 }`}
               >
                 {n}
               </span>
               {n === 1 && (
-                <span className={`mx-2 h-px flex-1 ${step === 2 ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`} />
+                <span className={`mx-2 h-px flex-1 ${step === 2 ? "bg-gray-900" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
@@ -330,6 +335,7 @@ const IncidentReporterAddPage = () => {
                 label={requiredLabel("Current Date")}
                 value={reportedOn.date}
                 InputProps={{ readOnly: true }}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -338,6 +344,7 @@ const IncidentReporterAddPage = () => {
                 label={requiredLabel("Current Time")}
                 value={reportedOn.time}
                 InputProps={{ readOnly: true }}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <span className="hidden lg:block" />
@@ -348,6 +355,7 @@ const IncidentReporterAddPage = () => {
                 value={basic.dateOfIncident}
                 onChange={(e) => setBasic((p) => ({ ...p, dateOfIncident: e.target.value }))}
                 inputProps={{ max: todayIso() }}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -356,6 +364,7 @@ const IncidentReporterAddPage = () => {
                 label={requiredLabel("Time of Incident")}
                 value={basic.timeOfIncident}
                 onChange={(e) => setBasic((p) => ({ ...p, timeOfIncident: e.target.value }))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <IncidentSelectField
@@ -401,6 +410,7 @@ const IncidentReporterAddPage = () => {
                   placeholder="Enter type of facility"
                   value={otherValues.facilityType}
                   onChange={(e) => setOtherValues((p) => ({ ...p, facilityType: e.target.value }))}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
@@ -410,6 +420,7 @@ const IncidentReporterAddPage = () => {
                 placeholder="Enter incident location"
                 value={basic.location}
                 onChange={(e) => setBasic((p) => ({ ...p, location: e.target.value }))}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <IncidentSelectField
@@ -460,6 +471,7 @@ const IncidentReporterAddPage = () => {
                   placeholder="Enter classification"
                   value={otherValues.classification}
                   onChange={(e) => setOtherValues((p) => ({ ...p, classification: e.target.value }))}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
@@ -470,6 +482,7 @@ const IncidentReporterAddPage = () => {
                   placeholder="Enter category"
                   value={otherValues.category}
                   onChange={(e) => setOtherValues((p) => ({ ...p, category: e.target.value }))}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
@@ -480,6 +493,7 @@ const IncidentReporterAddPage = () => {
                   placeholder="Enter sub category"
                   value={otherValues.subCategory}
                   onChange={(e) => setOtherValues((p) => ({ ...p, subCategory: e.target.value }))}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
@@ -502,6 +516,7 @@ const IncidentReporterAddPage = () => {
                 placeholder="Enter incident details"
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
+                sx={auditFieldSx}
                 InputLabelProps={{ shrink: true }}
               />
               <AttachmentPicker
@@ -540,21 +555,21 @@ const IncidentReporterAddPage = () => {
           </DetailCard>
 
           <DetailCard icon={sectionIcon(HeartPulse)} title="Any Injury Happened?" className="mb-5">
-            <div className="mb-4 flex items-center justify-end gap-2 text-sm text-[rgba(26,26,24,0.68)]">
+            <div className="mb-4 flex items-center justify-end gap-2 text-sm text-gray-600">
               {injuryHappened ? "Yes" : "No"}
-              <Switch checked={injuryHappened} onChange={(e) => setInjuryHappened(e.target.checked)} />
+              <Switch sx={auditSwitchSx} checked={injuryHappened} onChange={(e) => setInjuryHappened(e.target.checked)} />
             </div>
             {injuryHappened && (
               <div className="space-y-6">
                 {injuries.map((entry, index) => (
-                  <div key={entry.id || index} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+                  <div key={entry.id || index} className={index > 0 ? "border-t border-gray-200 pt-6" : ""}>
                     {injuries.length > 1 && (
                       <div className="mb-3 flex items-center justify-between">
-                        <span className="text-[13px] font-semibold text-[#1A1A18]">Injury {index + 1}</span>
+                        <span className="text-[13px] font-semibold text-gray-900">Injury {index + 1}</span>
                         <button
                           type="button"
                           onClick={() => setInjuries((prev) => prev.filter((_, i) => i !== index))}
-                          className="rounded-[8px] p-1.5 text-[rgba(26,26,24,0.48)] hover:bg-[#F5F4F0] hover:text-[#1A1A18]"
+                          className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                           aria-label={`Remove injury ${index + 1}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -568,6 +583,7 @@ const IncidentReporterAddPage = () => {
                         placeholder="Enter name"
                         value={entry.name}
                         onChange={(e) => updateInjury(index, { name: e.target.value })}
+                        sx={auditFieldSx}
                         InputLabelProps={{ shrink: true }}
                       />
                       <TextField
@@ -578,6 +594,7 @@ const IncidentReporterAddPage = () => {
                         value={entry.age}
                         onChange={(e) => updateInjury(index, { age: e.target.value })}
                         inputProps={{ min: 0 }}
+                        sx={auditFieldSx}
                         InputLabelProps={{ shrink: true }}
                       />
                       <IncidentSelectField
@@ -595,6 +612,7 @@ const IncidentReporterAddPage = () => {
                         placeholder="Enter vendor name"
                         value={entry.vendor}
                         onChange={(e) => updateInjury(index, { vendor: e.target.value })}
+                        sx={auditFieldSx}
                         InputLabelProps={{ shrink: true }}
                       />
                       <TextField
@@ -603,6 +621,7 @@ const IncidentReporterAddPage = () => {
                         placeholder="Enter sub vendor name"
                         value={entry.subVendor}
                         onChange={(e) => updateInjury(index, { subVendor: e.target.value })}
+                        sx={auditFieldSx}
                         InputLabelProps={{ shrink: true }}
                       />
                       <IncidentSelectField

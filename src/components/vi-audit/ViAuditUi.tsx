@@ -20,6 +20,32 @@ export const auditFieldSx = {
     "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
   },
   "& .MuiInputLabel-root.Mui-focused": { color: "var(--color-primary)" },
+  // Multiline: MUI's TextareaAutosize renders a hidden copy (aria-hidden) to measure height; the
+  // global `[class*="MuiFormControl"] textarea { position: relative !important }` pulls it into
+  // the layout so the visible textarea gets half the width. Keep the copy out of the flow.
+  "& textarea[aria-hidden='true']": {
+    position: "absolute !important",
+    visibility: "hidden",
+    top: 0,
+    left: 0,
+    width: "100% !important",
+    height: "0 !important",
+    minHeight: "0 !important",
+    maxHeight: "0 !important",
+    padding: "0 !important",
+    overflow: "hidden !important",
+    pointerEvents: "none",
+  },
+  "& textarea:not([aria-hidden='true'])": { width: "100% !important" },
+} as const;
+
+// MUI Switch / Checkbox in the brand colour (on / checked), like the ticket module controls.
+export const auditSwitchSx = {
+  "& .MuiSwitch-switchBase.Mui-checked": { color: "var(--color-primary)" },
+  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "var(--color-primary)", opacity: 0.5 },
+} as const;
+export const auditCheckboxSx = {
+  "&.Mui-checked, &.MuiCheckbox-indeterminate": { color: "var(--color-primary)" },
 } as const;
 
 // Section-card header icon (inside DetailCard's round tile), brand coloured like the ticket cards.

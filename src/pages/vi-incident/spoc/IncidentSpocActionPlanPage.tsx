@@ -4,7 +4,13 @@ import { toast } from "sonner";
 import { ArrowLeft, Search, ShieldCheck, ListChecks } from "lucide-react";
 import { Checkbox, FormControlLabel, Switch, TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  AuditLoadingState,
+  sectionIcon,
+  auditFieldSx,
+  auditSwitchSx,
+  auditCheckboxSx,
+} from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel, toId } from "@/components/vi-audit/AuditFormFields";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { AutocompleteLabel } from "@/components/vi-audit/ViUserPicker";
@@ -272,32 +278,32 @@ const IncidentSpocActionPlanPage = () => {
   }
 
   const draftButton = (
-    <button type="button" className="fm-action-secondary" onClick={() => save(false)} disabled={saving}>
+    <button type="button" className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={() => save(false)} disabled={saving}>
       Save Draft
     </button>
   );
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={handleBack}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
           aria-label="Back"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Plan</span>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentNo}</h1>
+        <span className="text-sm text-gray-500">Action Plan</span>
       </div>
 
       {step === 1 && (
         <>
           <DetailCard icon={sectionIcon(Search)} title="Investigation" className="mb-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#1A1A18]">Investigation Required?</span>
-              <Switch checked={investigationRequired} onChange={(e) => setInvestigationRequired(e.target.checked)} />
+              <span className="text-sm font-semibold text-gray-900">Investigation Required?</span>
+              <Switch sx={auditSwitchSx} checked={investigationRequired} onChange={(e) => setInvestigationRequired(e.target.checked)} />
             </div>
             <div className="mt-4">
               {investigationRequired ? (
@@ -310,6 +316,7 @@ const IncidentSpocActionPlanPage = () => {
                     value={daysAway}
                     onChange={(e) => setDaysAway(e.target.value)}
                     inputProps={{ min: 0 }}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                   <TextField
@@ -320,6 +327,7 @@ const IncidentSpocActionPlanPage = () => {
                     value={restrictedDays}
                     onChange={(e) => setRestrictedDays(e.target.value)}
                     inputProps={{ min: 0 }}
+                    sx={auditFieldSx}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -332,6 +340,7 @@ const IncidentSpocActionPlanPage = () => {
                   placeholder="Describe why an investigation is not required"
                   value={noInvestigationReason}
                   onChange={(e) => setNoInvestigationReason(e.target.value)}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               )}
@@ -341,11 +350,11 @@ const IncidentSpocActionPlanPage = () => {
           {/* Root-cause checklists (GET /vi_incidents/checklist_hierarchy.json) — locked (dimmed, not
               clickable) until "Investigation Required?" is switched on */}
           {mastersLoading || checklistLoading ? (
-            <p className="mb-5 text-sm text-[rgba(26,26,24,0.48)]">Loading root cause checklist...</p>
+            <p className="mb-5 text-sm text-gray-500">Loading root cause checklist...</p>
           ) : (
             <>
             {!investigationRequired && (
-              <p className="mb-3 text-sm text-[rgba(26,26,24,0.48)]">
+              <p className="mb-3 text-sm text-gray-500">
                 Turn on “Investigation Required?” to select the root causes.
               </p>
             )}
@@ -368,14 +377,14 @@ const IncidentSpocActionPlanPage = () => {
                             labelPlacement="start"
                             disabled={!investigationRequired}
                             control={
-                              <Checkbox checked={parentChecked} onChange={() => toggleParent(sub)} size="small" />
+                              <Checkbox sx={auditCheckboxSx} checked={parentChecked} onChange={() => toggleParent(sub)} size="small" />
                             }
-                            label={<span className="text-sm font-semibold text-[#1A1A18]">{sub.name}</span>}
+                            label={<span className="text-sm font-semibold text-gray-900">{sub.name}</span>}
                             sx={{ marginLeft: 0, justifyContent: "space-between" }}
                           />
                           {/* Children: sub-sub categories, shown once the parent is ticked */}
                           {parentChecked && (
-                            <div className="mb-2 ml-3 border-l-2 border-[rgba(26,26,24,0.09)] pl-3">
+                            <div className="mb-2 ml-3 border-l-2 border-gray-200 pl-3">
                               {sub.items.length ? (
                                 sub.items.map((item) => (
                                   <FormControlLabel
@@ -384,18 +393,18 @@ const IncidentSpocActionPlanPage = () => {
                                     labelPlacement="start"
                                     disabled={!investigationRequired}
                                     control={
-                                      <Checkbox
+                                      <Checkbox sx={auditCheckboxSx}
                                         checked={selectedItems.includes(item.id)}
                                         onChange={() => toggleItem(item.id)}
                                         size="small"
                                       />
                                     }
-                                    label={<span className="text-sm text-[rgba(26,26,24,0.68)]">{item.name}</span>}
+                                    label={<span className="text-sm text-gray-600">{item.name}</span>}
                                     sx={{ marginLeft: 0, justifyContent: "space-between" }}
                                   />
                                 ))
                               ) : (
-                                <p className="py-1 text-xs text-[rgba(26,26,24,0.3)]">No checklist items</p>
+                                <p className="py-1 text-xs text-gray-400">No checklist items</p>
                               )}
                             </div>
                           )}
@@ -413,8 +422,8 @@ const IncidentSpocActionPlanPage = () => {
             <>
               <DetailCard icon={sectionIcon(ShieldCheck)} title="Breach of absolute safety rules" className="mb-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-[rgba(26,26,24,0.68)]">{breachOfRules ? "Yes" : "No"}</span>
-                  <Switch checked={breachOfRules} onChange={(e) => setBreachOfRules(e.target.checked)} />
+                  <span className="text-sm text-gray-600">{breachOfRules ? "Yes" : "No"}</span>
+                  <Switch sx={auditSwitchSx} checked={breachOfRules} onChange={(e) => setBreachOfRules(e.target.checked)} />
                 </div>
                 <div className="mt-4 max-w-md">
                   {breachOfRules ? (
@@ -436,6 +445,7 @@ const IncidentSpocActionPlanPage = () => {
                           placeholder="Describe the other HSW rule violated"
                           value={breachRuleOther}
                           onChange={(e) => setBreachRuleOther(e.target.value)}
+                          sx={auditFieldSx}
                           InputLabelProps={{ shrink: true }}
                         />
                       )}
@@ -463,22 +473,23 @@ const IncidentSpocActionPlanPage = () => {
                   placeholder="Enter text..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
+                  sx={auditFieldSx}
                   InputLabelProps={{ shrink: true }}
                 />
               </DetailCard>
             </>
           )}
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
+          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
             {draftButton}
             {investigationRequired ? (
-              <button type="button" className="fm-action-primary" onClick={handleNext} disabled={saving}>
+              <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleNext} disabled={saving}>
                 Next
               </button>
             ) : (
               <button
                 type="button"
-                className="fm-action-primary"
+                className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleSubmitWithoutInvestigation}
                 disabled={saving}
               >
@@ -492,7 +503,7 @@ const IncidentSpocActionPlanPage = () => {
       {step === 2 && (
         <>
           <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
-            <p className="text-sm text-[rgba(26,26,24,0.48)]">
+            <p className="text-sm text-gray-500">
               Add a corrective and a preventive action plan for each root cause identified.
             </p>
           </DetailCard>
@@ -504,12 +515,12 @@ const IncidentSpocActionPlanPage = () => {
               title={`${itemIndex + 1}. ${item.name}`}
               className="mb-5"
             >
-              {item.path && <p className="-mt-2 mb-4 text-xs text-[rgba(26,26,24,0.48)]">{item.path}</p>}
+              {item.path && <p className="-mt-2 mb-4 text-xs text-gray-500">{item.path}</p>}
               <div className="space-y-6">
                 {ACTION_TYPES.map((type, typeIndex) => {
                   const plan = plansFor(item.id)[type];
                   return (
-                    <div key={type} className={typeIndex > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+                    <div key={type} className={typeIndex > 0 ? "border-t border-gray-200 pt-6" : ""}>
                       <div className="space-y-5">
                         <TextField
                           fullWidth
@@ -519,6 +530,7 @@ const IncidentSpocActionPlanPage = () => {
                           placeholder="Describe the actions to be taken..."
                           value={plan.description}
                           onChange={(e) => updatePlan(item.id, type, { description: e.target.value })}
+                          sx={auditFieldSx}
                           InputLabelProps={{ shrink: true }}
                         />
                         {/* Same label component and input height on both fields, so they line up in one row */}
@@ -550,9 +562,9 @@ const IncidentSpocActionPlanPage = () => {
             </DetailCard>
           ))}
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
+          <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
             {draftButton}
-            <button type="button" className="fm-action-primary" onClick={handleSubmitPlans} disabled={saving}>
+            <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmitPlans} disabled={saving}>
               Submit
             </button>
           </div>

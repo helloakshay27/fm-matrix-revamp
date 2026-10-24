@@ -10,6 +10,8 @@ import {
   auditTabTriggerClass,
   auditTabsListClass,
   sectionIcon,
+  auditTabsWrapperClass,
+  auditTabContentClass,
 } from "@/components/vi-audit/ViAuditUi";
 import {
   IncidentHeader,
@@ -48,13 +50,13 @@ const IncidentFunctionalHeadDetailPage = () => {
   const closedCount = groups.filter(isGroupClosed).length;
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_FUNCTIONAL_HEAD_PATH)}>
-        <span className="text-sm text-[rgba(26,26,24,0.48)]">{incident.classification}</span>
+        <span className="text-sm text-gray-500">{incident.classification}</span>
       </IncidentHeader>
 
-      <Tabs defaultValue="plans" className="w-full">
-        <TabsList className={`${auditTabsListClass} mb-5`}>
+      <Tabs defaultValue="plans" className={`w-full ${auditTabsWrapperClass}`}>
+        <TabsList className={auditTabsListClass}>
           <TabsTrigger value="details" className={auditTabTriggerClass}>
             Incident Details
           </TabsTrigger>
@@ -63,36 +65,36 @@ const IncidentFunctionalHeadDetailPage = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-0">
+        <TabsContent value="details" className={`mt-0 ${auditTabContentClass}`}>
           <IncidentInfoCards incident={incident} />
           <IncidentInvestigationCard incident={incident} />
         </TabsContent>
 
         {/* Each record opens the action plan detail page */}
-        <TabsContent value="plans" className="mt-0">
+        <TabsContent value="plans" className={`mt-0 ${auditTabContentClass}`}>
           <DetailCard icon={sectionIcon(ClipboardList)} title="Action Plans" className="mb-5">
             {groups.length ? (
               <>
                 <div className="mb-4 flex justify-end">
-                  <span className="rounded-full bg-[#F5F4F0] px-[10px] py-[3px] text-[11px] font-medium text-[rgba(26,26,24,0.68)]">
+                  <span className="rounded-full bg-gray-100 px-[10px] py-[3px] text-[11px] font-medium text-gray-600">
                     {closedCount} of {groups.length} closed by action owner
                   </span>
                 </div>
-                <div className="divide-y divide-[rgba(26,26,24,0.08)] rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+                <div className="divide-y divide-gray-200 rounded-lg border border-gray-200">
                   {groups.map((group, index) => (
                     <button
                       key={group.item.id}
                       type="button"
                       onClick={() => navigate(`${INCIDENT_FUNCTIONAL_HEAD_PATH}/${incident.id}/plans/${group.item.id}`)}
-                      className="group flex w-full items-start gap-4 px-4 py-4 text-left transition-colors hover:bg-[#F7F6F2] focus-visible:outline-none focus-visible:bg-[#F7F6F2]"
+                      className="group flex w-full items-start gap-4 px-4 py-4 text-left transition-colors hover:bg-[#F6F4EE] focus-visible:outline-none focus-visible:bg-[#F6F4EE]"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center justify-between gap-3">
-                          <span className="text-xs font-semibold text-[rgba(26,26,24,0.48)]">{`CL0${index + 1}`}</span>
+                          <span className="text-xs font-semibold text-gray-500">{`CL0${index + 1}`}</span>
                           <DueLabel label={viIncidentPlanDueLabel([...group.corrective, ...group.preventive])} />
                         </div>
-                        <div className="mb-0.5 text-sm font-semibold text-[#1A1A18]">{group.item.name}</div>
-                        <div className="mb-1 text-xs text-[rgba(26,26,24,0.48)]">{group.item.path}</div>
+                        <div className="mb-0.5 text-sm font-semibold text-gray-900">{group.item.name}</div>
+                        <div className="mb-1 text-xs text-gray-500">{group.item.path}</div>
                         <div className="mt-2">
                           <AuditStatusPill
                             status={isGroupClosed(group) ? "Closed By Action Owner" : "Pending By Action Owner"}
@@ -103,13 +105,13 @@ const IncidentFunctionalHeadDetailPage = () => {
                           className="mt-2"
                         />
                       </div>
-                      <ChevronRight className="mt-6 w-4 h-4 shrink-0 text-[rgba(26,26,24,0.3)] group-hover:text-[#1A1A18]" />
+                      <ChevronRight className="mt-6 w-4 h-4 shrink-0 text-gray-400 group-hover:text-gray-900" />
                     </button>
                   ))}
                 </div>
               </>
             ) : (
-              <p className="text-sm text-[rgba(26,26,24,0.48)]">
+              <p className="text-sm text-gray-500">
                 {incident.investigation.submitted
                   ? "No action plans were created for this incident."
                   : "The SPOC has not submitted the action plan yet."}

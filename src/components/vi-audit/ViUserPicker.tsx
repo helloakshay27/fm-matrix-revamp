@@ -17,9 +17,9 @@ import {
 // closes. Same pattern as the app's other Autocompletes (e.g. ReporteesReassignPage).
 export function AutocompleteLabel({ children, required }: { children: ReactNode; required?: boolean }) {
   return (
-    <span className="block mb-1.5 text-[12px] font-semibold text-[rgba(26,26,24,0.68)]">
+    <span className="block mb-1.5 text-[12px] font-semibold text-gray-600">
       {children}
-      {required && <span className="fm-required-mark">*</span>}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
     </span>
   );
 }
@@ -110,15 +110,15 @@ export function UserAutocomplete({
       renderOption={(props, user) => (
         <li {...props} key={user.id}>
           <div className="flex flex-col py-0.5">
-            <span className="flex items-center gap-2 text-sm text-[#1A1A18]">
+            <span className="flex items-center gap-2 text-sm text-gray-900">
               {user.name}
               {me && user.id === me.id && (
-                <span className="rounded-full bg-[#F5F4F0] px-2 py-[1px] text-[10px] font-semibold text-[rgba(26,26,24,0.68)]">
+                <span className="rounded-full bg-gray-100 px-2 py-[1px] text-[10px] font-semibold text-gray-600">
                   You
                 </span>
               )}
             </span>
-            {user.email && <span className="text-xs text-[rgba(26,26,24,0.48)]">{user.email}</span>}
+            {user.email && <span className="text-xs text-gray-500">{user.email}</span>}
           </div>
         </li>
       )}

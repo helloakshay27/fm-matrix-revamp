@@ -46,36 +46,36 @@ export const OwnerStatusList = ({
   isMine?: (assignment: ViIncidentAssignment) => boolean;
 }) => {
   if (!plan.assignments.length) {
-    return <div className="text-sm font-medium text-[#1A1A18]">-</div>;
+    return <div className="text-sm font-medium text-gray-900">-</div>;
   }
   const pending = plan.assignments.filter((a) => a.status !== "closed");
   const ownerName = (a: ViIncidentAssignment) => a.owner?.name || "Unassigned";
   return (
     <div>
-      <div className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">
+      <div className="mb-2 text-xs text-gray-500">
         Action Owners ({plan.assignments.length})
       </div>
-      <ul className="divide-y divide-[rgba(26,26,24,0.08)] rounded-[10px] border border-[rgba(26,26,24,0.09)]">
+      <ul className="divide-y divide-gray-200 rounded-[10px] border border-gray-200">
         {plan.assignments.map((a) => {
           const status = assignmentStatus(a);
           return (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-medium text-[#1A1A18]">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                   <span className="truncate">{ownerName(a)}</span>
                   {isMine?.(a) && (
-                    <span className="rounded-full bg-[#F5F4F0] px-2 py-[1px] text-[10px] font-semibold text-[rgba(26,26,24,0.68)]">
+                    <span className="rounded-full bg-gray-100 px-2 py-[1px] text-[10px] font-semibold text-gray-600">
                       You
                     </span>
                   )}
                 </div>
-                {a.owner?.email && <div className="truncate text-xs text-[rgba(26,26,24,0.48)]">{a.owner.email}</div>}
+                {a.owner?.email && <div className="truncate text-xs text-gray-500">{a.owner.email}</div>}
               </div>
               <div className="flex items-center gap-2">
                 {a.status === "closed" && a.closureDate && (
-                  <span className="text-xs text-[rgba(26,26,24,0.48)]">Closed {formatIncidentDate(a.closureDate)}</span>
+                  <span className="text-xs text-gray-500">Closed {formatIncidentDate(a.closureDate)}</span>
                 )}
-                <span className={`whitespace-nowrap rounded-full px-[10px] py-[3px] text-[11px] font-medium ${status.tone}`}>
+                <span className={`whitespace-nowrap px-2 py-1 rounded text-xs font-medium ${status.tone}`}>
                   {status.label}
                 </span>
               </div>
@@ -83,7 +83,7 @@ export const OwnerStatusList = ({
           );
         })}
       </ul>
-      <p className="mt-2 text-xs font-medium text-[rgba(26,26,24,0.68)]">
+      <p className="mt-2 text-xs font-medium text-gray-600">
         {pending.length
           ? `Pending with: ${pending.map((a) => (isMine?.(a) ? `${ownerName(a)} (You)` : ownerName(a))).join(", ")}`
           : "All action owners have taken action"}
@@ -102,12 +102,12 @@ export const AssignmentTaken = ({
   showOwner?: boolean;
   tone?: "card" | "inset";
 }) => (
-  <div className={tone === "inset" ? "border-t border-[rgba(26,26,24,0.09)] bg-[#F7F6F2] px-4 py-4" : ""}>
-    <div className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-[rgba(26,26,24,0.48)]">
+  <div className={tone === "inset" ? "border-t border-gray-200 bg-[#F6F4EE] px-4 py-4" : ""}>
+    <div className="mb-1 flex items-center justify-between gap-3 text-xs font-semibold text-gray-500">
       <span>Action Taken{showOwner && assignment.owner ? ` — ${assignment.owner.name}` : ""}</span>
       {assignment.status === "draft" && <span className="font-medium">Draft</span>}
     </div>
-    <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{assignment.actionTaken}</p>
+    <p className="text-sm text-gray-900 whitespace-pre-wrap">{assignment.actionTaken}</p>
     <div className="mt-3">
       <FieldGrid
         columns={2}
@@ -148,8 +148,8 @@ export const IncidentActionPlanCards = ({
             icon={sectionIcon(CheckSquare)}
             title={groups.length > 1 ? `Checklist Item ${index + 1}` : "Checklist Item"}
           >
-            {group.item.path && <p className="mb-3 text-xs text-[rgba(26,26,24,0.48)]">{group.item.path}</p>}
-            <p className="text-sm text-[#1A1A18]">{group.item.name}</p>
+            {group.item.path && <p className="mb-3 text-xs text-gray-500">{group.item.path}</p>}
+            <p className="text-sm text-gray-900">{group.item.name}</p>
           </DetailCard>
 
           {[...group.corrective, ...group.preventive].map((plan) => {
@@ -168,7 +168,7 @@ export const IncidentActionPlanCards = ({
                   <PlanStatusPill plan={plan} />
                   <DueLabel label={viIncidentPlanDueLabel([plan])} />
                 </div>
-                <p className="mb-4 border-b border-[rgba(26,26,24,0.09)] pb-4 text-sm text-[#1A1A18] whitespace-pre-wrap">
+                <p className="mb-4 border-b border-gray-200 pb-4 text-sm text-gray-900 whitespace-pre-wrap">
                   {plan.description || "-"}
                 </p>
                 <FieldGrid
@@ -182,7 +182,7 @@ export const IncidentActionPlanCards = ({
                   <OwnerStatusList plan={plan} isMine={isMine} />
                 </div>
                 {taken.map((assignment) => (
-                  <div key={assignment.id} className="mt-4 border-t border-[rgba(26,26,24,0.09)] pt-4">
+                  <div key={assignment.id} className="mt-4 border-t border-gray-200 pt-4">
                     <AssignmentTaken assignment={assignment} showOwner={plan.assignments.length > 1} />
                   </div>
                 ))}
