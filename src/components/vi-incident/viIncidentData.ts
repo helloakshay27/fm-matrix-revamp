@@ -200,3 +200,25 @@ export const getViIncidentActionPlans = (incident: ViIncidentRecord): ViIncident
       : undefined,
   }));
 };
+
+/** Status options for the incident filters. */
+export const VI_INCIDENT_STATUSES: ViIncidentStatus[] = [
+  "Draft",
+  "Open",
+  "Closed",
+  "Pending By SPOC",
+  "Pending By Action Owner",
+  "Closed By Action Owner",
+];
+
+/** Incident-card fields (ID, Status, Classification, Location) — the list columns in the role designs. */
+export const INCIDENT_CARD_COLUMNS: ColumnConfig[] = [
+  { key: "incidentId", label: "Incident ID", sortable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  { key: "classification", label: "Classification", sortable: true, defaultVisible: true },
+  { key: "incidentLocation", label: "Incident Location", sortable: true, defaultVisible: true },
+];
+
+/** Due label shown on an action plan card, e.g. "Due 18 Sep". */
+export const viIncidentPlanDueLabel = (plan: ViIncidentActionPlan) =>
+  plan.taken ? undefined : `Due ${plan.targetDate.replace(/\s\d{4}$/, "")}`;

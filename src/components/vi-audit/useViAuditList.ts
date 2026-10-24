@@ -7,6 +7,8 @@ import type { ViAuditListRecord } from "./viAuditListData";
 export const VI_AUDIT_LIST_ENDPOINTS = {
   auditor: "/vi_audits.json",
   spoc: "/vi_audits/spoc_audits.json",
+  actionOwner: "/vi_audits/action_owner_audits.json",
+  functionalHead: "/vi_audits/functional_head_audits.json",
 } as const;
 export const VI_AUDIT_LIST_PER_PAGE = 20;
 
@@ -80,8 +82,17 @@ export interface ViAuditListPagination {
   totalCount: number;
 }
 
-/** Paginated audit list for a role list page (e.g. GET /vi_audits.json?page=&per_page=). */
-export const useViAuditList = (page: number, endpoint: string = VI_AUDIT_LIST_ENDPOINTS.auditor) => {
+/**
+ * Paginated audit list for a role list page (e.g. GET /vi_audits.json?page=&per_page=).
+ * `filters` are extra query params (e.g. q[status_eq]) from the page's filter dialog.
+ */
+export const useViAuditList = (
+  page: number,
+  endpoint: string = VI_AUDIT_LIST_ENDPOINTS.auditor,
+  filters: Record<string, string> = {},
+) => {
+  // Stable key so a new (but equal) filters object doesn't refetch.
+  const filtersKey = JSON.stringify(filters);
   const [audits, setAudits] = useState<ViAuditListRecord[]>([]);
   const [pagination, setPagination] = useState<ViAuditListPagination>({
     currentPage: page,
@@ -95,7 +106,11 @@ export const useViAuditList = (page: number, endpoint: string = VI_AUDIT_LIST_EN
     setLoading(true);
     (async () => {
       try {
-        const params = new URLSearchParams({ page: String(page), per_page: String(VI_AUDIT_LIST_PER_PAGE) });
+        const params = new URLSearchParams({
+          ...(JSON.parse(filtersKey) as Record<string, string>),
+          page: String(page),
+          per_page: String(VI_AUDIT_LIST_PER_PAGE),
+        });
         const response = await fetch(getFullUrl(`${endpoint}?${params.toString()}`), {
           headers: { Authorization: getAuthHeader() },
           signal: controller.signal,
@@ -121,7 +136,7 @@ export const useViAuditList = (page: number, endpoint: string = VI_AUDIT_LIST_EN
       }
     })();
     return () => controller.abort();
-  }, [page, endpoint]);
+  }, [page, endpoint, filtersKey]);
 
   return { audits, pagination, loading };
 };

@@ -113,8 +113,9 @@ const AuditorEditAuditPage = () => {
     return true;
   };
 
-  // Request body for PUT /vi_audits/:id.json.
+  // Request body for PUT /vi_audits/:id.json. `submit: true` submits the draft on Update.
   const buildPayload = () => ({
+    submit: true,
     vi_audit: {
       audit_type: draft?.auditType ?? "",
       audit_date: basic.dateOfAudit,

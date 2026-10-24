@@ -38,6 +38,7 @@ export const AuditListView = ({
   loading = false,
   pagination,
   editDrafts = false,
+  onFilterClick,
 }: {
   title: string;
   stats: AuditListStat[];
@@ -55,6 +56,8 @@ export const AuditListView = ({
   pagination?: { currentPage: number; totalPages: number; onPageChange: (page: number) => void };
   /** Draft rows also get an edit button, opening `${detailBasePath}/${audit.id}/edit`. */
   editDrafts?: boolean;
+  /** Opens the page's filter dialog from the table's filter button. */
+  onFilterClick?: () => void;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -145,7 +148,7 @@ export const AuditListView = ({
         currentPage={pagination?.currentPage}
         totalPages={pagination?.totalPages}
         onPageChange={pagination?.onPageChange}
-        onFilterClick={() => toast.info("Audit filters coming soon")}
+        onFilterClick={onFilterClick ?? (() => toast.info("Audit filters coming soon"))}
         leftActions={leftActions}
       />
 

@@ -27,6 +27,7 @@ import {
   ClipboardCheck,
   UserPlus,
   AlertTriangle,
+  ClipboardList,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -127,9 +128,20 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       ],
     },
     {
+      name: "Inspection",
+      icon: ClipboardList,
+      href: "/safety/vi-inspection",
+      subItems: [
+        { name: "Inspector", href: "/safety/vi-inspection/inspector", color: "text-[#1a1a1a]" },
+        { name: "SPOC", href: "/safety/vi-inspection/spoc", color: "text-[#1a1a1a]" },
+        { name: "Action Owner", href: "/safety/vi-inspection/action-owner", color: "text-[#1a1a1a]" },
+        { name: "Functional Head", href: "/safety/vi-inspection/functional-head", color: "text-[#1a1a1a]" },
+      ],
+    },
+    {
       name: "Report",
       icon: Download,
-      href: "/safety",
+      href: "/safety/report",
       subItems: [
         {
           name: "Msafe User Report",

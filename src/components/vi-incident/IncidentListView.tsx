@@ -10,10 +10,16 @@ import {
   Pencil,
   type LucideIcon,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import type { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  EMPTY_INCIDENT_FILTERS,
+  IncidentFilterDialog,
+  matchesIncidentFilters,
+  type IncidentFilters,
+} from "./IncidentFilterDialog";
 import { INCIDENT_COLUMNS, VI_INCIDENT_LIST, VI_INCIDENT_STATUS_TONE, type ViIncidentRecord } from "./viIncidentData";
 
 export interface IncidentListStat {
@@ -62,6 +68,8 @@ export const IncidentListView = ({
   data = VI_INCIDENT_LIST,
   loading = false,
   editDrafts = false,
+  buildStats = buildIncidentStats,
+  columns = INCIDENT_COLUMNS,
 }: {
   title: string;
   /** The eye button opens `${detailBasePath}/${incident.id}`. */
@@ -72,11 +80,18 @@ export const IncidentListView = ({
   loading?: boolean;
   /** Draft rows also get an edit button, opening `${detailBasePath}/${incident.id}/edit`. */
   editDrafts?: boolean;
+  /** Stat cards for this role — defaults to the standard six. */
+  buildStats?: (records: ViIncidentRecord[]) => IncidentListStat[];
+  /** Table columns — defaults to the full incident column set. */
+  columns?: ColumnConfig[];
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<IncidentFilters>(EMPTY_INCIDENT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filtered = data.filter((incident) => {
+    if (!matchesIncidentFilters(incident, filters)) return false;
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -122,8 +137,8 @@ export const IncidentListView = ({
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-xl font-semibold text-[#1A1A18] mb-4">{title}</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-[14px] mb-6">
-        {buildIncidentStats(data).map(({ title: statTitle, value, icon: Icon }) => (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
+        {buildStats(data).map(({ title: statTitle, value, icon: Icon }) => (
           <StatsCard
             key={statTitle}
             title={statTitle}
@@ -137,7 +152,7 @@ export const IncidentListView = ({
 
       <EnhancedTable
         data={filtered}
-        columns={INCIDENT_COLUMNS}
+        columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
         storageKey={storageKey}
@@ -152,8 +167,15 @@ export const IncidentListView = ({
         emptyMessage="No incidents found"
         pagination
         pageSize={10}
-        onFilterClick={() => toast.info("Incident filters coming soon")}
+        onFilterClick={() => setFilterOpen(true)}
         leftActions={leftActions}
+      />
+
+      <IncidentFilterDialog
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        filters={filters}
+        onApply={setFilters}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import type { ViIncidentActionPlan } from "./viIncidentData";
+import { getViIncident, getViIncidentActionPlans, type ViIncidentActionPlan } from "./viIncidentData";
 
 // Remembers action-taken submissions in this browser until the Incident API exists, so the detail
 // page can hide "Add Action Taken" and show what was submitted. Replace with the API response later.
@@ -26,4 +26,13 @@ export const saveSubmittedActionTaken = (incidentId: string | undefined, byPlan:
   } catch {
     // storage unavailable — the detail page then simply keeps showing the button
   }
+};
+
+/** The incident's action plans with any action taken the user already submitted merged in. */
+export const getIncidentPlansWithActionTaken = (incidentId: string | undefined): ViIncidentActionPlan[] => {
+  const submitted = getSubmittedActionTaken(incidentId);
+  return getViIncidentActionPlans(getViIncident(incidentId)).map((plan) => ({
+    ...plan,
+    taken: submitted[plan.id] ?? plan.taken,
+  }));
 };
