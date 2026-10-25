@@ -333,6 +333,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation,
         });
 
         saveBaseUrl(baseUrl);
@@ -378,6 +379,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation,
         });
 
         saveBaseUrl(baseUrl);
@@ -416,6 +418,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         lock_role: response.lock_role,
         is_vendor: response.is_vendor,
         supplier_id: response.supplier_id,
+        designation: response.designation,
       });
       // Store vendor/supplier ID for vendor portal routing
       if (response.supplier_id) {

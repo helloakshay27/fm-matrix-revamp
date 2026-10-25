@@ -36,6 +36,7 @@ export interface User {
   };
   user_type?: string;
   user_roster_id?: number;
+  designation?: string;
 }
 
 export interface LoginResponse {
@@ -46,6 +47,7 @@ export interface LoginResponse {
   access_token: string;
   is_vendor?: boolean;
   supplier_id?: number;
+  designation?: string;
   verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
