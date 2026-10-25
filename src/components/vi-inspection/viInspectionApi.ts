@@ -97,7 +97,7 @@ const toPerson = (value: unknown, fallbackId?: unknown, fallbackName?: unknown):
     name: name || `User ${id}`,
     email: text(p.email) || undefined,
     mobile: text(p.mobile) || undefined,
-    employer: text(p.employer_name, p.employer, p.company_name, p.designation) || undefined,
+    designation: text(p.designation, p.employer_name, p.employer, p.company_name) || undefined,
   };
 };
 

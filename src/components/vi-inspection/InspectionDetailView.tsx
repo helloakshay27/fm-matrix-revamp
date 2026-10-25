@@ -2,7 +2,11 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck, FileText, User } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  AuditLoadingState,
+  FieldGrid,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { AttachmentLinks } from "@/components/vi-incident/IncidentFormFields";
 import { InspectionStatusPill } from "./InspectionListView";
 import { InspectionPlanCard } from "./InspectionPlanCard";
@@ -44,8 +48,14 @@ export const InspectionDetailView = ({
   listPath: string;
   /** Sticky action bar content, e.g. the SPOC's "Add Action Plan" button. */
   footer?: (slots: InspectionDetailSlots) => ReactNode;
-  renderPlanActions?: (plan: ViInspectionActionPlan, slots: InspectionDetailSlots) => ReactNode;
-  isMine?: (assignment: ViInspectionAssignment, inspection: ViInspectionRecord) => boolean;
+  renderPlanActions?: (
+    plan: ViInspectionActionPlan,
+    slots: InspectionDetailSlots
+  ) => ReactNode;
+  isMine?: (
+    assignment: ViInspectionAssignment,
+    inspection: ViInspectionRecord
+  ) => boolean;
   /**
    * Action Owner's view: only the checklist responses with a plan the user is a responsible person on
    * (per `isMine`), and under each only those plans.
@@ -56,23 +66,43 @@ export const InspectionDetailView = ({
   const { inspection, loading, reload } = useViInspectionDetail(id);
   const [checklistExpanded, setChecklistExpanded] = useState(true);
 
-  if (loading && !inspection) return <AuditLoadingState message="Loading inspection..." onBack={() => navigate(listPath)} />;
-  if (!inspection) return <AuditLoadingState message="Inspection not found." onBack={() => navigate(listPath)} />;
+  if (loading && !inspection)
+    return (
+      <AuditLoadingState
+        message="Loading inspection..."
+        onBack={() => navigate(listPath)}
+      />
+    );
+  if (!inspection)
+    return (
+      <AuditLoadingState
+        message="Inspection not found."
+        onBack={() => navigate(listPath)}
+      />
+    );
 
   const slots = { inspection, reload };
   const responses = onlyMyResponses
     ? inspection.checklistResponses
         .map((r) => ({
           ...r,
-          actionPlans: r.actionPlans.filter((plan) => plan.assignments.some((a) => isMine?.(a, inspection))),
+          actionPlans: r.actionPlans.filter((plan) =>
+            plan.assignments.some((a) => isMine?.(a, inspection))
+          ),
         }))
         .filter((r) => r.actionPlans.length)
     : inspection.checklistResponses;
   const visible = checklistExpanded ? responses : responses.slice(0, 1);
   const footerContent = footer?.(slots);
 
-  const renderResponse = (item: ViInspectionChecklistResponse, index: number) => (
-    <div key={item.id || index} className="rounded-xl border border-[rgba(26,26,24,0.09)] p-4">
+  const renderResponse = (
+    item: ViInspectionChecklistResponse,
+    index: number
+  ) => (
+    <div
+      key={item.id || index}
+      className="rounded-xl border border-[rgba(26,26,24,0.09)] p-4"
+    >
       <div className="mb-3 flex items-start justify-between gap-4">
         <p className="text-sm font-medium text-[#1A1A18]">
           {index + 1}. {item.question}
@@ -88,14 +118,18 @@ export const InspectionDetailView = ({
       {item.remark && (
         <div className="mb-3">
           <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Remarks</div>
-          <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{item.remark}</p>
+          <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">
+            {item.remark}
+          </p>
         </div>
       )}
       <div>
         <div className="mb-2 flex items-center justify-between text-xs text-[rgba(26,26,24,0.48)]">
           <span>Attachments</span>
           {item.attachments.length > 0 && (
-            <span className="font-medium text-[#1A1A18]">{item.attachments.length} files</span>
+            <span className="font-medium text-[#1A1A18]">
+              {item.attachments.length} files
+            </span>
           )}
         </div>
         {item.attachments.length ? (
@@ -106,11 +140,15 @@ export const InspectionDetailView = ({
       </div>
       {item.actionPlans.length > 0 && (
         <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4 border-t border-[rgba(26,26,24,0.09)] pt-4">
-          {ACTION_TYPES.flatMap((type) => item.actionPlans.filter((plan) => plan.actionType === type)).map((plan) => (
+          {ACTION_TYPES.flatMap((type) =>
+            item.actionPlans.filter((plan) => plan.actionType === type)
+          ).map((plan) => (
             <InspectionPlanCard
               key={plan.id}
               plan={plan}
-              isMine={isMine && ((assignment) => isMine(assignment, inspection))}
+              isMine={
+                isMine && ((assignment) => isMine(assignment, inspection))
+              }
               actions={renderPlanActions?.(plan, slots)}
             />
           ))}
@@ -130,26 +168,42 @@ export const InspectionDetailView = ({
         >
           <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Inspection — {inspection.inspectionNo}</h1>
-        <InspectionStatusPill workflowKey={inspection.workflowKey} label={inspection.workflowLabel} />
+        <h1 className="text-xl font-semibold text-[#1A1A18]">
+          Inspection — {inspection.inspectionNo}
+        </h1>
+        <InspectionStatusPill
+          workflowKey={inspection.workflowKey}
+          label={inspection.workflowLabel}
+        />
       </div>
 
-      <DetailCard icon={sectionIcon(User)} title="Inspector Details" className="mb-5">
+      <DetailCard
+        icon={sectionIcon(User)}
+        title="Inspector Details"
+        className="mb-5"
+      >
         <FieldGrid
           fields={[
             { label: "Name", value: inspection.inspector?.name },
             { label: "Mail ID", value: inspection.inspector?.email },
-            { label: "Employer", value: inspection.inspector?.employer },
+            { label: "Designation", value: inspection.inspector?.designation },
           ]}
         />
       </DetailCard>
 
-      <DetailCard icon={sectionIcon(FileText)} title="Basic Details" className="mb-5">
+      <DetailCard
+        icon={sectionIcon(FileText)}
+        title="Basic Details"
+        className="mb-5"
+      >
         <FieldGrid
           columns={4}
           fields={[
             { label: "Inspection No.", value: inspection.inspectionNo },
-            { label: "Date of Inspection", value: formatInspectionDate(inspection.inspectionDate) },
+            {
+              label: "Date of Inspection",
+              value: formatInspectionDate(inspection.inspectionDate),
+            },
             { label: "Circle", value: inspection.circle },
             { label: "Personnel Area", value: inspection.personalArea },
             { label: "Work Location", value: inspection.workLocation },
@@ -157,10 +211,23 @@ export const InspectionDetailView = ({
             { label: "Function", value: inspection.department },
             { label: "Inspection Type", value: inspection.inspectionType },
             { label: "SPOC", value: inspection.spoc?.name },
-            { label: "Functional Head", value: inspection.functionalHead?.name },
-            { label: "Target Date", value: formatInspectionDate(inspection.targetDate) },
-            { label: "Submitted On", value: formatInspectionDate(inspection.submittedAt) },
-            { label: "Inspector Location", value: inspection.inspectorLocation, span: true },
+            {
+              label: "Functional Head",
+              value: inspection.functionalHead?.name,
+            },
+            {
+              label: "Target Date",
+              value: formatInspectionDate(inspection.targetDate),
+            },
+            {
+              label: "Submitted On",
+              value: formatInspectionDate(inspection.submittedAt),
+            },
+            {
+              label: "Inspector Location",
+              value: inspection.inspectorLocation,
+              span: true,
+            },
           ]}
         />
       </DetailCard>
@@ -185,7 +252,9 @@ export const InspectionDetailView = ({
           <div className="space-y-4">{visible.map(renderResponse)}</div>
         ) : (
           <p className="text-sm text-[rgba(26,26,24,0.48)]">
-            {onlyMyResponses ? "No checklist items are assigned to you on this inspection." : "No checklist responses."}
+            {onlyMyResponses
+              ? "No checklist items are assigned to you on this inspection."
+              : "No checklist responses."}
           </p>
         )}
       </DetailCard>
