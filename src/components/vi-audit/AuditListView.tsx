@@ -81,6 +81,9 @@ export const AuditListView = ({
         return <AuditStatusPill status={item.status} />;
       case "auditType":
         return <span>{item.auditType} Audit</span>;
+      case "auditLocation":
+        // Long addresses wrap inside the column instead of stretching the table.
+        return <span className="block min-w-[180px] max-w-[280px] whitespace-normal break-words">{item.auditLocation}</span>;
       default:
         return <span>{String(item[columnKey as keyof ViAuditListRecord] ?? "")}</span>;
     }

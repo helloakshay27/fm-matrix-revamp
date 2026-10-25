@@ -55,8 +55,8 @@ const toPlanEntry = (p: Record<string, unknown>): PlanEntry => {
   };
 };
 
-const PLAN_SECTIONS: { kind: PlanKind; title: string; window: string }[] = [
-  { kind: "corrective", title: "Corrective Action Plan", window: "0–7 days" },
+const PLAN_SECTIONS: { kind: PlanKind; title: string; window?: string }[] = [
+  { kind: "corrective", title: "Corrective Action Plan" },
   { kind: "preventive", title: "Preventive Action Plan", window: "15–30 days" },
 ];
 
@@ -249,7 +249,7 @@ const SpocActionPlanPage = () => {
       </div>
 
       {PLAN_SECTIONS.map(({ kind, title, window }) => (
-        <DetailCard key={kind} icon={sectionIcon(ShieldCheck)} title={`${title} (${window})`} className="mb-5">
+        <DetailCard key={kind} icon={sectionIcon(ShieldCheck)} title={window ? `${title} (${window})` : title} className="mb-5">
           <div className="space-y-6">
             {plans[kind].map((entry, index) => (
               <div

@@ -9,7 +9,7 @@ import {
 } from "@/components/vi-audit/viAuditData";
 import { ActionPlanRecord, AuditLoadingState, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
-import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
+import { VI_AUDIT_DETAIL_URLS, useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
   "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
@@ -61,7 +61,7 @@ const ActionOwnerActionPlanDetailPage = () => {
   const navigate = useNavigate();
   const { id, observationId, planId } = useParams();
   const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
-  const { audit, loading: auditLoading } = useViAuditDetail(id);
+  const { audit, loading: auditLoading } = useViAuditDetail(id, VI_AUDIT_DETAIL_URLS.actionOwner);
   const observation = audit?.observations.find((o) => o.id === observationId);
 
   const basePath = viAuditBasePath("action-owner");

@@ -83,6 +83,9 @@ const toListRecord = (r: Raw, index: number): ViAuditListRecord => {
     spoc: text(r.spoc_name, obj(r.spoc).name) || fromObservations(observations, (o) => text(obj(o.spoc).name)),
     auditCircle: text(cluster.cluster_name, r.cluster_name),
     auditZone: text(circle.name, r.circle_name),
+    personnelArea: text(circle.name, r.circle_name),
+    facilityType: text(obj(r.visit_business_area).name, r.visit_business_area_name),
+    function: text(obj(r.department).department_name, r.department_name),
     observations: num(r.observations_count, r.observations),
     // Per-audit workflow counts: from the API when sent, else counted from the nested
     // observations' workflow_status_key (SPOC / FH / Action Owner lists nest them).

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Users } from "lucide-react";
 import { MenuItem, TextField, type MenuProps } from "@mui/material";
@@ -76,9 +76,14 @@ export function SelectField({
   );
   const labelFor = (selected: string) =>
     normalized.find((option) => option.value === selected)?.label ?? selected;
+  // The menu matches the field's width and opens right under it (the global search box
+  // injected into every menu otherwise stretches it across the whole row).
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const [menuWidth, setMenuWidth] = useState<number>();
 
   return (
     <TextField
+      ref={fieldRef}
       select
       fullWidth
       label={required ? requiredLabel(label) : label}
@@ -88,11 +93,14 @@ export function SelectField({
       InputLabelProps={{ shrink: true }}
       SelectProps={{
         displayEmpty: true,
+        onOpen: () => setMenuWidth(fieldRef.current?.offsetWidth),
         MenuProps: {
+          anchorOrigin: { vertical: "bottom", horizontal: "left" },
+          transformOrigin: { vertical: "top", horizontal: "left" },
           ...menuProps,
           PaperProps: {
             ...menuProps?.PaperProps,
-            style: { maxHeight: 320, ...menuProps?.PaperProps?.style },
+            style: { maxHeight: 320, width: menuWidth, maxWidth: menuWidth, ...menuProps?.PaperProps?.style },
           },
         },
         renderValue: (selected) =>

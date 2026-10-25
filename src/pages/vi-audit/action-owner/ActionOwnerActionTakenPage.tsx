@@ -9,7 +9,7 @@ import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { hasSubmittedActionTaken, isPlanPendingByActionOwner, viAuditBasePath } from "@/components/vi-audit/viAuditData";
 import { AuditLoadingState, sectionIcon, auditTextareaSx } from "@/components/vi-audit/ViAuditUi";
 import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
-import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
+import { VI_AUDIT_DETAIL_URLS, useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 import {
   ATTACHMENT_ACCEPT,
   ATTACHMENT_TYPES_LABEL,
@@ -54,7 +54,7 @@ const ActionOwnerActionTakenPage = () => {
   const navigate = useNavigate();
   const { id, observationId, planId } = useParams();
   const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
-  const { audit, loading: auditLoading } = useViAuditDetail(id);
+  const { audit, loading: auditLoading } = useViAuditDetail(id, VI_AUDIT_DETAIL_URLS.actionOwner);
   const observation = audit?.observations.find((o) => o.id === observationId);
 
   const observationPath = `${viAuditBasePath("action-owner")}/${id}/observations/${observationId}`;
@@ -83,7 +83,7 @@ const ActionOwnerActionTakenPage = () => {
 
   const kind = found?.kind ?? "corrective";
   const sectionTitle =
-    kind === "corrective" ? "Corrective Action Taken (0–7 days)" : "Preventive Action Taken (15–30 days)";
+    kind === "corrective" ? "Corrective Action Taken " : "Preventive Action Taken (15–30 days)";
 
   const updateEntry = (index: number, patch: Partial<ActionTakenEntry>) =>
     setEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
