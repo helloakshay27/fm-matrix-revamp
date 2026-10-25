@@ -139,7 +139,7 @@ export const InspectionDetailView = ({
           fields={[
             { label: "Name", value: inspection.inspector?.name },
             { label: "Mail ID", value: inspection.inspector?.email },
-            { label: "Employer", value: inspection.inspector?.employer },
+            { label: "Designation", value: inspection.inspector?.designation },
           ]}
         />
       </DetailCard>
