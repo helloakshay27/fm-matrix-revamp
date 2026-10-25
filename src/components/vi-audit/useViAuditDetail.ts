@@ -60,6 +60,7 @@ export const toActionPlan = (raw: Raw, index: number, prefix: string): ViActionP
   status: (statusLabel(raw.status) || "Pending By Action Owner") as ViActionPlanStatus,
   capaProgress: text(raw.capa_progress) || undefined,
   capaProgressKey: text(raw.capa_progress_key) || undefined,
+  capaClosure: text(raw.capa_closure) || undefined,
   capaClosureKey: text(raw.capa_closure_key) || undefined,
   canAddCapa: typeof raw.can_add_capa === "boolean" ? raw.can_add_capa : undefined,
   capas: arr(raw.capas, raw.actions_taken).map((c, i) => ({
@@ -166,8 +167,10 @@ const toAuditDetail = (json: unknown, fallbackId: string): ViAuditDetail => {
 export const VI_AUDIT_DETAIL_URLS = {
   default: (auditId: string) => `/vi_audits/${encodeURIComponent(auditId)}.json`,
   spoc: (auditId: string) => `/vi_audits/spoc_audits.json?${new URLSearchParams({ id: auditId }).toString()}`,
-  functionalHead: (auditId: string) =>
-    `/vi_audits/functional_head_audits.json?${new URLSearchParams({ id: auditId }).toString()}`,
+  actionOwner: (auditId: string) =>
+    // the endpoint ignores ?id=; the ransack filter returns just this audit
+    `/vi_audits/action_owner_audits.json?${new URLSearchParams({ "q[id_eq]": auditId }).toString()}`,
+  functionalHead: (auditId: string) => `/vi_audits/${encodeURIComponent(auditId)}/functional_head_audit.json`,
 } as const;
 
 // A role endpoint may return the audit itself or a list — pick the audit with this id (or the only one).

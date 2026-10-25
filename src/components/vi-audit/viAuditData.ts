@@ -24,7 +24,9 @@ export interface ViActionPlan {
   /** CAPA progress from the API: label ("CAPA Plan Not Started") and key ("capa_plan_not_started"). */
   capaProgress?: string;
   capaProgressKey?: string;
-  /** e.g. "capa_plan_not_closed_by_action_owner" / "capa_plan_closed_by_action_owner". */
+  /** CAPA closure label ("CAPA Plan Not Closed By Action Owner") and key
+   *  ("capa_plan_not_closed_by_action_owner" / "capa_plan_closed_by_action_owner"). */
+  capaClosure?: string;
   capaClosureKey?: string;
   /** From the API: whether the action owner can still add action taken (CAPA) on this plan. */
   canAddCapa?: boolean;

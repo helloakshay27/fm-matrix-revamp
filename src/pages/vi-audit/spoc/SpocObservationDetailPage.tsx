@@ -74,9 +74,9 @@ const SpocObservationDetailPage = () => {
       loading={auditLoading || observationLoading}
       auditPath={auditPath}
       // Breached plan (target date passed, not closed by the action owner): SPOC extends it.
-      // navigate(0) reloads the page so the plan shows its new date and reason.
-      renderPlanFooter={(plan) =>
-        isPlanDateBreached(plan) ? <PlanExtensionForm plan={plan} onExtended={() => navigate(0)} /> : null
+      // After extending, re-load just that plan so it shows the new date and reason (no page reload).
+      renderPlanFooter={(plan, { refreshPlan }) =>
+        isPlanDateBreached(plan) ? <PlanExtensionForm plan={plan} onExtended={refreshPlan} /> : null
       }
       footer={({ observation, allPlansClosed }) =>
         allPlansClosed || hasSubmittedActionPlans(observation) ? null : (

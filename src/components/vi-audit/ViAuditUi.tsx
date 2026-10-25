@@ -162,7 +162,18 @@ export const ActionPlanRecord = ({
         </div>
       )}
       <div className="mt-3">
-        {plan.capaProgress ? (
+        {plan.capaClosure ? (
+          // capa_closure label, toned by capa_closure_key (closed by action owner = green, else pending)
+          <span
+            className={`inline-flex items-center whitespace-nowrap rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
+              plan.capaClosureKey === "capa_plan_closed_by_action_owner"
+                ? VI_AUDIT_STATUS_TONE["Closed By Action Owner"]
+                : VI_AUDIT_STATUS_TONE["Pending By Action Owner"]
+            }`}
+          >
+            {plan.capaClosure}
+          </span>
+        ) : plan.capaProgress ? (
           <CapaProgressPill label={plan.capaProgress} progressKey={plan.capaProgressKey} />
         ) : (
           <AuditStatusPill status={plan.status} />

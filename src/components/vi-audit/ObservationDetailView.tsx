@@ -99,8 +99,9 @@ export const ObservationDetailView = ({
   /** Audit detail route — back arrow and "View More". */
   auditPath: string;
   onSelectPlan?: (plan: ViActionPlan, ctx: ObservationViewContext) => void;
-  /** Extra content under each corrective / preventive plan record. */
-  renderPlanFooter?: (plan: ViActionPlan) => ReactNode;
+  /** Extra content under each corrective / preventive plan record. `refreshPlan` re-loads that
+   *  plan in place (no page reload / loader). */
+  renderPlanFooter?: (plan: ViActionPlan, helpers: { refreshPlan: () => Promise<void> }) => ReactNode;
   footer?: (ctx: ObservationViewContext) => ReactNode;
 }) => {
   const navigate = useNavigate();
@@ -116,7 +117,10 @@ export const ObservationDetailView = ({
         : [],
     [apiObservation],
   );
-  const { plans: fetchedPlans, loading: plansLoading } = useViActionPlans(planIds);
+  const { plans: fetchedPlans, loading: plansLoading, refreshPlan } = useViActionPlans(planIds);
+  const planFooter = renderPlanFooter
+    ? (plan: ViActionPlan) => renderPlanFooter(plan, { refreshPlan: () => refreshPlan(plan.id) })
+    : undefined;
 
   if (loading || plansLoading) return <AuditLoadingState message="Loading observation..." />;
   if (auditFromApi === null) return <AuditLoadingState message="Audit not found." onBack={() => navigate(auditPath)} />;
@@ -312,13 +316,13 @@ export const ObservationDetailView = ({
 
         <TabsContent value="corrective" className={`mt-0 ${auditTabContentClass}`}>
           <DetailCard icon={sectionIcon(ShieldCheck)} title="Corrective Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
+            <ActionPlanList plans={observation.correctiveActions} onSelect={openPlan} renderPlanFooter={planFooter} />
           </DetailCard>
         </TabsContent>
 
         <TabsContent value="preventive" className={`mt-0 ${auditTabContentClass}`}>
           <DetailCard icon={sectionIcon(ShieldCheck)} title="Preventive Action Plan" className="mb-5">
-            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} renderPlanFooter={renderPlanFooter} />
+            <ActionPlanList plans={observation.preventiveActions} onSelect={openPlan} renderPlanFooter={planFooter} />
           </DetailCard>
         </TabsContent>
       </Tabs>

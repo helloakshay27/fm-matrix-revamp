@@ -21,7 +21,14 @@ const requiredLabel = (text: string) => (
  * PUT /vi_audit_action_plans/:id.json { vi_audit_action_plan: { extend_target_date, extension_reason } }
  * (extend_target_date must be on/after target_date and needs a reason).
  */
-export const PlanExtensionForm = ({ plan, onExtended }: { plan: ViActionPlan; onExtended: () => void }) => {
+export const PlanExtensionForm = ({
+  plan,
+  onExtended,
+}: {
+  plan: ViActionPlan;
+  /** Called after a successful PUT; awaited so "Submitting..." stays until the plan has refreshed. */
+  onExtended: () => void | Promise<void>;
+}) => {
   const [date, setDate] = useState("");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,7 +60,7 @@ export const PlanExtensionForm = ({ plan, onExtended }: { plan: ViActionPlan; on
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(apiErrorMessage(result) || `Request failed with status ${response.status}`);
       toast.success("Target date extended");
-      onExtended();
+      await onExtended();
     } catch (error) {
       console.error("Target date extension failed:", error);
       const message = error instanceof Error ? error.message : "";
