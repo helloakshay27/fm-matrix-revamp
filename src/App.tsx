@@ -2044,6 +2044,12 @@ const InspectionFunctionalHeadDetailPage = lazy(() =>
 const InspectionInspectorAddPage = lazy(
   () => import("./pages/vi-inspection/InspectionInspectorAddPage")
 );
+const ViInspectionTypeMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionTypePage")
+);
+const ViInspectionChecklistMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionChecklistPage")
+);
 const InspectionSpocListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionSpocListPage,
@@ -9420,6 +9426,14 @@ function App() {
                             <Route
                               path="/safety/vi-inspection/functional-head/:id"
                               element={<InspectionFunctionalHeadDetailPage />}
+                            />
+                            <Route
+                              path="/settings/inspection-master/inspection-type"
+                              element={<ViInspectionTypeMasterPage />}
+                            />
+                            <Route
+                              path="/settings/inspection-master/inspection-checklist"
+                              element={<ViInspectionChecklistMasterPage />}
                             />
                             <Route
                               path="/safety/audit-list"
