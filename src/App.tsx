@@ -9392,6 +9392,10 @@ function App() {
                               element={<InspectionInspectorAddPage />}
                             />
                             <Route
+                              path="/safety/vi-inspection/inspector/:id/edit"
+                              element={<InspectionInspectorAddPage />}
+                            />
+                            <Route
                               path="/safety/vi-inspection/spoc"
                               element={<InspectionSpocListPage />}
                             />

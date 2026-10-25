@@ -1,197 +1,270 @@
+import type { LucideIcon } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Clock, FileEdit, ListChecks, Search } from "lucide-react";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
+import type { ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 
-// Inspection records shared by every role's list/detail pages.
-// Placeholder data — swap for a live API once the Inspection backend endpoint is available.
+// VI Inspection types and constants (docs/vi_inspection/API.md). Records are parsed from the API in
+// viInspectionApi.ts.
 
-export type ViInspectionStatus = "Draft" | "Open" | "Closed" | "Pending By Action Owner" | "Closed By Action Owner";
+export type ViInspectionRole = "inspector" | "spoc" | "action_owner" | "functional_head";
+export type ViInspectionActionType = "corrective" | "preventive";
 
-// Workflow stages remain available for summary cards; only final closure is Closed.
-export const getInspectionDisplayStatus = (status: string): "Open" | "Closed" =>
-  status.trim().toLowerCase() === "closed" ? "Closed" : "Open";
+export const ACTION_TYPES: ViInspectionActionType[] = ["corrective", "preventive"];
+export const ACTION_TYPE_LABEL: Record<ViInspectionActionType, string> = {
+  corrective: "Corrective",
+  preventive: "Preventive",
+};
 
-/** A corrective or preventive plan the SPOC created for a checklist finding. */
-export interface ViInspectionPlan {
+export const CHECKLIST_ANSWERS = ["Yes", "No", "NA"] as const;
+
+export const INSPECTION_PATHS: Record<ViInspectionRole, string> = {
+  inspector: "/safety/vi-inspection/inspector",
+  spoc: "/safety/vi-inspection/spoc",
+  action_owner: "/safety/vi-inspection/action-owner",
+  functional_head: "/safety/vi-inspection/functional-head",
+};
+
+export interface ViInspectionAttachment {
   id: string;
-  description: string;
-  actionOwner: string;
-  targetDate: string;
+  name: string;
+  url: string;
 }
 
-/** One answered checklist question, as shown on the inspection detail page. */
-export interface ViInspectionChecklistResult {
-  question: string;
-  /** The gap the SPOC plans actions against, e.g. "Safety signages not clearly displayed and visible". */
-  finding: string;
-  answer: string;
-  remarks: string;
-  spoc: string;
-  functionalHead: string;
-  targetDate: string;
-  attachments: string[];
+export interface ViInspectionPerson extends ViActiveUserOption {
+  designation?: string;
+}
+
+/** One action-taken entry of an owner's assignment (many per assignment). */
+export interface ViInspectionActionTaken {
+  id: string;
+  description: string;
+  closureDate: string;
+  attachments: ViInspectionAttachment[];
+}
+
+/** One responsible person's work on a plan: open → draft (entries saved) → closed (submitted). */
+export interface ViInspectionAssignment {
+  id: string;
+  owner: ViInspectionPerson | null;
   status: string;
-  /** Filled once the SPOC has submitted the action plan. */
-  correctivePlans: ViInspectionPlan[];
-  preventivePlans: ViInspectionPlan[];
+  submittedAt: string;
+  closureDate: string;
+  actionTakens: ViInspectionActionTaken[];
+}
+
+export interface ViInspectionExtension {
+  previousDate: string;
+  newDate: string;
+  reason: string;
+  by: string;
+  at: string;
+}
+
+export interface ViInspectionActionPlan {
+  id: string;
+  checklistResponseId: string;
+  actionType: ViInspectionActionType;
+  description: string;
+  targetDate: string;
+  extendTargetDate: string;
+  extensionReason: string;
+  /** draft (SPOC only) → open (released to owners) → closed. */
+  status: string;
+  extensions: ViInspectionExtension[];
+  assignments: ViInspectionAssignment[];
+}
+
+export interface ViInspectionChecklistResponse {
+  id: string;
+  questionId: string;
+  /** Question text as it was when answered (question_text_snapshot). */
+  question: string;
+  position: number;
+  answer: string;
+  remark: string;
+  attachments: ViInspectionAttachment[];
+  actionPlans: ViInspectionActionPlan[];
 }
 
 export interface ViInspectionRecord {
   id: number;
-  inspectionId: number;
-  status: ViInspectionStatus;
-  title: string;
-  inspectionLocation: string;
-  dateOfInspection: string;
-  inspectionType: string;
+  inspectionNo: string;
+  /** Persisted status: draft | open | closed. */
+  status: string;
+  /** Derived workflow label key and text (workflow_status_key / workflow_status). */
+  workflowKey: string;
+  workflowLabel: string;
+  inspectionDate: string;
+  circleId: string;
   circle: string;
-  personnelArea: string;
+  personalAreaId: string;
+  personalArea: string;
+  workLocationId: string;
   workLocation: string;
+  inspectionTypeId: string;
+  inspectionType: string;
+  inspectorLocation: string;
+  departmentId: string;
+  department: string;
+  facilityTypeId: string;
   facilityType: string;
-  function: string;
-  inspector: { name: string; mailId: string; employer: string };
-  spoc: string;
-  functionalHead: string;
+  inspector: ViInspectionPerson | null;
+  spoc: ViInspectionPerson | null;
+  functionalHead: ViInspectionPerson | null;
   targetDate: string;
-  checklist: ViInspectionChecklistResult[];
+  submittedAt: string;
+  canEdit: boolean;
+  canManageActionPlans: boolean;
+  roles: string[];
+  checklistResponses: ViInspectionChecklistResponse[];
+  checklistResponsesCount: number;
+  actionPlansCount: number;
+  assignmentsCount: number;
+  pendingAssignmentsCount: number;
 }
 
-// File names only until the API returns real attachment URLs; the detail page shows a tile per file.
-const PLACEHOLDER_PHOTOS = ["photo-1.jpg", "photo-2.jpg", "photo-3.jpg"];
+// ---------------------------------------------------------------------------------------------
+// Workflow
 
-type TemplateRecord = Omit<ViInspectionRecord, "id" | "inspectionId" | "status" | "checklist">;
-
-const INSPECTOR = { name: "Sohail Ansari", mailId: "sohail.ansari@mail.com", employer: "Aquil H" };
-
-const TEMPLATE: TemplateRecord[] = [
-  {
-    title: "Lobby Inspection",
-    inspectionLocation: "Birla Centurion Pvt. Ltd., Wing B, Floor 3, Room 203, Common Area",
-    dateOfInspection: "23/03/2026",
-    inspectionType: "Fire Safety",
-    circle: "Birla",
-    personnelArea: "Worli",
-    workLocation: "Worli",
-    facilityType: "Birla",
-    function: "",
-    inspector: INSPECTOR,
-    spoc: "Shahab Mirza",
-    functionalHead: "Kshitij Rasal",
-    targetDate: "02/09/2026",
-  },
-  {
-    title: "Office Room",
-    inspectionLocation: "Birla Centurion Pvt. Ltd., Wing B, Floor 3, Room 203, Common Area",
-    dateOfInspection: "02/04/2026",
-    inspectionType: "Electrical",
-    circle: "Birla",
-    personnelArea: "Worli",
-    workLocation: "Worli",
-    facilityType: "Birla",
-    function: "Operations",
-    inspector: INSPECTOR,
-    spoc: "Veena Kumari",
-    functionalHead: "Kshitij Rasal",
-    targetDate: "10/09/2026",
-  },
-  {
-    title: "Meeting Room Inspection",
-    inspectionLocation: "Tata Projects Pvt. Ltd., Wing A, Floor 1, Reception",
-    dateOfInspection: "18/04/2026",
-    inspectionType: "Housekeeping",
-    circle: "Tata",
-    personnelArea: "Andheri",
-    workLocation: "Andheri",
-    facilityType: "Tata",
-    function: "Operations",
-    inspector: INSPECTOR,
-    spoc: "Shahab Mirza",
-    functionalHead: "Kshitij Rasal",
-    targetDate: "15/09/2026",
-  },
-];
-
-const PLAN_TEXT =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-const samplePlans = (prefix: "CA" | "PA"): ViInspectionPlan[] => [
-  { id: `${prefix}01`, description: PLAN_TEXT, actionOwner: "Vama Shah", targetDate: "18 Sep 2026" },
-];
-
-const sampleChecklist = ({ spoc, functionalHead, targetDate }: TemplateRecord): ViInspectionChecklistResult[] => [
-  {
-    question: "Are Safety Signages Clearly Displayed And Visible?",
-    finding: "Safety signages not clearly displayed and visible",
-    answer: "Yes",
-    remarks: "",
-    spoc,
-    functionalHead,
-    targetDate,
-    attachments: PLACEHOLDER_PHOTOS,
-    status: "Pending By SPOC",
-    correctivePlans: samplePlans("CA"),
-    preventivePlans: samplePlans("PA"),
-  },
-  {
-    question: "Are Incident Reports Documented And Analyzed?",
-    finding: "Incident reports not documented and analyzed",
-    answer: "No",
-    remarks: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.",
-    spoc,
-    functionalHead,
-    targetDate,
-    attachments: PLACEHOLDER_PHOTOS,
-    status: "Pending By SPOC",
-    correctivePlans: samplePlans("CA"),
-    preventivePlans: samplePlans("PA"),
-  },
-];
-
-const STATUS_CYCLE: ViInspectionStatus[] = ["Draft", "Open", "Closed", "Pending By Action Owner", "Closed By Action Owner"];
-
-export const VI_INSPECTION_LIST: ViInspectionRecord[] = Array.from({ length: 12 }, (_, i) => {
-  const template = TEMPLATE[i % TEMPLATE.length];
-  return {
-    ...template,
-    id: i + 1,
-    inspectionId: 2378 + i,
-    status: STATUS_CYCLE[i % STATUS_CYCLE.length],
-    checklist: sampleChecklist(template),
-  };
-});
-
-export const getViInspection = (id: string | undefined): ViInspectionRecord =>
-  VI_INSPECTION_LIST.find((inspection) => String(inspection.id) === id) ?? VI_INSPECTION_LIST[0];
-
-/** Status tone classes for the inspection status pill (same palette as incident). */
-export const VI_INSPECTION_STATUS_TONE: Record<string, string> = {
-  Draft: "bg-[#FBE3D8] text-[#B5502A]",
-  Open: "bg-[#DCE8F4] text-[#2F5F8F]",
-  Closed: "bg-[#DDEBD3] text-[#4A6B2E]",
-  "Pending By SPOC": "bg-[#F5B5A6] text-[#8A2F1B]",
-  "Pending By Action Owner": "bg-[#F8E4C7] text-[#8A5A12]",
-  "Closed By Action Owner": "bg-[#DDEBD3] text-[#4A6B2E]",
+export const WORKFLOW_LABEL: Record<string, string> = {
+  draft: "Draft",
+  open: "Open",
+  closed: "Closed",
+  pending_by_spoc: "Pending By SPOC",
+  closed_by_spoc: "Closed By SPOC",
+  pending_by_action_owner: "Pending By Action Owner",
+  closed_by_action_owner: "Closed By Action Owner",
+  inspection_closed: "Inspection Closed",
 };
 
-/** Dropdown options for inspection type — placeholder until the masters API provides them. */
-export const INSPECTION_TYPE_OPTIONS = ["Fire Safety", "Electrical", "Housekeeping", "Emergency Preparedness", "General"];
+const WORKFLOW_TONE: Record<string, string> = {
+  draft: "bg-[#FBE3D8] text-[#B5502A]",
+  open: "bg-[#DCE8F4] text-[#2F5F8F]",
+  pending_by_spoc: "bg-[#F5B5A6] text-[#8A2F1B]",
+  closed_by_spoc: "bg-[#DCE8F4] text-[#2F5F8F]",
+  pending_by_action_owner: "bg-[#F8E4C7] text-[#8A5A12]",
+  closed_by_action_owner: "bg-[#DDEBD3] text-[#4A6B2E]",
+  closed: "bg-[#DDEBD3] text-[#4A6B2E]",
+  inspection_closed: "bg-[#DDEBD3] text-[#4A6B2E]",
+};
 
-/** Checklist questions answered in step 2 — placeholder until a checklist master exists. */
-export const INSPECTION_CHECKLIST: { id: string; question: string }[] = [
-  { id: "q1", question: "Are Safety Signages Clearly Displayed And Visible?" },
-  { id: "q2", question: "Are Incident Reports Documented And Analyzed?" },
-  { id: "q3", question: "Is There A Protocol For Reporting Incidents?" },
-  { id: "q4", question: "How Often Are Drills Conducted For Response?" },
-];
+export const workflowTone = (key: string) => WORKFLOW_TONE[key] ?? WORKFLOW_TONE.open;
 
-export const CHECKLIST_ANSWERS = ["Yes", "No", "NA"] as const;
+/** "pending_by_spoc" → "Pending By SPOC" (unknown keys are title-cased). */
+export const workflowLabel = (key: string) =>
+  WORKFLOW_LABEL[key] ??
+  key
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => (w.toLowerCase() === "spoc" ? "SPOC" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+
+/** Status filter values of the list APIs (`draft` only exists for the Inspector's own inspections). */
+export const statusFilterOptions = (role: ViInspectionRole) =>
+  [
+    ...(role === "inspector" ? ["draft"] : []),
+    "open",
+    "closed",
+    "pending_by_spoc",
+    "closed_by_spoc",
+    "pending_by_action_owner",
+    "closed_by_action_owner",
+  ].map((value) => ({ value, label: WORKFLOW_LABEL[value] }));
+
+// One owner's progress on an assignment.
+export const ASSIGNMENT_STATUS: Record<string, { label: string; tone: string }> = {
+  closed: { label: "Action Taken", tone: "bg-[#DDEBD3] text-[#4A6B2E]" },
+  draft: { label: "In Progress", tone: "bg-[#F8E4C7] text-[#8A5A12]" },
+  open: { label: "Pending", tone: "bg-[#F5B5A6] text-[#8A2F1B]" },
+};
+export const assignmentStatus = (status: string) => ASSIGNMENT_STATUS[status] ?? ASSIGNMENT_STATUS.open;
+
+export const isPlanDraft = (plan: ViInspectionActionPlan) => plan.status.toLowerCase() === "draft";
+export const isPlanClosed = (plan: ViInspectionActionPlan) => plan.status.toLowerCase() === "closed";
+/** The deadline in force: the latest extension, else the original target date. */
+export const planDeadline = (plan: ViInspectionActionPlan) => plan.extendTargetDate || plan.targetDate;
+
+// ---------------------------------------------------------------------------------------------
+// Dates
+
+export const todayIso = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
+
+/** "2026-09-18" (or an ISO timestamp) → "18 Sep 2026". */
+export const formatInspectionDate = (value: string) => {
+  if (!value) return "";
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+// ---------------------------------------------------------------------------------------------
+// List
 
 export const INSPECTION_COLUMNS: ColumnConfig[] = [
-  { key: "inspectionId", label: "Inspection ID", sortable: true, defaultVisible: true },
-  { key: "status", label: "Status", sortable: true, defaultVisible: true },
-  { key: "title", label: "Inspection", sortable: true, defaultVisible: true },
-  { key: "inspectionType", label: "Type", sortable: true, defaultVisible: true },
-  { key: "inspectionLocation", label: "Inspection Location", sortable: true, defaultVisible: true },
-  { key: "dateOfInspection", label: "Date of Inspection", sortable: true, defaultVisible: true },
+  { key: "inspectionNo", label: "Inspection No.", sortable: true, defaultVisible: true },
+  { key: "workflowLabel", label: "Status", sortable: true, defaultVisible: true },
+  { key: "inspectionType", label: "Inspection Type", sortable: true, defaultVisible: true },
+  { key: "inspectionDateLabel", label: "Date of Inspection", sortable: true, defaultVisible: true },
   { key: "circle", label: "Circle", sortable: true, defaultVisible: true },
-  { key: "spoc", label: "SPOC", sortable: true, defaultVisible: true },
-  { key: "functionalHead", label: "Functional Head", sortable: true, defaultVisible: true },
+  { key: "personalArea", label: "Personnel Area", sortable: true, defaultVisible: true },
+  { key: "workLocation", label: "Work Location", sortable: true, defaultVisible: true },
+  { key: "facilityType", label: "Type of Facility", sortable: true, defaultVisible: true },
+  { key: "inspectorLocation", label: "Inspector Location", sortable: true, defaultVisible: false },
+  { key: "spocName", label: "SPOC", sortable: true, defaultVisible: true },
+  { key: "functionalHeadName", label: "Functional Head", sortable: true, defaultVisible: true },
+  { key: "targetDateLabel", label: "Target Date", sortable: true, defaultVisible: true },
 ];
+
+export const VI_INSPECTION_LIST_PER_PAGE = 20;
+
+// ---------------------------------------------------------------------------------------------
+// Dashboards — exactly the cards of API.md §7, per role.
+
+export interface InspectionStatCard {
+  key: string;
+  title: string;
+  icon: LucideIcon;
+}
+
+const STAGE_CARDS: InspectionStatCard[] = [
+  { key: "pending_by_spoc", title: "Pending By SPOC", icon: Search },
+  { key: "closed_by_spoc", title: "Closed By SPOC", icon: CheckCircle2 },
+  { key: "pending_by_action_owner", title: "Pending By Action Owner", icon: Clock },
+  { key: "closed_by_action_owner", title: "Closed By Action Owner", icon: CheckCircle2 },
+];
+
+export const DASHBOARD_CARDS: Record<ViInspectionRole, InspectionStatCard[]> = {
+  inspector: [
+    { key: "total_inspection", title: "Total Inspection", icon: ClipboardList },
+    { key: "open_inspection", title: "Open Inspection", icon: AlertTriangle },
+    { key: "closed_inspection", title: "Closed Inspection", icon: CheckCircle2 },
+    { key: "draft_inspection", title: "Draft Inspection", icon: FileEdit },
+    ...STAGE_CARDS,
+  ],
+  spoc: [
+    { key: "total_assigned_inspection", title: "Total Assigned Inspection", icon: ClipboardList },
+    { key: "open_inspection", title: "Open Inspection", icon: AlertTriangle },
+    { key: "closed_inspection", title: "Closed Inspection", icon: CheckCircle2 },
+    ...STAGE_CARDS,
+  ],
+  action_owner: [
+    { key: "total_assigned_inspection", title: "Total Assigned Inspection", icon: ClipboardList },
+    { key: "total_assigned_actions", title: "Total Assigned Actions", icon: ListChecks },
+    { key: "pending_actions", title: "Pending Actions", icon: Clock },
+    { key: "draft_actions", title: "Draft Actions", icon: FileEdit },
+    { key: "completed_actions", title: "Completed Actions", icon: CheckCircle2 },
+    { key: "open_inspection", title: "Open Inspection", icon: AlertTriangle },
+    { key: "closed_inspection", title: "Closed Inspection", icon: CheckCircle2 },
+    STAGE_CARDS[2],
+    STAGE_CARDS[3],
+  ],
+  functional_head: [
+    { key: "total_assigned_inspection", title: "Total Assigned Inspection", icon: ClipboardList },
+    { key: "open_inspection", title: "Open Inspection", icon: AlertTriangle },
+    { key: "closed_inspection", title: "Closed Inspection", icon: CheckCircle2 },
+    ...STAGE_CARDS,
+  ],
+};

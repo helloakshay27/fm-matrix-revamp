@@ -1,109 +1,208 @@
-import { useEffect, useMemo, useState } from "react";
-import { useInspectionDraft } from "@/components/vi-inspection/useInspectionDraft";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Check, ClipboardCheck, FileText, Paperclip, User, UserPlus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ClipboardCheck,
+  FileText,
+  User,
+  UserPlus,
+} from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { useViAuditMasters } from "@/components/vi-audit/useViAuditMasters";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
-import { AutocompleteLabel, UserSelectField } from "@/components/vi-audit/ViUserPicker";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
-import { InfoRow, SelectField, getLoggedInUser, requiredLabel } from "@/components/vi-audit/AuditFormFields";
+import {
+  AutocompleteLabel,
+  UserSelectField,
+} from "@/components/vi-audit/ViUserPicker";
+import {
+  AuditLoadingState,
+  auditTextareaSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
+import {
+  InfoRow,
+  getLoggedInUser,
+  requiredLabel,
+} from "@/components/vi-audit/AuditFormFields";
+import {
+  AttachmentPicker,
+  IncidentSelectField,
+} from "@/components/vi-incident/IncidentFormFields";
+import { useInspectionTypeOptions } from "@/features/vi-inspection/master/api/queries";
+import {
+  errorToast,
+  saveViInspection,
+  useViInspectionChecklistQuestions,
+  useViInspectionDetail,
+  useViInspectionMasters,
+  type InspectionFormInput,
+} from "@/components/vi-inspection/viInspectionApi";
 import {
   CHECKLIST_ANSWERS,
-  INSPECTION_CHECKLIST,
-  INSPECTION_TYPE_OPTIONS,
+  INSPECTION_PATHS,
+  todayIso,
+  type ViInspectionAttachment,
 } from "@/components/vi-inspection/viInspectionData";
-import { INSPECTION_INSPECTOR_PATH } from "./InspectionRolePlaceholderPage";
 
-// Attachments accept the same file types as incident/audit.
-const ALLOWED_EXTENSIONS = ["pdf", "jpeg", "jpg", "png"];
-const ATTACHMENT_ACCEPT = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png";
-const isAllowedAttachment = (file: File) =>
-  ALLOWED_EXTENSIONS.includes(file.name.split(".").pop()?.toLowerCase() ?? "");
+const INSPECTOR_PATH = INSPECTION_PATHS.inspector;
+const TOTAL_STEPS = 3;
 
-interface ChecklistAnswer {
+interface AnswerDraft {
   answer: string;
-  remarks: string;
-  attachments: File[];
+  remark: string;
+  files: File[];
+  existing: ViInspectionAttachment[];
+  removeAttachmentIds: string[];
 }
 
-/** Thumbnail for an image attachment (file chip for PDFs), with a remove button. */
-const AttachmentPreview = ({ file, onRemove }: { file: File; onRemove: () => void }) => {
-  const isImage = file.type.startsWith("image/");
-  const url = useMemo(() => (isImage ? URL.createObjectURL(file) : ""), [file, isImage]);
-  useEffect(() => () => url && URL.revokeObjectURL(url), [url]);
-
-  return (
-    <div className="relative" title={file.name}>
-      {isImage ? (
-        <img src={url} alt={file.name} className="h-20 w-24 rounded-[10px] object-cover border border-[rgba(26,26,24,0.09)]" />
-      ) : (
-        <div className="flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-[10px] bg-[#F5F4F0] px-1 text-[rgba(26,26,24,0.48)]">
-          <FileText className="w-5 h-5" />
-          <span className="w-full truncate text-center text-[10px]">{file.name}</span>
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[rgba(26,26,24,0.68)] shadow hover:text-[#1A1A18]"
-        aria-label={`Remove ${file.name}`}
-      >
-        <X className="w-3 h-3" />
-      </button>
-    </div>
+const emptyAnswer = (): AnswerDraft => ({
+  answer: "",
+  remark: "",
+  files: [],
+  existing: [],
+  removeAttachmentIds: [],
+});
+const hasContent = (a: AnswerDraft) =>
+  Boolean(
+    a.answer ||
+      a.remark.trim() ||
+      a.files.length ||
+      a.existing.length ||
+      a.removeAttachmentIds.length
   );
+
+interface BasicDraft {
+  inspection_date: string;
+  circle_id: string;
+  personal_area_id: string;
+  work_location_id: string;
+  inspection_type_id: string;
+  inspector_location: string;
+  department_id: string;
+  facility_type_id: string;
+}
+
+const EMPTY_BASIC: BasicDraft = {
+  inspection_date: todayIso(),
+  circle_id: "",
+  personal_area_id: "",
+  work_location_id: "",
+  inspection_type_id: "",
+  inspector_location: "",
+  department_id: "",
+  facility_type_id: "",
 };
 
-const TOTAL_STEPS = 3;
-const todayIso = () => new Date().toISOString().split("T")[0];
-
-// Inspector: create inspection — step 1 (inspector + basic details), step 2 (checklist), step 3 (assignment).
-// The Inspection API is not live yet: Save draft / Submit validate the form and return to the list.
+// Inspector: create / edit an inspection — step 1 (inspector + basic details), step 2 (checklist
+// answers, remarks, attachments), step 3 (SPOC, Functional Head, target date).
+// Save draft: POST /vi_inspections.json or PATCH /vi_inspections/:id.json. Submit additionally submits
+// (draft → open); after that the inspection is read-only for the Inspector.
 const InspectionInspectorAddPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
   const loggedInUser = useMemo(getLoggedInUser, []);
-  const { masters, loading: mastersLoading } = useViAuditMasters();
+  const { masters, loading: mastersLoading } = useViInspectionMasters();
+  // Inspection types come from their own API (GET /vi_inspection_type_masters.json), which carries
+  // lat_long_required — it decides whether the Inspector Location field is shown.
+  const { data: inspectionTypes = [], isLoading: inspectionTypesLoading } =
+    useInspectionTypeOptions();
+  const { inspection, loading: inspectionLoading } = useViInspectionDetail(id);
+
   const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [basic, setBasicState] = useState<BasicDraft>(EMPTY_BASIC);
+  const [answers, setAnswers] = useState<Record<string, AnswerDraft>>({});
+  const [spoc, setSpoc] = useState<ViActiveUserOption | null>(null);
+  const [functionalHead, setFunctionalHead] =
+    useState<ViActiveUserOption | null>(null);
+  const [targetDate, setTargetDate] = useState("");
 
-  const { value: draft, setValue: setDraft, loading, error, saving, retry, saveDraft, clearDraft } = useInspectionDraft("inspector-add", () => ({
-    basic: {
-    dateOfInspection: todayIso(),
-    circle: "",
-    personnelArea: "",
-    workLocation: "",
-    location: "",
-    function: "",
-    facilityType: "",
-    type: "",
-    },
-    answers: Object.fromEntries(INSPECTION_CHECKLIST.map((q) => [q.id, { answer: "", remarks: "", attachments: [] }])) as Record<string, ChecklistAnswer>,
-    spoc: null as ViActiveUserOption | null,
-    functionalHead: null as ViActiveUserOption | null,
-    targetDate: "",
-  }));
-  const { basic, answers, spoc, functionalHead, targetDate } = draft;
-  const setBasic = (update: (previous: typeof basic) => typeof basic) => setDraft((prev) => ({ ...prev, basic: update(prev.basic) }));
-  const setAnswers = (update: (previous: typeof answers) => typeof answers) => setDraft((prev) => ({ ...prev, answers: update(prev.answers) }));
-  const setSpoc = (value: ViActiveUserOption | null) => setDraft((prev) => ({ ...prev, spoc: value }));
-  const setFunctionalHead = (value: ViActiveUserOption | null) => setDraft((prev) => ({ ...prev, functionalHead: value }));
-  const setTargetDate = (value: string) => setDraft((prev) => ({ ...prev, targetDate: value }));
+  const { questions, loading: questionsLoading } =
+    useViInspectionChecklistQuestions(basic.inspection_type_id);
 
-  const updateAnswer = (id: string, patch: Partial<ChecklistAnswer>) =>
-    setAnswers((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  // Continue from the saved draft.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!inspection || prefilled.current) return;
+    prefilled.current = true;
+    setBasicState({
+      inspection_date: inspection.inspectionDate || todayIso(),
+      circle_id: inspection.circleId,
+      personal_area_id: inspection.personalAreaId,
+      work_location_id: inspection.workLocationId,
+      inspection_type_id: inspection.inspectionTypeId,
+      inspector_location: inspection.inspectorLocation,
+      department_id: inspection.departmentId,
+      facility_type_id: inspection.facilityTypeId,
+    });
+    setAnswers(
+      Object.fromEntries(
+        inspection.checklistResponses.map((r) => [
+          r.questionId,
+          {
+            answer: r.answer,
+            remark: r.remark,
+            files: [],
+            existing: r.attachments,
+            removeAttachmentIds: [],
+          },
+        ])
+      )
+    );
+    setSpoc(inspection.spoc);
+    setFunctionalHead(inspection.functionalHead);
+    setTargetDate(inspection.targetDate);
+  }, [inspection]);
+
+  // Active types only — plus the draft's own type, so an edit still shows it if it was deactivated.
+  const inspectionTypeOptions = useMemo(
+    () =>
+      inspectionTypes
+        .filter(
+          (type) => type.active || String(type.id) === basic.inspection_type_id
+        )
+        .map((type) => ({ value: String(type.id), label: type.name })),
+    [inspectionTypes, basic.inspection_type_id]
+  );
+  const latLongRequired = Boolean(
+    inspectionTypes.find((type) => String(type.id) === basic.inspection_type_id)
+      ?.lat_long_required
+  );
+
+  const setBasic = (patch: Partial<BasicDraft>) =>
+    setBasicState((prev) => ({ ...prev, ...patch }));
+  const answerFor = (questionId: string) =>
+    answers[questionId] ?? emptyAnswer();
+  const updateAnswer = (questionId: string, patch: Partial<AnswerDraft>) =>
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...(prev[questionId] ?? emptyAnswer()), ...patch },
+    }));
+
+  // Answers belong to a type: changing it drops them (the API does the same on save).
+  const changeInspectionType = (typeId: string) => {
+    if (typeId === basic.inspection_type_id) return;
+    if (Object.values(answers).some(hasContent))
+      toast.info("Checklist answers were cleared for the new inspection type");
+    setAnswers({});
+    setBasic({ inspection_type_id: typeId });
+  };
 
   const validateStepOne = () => {
     const missing = [
-      !basic.dateOfInspection && "Date of Inspection",
-      !basic.circle && "Circle",
-      !basic.personnelArea && "Personnel Area",
-      !basic.workLocation && "Work Location",
-      !basic.location.trim() && "Inspection Location",
-      !basic.function && "Function",
-      !basic.facilityType && "Type of Facility",
-      !basic.type && "Type",
+      !basic.inspection_date && "Date of Inspection",
+      !basic.circle_id && "Circle",
+      !basic.personal_area_id && "Personnel Area",
+      !basic.work_location_id && "Work Location",
+      !basic.inspection_type_id && "Inspection Type",
+      latLongRequired &&
+        !basic.inspector_location.trim() &&
+        "Inspector Location",
+      !basic.department_id && "Function",
+      !basic.facility_type_id && "Type of Facility",
     ].filter(Boolean);
     if (missing.length) {
       toast.error(`Please fill: ${missing.join(", ")}`);
@@ -113,7 +212,17 @@ const InspectionInspectorAddPage = () => {
   };
 
   const validateStepTwo = () => {
-    const unanswered = INSPECTION_CHECKLIST.findIndex((q) => !answers[q.id].answer);
+    if (questionsLoading) {
+      toast.error("Checklist questions are still loading");
+      return false;
+    }
+    if (!questions.length) {
+      toast.error(
+        "The selected inspection type has no active checklist questions"
+      );
+      return false;
+    }
+    const unanswered = questions.findIndex((q) => !answerFor(q.id).answer);
     if (unanswered !== -1) {
       toast.error(`Please answer checklist question ${unanswered + 1}`);
       return false;
@@ -122,48 +231,95 @@ const InspectionInspectorAddPage = () => {
   };
 
   const validateStepThree = () => {
-    const missing = [!spoc && "SPOC", !functionalHead && "Functional Head", !targetDate && "Target Date"].filter(Boolean);
+    const missing = [
+      !spoc && "SPOC",
+      !functionalHead && "Functional Head",
+      !targetDate && "Target Date",
+    ].filter(Boolean);
     if (missing.length) {
       toast.error(`Please fill: ${missing.join(", ")}`);
+      return false;
+    }
+    if (targetDate < basic.inspection_date) {
+      toast.error("Target Date can't be before the Date of Inspection");
       return false;
     }
     return true;
   };
 
-  const handleBack = () => (step > 1 ? setStep(step - 1) : navigate(INSPECTION_INSPECTOR_PATH));
+  const buildInput = (): InspectionFormInput => ({
+    ...basic,
+    // Only types with lat_long_required ask for it; otherwise it's cleared.
+    inspector_location: latLongRequired ? basic.inspector_location.trim() : "",
+    spoc_id: spoc?.id ?? "",
+    functional_head_id: functionalHead?.id ?? "",
+    target_date: targetDate,
+    // Only this type's questions; a draft sends just the rows that have something in them.
+    responses: questions
+      .filter((q) => hasContent(answerFor(q.id)))
+      .map((q) => {
+        const a = answerFor(q.id);
+        return {
+          questionId: q.id,
+          answer: a.answer,
+          remark: a.remark.trim(),
+          files: a.files,
+          removeAttachmentIds: a.removeAttachmentIds,
+        };
+      }),
+  });
 
+  const save = async (submit: boolean) => {
+    if (saving) return;
+    if (
+      submit &&
+      (!validateStepOne() || !validateStepTwo() || !validateStepThree())
+    )
+      return;
+    setSaving(true);
+    try {
+      await saveViInspection(id, buildInput(), submit);
+      toast.success(
+        submit
+          ? "Inspection submitted successfully"
+          : "Inspection saved to draft"
+      );
+      navigate(INSPECTOR_PATH);
+    } catch (error) {
+      errorToast(
+        submit ? "Failed to submit inspection" : "Failed to save draft",
+        error
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBack = () =>
+    step > 1 ? setStep(step - 1) : navigate(INSPECTOR_PATH);
   const handleNext = () => {
     if (step === 1 && !validateStepOne()) return;
     if (step === 2 && !validateStepTwo()) return;
     setStep(step + 1);
   };
 
-  const handleSaveDraft = async () => {
-    if (!(await saveDraft())) return;
-    toast.success("Inspection saved to draft");
-    navigate(INSPECTION_INSPECTOR_PATH);
-  };
+  if (isEdit && inspectionLoading && !inspection) {
+    return (
+      <AuditLoadingState
+        message="Loading inspection..."
+        onBack={() => navigate(INSPECTOR_PATH)}
+      />
+    );
+  }
+  if (isEdit && inspection && !inspection.canEdit) {
+    return (
+      <AuditLoadingState
+        message="This inspection has been submitted and can no longer be edited."
+        onBack={() => navigate(INSPECTOR_PATH)}
+      />
+    );
+  }
 
-  const handleSubmit = async () => {
-    if (!validateStepOne() || !validateStepTwo() || !validateStepThree()) return;
-    if (!(await clearDraft())) return;
-    toast.success("Inspection submitted successfully");
-    navigate(INSPECTION_INSPECTOR_PATH);
-  };
-
-  const addAttachments = (id: string, fileList: FileList | null) => {
-    const files = Array.from(fileList || []);
-    const rejected = files.filter((f) => !isAllowedAttachment(f));
-    if (rejected.length) {
-      toast.error(
-        `${rejected.map((f) => f.name).join(", ")} not allowed. Only PDF, JPEG, JPG and PNG files are accepted.`,
-      );
-    }
-    updateAnswer(id, { attachments: [...answers[id].attachments, ...files.filter(isAllowedAttachment)] });
-  };
-
-  if (error) return <div className="p-6" role="alert">Unable to load draft. <button onClick={retry}>Retry</button></div>;
-  if (loading) return <div className="p-6" role="status">Loading draft...</div>;
   return (
     <fieldset disabled={saving} className="p-6 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
@@ -175,7 +331,11 @@ const InspectionInspectorAddPage = () => {
         >
           <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Inspection</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">
+          {isEdit
+            ? `Edit Inspection${inspection ? ` — ${inspection.inspectionNo}` : ""}`
+            : "Inspection"}
+        </h1>
       </div>
 
       {/* Stepper: n of 3 steps — completed steps show a check */}
@@ -185,7 +345,10 @@ const InspectionInspectorAddPage = () => {
         </p>
         <div className="flex items-center">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
-            <div key={n} className={`flex items-center ${n < TOTAL_STEPS ? "flex-1" : ""}`}>
+            <div
+              key={n}
+              className={`flex items-center ${n < TOTAL_STEPS ? "flex-1" : ""}`}
+            >
               <span
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                   n <= step
@@ -196,7 +359,9 @@ const InspectionInspectorAddPage = () => {
                 {n < step ? <Check className="w-4 h-4" /> : n}
               </span>
               {n < TOTAL_STEPS && (
-                <span className={`mx-2 h-px flex-1 ${n < step ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`} />
+                <span
+                  className={`mx-2 h-px flex-1 ${n < step ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`}
+                />
               )}
             </div>
           ))}
@@ -205,85 +370,109 @@ const InspectionInspectorAddPage = () => {
 
       {step === 1 && (
         <>
-          <DetailCard icon={sectionIcon(User)} title="Inspector Details" className="mb-5">
+          <DetailCard
+            icon={sectionIcon(User)}
+            title="Inspector Details"
+            className="mb-5"
+          >
             <div className="space-y-2">
-              <InfoRow label="Name" value={loggedInUser.name} />
-              <InfoRow label="Mail ID" value={loggedInUser.email} />
-              <InfoRow label="Employer Name" value={loggedInUser.designation} />
+              <InfoRow
+                label="Name"
+                value={inspection?.inspector?.name || loggedInUser.name}
+              />
+              <InfoRow
+                label="Mail ID"
+                value={inspection?.inspector?.email || loggedInUser.email}
+              />
+              <InfoRow
+                label="Designation"
+                value={
+                  inspection?.inspector?.designation || loggedInUser.designation
+                }
+              />
             </div>
           </DetailCard>
 
-          <DetailCard icon={sectionIcon(FileText)} title="Basic Details" className="mb-5">
+          <DetailCard
+            icon={sectionIcon(FileText)}
+            title="Basic Details"
+            className="mb-5"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-5">
               <TextField
                 fullWidth
                 type="date"
                 label={requiredLabel("Date of Inspection")}
-                value={basic.dateOfInspection}
-                onChange={(e) => setBasic((p) => ({ ...p, dateOfInspection: e.target.value }))}
+                value={basic.inspection_date}
+                onChange={(e) => setBasic({ inspection_date: e.target.value })}
                 inputProps={{ max: todayIso() }}
                 InputLabelProps={{ shrink: true }}
               />
-              <SelectField
+              <IncidentSelectField
                 label="Circle"
                 required
-                value={basic.circle}
-                onChange={(v) => setBasic((p) => ({ ...p, circle: v }))}
-                options={masters.clusters}
+                value={basic.circle_id}
+                onChange={(v) => setBasic({ circle_id: v })}
+                options={masters.circles}
                 loading={mastersLoading}
-                placeholder="Select inspection circle"
+                placeholder="Select circle"
               />
-              <SelectField
+              <IncidentSelectField
                 label="Personnel Area"
                 required
-                value={basic.personnelArea}
-                onChange={(v) => setBasic((p) => ({ ...p, personnelArea: v }))}
-                options={masters.circles}
+                value={basic.personal_area_id}
+                onChange={(v) => setBasic({ personal_area_id: v })}
+                options={masters.personalAreas}
                 loading={mastersLoading}
                 placeholder="Select personnel area"
               />
-              <SelectField
+              <IncidentSelectField
                 label="Work Location"
                 required
-                value={basic.workLocation}
-                onChange={(v) => setBasic((p) => ({ ...p, workLocation: v }))}
+                value={basic.work_location_id}
+                onChange={(v) => setBasic({ work_location_id: v })}
                 options={masters.workLocations}
                 loading={mastersLoading}
                 placeholder="Select work location"
               />
-              <TextField
-                fullWidth
-                label={requiredLabel("Inspection Location")}
-                placeholder="Enter inspection location"
-                value={basic.location}
-                onChange={(e) => setBasic((p) => ({ ...p, location: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
+              <IncidentSelectField
+                label="Inspection Type"
+                required
+                value={basic.inspection_type_id}
+                onChange={changeInspectionType}
+                options={inspectionTypeOptions}
+                loading={inspectionTypesLoading}
+                placeholder="Select inspection type"
               />
-              <SelectField
+              {latLongRequired && (
+                <TextField
+                  fullWidth
+                  label={requiredLabel("Inspector Location")}
+                  placeholder="Enter inspector location"
+                  value={basic.inspector_location}
+                  onChange={(e) =>
+                    setBasic({ inspector_location: e.target.value })
+                  }
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+              <IncidentSelectField
                 label="Function"
                 required
-                value={basic.function}
-                onChange={(v) => setBasic((p) => ({ ...p, function: v }))}
+                value={basic.department_id}
+                onChange={(v) => setBasic({ department_id: v })}
                 options={masters.departments}
                 loading={mastersLoading}
-                placeholder="Select inspection function"
+                placeholder="Select function"
               />
-              <SelectField
+              <IncidentSelectField
                 label="Type of Facility"
                 required
-                value={basic.facilityType}
-                onChange={(v) => setBasic((p) => ({ ...p, facilityType: v }))}
-                options={masters.visitBusinessAreas}
+                value={basic.facility_type_id}
+                onChange={(v) => setBasic({ facility_type_id: v })}
+                options={masters.facilityTypes}
                 loading={mastersLoading}
                 placeholder="Select type of facility"
-              />
-              <SelectField
-                label="Type"
-                required
-                value={basic.type}
-                onChange={(v) => setBasic((p) => ({ ...p, type: v }))}
-                options={INSPECTION_TYPE_OPTIONS}
-                placeholder="Select inspection type"
               />
             </div>
           </DetailCard>
@@ -291,79 +480,106 @@ const InspectionInspectorAddPage = () => {
       )}
 
       {step === 2 && (
-        <DetailCard icon={sectionIcon(ClipboardCheck)} title="Checklists" className="mb-5">
-          <div className="space-y-6">
-            {INSPECTION_CHECKLIST.map((q, index) => {
-              const entry = answers[q.id];
-              return (
-                <div key={q.id} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
-                  <p className="mb-3 text-sm font-medium text-[#1A1A18]">
-                    {index + 1}. {requiredLabel(q.question)}
-                  </p>
-                  <div className="mb-3 flex flex-wrap gap-6">
-                    {CHECKLIST_ANSWERS.map((option) => (
-                      <label key={option} className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A18]">
-                        <input
-                          type="radio"
-                          name={`checklist-${q.id}`}
-                          value={option}
-                          checked={entry.answer === option}
-                          onChange={() => updateAnswer(q.id, { answer: option })}
-                          className="h-4 w-4 accent-[#1A1A18]"
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    label="Remarks (if any)"
-                    placeholder="Enter remarks"
-                    value={entry.remarks}
-                    onChange={(e) => updateAnswer(q.id, { remarks: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  {entry.attachments.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {entry.attachments.map((file, i) => (
-                        <AttachmentPreview
-                          key={`${file.name}-${i}`}
-                          file={file}
-                          onRemove={() =>
-                            updateAnswer(q.id, { attachments: entry.attachments.filter((_, idx) => idx !== i) })
-                          }
-                        />
+        <DetailCard
+          icon={sectionIcon(ClipboardCheck)}
+          title="Checklists"
+          className="mb-5"
+        >
+          {questionsLoading ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              Loading checklist questions...
+            </p>
+          ) : !basic.inspection_type_id ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              Select an inspection type in step 1.
+            </p>
+          ) : !questions.length ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              No active checklist questions for this inspection type.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {questions.map((q, index) => {
+                const entry = answerFor(q.id);
+                return (
+                  <div
+                    key={q.id}
+                    className={
+                      index > 0
+                        ? "border-t border-[rgba(26,26,24,0.09)] pt-6"
+                        : ""
+                    }
+                  >
+                    <p className="mb-3 text-sm font-medium text-[#1A1A18]">
+                      {index + 1}. {requiredLabel(q.question)}
+                    </p>
+                    <div className="mb-3 flex flex-wrap gap-6">
+                      {CHECKLIST_ANSWERS.map((option) => (
+                        <label
+                          key={option}
+                          className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A18]"
+                        >
+                          <input
+                            type="radio"
+                            name={`checklist-${q.id}`}
+                            value={option}
+                            checked={entry.answer === option}
+                            onChange={() =>
+                              updateAnswer(q.id, { answer: option })
+                            }
+                            className="h-4 w-4 accent-[#1A1A18]"
+                          />
+                          {option}
+                        </label>
                       ))}
                     </div>
-                  )}
-                  <div className="mt-3 flex justify-end">
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[#1A1A18] underline-offset-2 hover:underline">
-                      <Paperclip className="w-4 h-4" />
-                      Attachment
-                      <input
-                        type="file"
-                        multiple
-                        accept={ATTACHMENT_ACCEPT}
-                        className="hidden"
-                        onChange={(e) => {
-                          addAttachments(q.id, e.target.files);
-                          e.target.value = "";
-                        }}
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      sx={auditTextareaSx}
+                      label="Remarks (if any)"
+                      placeholder="Enter remarks"
+                      value={entry.remark}
+                      onChange={(e) =>
+                        updateAnswer(q.id, { remark: e.target.value })
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <div className="mt-3">
+                      <AttachmentPicker
+                        label="Attachment"
+                        files={entry.files}
+                        onFilesChange={(files) => updateAnswer(q.id, { files })}
+                        existing={entry.existing}
+                        onRemoveExisting={(attachment) =>
+                          updateAnswer(q.id, {
+                            existing: entry.existing.filter(
+                              (a) => a.id !== attachment.id
+                            ),
+                            removeAttachmentIds: [
+                              ...entry.removeAttachmentIds,
+                              attachment.id,
+                            ],
+                          })
+                        }
                       />
-                    </label>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </DetailCard>
       )}
 
       {step === 3 && (
-        <DetailCard icon={sectionIcon(UserPlus)} title="Assign Functional Head" className="mb-5">
-          <div className="grid grid-cols-3 items-end gap-5 [&>div]:min-w-0">
+        <DetailCard
+          icon={sectionIcon(UserPlus)}
+          title="Assign SPOC & Functional Head"
+          className="mb-5"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-5 [&>div]:min-w-0">
             <UserSelectField
               label="SPOC"
               required
@@ -387,7 +603,10 @@ const InspectionInspectorAddPage = () => {
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                inputProps={{ min: todayIso(), "aria-label": "Select Target Date" }}
+                inputProps={{
+                  min: basic.inspection_date || todayIso(),
+                  "aria-label": "Select Target Date",
+                }}
               />
             </div>
           </div>
@@ -395,16 +614,28 @@ const InspectionInspectorAddPage = () => {
       )}
 
       <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
-          Save draft
+        <button
+          type="button"
+          className="fm-action-secondary"
+          onClick={() => save(false)}
+        >
+          {saving ? "Saving..." : "Save draft"}
         </button>
         {step < TOTAL_STEPS ? (
-          <button type="button" className="fm-action-primary" onClick={handleNext}>
+          <button
+            type="button"
+            className="fm-action-primary"
+            onClick={handleNext}
+          >
             Next
           </button>
         ) : (
-          <button type="button" className="fm-action-primary" onClick={handleSubmit}>
-            Submit
+          <button
+            type="button"
+            className="fm-action-primary"
+            onClick={() => save(true)}
+          >
+            {saving ? "Submitting..." : "Submit"}
           </button>
         )}
       </div>
