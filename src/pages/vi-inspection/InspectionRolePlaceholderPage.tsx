@@ -3,20 +3,19 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InspectionListView } from "@/components/vi-inspection/InspectionListView";
 import { InspectionDetailView } from "@/components/vi-inspection/InspectionDetailView";
+import { INSPECTION_PATHS } from "@/components/vi-inspection/viInspectionData";
 
-export const INSPECTION_INSPECTOR_PATH = "/safety/vi-inspection/inspector";
-const INSPECTION_SPOC_PATH = "/safety/vi-inspection/spoc";
-const INSPECTION_ACTION_OWNER_PATH = "/safety/vi-inspection/action-owner";
-const INSPECTION_FUNCTIONAL_HEAD_PATH = "/safety/vi-inspection/functional-head";
+export const INSPECTION_INSPECTOR_PATH = INSPECTION_PATHS.inspector;
 
-// Inspector: inspection list with "Add Inspection" (creates a new inspection in a 3-step form).
+// Inspector: own inspections, "Add Inspection", and edit on own drafts (can_edit).
 export const InspectionInspectorListPage = () => {
   const navigate = useNavigate();
   return (
     <InspectionListView
+      role="inspector"
       title="Inspection — Inspector"
-      detailBasePath={INSPECTION_INSPECTOR_PATH}
       storageKey="vi-inspection-list-inspector"
+      editPath={(inspection) => `${INSPECTION_INSPECTOR_PATH}/${inspection.id}/edit`}
       leftActions={
         <Button
           className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
@@ -30,38 +29,48 @@ export const InspectionInspectorListPage = () => {
   );
 };
 
-// Functional Head shares the SPOC list view, with read-only inspection details.
 export const InspectionSpocListPage = () => (
-  <InspectionListView
-    title="Inspection — SPOC"
-    detailBasePath={INSPECTION_SPOC_PATH}
-    storageKey="vi-inspection-list-spoc"
-  />
+  <InspectionListView role="spoc" title="Inspection — SPOC" storageKey="vi-inspection-list-spoc" />
 );
 
 export const InspectionActionOwnerListPage = () => (
   <InspectionListView
+    role="action_owner"
     title="Inspection — Action Owner"
-    detailBasePath={INSPECTION_ACTION_OWNER_PATH}
     storageKey="vi-inspection-list-action-owner"
     enableReportDownload
   />
 );
 
 export const InspectionFunctionalHeadListPage = () => (
-  <InspectionListView
-    title="Inspection — Functional Head"
-    detailBasePath={INSPECTION_FUNCTIONAL_HEAD_PATH}
-    storageKey="vi-inspection-list-functional-head"
-  />
+  <InspectionListView role="functional_head" title="Inspection — Functional Head" storageKey="vi-inspection-list-functional-head" />
 );
 
-const InspectionRoleDetailPage = ({ listPath }: { listPath: string }) => {
+// Inspector: detail of an own inspection, with "Edit Draft" while it is still a draft.
+export const InspectionInspectorDetailPage = () => {
   const { id } = useParams();
-  return <InspectionDetailView inspectionId={id} listPath={listPath} />;
+  const navigate = useNavigate();
+  return (
+    <InspectionDetailView
+      inspectionId={id}
+      listPath={INSPECTION_INSPECTOR_PATH}
+      footer={({ inspection }) =>
+        inspection.canEdit ? (
+          <button
+            type="button"
+            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
+            onClick={() => navigate(`${INSPECTION_INSPECTOR_PATH}/${inspection.id}/edit`)}
+          >
+            Edit Draft
+          </button>
+        ) : null
+      }
+    />
+  );
 };
 
-export const InspectionInspectorDetailPage = () => <InspectionRoleDetailPage listPath={INSPECTION_INSPECTOR_PATH} />;
-export const InspectionFunctionalHeadDetailPage = () => (
-  <InspectionRoleDetailPage listPath={INSPECTION_FUNCTIONAL_HEAD_PATH} />
-);
+// Functional Head: read-only view (GET /vi_inspections/:id.json only).
+export const InspectionFunctionalHeadDetailPage = () => {
+  const { id } = useParams();
+  return <InspectionDetailView inspectionId={id} listPath={INSPECTION_PATHS.functional_head} />;
+};
