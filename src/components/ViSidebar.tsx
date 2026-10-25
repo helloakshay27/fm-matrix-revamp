@@ -107,10 +107,22 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: ClipboardCheck,
       href: "/safety/audit",
       subItems: [
-        { name: "Auditor", href: "/safety/audit-list", color: "text-[#1a1a1a]" },
+        {
+          name: "Auditor",
+          href: "/safety/audit-list",
+          color: "text-[#1a1a1a]",
+        },
         { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/audit/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/audit/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Action Owner",
+          href: "/safety/audit/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/audit/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -118,10 +130,26 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: AlertTriangle,
       href: "/safety/vi-incident",
       subItems: [
-        { name: "Reporter", href: "/safety/vi-incident/reporter", color: "text-[#1a1a1a]" },
-        { name: "SPOC", href: "/safety/vi-incident/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/vi-incident/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/vi-incident/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Reporter",
+          href: "/safety/vi-incident/reporter",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-incident/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-incident/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-incident/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -129,10 +157,26 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: ClipboardList,
       href: "/safety/vi-inspection",
       subItems: [
-        { name: "Inspector", href: "/safety/vi-inspection/inspector", color: "text-[#1a1a1a]" },
-        { name: "SPOC", href: "/safety/vi-inspection/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/vi-inspection/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/vi-inspection/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Inspector",
+          href: "/safety/vi-inspection/inspector",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-inspection/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-inspection/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-inspection/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -301,6 +345,20 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         {
           name: "Booking",
           href: "/settings/vas/booking/setup",
+        },
+      ],
+    },
+    {
+      name: "Inspection Master",
+      icon: Star,
+      subItems: [
+        {
+          name: "Inspection Type",
+          href: "/settings/inspection-master/inspection-type",
+        },
+        {
+          name: "Inspection Checklist",
+          href: "/settings/inspection-master/inspection-checklist",
         },
       ],
     },
