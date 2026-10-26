@@ -502,7 +502,7 @@ const IncidentSpocActionPlanPage = () => {
             </>
           )}
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 sm:pt-6">
             {draftButton}
             {investigationRequired ? (
               <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleNext} disabled={saving}>
@@ -610,7 +610,7 @@ const IncidentSpocActionPlanPage = () => {
             </DetailCard>
           ))}
 
-          <div className="fm-action-bar pt-4 sm:pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 sm:pt-6">
             {draftButton}
             <button type="button" className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed" onClick={handleSubmitPlans} disabled={saving}>
               Submit
