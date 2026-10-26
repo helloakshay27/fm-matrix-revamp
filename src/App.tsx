@@ -736,12 +736,7 @@ const SpocActionPlanDetailPage = lazy(
 const FunctionalHeadActionPlanDetailPage = lazy(
   () => import("./pages/vi-audit/functional-head/FunctionalHeadActionPlanDetailPage")
 );
-const ViAuditManagementDashboardPage = lazy(
-  () => import("./pages/vi-audit/dashboard/ViAuditManagementDashboardPage")
-);
-const ViIncidentManagementDashboardPage = lazy(
-  () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
-);
+
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );

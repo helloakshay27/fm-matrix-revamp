@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Paperclip, type LucideIcon } from "lucide-react";
 import { VI_AUDIT_STATUS_TONE, isPlanDateBreached, type ViActionPlan, type ViActionTaken } from "./viAuditData";
 
@@ -107,11 +108,27 @@ export const FieldGrid = ({
     } gap-y-4 gap-x-8`}
   >
     {fields.map(({ label, value, span }) => (
-      <div key={label} className={`flex items-start ${span ? "md:col-span-2 lg:col-span-full" : ""}`}>
-        <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">{label}</div>
-        <div className="text-[14px] font-semibold text-gray-900 flex-1 break-words">{value || "-"}</div>
-      </div>
+      <LabelValue key={label} label={label} className={span ? "md:col-span-2 lg:col-span-full" : ""}>
+        {value || "-"}
+      </LabelValue>
     ))}
+  </div>
+);
+
+// One label-left row: fixed label column (wide enough for "Extended Target Date" on one line),
+// a gap, then the value, which wraps inside its own column.
+export const LabelValue = ({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) => (
+  <div className={`flex items-start gap-3 ${className}`}>
+    <div className="w-[170px] shrink-0 text-[14px] leading-5 text-gray-500">{label}</div>
+    <div className="min-w-0 flex-1 break-words text-[14px] font-semibold leading-5 text-gray-900">{children}</div>
   </div>
 );
 
@@ -138,29 +155,17 @@ export const ActionPlanRecord = ({
         <DueLabel label={plan.dueLabel ?? (isPlanDateBreached(plan) ? "Date breached" : undefined)} />
       </div>
       <p className={`text-sm text-gray-900 ${clampDescription ? "line-clamp-2" : ""}`}>{plan.description}</p>
-      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 sm:max-w-xl">
-        <div className="flex items-start">
-          <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">Action Owner</div>
-          <div className="text-[14px] font-semibold text-gray-900">{plan.actionOwner || "-"}</div>
-        </div>
-        <div className="flex items-start">
-          <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">Target Date</div>
-          <div className="text-[14px] font-semibold text-gray-900">{plan.targetDate || "-"}</div>
-        </div>
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 md:max-w-3xl">
+        <LabelValue label="Action Owner">{plan.actionOwner || "-"}</LabelValue>
+        <LabelValue label="Target Date">{plan.targetDate || "-"}</LabelValue>
         {/* Shown only when the target date has been extended */}
-        {plan.extendedTargetDate && (
-          <div className="flex items-start">
-            <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">Extended Target Date</div>
-            <div className="text-[14px] font-semibold text-gray-900">{plan.extendedTargetDate}</div>
-          </div>
+        {plan.extendedTargetDate && <LabelValue label="Extended Target Date">{plan.extendedTargetDate}</LabelValue>}
+        {plan.extendedTargetDate && plan.extensionReason && (
+          <LabelValue label="Reason for Extension" className="md:col-span-2">
+            <span className={clampDescription ? "line-clamp-2" : ""}>{plan.extensionReason}</span>
+          </LabelValue>
         )}
       </div>
-      {plan.extendedTargetDate && plan.extensionReason && (
-        <div className="mt-2 flex items-start">
-          <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">Reason for Extension</div>
-          <p className={`text-[14px] font-semibold text-gray-900 flex-1 ${clampDescription ? "line-clamp-2" : ""}`}>{plan.extensionReason}</p>
-        </div>
-      )}
       <div className="mt-3">
         {plan.capaClosure ? (
           // capa_closure label, toned by capa_closure_key (closed by action owner = green, else pending)
@@ -197,24 +202,22 @@ export const ActionPlanRecord = ({
 
 // Actions already taken against the plan (its CAPAs): description, closure date, attachments.
 export const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
-  <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+  <div className="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200">
     {actions.map((action) => (
-      <div key={action.id} className="px-4 py-4">
+      <div key={action.id} className="bg-white px-4 py-4">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-sm text-[#1A1A18] whitespace-pre-line">{action.description || "-"}</p>
+          <p className="text-sm text-gray-900 whitespace-pre-line">{action.description || "-"}</p>
           {/* CAPA status (draft / open / closed) */}
           {action.status && (
             <AuditStatusPill status={action.status === "closed" ? "Closed" : action.status === "open" ? "Open" : "Draft"} />
           )}
         </div>
-        <div className="mt-3">
-          <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Closure Date</div>
-          <div className="text-sm font-medium text-[#1A1A18]">{action.closureDate || "-"}</div>
-        </div>
+        <LabelValue label="Closure Date" className="mt-3">
+          {action.closureDate || "-"}
+        </LabelValue>
         {action.attachments.length > 0 && (
-          <div className="mt-3">
-            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-2">Attachments</div>
-            <div className="flex flex-wrap gap-3">
+          <LabelValue label="Attachments" className="mt-3">
+            <div className="flex flex-wrap gap-3 font-normal">
               {action.attachments.map((file, index) => {
                 // Image preview (URLs end in /download, so the type comes from the file name).
                 const isImage = /\.(png|jpe?g)$/i.test(file.name) || /^data:image\//i.test(file.url);
@@ -239,7 +242,7 @@ export const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
                 );
               })}
             </div>
-          </div>
+          </LabelValue>
         )}
       </div>
     ))}
