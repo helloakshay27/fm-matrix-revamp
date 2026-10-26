@@ -5,6 +5,7 @@ import {
   dashboardGroupCount,
   dashboardGroupLabel,
 } from "@/components/vi-incident/viIncidentApi";
+import { hasSpocDraft, type ViIncidentRecord } from "@/components/vi-incident/viIncidentData";
 
 export const INCIDENT_SPOC_PATH = "/safety/vi-incident/spoc";
 
@@ -27,7 +28,16 @@ const buildSpocStats: IncidentStatsBuilder = (d) => {
   ];
 };
 
-// SPOC: incidents assigned for review (GET /vi_incidents/spoc_incidents.json). Open one to create its action plan.
+// A saved, unsubmitted investigation / action plan reopens the action plan form.
+const spocDraftPath = (incident: ViIncidentRecord) =>
+  hasSpocDraft(incident) ? `${INCIDENT_SPOC_PATH}/${incident.id}/action-plan` : null;
+
+// List rows don't carry the investigation, so a still-pending incident's draft is read from its detail.
+const spocNeedsDetail = (incident: ViIncidentRecord) =>
+  incident.storedStatus === "open" && !incident.investigation.submitted && !hasSpocDraft(incident);
+
+// SPOC: incidents assigned for review (GET /vi_incidents/spoc_incidents.json). Open one to create its action plan;
+// a draft action plan can be edited straight from the list.
 const IncidentSpocListPage = () => (
   <IncidentListView
     role="spoc"
@@ -35,6 +45,8 @@ const IncidentSpocListPage = () => (
     detailBasePath={INCIDENT_SPOC_PATH}
     storageKey="vi-incident-list-spoc"
     buildStats={buildSpocStats}
+    editPath={spocDraftPath}
+    needsDetail={spocNeedsDetail}
   />
 );
 

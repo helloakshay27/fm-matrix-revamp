@@ -7,6 +7,7 @@ import { arr, obj, personName, text, toAttachment } from "@/components/vi-audit/
 import type { MasterOption } from "@/components/vi-audit/useViAuditMasters";
 import type { ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import {
+  isAssignmentDraft,
   type ViIncidentActionPlan,
   type ViIncidentActionType,
   type ViIncidentAssignment,
@@ -342,6 +343,7 @@ export const toIncidentRecord = (r: Raw, index = 0): ViIncidentRecord => {
     checklistItems: [...items.values()],
     actionPlans,
     myAssignmentIds: arr(r.my_assignments).map((a) => text(a.id)).filter(Boolean),
+    myAssignmentStatuses: arr(r.my_assignments).map((a) => text(a.status).toLowerCase()).filter(Boolean),
     injuriesCount: num(r.injuries_count),
     actionPlansCount: num(r.action_plans_count),
     assignmentsCount: num(r.assignments_count),
@@ -606,6 +608,36 @@ export const useViIncidentDetail = (id: string | undefined) => {
   return { incident, loading, reload };
 };
 
+/**
+ * Full records (GET /vi_incidents/:id.json) for the given list rows — for what list rows leave out,
+ * e.g. the SPOC's saved investigation / action plans. A failed fetch just leaves that row out.
+ */
+export const useViIncidentDetails = (ids: number[]) => {
+  const idsKey = ids.join(",");
+  const [details, setDetails] = useState<Map<number, ViIncidentRecord>>(new Map());
+
+  useEffect(() => {
+    if (!idsKey) {
+      setDetails(new Map());
+      return;
+    }
+    const controller = new AbortController();
+    Promise.all(
+      idsKey.split(",").map((id) =>
+        viIncidentRequest(`/vi_incidents/${encodeURIComponent(id)}.json`, { signal: controller.signal })
+          .then((json) => toIncidentRecord(unwrap(json)))
+          .catch(() => null),
+      ),
+    ).then((records) => {
+      if (controller.signal.aborted) return;
+      setDetails(new Map(records.filter((r): r is ViIncidentRecord => r !== null).map((r) => [r.id, r])));
+    });
+    return () => controller.abort();
+  }, [idsKey]);
+
+  return details;
+};
+
 /** Logged-in user's id — action owners only see / act on their own assignments. */
 export const currentUserId = () => text(getUser()?.id);
 
@@ -631,14 +663,35 @@ export const useViIncidentMyAssignmentIds = (incidentId: string | undefined) => 
     incidentId ? "/vi_incident_action_assignments.json?per_page=100" : null,
     "Failed to load your assignments",
   );
-  const ids = useMemo(() => {
-    const root = obj(json);
-    const data = root.data;
-    const rows = Array.isArray(data) ? (data as Raw[]) : arr(obj(data).assignments, root.assignments);
-    return rows.filter((a) => assignmentIncidentId(a) === incidentId).map((a) => text(a.id)).filter(Boolean);
-  }, [json, incidentId]);
+  const ids = useMemo(
+    () => assignmentRows(json).filter((a) => assignmentIncidentId(a) === incidentId).map((a) => text(a.id)).filter(Boolean),
+    [json, incidentId],
+  );
   return { ids, loading };
 };
+
+const assignmentRows = (json: unknown) => {
+  const root = obj(json);
+  const data = root.data;
+  return Array.isArray(data) ? (data as Raw[]) : arr(obj(data).assignments, root.assignments);
+};
+
+/**
+ * Incidents where the logged-in owner has saved an action taken without submitting it — status
+ * "draft", or still open with an action taken filled in (GET /vi_incident_action_assignments.json).
+ */
+export const useViIncidentMyDraftIncidentIds = () => {
+  const { json } = useViIncidentQuery("/vi_incident_action_assignments.json?per_page=100", "Failed to load your assignments");
+  return useMemo(() => draftIncidentIds(json), [json]);
+};
+
+export const draftIncidentIds = (assignmentsJson: unknown) =>
+  new Set(
+    assignmentRows(assignmentsJson)
+      .filter((row) => isAssignmentDraft(toAssignment(row)))
+      .map(assignmentIncidentId)
+      .filter(Boolean),
+  );
 
 /**
  * The incident's plans narrowed to the logged-in action owner's assignments: those listed by the

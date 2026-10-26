@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, FileText, Layers, ClipboardList, User, HeartPulse, Search } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { IncidentFieldGrid as FieldGrid } from "./IncidentFieldGrid";
 import { AttachmentLinks } from "./IncidentFormFields";
 import { IncidentStatusPill } from "./IncidentListView";
 import { incidentPendingWith, type ViIncidentRecord } from "./viIncidentData";
@@ -148,10 +149,12 @@ export const IncidentInvestigationCard = ({ incident }: { incident: ViIncidentRe
 export const IncidentHeader = ({
   incident,
   onBack,
+  draft = false,
   children,
 }: {
   incident: ViIncidentRecord;
   onBack: () => void;
+  draft?: boolean;
   children?: ReactNode;
 }) => {
   const pending = incidentPendingWith(incident);
@@ -168,6 +171,7 @@ export const IncidentHeader = ({
         </button>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentNo}</h1>
         <IncidentStatusPill status={incident.status} />
+        {draft && incident.status !== "Draft" && <IncidentStatusPill status="Draft" />}
         {children}
       </div>
       {/* Whose end the incident is waiting on */}
@@ -204,11 +208,13 @@ export const IncidentDetailView = ({
   loading,
   listPath,
   footer,
+  draft = false,
   children,
 }: {
   incident: ViIncidentRecord | null;
   loading: boolean;
   listPath: string;
+  draft?: boolean;
   /** Sticky action bar content, e.g. the SPOC's "Create Action Plan" button. */
   footer?: ReactNode;
   /** Extra content after the incident cards (e.g. the investigation and action plans). */
@@ -221,7 +227,7 @@ export const IncidentDetailView = ({
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
-      <IncidentHeader incident={incident} onBack={() => navigate(listPath)} />
+      <IncidentHeader incident={incident} onBack={() => navigate(listPath)} draft={draft} />
 
       <IncidentInfoCards incident={incident} />
 

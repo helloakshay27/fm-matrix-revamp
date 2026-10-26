@@ -1,3 +1,4 @@
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -292,6 +293,7 @@ const IncidentReporterAddPage = () => {
           <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident{incident ? ` — ${incident.incidentNo}` : ""}</h1>
+        {incident?.storedStatus === "draft" && <IncidentStatusPill status="Draft" />}
       </div>
 
       {/* Stepper: 1 of 2 steps */}
