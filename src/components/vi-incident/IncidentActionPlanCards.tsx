@@ -1,7 +1,8 @@
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import type { ReactNode } from "react";
 import { CheckSquare, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditStatusPill, DueLabel, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditStatusPill, DueLabel, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { AttachmentLinks } from "./IncidentFormFields";
 import {
   ACTION_TYPE_LABEL,

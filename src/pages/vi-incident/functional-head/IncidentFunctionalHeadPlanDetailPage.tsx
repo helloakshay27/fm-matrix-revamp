@@ -1,3 +1,4 @@
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck, FileText, ShieldCheck } from "lucide-react";
@@ -7,7 +8,6 @@ import {
   AuditLoadingState,
   AuditStatusPill,
   DueLabel,
-  FieldGrid,
   auditTabTriggerClass,
   auditTabsListClass,
   sectionIcon,

@@ -1,3 +1,4 @@
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -6,7 +7,6 @@ import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import {
   AuditLoadingState,
-  FieldGrid,
   sectionIcon,
   auditFieldSx,
 } from "@/components/vi-audit/ViAuditUi";

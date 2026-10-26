@@ -1,8 +1,9 @@
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList, FileText } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { IncidentHeader } from "@/components/vi-incident/IncidentDetailView";
 import { IncidentActionPlanCards } from "@/components/vi-incident/IncidentActionPlanCards";
 import {
