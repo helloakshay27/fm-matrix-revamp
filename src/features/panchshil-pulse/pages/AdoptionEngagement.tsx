@@ -7,6 +7,7 @@ import { LineChart } from "@/features/vi-posthog-dashboard/components/charts/Lin
 import { StackedBarChart } from "@/features/vi-posthog-dashboard/components/charts/StackedBarChart";
 import { toWeekLabels } from "@/features/vi-posthog-dashboard/data/usageChart";
 import { SectionState } from "../components/common/SectionState";
+import { AdoptionSkeleton } from "../components/common/PulseSkeletons";
 import { tileToKpi } from "../utils/tileAdapter";
 import { useChartColors } from "../utils/chartColors";
 
@@ -67,7 +68,7 @@ export const AdoptionEngagement: React.FC = () => {
         </ul>
       </div>
 
-      <SectionState status={vm.status.adopt} label="adoption data">
+      <SectionState status={vm.status.adopt} label="adoption data" skeleton={<AdoptionSkeleton />}>
         {/* KPI Tiles */}
         <div className="tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginTop: "16px" }} id="tilesAdoption">
           <KpiTile

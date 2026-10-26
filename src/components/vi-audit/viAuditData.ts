@@ -14,13 +14,74 @@ export interface ViActionPlan {
   actionNo?: string;
   description: string;
   actionOwner: string;
+  /** Original target date (target_date). */
   targetDate: string;
+  /** Extended target date + its reason, when the target date has been extended. */
+  extendedTargetDate?: string;
+  extensionReason?: string;
   dueLabel?: string;
   status: ViActionPlanStatus;
+  /** CAPA progress from the API: label ("CAPA Plan Not Started") and key ("capa_plan_not_started"). */
+  capaProgress?: string;
+  capaProgressKey?: string;
+  /** CAPA closure label ("CAPA Plan Not Closed By Action Owner") and key
+   *  ("capa_plan_not_closed_by_action_owner" / "capa_plan_closed_by_action_owner"). */
+  capaClosure?: string;
+  capaClosureKey?: string;
+  /** From the API: whether the action owner can still add action taken (CAPA) on this plan. */
+  canAddCapa?: boolean;
+  /** Actions taken (CAPAs) already recorded against this plan. */
+  capas?: ViActionTaken[];
 }
+
+export interface ViActionTaken {
+  id: string;
+  description: string;
+  closureDate: string;
+  /** CAPA status from the API: "draft" / "open" / "closed" (empty when not sent). */
+  status?: string;
+  attachments: { name: string; url: string }[];
+}
+
+/**
+ * True once an action taken (CAPA) has been submitted (closed) against the plan. Draft / open
+ * CAPAs don't count; a CAPA without a status (older responses) is treated as submitted.
+ */
+export const hasSubmittedActionTaken = (plan: ViActionPlan) =>
+  (plan.capas ?? []).some((capa) => !capa.status || capa.status.toLowerCase() === "closed");
+
+/** Today as YYYY-MM-DD in the user's local time zone. */
+export const localTodayIso = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+
+/**
+ * True when the plan's current due date (extended target date, else target date) has passed
+ * and the action owner hasn't closed it yet — the SPOC then has to extend the target date.
+ */
+export const isPlanDateBreached = (plan: ViActionPlan) => {
+  const due = (plan.extendedTargetDate || plan.targetDate || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return false;
+  const closed =
+    plan.capaClosureKey === "capa_plan_closed_by_action_owner" || plan.status === "Closed By Action Owner";
+  return !closed && due < localTodayIso();
+};
+
+/**
+ * True while the action owner still has to act on the plan: the API's `can_add_capa` when sent,
+ * otherwise the CAPA closure key / status says it isn't closed by the action owner yet.
+ */
+export const isPlanPendingByActionOwner = (plan: ViActionPlan) => {
+  if (typeof plan.canAddCapa === "boolean") return plan.canAddCapa;
+  if (plan.capaClosureKey) return plan.capaClosureKey !== "capa_plan_closed_by_action_owner";
+  return plan.status !== "Closed By Action Owner";
+};
 
 export interface ViObservation {
   id: string;
+  /** Display number from the API, e.g. "Obs01" (id stays the server id used in URLs). */
+  observationNo?: string;
   title?: string;
   area?: string;
   description: string;
@@ -33,6 +94,24 @@ export interface ViObservation {
   attachmentFiles?: { name: string; url: string }[];
   correctiveActions: ViActionPlan[];
   preventiveActions: ViActionPlan[];
+  /** Per-observation details (moved from the audit to each observation by the API). */
+  classification?: ViObservationClassification;
+  people?: ViPeopleInteracted;
+  vendor?: ViVendorDetails;
+}
+
+export interface ViObservationClassification {
+  classification: string;
+  category: string;
+  subCategory: string;
+}
+export interface ViPeopleInteracted {
+  fte: string[];
+  others: { name: string; designation: string }[];
+}
+export interface ViVendorDetails {
+  vendorName: string;
+  subVendorName: string;
 }
 
 export interface ViAuditDetail {
@@ -51,9 +130,13 @@ export interface ViAuditDetail {
     auditLocation: string;
     function: string;
   };
-  classification: { classification: string; category: string; subCategory: string };
-  people: { fte: string[]; others: { name: string; designation: string }[] };
-  vendor: { vendorName: string; subVendorName: string };
+  /**
+   * Audit-level copies — the API now keeps these per observation; filled from the audit when an
+   * older response still has them, otherwise from the first observation.
+   */
+  classification: ViObservationClassification;
+  people: ViPeopleInteracted;
+  vendor: ViVendorDetails;
   observations: ViObservation[];
 }
 

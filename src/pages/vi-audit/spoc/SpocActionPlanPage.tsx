@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Plus, ShieldCheck, Trash2 } from "lucide-react";
@@ -6,7 +6,8 @@ import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon, auditTextareaSx } from "@/components/vi-audit/ViAuditUi";
+import { arr, obj, personName, text } from "@/components/vi-audit/useViAuditDetail";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { apiErrorMessage } from "@/components/vi-audit/viAuditApi";
@@ -38,8 +39,24 @@ const emptyEntry = (): PlanEntry => ({
   extensionReason: "",
 });
 
-const PLAN_SECTIONS: { kind: PlanKind; title: string; window: string }[] = [
-  { kind: "corrective", title: "Corrective Action Plan", window: "0–7 days" },
+// A saved (draft / open) plan from GET /vi_audit_observations/:id.json as a form entry.
+const toPlanEntry = (p: Record<string, unknown>): PlanEntry => {
+  const person = obj(p.responsible_person);
+  const personId = text(p.responsible_person_id, person.id);
+  return {
+    id: text(p.id) || undefined,
+    description: text(p.action_plan, p.description),
+    responsiblePerson: personId
+      ? { id: personId, name: text(personName(person)) || `User ${personId}`, email: text(person.email) || undefined }
+      : null,
+    targetDate: text(p.target_date).slice(0, 10) || todayIso(),
+    extendTargetDate: text(p.extend_target_date).slice(0, 10),
+    extensionReason: text(p.extension_reason),
+  };
+};
+
+const PLAN_SECTIONS: { kind: PlanKind; title: string; window?: string }[] = [
+  { kind: "corrective", title: "Corrective Action Plan" },
   { kind: "preventive", title: "Preventive Action Plan", window: "15–30 days" },
 ];
 
@@ -60,6 +77,49 @@ const SpocActionPlanPage = () => {
     preventive: [emptyEntry()],
   });
   const [submitting, setSubmitting] = useState(false);
+  // Saved plans of this observation that aren't submitted yet ("Continue Draft"); while loading,
+  // the form waits so the draft values are preselected.
+  const [loadingDraft, setLoadingDraft] = useState(true);
+  const [hasDraft, setHasDraft] = useState(false);
+
+  useEffect(() => {
+    if (!observationId) {
+      setLoadingDraft(false);
+      return;
+    }
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(getFullUrl(`/vi_audit_observations/${encodeURIComponent(observationId)}.json`), {
+          headers: { Authorization: getAuthHeader() },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const root = obj(await response.json());
+        const observation = obj(root.data ?? root.vi_audit_observation ?? root);
+        // Only plans still editable by the SPOC — closed (submitted) plans stay out of the form.
+        const saved = arr(observation.action_plans).filter((p) => text(p.status).toLowerCase() !== "closed");
+        const ofType = (kind: PlanKind) =>
+          saved.filter((p) => text(p.action_type).toLowerCase() === kind).map(toPlanEntry);
+        if (saved.length) {
+          const corrective = ofType("corrective");
+          const preventive = ofType("preventive");
+          setPlans({
+            corrective: corrective.length ? corrective : [emptyEntry()],
+            preventive: preventive.length ? preventive : [emptyEntry()],
+          });
+          setHasDraft(true);
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load saved action plans:", error);
+        toast.error("Failed to load saved draft action plans");
+      } finally {
+        if (!controller.signal.aborted) setLoadingDraft(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [observationId]);
 
   const updateEntry = (kind: PlanKind, index: number, patch: Partial<PlanEntry>) =>
     setPlans((prev) => ({
@@ -78,7 +138,7 @@ const SpocActionPlanPage = () => {
       for (const [index, entry] of plans[kind].entries()) {
         const label = plans[kind].length > 1 ? `${title} ${index + 1}` : title;
         if (!entry.description.trim() || !entry.responsiblePerson || !entry.targetDate) {
-          toast.error(`${label}: Action Plan, Responsible Person and Target Date are required`);
+          toast.error(`${label}: Action Plan, Action Owner and Target Date are required`);
           return false;
         }
         if (entry.extendTargetDate && entry.extendTargetDate < entry.targetDate) {
@@ -105,6 +165,10 @@ const SpocActionPlanPage = () => {
           action_plan: entry.description.trim(),
           responsible_person_id: entry.responsiblePerson?.id ?? null,
           target_date: entry.targetDate,
+          // Optional extension (must be on/after target_date and needs a reason — validated above).
+          ...(entry.extendTargetDate
+            ? { extend_target_date: entry.extendTargetDate, extension_reason: entry.extensionReason.trim() }
+            : {}),
         })),
     );
     return submit ? { submit: true, action_plans: actionPlans } : { action_plans: actionPlans };
@@ -140,6 +204,8 @@ const SpocActionPlanPage = () => {
     }
   };
 
+  if (loadingDraft) return <AuditLoadingState message="Loading action plan..." />;
+
   return (
     <div className="p-6 min-h-screen">
       {/* Header */}
@@ -156,6 +222,11 @@ const SpocActionPlanPage = () => {
         <span className="text-sm text-[rgba(26,26,24,0.48)]">
           {observationId} · Action Plan
         </span>
+        {hasDraft && (
+          <span className="inline-flex items-center rounded px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700">
+            Draft
+          </span>
+        )}
       </div>
 
       {/* Stepper: 3 of 3 — audit and observation steps done, action plan current (neutral states) */}
@@ -178,14 +249,14 @@ const SpocActionPlanPage = () => {
       </div>
 
       {PLAN_SECTIONS.map(({ kind, title, window }) => (
-        <DetailCard key={kind} icon={sectionIcon(ShieldCheck)} title={`${title} (${window})`} className="mb-5">
+        <DetailCard key={kind} icon={sectionIcon(ShieldCheck)} title={window ? `${title} (${window})` : title} className="mb-5">
           <div className="space-y-6">
             {plans[kind].map((entry, index) => (
               <div
                 key={index}
                 className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}
               >
-                {plans[kind].length > 1 && (
+                {plans[kind].length > 1 && !entry.id && (
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-[13px] font-semibold text-[#1A1A18]">Action {index + 1}</span>
                     <button
@@ -202,7 +273,8 @@ const SpocActionPlanPage = () => {
                   <TextField
                     fullWidth
                     multiline
-                    minRows={3}
+                    rows={3}
+                    sx={auditTextareaSx}
                     label="Action Plan"
                     placeholder={
                       kind === "corrective"
@@ -213,14 +285,16 @@ const SpocActionPlanPage = () => {
                     onChange={(e) => updateEntry(kind, index, { description: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                   />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* New plan: Action Owner + Target Date only. Extending the target date applies to an
+                      already saved plan (Continue Draft) and needs a reason. */}
+                  <div className={`grid grid-cols-1 gap-5 ${entry.id ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
                     <UserSelectField
-                      label="Responsible Person"
+                      label="Action Owner"
                       required
                       employeeType="internal"
                       value={entry.responsiblePerson}
                       onChange={(user) => updateEntry(kind, index, { responsiblePerson: user })}
-                      placeholder="Search responsible person by email or mobile"
+                      placeholder="Search action owner by email or mobile"
                     />
                     <TextField
                       fullWidth
@@ -230,26 +304,31 @@ const SpocActionPlanPage = () => {
                       onChange={(e) => updateEntry(kind, index, { targetDate: e.target.value })}
                       InputLabelProps={{ shrink: true }}
                     />
+                    {entry.id && (
+                      <TextField
+                        fullWidth
+                        type="date"
+                        label="Extend Target Date"
+                        value={entry.extendTargetDate}
+                        onChange={(e) => updateEntry(kind, index, { extendTargetDate: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ min: entry.targetDate || undefined }}
+                      />
+                    )}
+                  </div>
+                  {entry.id && entry.extendTargetDate && (
                     <TextField
                       fullWidth
-                      type="date"
-                      label="Extend Target Date"
-                      value={entry.extendTargetDate}
-                      onChange={(e) => updateEntry(kind, index, { extendTargetDate: e.target.value })}
+                      multiline
+                      rows={3}
+                      sx={auditTextareaSx}
+                      label={requiredLabel("Reason for extension")}
+                      placeholder="Describe the reason for extending the target date..."
+                      value={entry.extensionReason}
+                      onChange={(e) => updateEntry(kind, index, { extensionReason: e.target.value })}
                       InputLabelProps={{ shrink: true }}
-                      inputProps={{ min: entry.targetDate || undefined }}
                     />
-                  </div>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={3}
-                    label={entry.extendTargetDate ? requiredLabel("Reason for extension") : "Reason for extension"}
-                    placeholder="Describe the reason for extending the target date..."
-                    value={entry.extensionReason}
-                    onChange={(e) => updateEntry(kind, index, { extensionReason: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                  />
+                  )}
                 </div>
               </div>
             ))}

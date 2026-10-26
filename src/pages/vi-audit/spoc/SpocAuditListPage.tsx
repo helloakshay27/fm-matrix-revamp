@@ -4,11 +4,29 @@ import { AuditListView, type AuditListStat } from "@/components/vi-audit/AuditLi
 import { AUDIT_CARD_COLUMNS } from "@/components/vi-audit/viAuditListData";
 import { dashboardCount, useViAuditDashboard, workflowCount } from "@/components/vi-audit/useViAuditDashboard";
 import { VI_AUDIT_LIST_ENDPOINTS, useViAuditList } from "@/components/vi-audit/useViAuditList";
+import {
+  AuditFilterDialog,
+  EMPTY_AUDIT_FILTERS,
+  auditFiltersToParams,
+  type AuditStatusOption,
+  type ViAuditFilters,
+} from "@/components/vi-audit/AuditFilterDialog";
+
+const STATUS_OPTIONS: AuditStatusOption[] = [
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];
 
 // SPOC: audits assigned for review — GET /vi_audits/spoc_audits.json?page=&per_page=20.
 const SpocAuditListPage = () => {
   const [page, setPage] = useState(1);
-  const { audits, pagination, loading } = useViAuditList(page, VI_AUDIT_LIST_ENDPOINTS.spoc);
+  const [filters, setFilters] = useState<ViAuditFilters>(EMPTY_AUDIT_FILTERS);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { audits, pagination, loading } = useViAuditList(
+    page,
+    VI_AUDIT_LIST_ENDPOINTS.spoc,
+    auditFiltersToParams(filters),
+  );
 
   // Overall totals for the stats cards — GET /vi_audits/dashboard.json?role=spoc
   const { counts } = useViAuditDashboard("spoc");
@@ -29,12 +47,24 @@ const SpocAuditListPage = () => {
       storageKey="vi-audit-list-spoc"
       data={audits}
       loading={loading}
+      onFilterClick={() => setIsFilterOpen(true)}
       pagination={{
         currentPage: pagination.currentPage,
         totalPages: pagination.totalPages,
         onPageChange: setPage,
       }}
-    />
+    >
+      <AuditFilterDialog
+        open={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        filters={filters}
+        statusOptions={STATUS_OPTIONS}
+        onApply={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+      />
+    </AuditListView>
   );
 };
 

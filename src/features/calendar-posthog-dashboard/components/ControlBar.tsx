@@ -85,24 +85,28 @@ export function ControlBar() {
           </div>
           <div className="dr-custom">
             <div className="dr-custom-label">Custom range</div>
+            {/* Stacked so each input is wide enough to show the full day, month and year. */}
             <div className="dr-custom-row">
-              <input
-                type="date"
-                id="dateFrom"
-                value={draft.from}
-                max={draft.to || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
-                aria-label="From date"
-              />
-              <span className="dr-to">&ndash;</span>
-              <input
-                type="date"
-                id="dateTo"
-                value={draft.to}
-                min={draft.from || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
-                aria-label="To date"
-              />
+              <label className="dr-field" htmlFor="dateFrom">
+                From
+                <input
+                  type="date"
+                  id="dateFrom"
+                  value={draft.from}
+                  max={draft.to || undefined}
+                  onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                />
+              </label>
+              <label className="dr-field" htmlFor="dateTo">
+                To
+                <input
+                  type="date"
+                  id="dateTo"
+                  value={draft.to}
+                  min={draft.from || undefined}
+                  onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                />
+              </label>
             </div>
             <button
               type="button"

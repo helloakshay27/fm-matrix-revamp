@@ -38,10 +38,8 @@ export const assetExportService = {
    */
   startDigitalRegisterExport: async (): Promise<ExportStartResponse> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    const params = new URLSearchParams({ access_token: accessToken });
     // if (siteId) params.set('q[pms_site_id_eq]', siteId);
-    const url = `${getBaseUrl()}/pms/assets/asset_register_export?${params}`;
+    const url = `${getBaseUrl()}/pms/assets/asset_register_export`;
 
     try {
       const response = await fetch(url, {
@@ -119,12 +117,38 @@ export const assetExportService = {
   },
 
   /**
-   * Trigger download of a digital register export via browser navigation
+   * Download a digital register export
    * GET /pms/assets/download_export?key=KEY  → returns .xlsx attachment
    */
-  downloadDigitalRegisterExport: (key: string): void => {
-    const accessToken = getAccessToken();
-    window.location.href = `${getBaseUrl()}/pms/assets/download_export?key=${key}&access_token=${accessToken}`;
+  downloadDigitalRegisterExport: async (key: string): Promise<void> => {
+    const url = `${getBaseUrl()}/pms/assets/download_export?key=${key}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { Authorization: getAuthHeader() },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download digital register export: ${response.status}`);
+      }
+
+      const disposition = response.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const filename = match ? decodeURIComponent(match[1]) : `digital-register-${new Date().getTime()}.xlsx`;
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading digital register export:', error);
+      throw error;
+    }
   },
 
   /**

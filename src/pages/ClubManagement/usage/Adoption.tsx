@@ -14,6 +14,8 @@ export function Adoption() {
   const data = buildAdopt({} as DashboardState, filters.rangeTo, engQ.data, trendQ.data, growthQ.data, retentionQ.data, rolesQ.data);
   const adoptionError = queries.some((q) => q.isError) || modulesQuery.isError;
   const adoptionLoading = queries.some((q) => q.isLoading) || modulesQuery.isLoading;
+  // Each card skeletons only while the endpoint it reads from is loading.
+  const tilesLoading = engQ.isLoading || trendQ.isLoading;
   const modules = modulesQuery.data?.tree ?? [];
   const deltaLabel = (value: number | null) => value == null ? null : `${value > 0 ? "+" : ""}${value}% vs prev. period`;
   const breadthRows = data.roleShares.map((r) => ({ label: `${r.name} (${r.users})`, value: r.share, color: r.color }));
@@ -25,12 +27,13 @@ export function Adoption() {
         <h2>Adoption &amp; Engagement</h2>
       </div>
 
-      {adoptionLoading && <div className="bmnote" role="status">Loading adoption analytics…</div>}
+      {adoptionLoading && <span className="sr-only" role="status">Loading adoption analytics…</span>}
       {adoptionError && <div className="bmnote" role="alert">Some adoption analytics could not be loaded. Available metrics remain visible.</div>}
       {!adoptionLoading && !adoptionError && queries.some((q) => !q.data) && <div className="bmnote">Some adoption analytics are unavailable for this date range.</div>}
 
       <div className="tiles" style={{ gridTemplateColumns: "repeat(3,1fr)", marginTop: 16 }}>
         <Tile
+          loading={tilesLoading}
           label="Stickiness"
           val={data.tiles[0].disp}
           dir={data.tiles[0].delta == null ? "flat" : data.tiles[0].delta >= 0 ? "up" : "dn"}
@@ -38,6 +41,7 @@ export function Adoption() {
           sub={data.tiles[0].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Adoption Trend"
           val={data.tiles[1].disp}
           dir={data.tiles[1].disp.startsWith("-") ? "dn" : "up"}
@@ -45,6 +49,7 @@ export function Adoption() {
           sub={data.tiles[1].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="14-Day Activation"
           val={data.tiles[2].disp}
           dir={data.tiles[2].delta == null ? "flat" : data.tiles[2].delta >= 0 ? "up" : "dn"}
@@ -52,6 +57,7 @@ export function Adoption() {
           sub={data.tiles[2].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Module Breadth"
           val={data.tiles[3].disp}
           dir="flat"
@@ -65,6 +71,8 @@ export function Adoption() {
           eyebrow="Trend · SVG line chart"
           title="Adoption trend (weekly active staff, last 8 weeks)"
           purpose="Weekly active staff over the last 8 weeks — the trend line behind the Adoption Trend tile above."
+          loading={trendQ.isLoading}
+          skeleton="line"
         >
           <TrendLineChart labels={trendChart.labels} cur={trendChart.cur} prev={trendChart.prev} showPrev={filters.prev && trendChart.prev.length > 0} color={CHART.blue} fill={CHART.fill} />
           <div className="legend">
@@ -80,6 +88,8 @@ export function Adoption() {
           eyebrow="Growth accounting · Last 6 weeks"
           title="New · Returning · Resurrecting · Dormant"
           purpose="Breaks the active staff base into newly issued logins, retained staff, win-backs and staff going quiet — a fuller view than a simple new-vs-returning split."
+          loading={growthQ.isLoading}
+          skeleton="stacked"
         >
           <GrowthStackedBar
             labels={data.growthWeeks.map((w) => w.label)}
@@ -110,6 +120,8 @@ export function Adoption() {
           eyebrow="Retention · weekly cohorts"
           title="Do new staff logins keep coming back?"
           purpose="Each row = distinct_id values first active that week (proposed join key); cells = % of that cohort still active N weeks later."
+          loading={retentionQ.isLoading}
+          skeleton="table" skeletonRows={6} skeletonCols={6}
         >
           <div className="tbl-wrap">
             <table className="rt">
@@ -139,6 +151,8 @@ export function Adoption() {
           eyebrow="Adoption by role"
           title="Which staff roles are active?"
           purpose="Active-user share and user counts by role, returned by the roles analytics endpoint."
+          loading={rolesQ.isLoading}
+          skeleton="bars"
         >
           <HBarList rows={breadthRows} />
         </ChartCard>
@@ -147,6 +161,8 @@ export function Adoption() {
           eyebrow="Dormant staff"
           title="Dormant staff"
           purpose="Dormant-user count and activity band returned by the adoption engagement endpoint."
+          loading={engQ.isLoading}
+          skeleton="kv"
         >
           <div className="kv">
             <KV
@@ -163,6 +179,8 @@ export function Adoption() {
           eyebrow="League table"
           title="Module-wise breakdown"
           purpose="Module users, events and sessions from the API. The endpoint does not return duration, trend or status values."
+          loading={modulesQuery.isLoading}
+          skeleton="table" skeletonRows={5} skeletonCols={7}
         >
           <div className="tbl-wrap">
             <table className="league">

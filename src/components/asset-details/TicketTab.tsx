@@ -205,12 +205,28 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
     ticket.heading?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-    const handleExport = () => {
+    const handleExport = async () => {
     if (!assetId) return;
 
-    const token = getAuthHeader().replace('Bearer ', '');
-    const downloadUrl = `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/tickets.xlsx?access_token=${token}`;
-    window.open(downloadUrl, '_blank');
+    const downloadUrl = `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/tickets.xlsx`;
+    try {
+      const response = await fetch(downloadUrl, {
+        headers: { Authorization: getAuthHeader() },
+      });
+      if (!response.ok) throw new Error('Failed to export tickets');
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `asset_${assetId}_tickets.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error exporting tickets:', error);
+    }
   };
 
 

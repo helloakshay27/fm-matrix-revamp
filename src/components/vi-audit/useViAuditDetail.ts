@@ -12,7 +12,7 @@ import type {
 type Raw = Record<string, unknown>;
 
 export const obj = (value: unknown): Raw => (value && typeof value === "object" && !Array.isArray(value) ? (value as Raw) : {});
-const arr = (...values: unknown[]): Raw[] => {
+export const arr = (...values: unknown[]): Raw[] => {
   for (const value of values) if (Array.isArray(value)) return value as Raw[];
   return [];
 };
@@ -23,14 +23,15 @@ export const text = (...values: unknown[]) => {
   }
   return "";
 };
-const personName = (value: unknown) => {
+export const personName = (value: unknown) => {
   const p = obj(value);
   return text(p.full_name, p.name, [text(p.firstname), text(p.lastname)].filter(Boolean).join(" "), p.email);
 };
 
 // "pending_by_spoc" -> "Pending By SPOC", "closed" -> "Closed"
-const statusLabel = (value: unknown) =>
-  text(value)
+// First non-empty value as a label.
+const statusLabel = (...values: unknown[]) =>
+  text(...values)
     .replace(/[_-]+/g, " ")
     .split(" ")
     .filter(Boolean)
@@ -38,7 +39,7 @@ const statusLabel = (value: unknown) =>
     .join(" ");
 
 // Attachments may be URLs, data URLs or { url, file_name / name } objects.
-const toAttachment = (value: unknown) => {
+export const toAttachment = (value: unknown) => {
   if (typeof value === "string") {
     const nameFromDataUrl = value.match(/^data:[^;,]*;name=([^;,]+)/)?.[1];
     return { name: nameFromDataUrl || decodeURIComponent(value.split("?")[0].split("/").pop() || "attachment"), url: value };
@@ -53,11 +54,48 @@ export const toActionPlan = (raw: Raw, index: number, prefix: string): ViActionP
   actionNo: text(raw.action_no) || undefined,
   description: text(raw.action_plan, raw.description, raw.action),
   actionOwner: text(personName(raw.responsible_person ?? raw.action_owner), raw.responsible_person_name, raw.action_owner_name),
-  targetDate: text(raw.extend_target_date, raw.extended_target_date, raw.target_date),
+  targetDate: text(raw.target_date, raw.extend_target_date, raw.extended_target_date),
+  extendedTargetDate: text(raw.extend_target_date, raw.extended_target_date) || undefined,
+  extensionReason: text(raw.extension_reason) || undefined,
   status: (statusLabel(raw.status) || "Pending By Action Owner") as ViActionPlanStatus,
+  capaProgress: text(raw.capa_progress) || undefined,
+  capaProgressKey: text(raw.capa_progress_key) || undefined,
+  capaClosure: text(raw.capa_closure) || undefined,
+  capaClosureKey: text(raw.capa_closure_key) || undefined,
+  canAddCapa: typeof raw.can_add_capa === "boolean" ? raw.can_add_capa : undefined,
+  capas: arr(raw.capas, raw.actions_taken).map((c, i) => ({
+    id: text(c.id) || String(i + 1),
+    description: text(c.action_taken, c.description, c.action),
+    closureDate: text(c.closure_date, c.closed_on),
+    status: text(c.status).toLowerCase() || undefined,
+    attachments: arr(c.attachments, c.documents).map(toAttachment),
+  })),
 });
 
-const toObservation = (raw: Raw, index: number): ViObservation => {
+// Classification / people / vendor of a record (observation, or an older audit response).
+// "Others" values come as classification_other / category_other / sub_category_other text.
+const toClassification = (r: Raw) => ({
+  classification: text(r.classification_name, obj(r.classification).name, r.classification_other),
+  category: text(r.category_name, obj(r.category).name, r.category_other),
+  subCategory: text(r.sub_category_name, obj(r.sub_category).name, r.sub_category_other),
+});
+const toPeople = (r: Raw) => {
+  const people = arr(r.people_interacted_with, r.people);
+  return {
+    fte: people
+      .filter((p) => text(p.type) !== "other")
+      .map((p) => text(personName(p.user), p.user_name, p.name, p.email))
+      .filter(Boolean),
+    others: people
+      .filter((p) => text(p.type) === "other")
+      .map((p) => ({ name: text(p.name), designation: text(p.role, p.designation) })),
+  };
+};
+const toVendor = (r: Raw) => ({ vendorName: text(r.vendor_name), subVendorName: text(r.sub_vendor_name) });
+const hasAny = (o: Record<string, unknown>) =>
+  Object.values(o).some((v) => (Array.isArray(v) ? v.length > 0 : Boolean(v)));
+
+export const toObservation = (raw: Raw, index: number): ViObservation => {
   const attachments = arr(raw.attachments, raw.documents).map(toAttachment);
   // Plans come as one action_plans array (action_type: corrective / preventive); older shapes
   // used separate corrective_actions / preventive_actions arrays.
@@ -65,16 +103,21 @@ const toObservation = (raw: Raw, index: number): ViObservation => {
   const plansOfType = (type: string) => plans.filter((p) => text(p.action_type).toLowerCase() === type);
   return {
     id: text(raw.id) || String(index + 1),
+    observationNo: text(raw.observation_no) || undefined,
     title: text(raw.title) || undefined,
     area: text(raw.area) || undefined,
     description: text(raw.observation, raw.description),
-    status: (statusLabel(raw.status) || "Pending By SPOC") as ViObservationStatus,
+    // workflow_status is the API's display label (e.g. "Pending By Action Owner"); status is the raw key.
+    status: (statusLabel(raw.workflow_status, raw.status) || "Pending By SPOC") as ViObservationStatus,
     assignedSpoc: text(personName(raw.spoc), raw.spoc_name),
     functionalHead: text(personName(raw.functional_head), raw.functional_head_name),
     attachments: attachments.map((a) => a.name),
     attachmentFiles: attachments,
     correctiveActions: (plans.length ? plansOfType("corrective") : arr(raw.corrective_actions, raw.corrective_action_plans)).map((p, i) => toActionPlan(p, i, "Ca")),
     preventiveActions: (plans.length ? plansOfType("preventive") : arr(raw.preventive_actions, raw.preventive_action_plans)).map((p, i) => toActionPlan(p, i, "Pa")),
+    classification: toClassification(raw),
+    people: toPeople(raw),
+    vendor: toVendor(raw),
   };
 };
 
@@ -84,8 +127,14 @@ const toAuditDetail = (json: unknown, fallbackId: string): ViAuditDetail => {
   const r = obj(root.vi_audit ?? root.audit ?? root.data ?? root);
   const id = text(r.id) || fallbackId;
   const createdBy = obj(r.created_by ?? r.auditor ?? r.user);
-  const auditCode = text(r.audit_code, r.audit_number) || `Audit${id}`;
-  const people = arr(r.people_interacted_with, r.people);
+  const auditCode = text(r.audit_no, r.audit_code, r.audit_number) || `Audit${id}`;
+  const observations = arr(r.observations, r.observations_attributes, r.vi_audit_observations).map(toObservation);
+  // Audit-level copies: an older response may still have them on the audit; otherwise use the
+  // first observation's values (the fields now belong to each observation).
+  const first = observations[0];
+  const auditClassification = toClassification(r);
+  const auditPeople = toPeople(r);
+  const auditVendor = toVendor(r);
 
   return {
     id,
@@ -93,9 +142,9 @@ const toAuditDetail = (json: unknown, fallbackId: string): ViAuditDetail => {
     auditType: statusLabel(r.audit_type) as ViAuditDetail["auditType"],
     status: statusLabel(r.status) as ViAuditDetail["status"],
     auditor: {
-      name: text(personName(createdBy), r.created_by_name, r.auditor_name),
-      mailId: text(createdBy.email, r.created_by_email),
-      designation: text(createdBy.designation, r.designation),
+      name: text(r.auditor_name, personName(createdBy), r.created_by_name),
+      mailId: text(r.auditor_email, createdBy.email, r.created_by_email),
+      designation: text(r.auditor_designation, createdBy.designation, r.designation),
     },
     basic: {
       auditId: auditCode,
@@ -107,27 +156,41 @@ const toAuditDetail = (json: unknown, fallbackId: string): ViAuditDetail => {
       auditLocation: text(r.audit_location),
       function: text(obj(r.department).department_name, r.department_name),
     },
-    classification: {
-      classification: text(obj(r.classification).name, r.classification_name),
-      category: text(obj(r.category).name, r.category_name),
-      subCategory: text(obj(r.sub_category).name, r.sub_category_name),
-    },
-    people: {
-      fte: people
-        .filter((p) => text(p.type) !== "other")
-        .map((p) => text(personName(p.user), p.user_name, p.name))
-        .filter(Boolean),
-      others: people
-        .filter((p) => text(p.type) === "other")
-        .map((p) => ({ name: text(p.name), designation: text(p.role, p.designation) })),
-    },
-    vendor: { vendorName: text(r.vendor_name), subVendorName: text(r.sub_vendor_name) },
-    observations: arr(r.observations, r.observations_attributes, r.vi_audit_observations).map(toObservation),
+    classification: hasAny(auditClassification) ? auditClassification : first?.classification ?? auditClassification,
+    people: hasAny(auditPeople) ? auditPeople : first?.people ?? auditPeople,
+    vendor: hasAny(auditVendor) ? auditVendor : first?.vendor ?? auditVendor,
+    observations,
   };
 };
 
-/** One audit for the detail / observation pages (GET /vi_audits/:id.json). */
-export const useViAuditDetail = (auditId: string | undefined) => {
+// Detail URL per role: the default /vi_audits/:id.json, or a role endpoint queried by id.
+export const VI_AUDIT_DETAIL_URLS = {
+  default: (auditId: string) => `/vi_audits/${encodeURIComponent(auditId)}.json`,
+  spoc: (auditId: string) => `/vi_audits/spoc_audits.json?${new URLSearchParams({ id: auditId }).toString()}`,
+  actionOwner: (auditId: string) =>
+    // the endpoint ignores ?id=; the ransack filter returns just this audit
+    `/vi_audits/action_owner_audits.json?${new URLSearchParams({ "q[id_eq]": auditId }).toString()}`,
+  functionalHead: (auditId: string) => `/vi_audits/${encodeURIComponent(auditId)}/functional_head_audit.json`,
+} as const;
+
+// A role endpoint may return the audit itself or a list — pick the audit with this id (or the only one).
+const pickAudit = (json: unknown, auditId: string): unknown => {
+  const root = obj(json);
+  const list = Array.isArray(json)
+    ? (json as Raw[])
+    : arr(root.vi_audits, root.audits, Array.isArray(root.data) ? root.data : undefined, obj(root.data).vi_audits);
+  if (!list.length) return json;
+  return list.find((a) => text(a.id) === auditId) ?? (list.length === 1 ? list[0] : json);
+};
+
+/**
+ * One audit for the detail / observation pages — GET /vi_audits/:id.json by default; pass
+ * `detailUrl` (e.g. VI_AUDIT_DETAIL_URLS.functionalHead) to use a role's endpoint instead.
+ */
+export const useViAuditDetail = (
+  auditId: string | undefined,
+  detailUrl: (auditId: string) => string = VI_AUDIT_DETAIL_URLS.default,
+) => {
   const [audit, setAudit] = useState<ViAuditDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -140,12 +203,12 @@ export const useViAuditDetail = (auditId: string | undefined) => {
     setLoading(true);
     (async () => {
       try {
-        const response = await fetch(getFullUrl(`/vi_audits/${encodeURIComponent(auditId)}.json`), {
+        const response = await fetch(getFullUrl(detailUrl(auditId)), {
           headers: { Authorization: getAuthHeader() },
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-        setAudit(toAuditDetail(await response.json(), auditId));
+        setAudit(toAuditDetail(pickAudit(await response.json(), auditId), auditId));
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error("Failed to load audit:", error);
@@ -156,7 +219,49 @@ export const useViAuditDetail = (auditId: string | undefined) => {
       }
     })();
     return () => controller.abort();
+    // detailUrl is one of the stable VI_AUDIT_DETAIL_URLS functions
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditId]);
 
   return { audit, loading };
+};
+
+/**
+ * One observation — GET /vi_audit_observations/:id.json. Its action_plans carry the plan ids the
+ * observation view then loads one by one from /vi_audit_action_plans/:id.json.
+ */
+export const useViObservationDetail = (observationId: string | undefined) => {
+  const [observation, setObservation] = useState<ViObservation | null>(null);
+  const [loading, setLoading] = useState(Boolean(observationId));
+
+  useEffect(() => {
+    if (!observationId) {
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setLoading(true);
+    (async () => {
+      try {
+        const response = await fetch(getFullUrl(`/vi_audit_observations/${encodeURIComponent(observationId)}.json`), {
+          headers: { Authorization: getAuthHeader() },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const root = obj(await response.json());
+        const raw = obj(root.vi_audit_observation ?? root.observation ?? root.data ?? root);
+        setObservation(toObservation(raw, 0));
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load observation:", error);
+        toast.error("Failed to load observation");
+        setObservation(null);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [observationId]);
+
+  return { observation, loading };
 };

@@ -9,7 +9,6 @@ import {
   buildTraffic,
   buildWorkflow,
   findWorkflow,
-  fmtCount,
   type AdoptionSample,
   type TrafficSample,
   type WorkflowSample,
@@ -92,6 +91,28 @@ const DAYS_IN: Record<DateRange, number> = { 7: 7, 30: 30, 90: 90 };
 function daysBetween(from: string, to: string): number {
   const ms = new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime();
   return Math.max(1, Math.round(ms / 86400000) + 1);
+}
+
+/** Shift a `YYYY-MM-DD` day by `n` whole days. */
+function addDays(day: string, n: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+type UsageDay = { day: string; visitors: number; views: number; sessions: number };
+
+/**
+ * The API returns only the days that had activity. Expand that into one entry per calendar
+ * day of the window (zero-filled), so the chart's x-axis spans the whole selected range and
+ * the current and previous series line up day for day.
+ */
+function fillDays(rows: UsageDay[], from: string, days: number): UsageDay[] {
+  const byDay = new Map(rows.map((r) => [r.day, r]));
+  return Array.from({ length: days }, (_, i) => {
+    const day = addDays(from, i);
+    return byDay.get(day) ?? { day, visitors: 0, views: 0, sessions: 0 };
+  });
 }
 
 function formatDuration(seconds: number): string {
@@ -271,8 +292,11 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
     const d = trafficQuery.data?.delta_pct;
     const u = usageQuery.data;
 
-    const currentDays = u?.usage_over_time?.current ?? [];
-    const prevDays = u?.usage_over_time?.previous ?? [];
+    const spanDays = daysBetween(range.from, range.to);
+    const rawCurrent = u?.usage_over_time?.current ?? [];
+    const rawPrev = u?.usage_over_time?.previous ?? [];
+    const currentDays = u ? fillDays(rawCurrent, range.from, spanDays) : [];
+    const prevDays = rawPrev.length > 0 ? fillDays(rawPrev, addDays(range.from, -spanDays), spanDays) : [];
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const labels = currentDays.map((cd) => {
@@ -326,7 +350,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       {
         id: 'screenViews',
         label: 'Screen Views',
-        disp: t ? fmtCount(t.screen_views) : '—',
+        disp: t ? t.screen_views.toLocaleString() : '—',
         raw: t ? t.screen_views : 0,
         delta: d?.screen_views ?? null,
         deltaText:
@@ -355,7 +379,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
             : undefined,
         sub: 'app sessions started',
         infoKey: 'totalSessions',
-        infoLabel: 'Sessions',
+        infoLabel: 'Total Sessions',
         goodUp: true,
         noTarget: true,
       },
@@ -367,7 +391,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         delta: d?.avg_session_seconds ?? null,
         sub: 'per session',
         infoKey: 'avgSessionDur',
-        infoLabel: 'Session Duration',
+        infoLabel: 'Average Session Duration',
         goodUp: true,
         noTarget: true,
       },
@@ -411,7 +435,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       platformRows,
       viewsPerSession,
     };
-  }, [trafficQuery.data, usageQuery.data]);
+  }, [trafficQuery.data, usageQuery.data, range.from, range.to]);
 
   /* Layer 2: Adoption & Engagement strictly from live API */
   const adopt = useMemo<AdoptionSample>(() => {

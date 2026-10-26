@@ -1,0 +1,646 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Check,
+  ClipboardCheck,
+  FileText,
+  User,
+  UserPlus,
+} from "lucide-react";
+import { TextField } from "@mui/material";
+import { DetailCard } from "@/components/ui/detail-card";
+import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
+import {
+  AutocompleteLabel,
+  UserSelectField,
+} from "@/components/vi-audit/ViUserPicker";
+import {
+  AuditLoadingState,
+  auditTextareaSx,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
+import {
+  InfoRow,
+  getLoggedInUser,
+  requiredLabel,
+} from "@/components/vi-audit/AuditFormFields";
+import {
+  AttachmentPicker,
+  IncidentSelectField,
+} from "@/components/vi-incident/IncidentFormFields";
+import { useInspectionTypeOptions } from "@/features/vi-inspection/master/api/queries";
+import {
+  errorToast,
+  saveViInspection,
+  useViInspectionChecklistQuestions,
+  useViInspectionDetail,
+  useViInspectionMasters,
+  type InspectionFormInput,
+} from "@/components/vi-inspection/viInspectionApi";
+import {
+  CHECKLIST_ANSWERS,
+  INSPECTION_PATHS,
+  todayIso,
+  type ViInspectionAttachment,
+} from "@/components/vi-inspection/viInspectionData";
+
+const INSPECTOR_PATH = INSPECTION_PATHS.inspector;
+const TOTAL_STEPS = 3;
+
+interface AnswerDraft {
+  answer: string;
+  remark: string;
+  files: File[];
+  existing: ViInspectionAttachment[];
+  removeAttachmentIds: string[];
+}
+
+const emptyAnswer = (): AnswerDraft => ({
+  answer: "",
+  remark: "",
+  files: [],
+  existing: [],
+  removeAttachmentIds: [],
+});
+const hasContent = (a: AnswerDraft) =>
+  Boolean(
+    a.answer ||
+      a.remark.trim() ||
+      a.files.length ||
+      a.existing.length ||
+      a.removeAttachmentIds.length
+  );
+
+interface BasicDraft {
+  inspection_date: string;
+  circle_id: string;
+  personal_area_id: string;
+  work_location_id: string;
+  inspection_type_id: string;
+  inspector_location: string;
+  department_id: string;
+  facility_type_id: string;
+}
+
+const EMPTY_BASIC: BasicDraft = {
+  inspection_date: todayIso(),
+  circle_id: "",
+  personal_area_id: "",
+  work_location_id: "",
+  inspection_type_id: "",
+  inspector_location: "",
+  department_id: "",
+  facility_type_id: "",
+};
+
+// Inspector: create / edit an inspection — step 1 (inspector + basic details), step 2 (checklist
+// answers, remarks, attachments), step 3 (SPOC, Functional Head, target date).
+// Save draft: POST /vi_inspections.json or PATCH /vi_inspections/:id.json. Submit additionally submits
+// (draft → open); after that the inspection is read-only for the Inspector.
+const InspectionInspectorAddPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const loggedInUser = useMemo(getLoggedInUser, []);
+  const { masters, loading: mastersLoading } = useViInspectionMasters();
+  // Inspection types come from their own API (GET /vi_inspection_type_masters.json), which carries
+  // lat_long_required — it decides whether the Inspector Location field is shown.
+  const { data: inspectionTypes = [], isLoading: inspectionTypesLoading } =
+    useInspectionTypeOptions();
+  const { inspection, loading: inspectionLoading } = useViInspectionDetail(id);
+
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [basic, setBasicState] = useState<BasicDraft>(EMPTY_BASIC);
+  const [answers, setAnswers] = useState<Record<string, AnswerDraft>>({});
+  const [spoc, setSpoc] = useState<ViActiveUserOption | null>(null);
+  const [functionalHead, setFunctionalHead] =
+    useState<ViActiveUserOption | null>(null);
+  const [targetDate, setTargetDate] = useState("");
+
+  const { questions, loading: questionsLoading } =
+    useViInspectionChecklistQuestions(basic.inspection_type_id);
+
+  // Continue from the saved draft.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!inspection || prefilled.current) return;
+    prefilled.current = true;
+    setBasicState({
+      inspection_date: inspection.inspectionDate || todayIso(),
+      circle_id: inspection.circleId,
+      personal_area_id: inspection.personalAreaId,
+      work_location_id: inspection.workLocationId,
+      inspection_type_id: inspection.inspectionTypeId,
+      inspector_location: inspection.inspectorLocation,
+      department_id: inspection.departmentId,
+      facility_type_id: inspection.facilityTypeId,
+    });
+    setAnswers(
+      Object.fromEntries(
+        inspection.checklistResponses.map((r) => [
+          r.questionId,
+          {
+            answer: r.answer,
+            remark: r.remark,
+            files: [],
+            existing: r.attachments,
+            removeAttachmentIds: [],
+          },
+        ])
+      )
+    );
+    setSpoc(inspection.spoc);
+    setFunctionalHead(inspection.functionalHead);
+    setTargetDate(inspection.targetDate);
+  }, [inspection]);
+
+  // Active types only — plus the draft's own type, so an edit still shows it if it was deactivated.
+  const inspectionTypeOptions = useMemo(
+    () =>
+      inspectionTypes
+        .filter(
+          (type) => type.active || String(type.id) === basic.inspection_type_id
+        )
+        .map((type) => ({ value: String(type.id), label: type.name })),
+    [inspectionTypes, basic.inspection_type_id]
+  );
+  const latLongRequired = Boolean(
+    inspectionTypes.find((type) => String(type.id) === basic.inspection_type_id)
+      ?.lat_long_required
+  );
+
+  const setBasic = (patch: Partial<BasicDraft>) =>
+    setBasicState((prev) => ({ ...prev, ...patch }));
+  const answerFor = (questionId: string) =>
+    answers[questionId] ?? emptyAnswer();
+  const updateAnswer = (questionId: string, patch: Partial<AnswerDraft>) =>
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...(prev[questionId] ?? emptyAnswer()), ...patch },
+    }));
+
+  // Answers belong to a type: changing it drops them (the API does the same on save).
+  const changeInspectionType = (typeId: string) => {
+    if (typeId === basic.inspection_type_id) return;
+    if (Object.values(answers).some(hasContent))
+      toast.info("Checklist answers were cleared for the new inspection type");
+    setAnswers({});
+    setBasic({ inspection_type_id: typeId });
+  };
+
+  const validateStepOne = () => {
+    const missing = [
+      !basic.inspection_date && "Date of Inspection",
+      !basic.circle_id && "Circle",
+      !basic.personal_area_id && "Personnel Area",
+      !basic.work_location_id && "Work Location",
+      !basic.inspection_type_id && "Inspection Type",
+      latLongRequired &&
+        !basic.inspector_location.trim() &&
+        "Inspector Location",
+      !basic.department_id && "Function",
+      !basic.facility_type_id && "Type of Facility",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return false;
+    }
+    return true;
+  };
+
+  const validateStepTwo = () => {
+    if (questionsLoading) {
+      toast.error("Checklist questions are still loading");
+      return false;
+    }
+    if (!questions.length) {
+      toast.error(
+        "The selected inspection type has no active checklist questions"
+      );
+      return false;
+    }
+    const unanswered = questions.findIndex((q) => !answerFor(q.id).answer);
+    if (unanswered !== -1) {
+      toast.error(`Please answer checklist question ${unanswered + 1}`);
+      return false;
+    }
+    return true;
+  };
+
+  const validateStepThree = () => {
+    const missing = [
+      !spoc && "SPOC",
+      !functionalHead && "Functional Head",
+      !targetDate && "Target Date",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return false;
+    }
+    if (targetDate < basic.inspection_date) {
+      toast.error("Target Date can't be before the Date of Inspection");
+      return false;
+    }
+    return true;
+  };
+
+  const buildInput = (): InspectionFormInput => ({
+    ...basic,
+    // Only types with lat_long_required ask for it; otherwise it's cleared.
+    inspector_location: latLongRequired ? basic.inspector_location.trim() : "",
+    spoc_id: spoc?.id ?? "",
+    functional_head_id: functionalHead?.id ?? "",
+    target_date: targetDate,
+    // Only this type's questions; a draft sends just the rows that have something in them.
+    responses: questions
+      .filter((q) => hasContent(answerFor(q.id)))
+      .map((q) => {
+        const a = answerFor(q.id);
+        return {
+          questionId: q.id,
+          answer: a.answer,
+          remark: a.remark.trim(),
+          files: a.files,
+          removeAttachmentIds: a.removeAttachmentIds,
+        };
+      }),
+  });
+
+  const save = async (submit: boolean) => {
+    if (saving) return;
+    if (
+      submit &&
+      (!validateStepOne() || !validateStepTwo() || !validateStepThree())
+    )
+      return;
+    setSaving(true);
+    try {
+      await saveViInspection(id, buildInput(), submit);
+      toast.success(
+        submit
+          ? "Inspection submitted successfully"
+          : "Inspection saved to draft"
+      );
+      navigate(INSPECTOR_PATH);
+    } catch (error) {
+      errorToast(
+        submit ? "Failed to submit inspection" : "Failed to save draft",
+        error
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBack = () =>
+    step > 1 ? setStep(step - 1) : navigate(INSPECTOR_PATH);
+  const handleNext = () => {
+    if (step === 1 && !validateStepOne()) return;
+    if (step === 2 && !validateStepTwo()) return;
+    setStep(step + 1);
+  };
+
+  if (isEdit && inspectionLoading && !inspection) {
+    return (
+      <AuditLoadingState
+        message="Loading inspection..."
+        onBack={() => navigate(INSPECTOR_PATH)}
+      />
+    );
+  }
+  if (isEdit && inspection && !inspection.canEdit) {
+    return (
+      <AuditLoadingState
+        message="This inspection has been submitted and can no longer be edited."
+        onBack={() => navigate(INSPECTOR_PATH)}
+      />
+    );
+  }
+
+  return (
+    <fieldset disabled={saving} className="p-6 min-h-screen">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+        </button>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">
+          {isEdit
+            ? `Edit Inspection${inspection ? ` — ${inspection.inspectionNo}` : ""}`
+            : "Inspection"}
+        </h1>
+      </div>
+
+      {/* Stepper: n of 3 steps — completed steps show a check */}
+      <div className="mb-6 max-w-md">
+        <p className="mb-2 text-xs text-[rgba(26,26,24,0.48)]">
+          {step} of {TOTAL_STEPS} steps
+        </p>
+        <div className="flex items-center">
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
+            <div
+              key={n}
+              className={`flex items-center ${n < TOTAL_STEPS ? "flex-1" : ""}`}
+            >
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                  n <= step
+                    ? "border-[1.5px] border-[#1A1A18] bg-[#F1EEE7] text-[#1A1A18]"
+                    : "border border-[rgba(26,26,24,0.12)] bg-white text-[rgba(26,26,24,0.48)]"
+                }`}
+              >
+                {n < step ? <Check className="w-4 h-4" /> : n}
+              </span>
+              {n < TOTAL_STEPS && (
+                <span
+                  className={`mx-2 h-px flex-1 ${n < step ? "bg-[#1A1A18]" : "bg-[rgba(26,26,24,0.12)]"}`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {step === 1 && (
+        <>
+          <DetailCard
+            icon={sectionIcon(User)}
+            title="Inspector Details"
+            className="mb-5"
+          >
+            <div className="space-y-2">
+              <InfoRow
+                label="Name"
+                value={inspection?.inspector?.name || loggedInUser.name}
+              />
+              <InfoRow
+                label="Mail ID"
+                value={inspection?.inspector?.email || loggedInUser.email}
+              />
+              <InfoRow
+                label="Designation"
+                value={
+                  inspection?.inspector?.designation || loggedInUser.designation
+                }
+              />
+            </div>
+          </DetailCard>
+
+          <DetailCard
+            icon={sectionIcon(FileText)}
+            title="Basic Details"
+            className="mb-5"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-5">
+              <TextField
+                fullWidth
+                type="date"
+                label={requiredLabel("Date of Inspection")}
+                value={basic.inspection_date}
+                onChange={(e) => setBasic({ inspection_date: e.target.value })}
+                inputProps={{ max: todayIso() }}
+                InputLabelProps={{ shrink: true }}
+              />
+              <IncidentSelectField
+                label="Circle"
+                required
+                value={basic.circle_id}
+                onChange={(v) => setBasic({ circle_id: v })}
+                options={masters.circles}
+                loading={mastersLoading}
+                placeholder="Select circle"
+              />
+              <IncidentSelectField
+                label="Personnel Area"
+                required
+                value={basic.personal_area_id}
+                onChange={(v) => setBasic({ personal_area_id: v })}
+                options={masters.personalAreas}
+                loading={mastersLoading}
+                placeholder="Select personnel area"
+              />
+              <IncidentSelectField
+                label="Work Location"
+                required
+                value={basic.work_location_id}
+                onChange={(v) => setBasic({ work_location_id: v })}
+                options={masters.workLocations}
+                loading={mastersLoading}
+                placeholder="Select work location"
+              />
+              <IncidentSelectField
+                label="Inspection Type"
+                required
+                value={basic.inspection_type_id}
+                onChange={changeInspectionType}
+                options={inspectionTypeOptions}
+                loading={inspectionTypesLoading}
+                placeholder="Select inspection type"
+              />
+              {latLongRequired && (
+                <TextField
+                  fullWidth
+                  label={requiredLabel("Inspector Location")}
+                  placeholder="Enter inspector location"
+                  value={basic.inspector_location}
+                  onChange={(e) =>
+                    setBasic({ inspector_location: e.target.value })
+                  }
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+              <IncidentSelectField
+                label="Function"
+                required
+                value={basic.department_id}
+                onChange={(v) => setBasic({ department_id: v })}
+                options={masters.departments}
+                loading={mastersLoading}
+                placeholder="Select function"
+              />
+              <IncidentSelectField
+                label="Type of Facility"
+                required
+                value={basic.facility_type_id}
+                onChange={(v) => setBasic({ facility_type_id: v })}
+                options={masters.facilityTypes}
+                loading={mastersLoading}
+                placeholder="Select type of facility"
+              />
+            </div>
+          </DetailCard>
+        </>
+      )}
+
+      {step === 2 && (
+        <DetailCard
+          icon={sectionIcon(ClipboardCheck)}
+          title="Checklists"
+          className="mb-5"
+        >
+          {questionsLoading ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              Loading checklist questions...
+            </p>
+          ) : !basic.inspection_type_id ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              Select an inspection type in step 1.
+            </p>
+          ) : !questions.length ? (
+            <p className="py-6 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              No active checklist questions for this inspection type.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {questions.map((q, index) => {
+                const entry = answerFor(q.id);
+                return (
+                  <div
+                    key={q.id}
+                    className={
+                      index > 0
+                        ? "border-t border-[rgba(26,26,24,0.09)] pt-6"
+                        : ""
+                    }
+                  >
+                    <p className="mb-3 text-sm font-medium text-[#1A1A18]">
+                      {index + 1}. {requiredLabel(q.question)}
+                    </p>
+                    <div className="mb-3 flex flex-wrap gap-6">
+                      {CHECKLIST_ANSWERS.map((option) => (
+                        <label
+                          key={option}
+                          className="flex cursor-pointer items-center gap-2 text-sm text-[#1A1A18]"
+                        >
+                          <input
+                            type="radio"
+                            name={`checklist-${q.id}`}
+                            value={option}
+                            checked={entry.answer === option}
+                            onChange={() =>
+                              updateAnswer(q.id, { answer: option })
+                            }
+                            className="h-4 w-4 accent-[#1A1A18]"
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      sx={auditTextareaSx}
+                      label="Remarks (if any)"
+                      placeholder="Enter remarks"
+                      value={entry.remark}
+                      onChange={(e) =>
+                        updateAnswer(q.id, { remark: e.target.value })
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <div className="mt-3">
+                      <AttachmentPicker
+                        label="Attachment"
+                        files={entry.files}
+                        onFilesChange={(files) => updateAnswer(q.id, { files })}
+                        existing={entry.existing}
+                        onRemoveExisting={(attachment) =>
+                          updateAnswer(q.id, {
+                            existing: entry.existing.filter(
+                              (a) => a.id !== attachment.id
+                            ),
+                            removeAttachmentIds: [
+                              ...entry.removeAttachmentIds,
+                              attachment.id,
+                            ],
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DetailCard>
+      )}
+
+      {step === 3 && (
+        <DetailCard
+          icon={sectionIcon(UserPlus)}
+          title="Assign SPOC & Functional Head"
+          className="mb-5"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-5 [&>div]:min-w-0">
+            <UserSelectField
+              label="SPOC"
+              required
+              value={spoc}
+              onChange={setSpoc}
+              employeeType="internal"
+              placeholder="Search SPOC by email or mobile"
+            />
+            <UserSelectField
+              label="Functional Head"
+              required
+              value={functionalHead}
+              onChange={setFunctionalHead}
+              employeeType="internal"
+              placeholder="Search functional head by email or mobile"
+            />
+            <div>
+              <AutocompleteLabel required>Select Target Date</AutocompleteLabel>
+              <TextField
+                fullWidth
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                inputProps={{
+                  min: basic.inspection_date || todayIso(),
+                  "aria-label": "Select Target Date",
+                }}
+              />
+            </div>
+          </div>
+        </DetailCard>
+      )}
+
+      <div className="fm-action-bar pt-4 sm:pt-6">
+        <button
+          type="button"
+          className="fm-action-secondary"
+          onClick={() => save(false)}
+        >
+          {saving ? "Saving..." : "Save draft"}
+        </button>
+        {step < TOTAL_STEPS ? (
+          <button
+            type="button"
+            className="fm-action-primary"
+            onClick={handleNext}
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="fm-action-primary"
+            onClick={() => save(true)}
+          >
+            {saving ? "Submitting..." : "Submit"}
+          </button>
+        )}
+      </div>
+    </fieldset>
+  );
+};
+
+export default InspectionInspectorAddPage;

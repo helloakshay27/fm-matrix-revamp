@@ -1,14 +1,24 @@
-import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
+import { ParkingSlotCategory } from '../components/parking/ParkingSlotCategory';
+import {
+  CategorySlots,
+  SlotType,
+  buildParkingSlotsData,
+  emptyCategorySlots,
+  removeSlotAt,
+  renameSlotAt,
+  resizeSlots,
+  totalSlotCount,
+  validateCategorySlots,
+} from '../components/parking/parkingSlotUtils';
 import {
   fetchParkingConfigByBuildingAndFloor,
-  ParkingNumber,
   ParkingConfiguration,
   fetchParkingCategories,
   ParkingCategory
@@ -19,8 +29,7 @@ import {
   fetchFloors,
   Building,
   Floor,
-  CreateParkingConfigurationRequest,
-  ParkingSlotData
+  CreateParkingConfigurationRequest
 } from '../services/parkingConfigurationsAPI';
 
 const fieldStyles = {
@@ -50,151 +59,6 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-interface CategorySlotData {
-  nonStack: number;
-  stack: number;
-  reserved: number;
-  parkingNumbers: ParkingNumber[];
-}
-
-type SlotType = 'nonStack' | 'stack' | 'reserved';
-
-interface ParkingSlotCategoryProps {
-  title: string;
-  categoryId: number;
-  type: SlotType;
-  count: number;
-  nonStackCount: number;
-  stackCount: number;
-  buttonColorClass: string;
-  isStack?: boolean;
-  customSlotNames: Record<string, string>;
-  onSlotCountChange: (categoryId: number, type: SlotType, value: number) => void;
-  onSlotRemove: (categoryId: number, type: SlotType, index: number) => void;
-  onSlotNameChange: (categoryId: number, type: SlotType, index: number, newName: string) => void;
-}
-
-// Defined at module scope (not inside the page component) so its identity stays
-// stable across re-renders — otherwise every keystroke recreated this component,
-// forcing React to unmount/remount the whole slot grid and losing scroll/focus.
-const ParkingSlotCategory: React.FC<ParkingSlotCategoryProps> = ({
-  title,
-  categoryId,
-  type,
-  count,
-  nonStackCount,
-  stackCount,
-  buttonColorClass,
-  isStack = false,
-  customSlotNames,
-  onSlotCountChange,
-  onSlotRemove,
-  onSlotNameChange,
-}) => {
-  // Local, uncommitted value — typing here must NOT touch the actual slot
-  // count/grid until "Add" is clicked.
-  const [draftCount, setDraftCount] = useState(String(count));
-
-  useEffect(() => {
-    setDraftCount(String(count));
-  }, [count]);
-
-  const generateSlotName = (index: number) => {
-    const key = `${categoryId}_${type}_${index}`;
-    const customName = customSlotNames[key];
-    if (customName) return customName;
-
-    const prefix = 'P';
-
-    if (isStack) {
-      const stackPairIndex = Math.floor(index / 2);
-      const stackSlotNumber = nonStackCount + stackPairIndex + 1;
-      const suffix = index % 2 === 0 ? 'A' : 'B';
-      return `${prefix}${stackSlotNumber}${suffix}`;
-    }
-
-    let baseNumber = 1;
-    if (type === 'stack') {
-      baseNumber = nonStackCount + 1;
-    } else if (type === 'reserved') {
-      baseNumber = nonStackCount + stackCount + 1;
-    }
-
-    return `${prefix}${baseNumber + index}`;
-  };
-
-  const handleAddClick = () => {
-    const parsed = Math.max(0, parseFloat(draftCount) || 0);
-    onSlotCountChange(categoryId, type, parsed);
-  };
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollPosRef = useRef(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    scrollPosRef.current = e.currentTarget.scrollTop;
-  };
-
-  useLayoutEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollPosRef.current;
-    }
-  });
-
-  return (
-    <div>
-      <h4 className="font-medium mb-4">{title}</h4>
-      <div ref={scrollRef} onScroll={handleScroll} className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
-              .map((index) => (
-                <div key={index} className="relative">
-                  <Input
-                    value={generateSlotName(index)}
-                    onChange={(e) => onSlotNameChange(categoryId, type, index, e.target.value)}
-                    className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                    placeholder="Slot name"
-                  />
-                  <button
-                    type="button"
-                    className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      onSlotRemove(categoryId, type, index);
-                    }}
-                  >
-                    &#x2715;
-                  </button>
-                </div>
-              ))}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          value={draftCount}
-          onChange={(e) => setDraftCount(e.target.value)}
-          className="w-16 h-8 text-center"
-          min="0"
-          step={type === 'stack' ? '0.5' : '1'}
-        />
-        <Button
-          size="sm"
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-          onClick={handleAddClick}
-        >
-          Add
-        </Button>
-        <span className="text-sm font-medium text-gray-600">
-          Total: {isStack ? count * 2 : count}
-        </span>
-      </div>
-    </div>
-  );
-};
-
 export const EditSlotConfigurationPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -209,14 +73,13 @@ export const EditSlotConfigurationPage = () => {
     building_id: '',
     floor_id: '',
     qrcode_needed: false,
-    categories: {} as Record<number, CategorySlotData>,
     floorMap: null as File | null,
     parking_image_url: '',
     parking_config_id: 0
   });
 
-  // Track custom slot names - key format: "categoryId_type_index"
-  const [customSlotNames, setCustomSlotNames] = useState<Record<string, string>>({});
+  // Slot names per category — the single source of truth for what gets saved.
+  const [slots, setSlots] = useState<Record<number, CategorySlots>>({});
 
   const fetchBuildingsData = useCallback(async () => {
     try {
@@ -288,48 +151,17 @@ export const EditSlotConfigurationPage = () => {
           const groupData = data.grouped_parking_configurations[0];
           const configs: ParkingConfiguration[] = groupData.parking_configurations;
 
-          // Build a category-slot-data map for every category present in the response,
-          // so any number of categories (2 Wheeler, 4 Wheeler, EV, ...) show up in the form.
-          const getCategoryCounts = (
-            config: ParkingConfiguration | undefined,
-            categoryId: number
-          ): CategorySlotData => {
-            if (!config) return { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
-
-            const nonStackSlots = config.parking_numbers.filter(p => !p.stacked && !p.reserved);
-            const stackSlots = config.parking_numbers.filter(p => p.stacked && !p.reserved);
-            const reservedSlots = config.parking_numbers.filter(p => p.reserved);
-
-            // Populate custom slot names from API data
-            const customNames: Record<string, string> = {};
-
-            nonStackSlots.forEach((slot, index) => {
-              customNames[`${categoryId}_nonStack_${index}`] = slot.name;
-            });
-
-            stackSlots.forEach((slot, index) => {
-              customNames[`${categoryId}_stack_${index}`] = slot.name;
-            });
-
-            reservedSlots.forEach((slot, index) => {
-              customNames[`${categoryId}_reserved_${index}`] = slot.name;
-            });
-
-            // Update customSlotNames state
-            setCustomSlotNames(prev => ({ ...prev, ...customNames }));
-
-            return {
-              nonStack: nonStackSlots.length,
-              stack: stackSlots.length / 2, // Stack comes in pairs
-              reserved: reservedSlots.length,
-              parkingNumbers: config.parking_numbers
-            };
-          };
-
-          const categoriesFormData: Record<number, CategorySlotData> = {};
+          // Keep every slot's real name, for every category present in the response
+          // (2 Wheeler, 4 Wheeler, EV, ...), so removing a slot removes exactly that one.
+          const categorySlots: Record<number, CategorySlots> = {};
           configs.forEach((config) => {
-            categoriesFormData[config.parking_category_id] = getCategoryCounts(config, config.parking_category_id);
+            categorySlots[config.parking_category_id] = {
+              nonStack: config.parking_numbers.filter(p => !p.stacked && !p.reserved).map(p => p.name),
+              stack: config.parking_numbers.filter(p => p.stacked && !p.reserved).map(p => p.name),
+              reserved: config.parking_numbers.filter(p => p.reserved).map(p => p.name),
+            };
           });
+          setSlots(categorySlots);
 
           const firstConfigWithImage = configs.find(c => c.parking_image_url);
 
@@ -337,7 +169,6 @@ export const EditSlotConfigurationPage = () => {
             building_id: groupData.building_id.toString(),
             floor_id: groupData.floor_id.toString(),
             qrcode_needed: groupData.qrcode_needed === 'true' || groupData.qrcode_needed === true,
-            categories: categoriesFormData,
             floorMap: null,
             parking_image_url: firstConfigWithImage?.parking_image_url || '',
             parking_config_id: configs[0]?.id || 0
@@ -366,21 +197,21 @@ export const EditSlotConfigurationPage = () => {
       .finally(() => setLoading(false));
   }, [setCurrentSection, id, navigate, fetchBuildingsData, fetchFloorsData, fetchParkingCategoriesData]);
 
-  // Ensure every fetched parking category has an entry in formData.categories,
-  // even if the site currently has no configured slots for it yet (e.g. a newly added category).
+  // Ensure every fetched parking category has a slot list, even if the site currently has no
+  // configured slots for it yet (e.g. a newly added category).
   useEffect(() => {
     if (parkingCategories.length === 0) return;
 
-    setFormData(prev => {
+    setSlots(prev => {
       let changed = false;
-      const nextCategories = { ...prev.categories };
+      const next = { ...prev };
       parkingCategories.forEach(category => {
-        if (!nextCategories[category.id]) {
-          nextCategories[category.id] = { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
+        if (!next[category.id]) {
+          next[category.id] = emptyCategorySlots();
           changed = true;
         }
       });
-      return changed ? { ...prev, categories: nextCategories } : prev;
+      return changed ? next : prev;
     });
   }, [parkingCategories]);
 
@@ -395,8 +226,7 @@ export const EditSlotConfigurationPage = () => {
     }
 
     // Check if there are any parking slots to update
-    const totalSlots = Object.values(formData.categories).reduce((total, category) =>
-      total + category.nonStack + category.stack + category.reserved, 0);
+    const totalSlots = Object.values(slots).reduce((total, category) => total + totalSlotCount(category), 0);
 
     if (totalSlots === 0) {
       toast.error('Please add at least one parking slot');
@@ -406,6 +236,15 @@ export const EditSlotConfigurationPage = () => {
     if (parkingCategories.length === 0) {
       toast.error('Unable to find parking categories. Please ensure categories are properly configured.');
       return;
+    }
+
+    // Blank or repeated slot names would be rejected or miscounted by the API
+    for (const category of parkingCategories) {
+      const message = validateCategorySlots(category.name, slots[category.id] ?? emptyCategorySlots());
+      if (message) {
+        toast.error(message);
+        return;
+      }
     }
 
     try {
@@ -418,17 +257,10 @@ export const EditSlotConfigurationPage = () => {
         qrcode_needed: formData.qrcode_needed // Use checkbox value
       };
 
-      // Add data for each category dynamically
+      // Add data for each category that has at least one slot configured
       parkingCategories.forEach(category => {
-        const categoryData = formData.categories[category.id];
-        if (!categoryData) return;
-
-        const totalCategorySlots = categoryData.nonStack + categoryData.stack + categoryData.reserved;
-
-        // Only include categories that have at least one slot configured
-        if (totalCategorySlots > 0) {
-          const categorySlots = generateParkingSlotsData(category.id, 'P');
-
+        const categorySlots = buildParkingSlotsData(slots[category.id] ?? emptyCategorySlots());
+        if (categorySlots.length > 0) {
           requestData[category.id] = {
             no_of_parkings: categorySlots.length,
             reserved_parkings: categorySlots.filter(slot => slot.reserved).length,
@@ -440,13 +272,9 @@ export const EditSlotConfigurationPage = () => {
       // Handle image replacement - always send attachment if new file is selected
       if (formData.floorMap) {
         requestData.attachment = formData.floorMap;
-        console.log('Replacing existing floor map with new file:', formData.floorMap.name);
       }
       // If no new file selected, existing image will remain unchanged
 
-      console.log('Updating parking config with requestData:', requestData);
-      console.log('Floor Map File:', formData.floorMap ? formData.floorMap.name : 'None selected');
-      console.log('Existing Image URL:', formData.parking_image_url || 'None');
       await createParkingConfiguration(requestData); // Use same function as Add page
 
       toast.success('Parking configuration updated successfully!');
@@ -459,146 +287,21 @@ export const EditSlotConfigurationPage = () => {
     }
   };
 
-  const generateParkingSlotsData = (
-    categoryId: number,
-    prefix: string
-  ): ParkingSlotData[] => {
-    const slots: ParkingSlotData[] = [];
-    const categoryData = formData.categories[categoryId];
-    if (!categoryData) return slots;
-
-    let slotNumber = 1;
-
-    // Non-stack slots
-    for (let i = 0; i < categoryData.nonStack; i++) {
-      const key = `${categoryId}_nonStack_${i}`;
-      const customName = customSlotNames[key];
-      slots.push({
-        parking_name: customName || `${prefix}${slotNumber}`,
-        reserved: false
-      });
-      slotNumber++;
-    }
-
-    // Stack count is measured in pairs, but a user can remove one displayed
-    // slot at a time, leaving a half pair (for example, 2.5 means 5 slots).
-    const stackedSlotCount = Math.round(categoryData.stack * 2);
-    for (let index = 0; index < stackedSlotCount; index++) {
-      const pairNumber = Math.floor(index / 2) + 1;
-      const suffix = index % 2 === 0 ? 'A' : 'B';
-      const customName = customSlotNames[`${categoryId}_stack_${index}`];
-      slots.push({
-        parking_name: customName || `${prefix}${slotNumber + pairNumber - 1}${suffix}`,
-        reserved: false,
-        stacked: true
-      });
-    }
-    slotNumber += Math.ceil(stackedSlotCount / 2);
-
-    // Reserved slots
-    for (let i = 0; i < categoryData.reserved; i++) {
-      const key = `${categoryId}_reserved_${i}`;
-      const customName = customSlotNames[key];
-      slots.push({
-        parking_name: customName || `${prefix}${slotNumber}`,
-        reserved: true
-      });
-      slotNumber++;
-    }
-
-    return slots;
-  };
-
   const handleCancel = () => {
     navigate('/settings/vas/parking-management/slot-configuration');
   };
 
-  const handleSlotCountChange = (
-    categoryId: number,
-    type: 'nonStack' | 'stack' | 'reserved',
-    value: number
-  ) => {
-    // Ensure the value is not negative
-    const newValue = Math.max(0, value);
-    setFormData(prev => ({
-      ...prev,
-      categories: {
-        ...prev.categories,
-        [categoryId]: {
-          ...(prev.categories[categoryId] || { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] }),
-          [type]: newValue
-        }
-      }
-    }));
-  };
+  const updateCategorySlots = (categoryId: number, update: (current: CategorySlots) => CategorySlots) =>
+    setSlots(prev => ({ ...prev, [categoryId]: update(prev[categoryId] ?? emptyCategorySlots()) }));
 
-  const handleSlotRemove = (
-    categoryId: number,
-    type: SlotType,
-    index: number
-  ) => {
-    // Stack counts use pairs, while each displayed slot can be removed alone.
-    const firstRemovedIndex = index;
-    const removedSlots = 1;
-    setFormData(prev => {
-      const category = prev.categories[categoryId];
-      if (!category) return prev;
+  const handleSlotResize = (categoryId: number, type: SlotType, targetLength: number) =>
+    updateCategorySlots(categoryId, current => resizeSlots(current, type, targetLength));
 
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          [categoryId]: {
-            ...category,
-            [type]: Math.max(0, category[type] - (type === 'stack' ? 0.5 : 1)),
-          },
-        },
-      };
-    });
+  const handleSlotRemove = (categoryId: number, type: SlotType, index: number) =>
+    updateCategorySlots(categoryId, current => removeSlotAt(current, type, index));
 
-    setCustomSlotNames(prev => {
-      const next = { ...prev };
-      const prefix = `${categoryId}_${type}_`;
-
-      // Rebuild this slot type's indexed names from the previous state. This
-      // avoids index collisions while compacting names after the removed slot.
-      const indexedNames = Object.keys(prev)
-        .filter(key => key.startsWith(prefix))
-        .map(key => ({
-          index: Number(key.slice(prefix.length)),
-          name: prev[key],
-        }))
-        .filter(({ index: slotIndex }) =>
-          slotIndex < firstRemovedIndex || slotIndex >= firstRemovedIndex + removedSlots
-        );
-
-      Object.keys(next).forEach(key => {
-        if (key.startsWith(prefix)) delete next[key];
-      });
-
-      indexedNames.forEach(({ index: slotIndex, name }) => {
-        const nextIndex = slotIndex >= firstRemovedIndex + removedSlots
-          ? slotIndex - removedSlots
-          : slotIndex;
-        next[`${prefix}${nextIndex}`] = name;
-      });
-
-      return next;
-    });
-  };
-
-  const handleSlotNameChange = (
-    categoryId: number,
-    type: 'nonStack' | 'stack' | 'reserved',
-    index: number,
-    newName: string
-  ) => {
-    const key = `${categoryId}_${type}_${index}`;
-    setCustomSlotNames(prev => ({
-      ...prev,
-      [key]: newName
-    }));
-  };
+  const handleSlotNameChange = (categoryId: number, type: SlotType, index: number, name: string) =>
+    updateCategorySlots(categoryId, current => renameSlotAt(current, type, index, name));
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -735,46 +438,22 @@ export const EditSlotConfigurationPage = () => {
                 {category.name}
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <ParkingSlotCategory
-                  title="Non Stack Parking"
-                  categoryId={category.id}
-                  type="nonStack"
-                  count={formData.categories[category.id]?.nonStack || 0}
-                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
-                  stackCount={formData.categories[category.id]?.stack || 0}
-                  customSlotNames={customSlotNames}
-                  onSlotCountChange={handleSlotCountChange}
-                  onSlotRemove={handleSlotRemove}
-                  onSlotNameChange={handleSlotNameChange}
-                  buttonColorClass="bg-brand hover:bg-brand-hover"
-                />
-                <ParkingSlotCategory
-                  title="Stack Parking"
-                  categoryId={category.id}
-                  type="stack"
-                  count={formData.categories[category.id]?.stack || 0}
-                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
-                  stackCount={formData.categories[category.id]?.stack || 0}
-                  customSlotNames={customSlotNames}
-                  onSlotCountChange={handleSlotCountChange}
-                  onSlotRemove={handleSlotRemove}
-                  onSlotNameChange={handleSlotNameChange}
-                  buttonColorClass="bg-brand hover:bg-brand-hover"
-                  isStack
-                />
-                <ParkingSlotCategory
-                  title="Reserved Parking"
-                  categoryId={category.id}
-                  type="reserved"
-                  count={formData.categories[category.id]?.reserved || 0}
-                  nonStackCount={formData.categories[category.id]?.nonStack || 0}
-                  stackCount={formData.categories[category.id]?.stack || 0}
-                  customSlotNames={customSlotNames}
-                  onSlotCountChange={handleSlotCountChange}
-                  onSlotRemove={handleSlotRemove}
-                  onSlotNameChange={handleSlotNameChange}
-                  buttonColorClass="bg-brand hover:bg-brand-hover"
-                />
+                {([
+                  ['Non Stack Parking', 'nonStack'],
+                  ['Stack Parking', 'stack'],
+                  ['Reserved Parking', 'reserved'],
+                ] as [string, SlotType][]).map(([title, type]) => (
+                  <ParkingSlotCategory
+                    key={type}
+                    title={title}
+                    type={type}
+                    isStack={type === 'stack'}
+                    slots={slots[category.id]?.[type] ?? []}
+                    onResize={(t, length) => handleSlotResize(category.id, t, length)}
+                    onRemove={(t, index) => handleSlotRemove(category.id, t, index)}
+                    onRename={(t, index, name) => handleSlotNameChange(category.id, t, index, name)}
+                  />
+                ))}
               </div>
             </div>
           ))}

@@ -36,6 +36,7 @@ export interface User {
   };
   user_type?: string;
   user_roster_id?: number;
+  designation?: string;
 }
 
 export interface LoginResponse {
@@ -46,6 +47,7 @@ export interface LoginResponse {
   access_token: string;
   is_vendor?: boolean;
   supplier_id?: number;
+  designation?: string;
   verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
@@ -302,11 +304,11 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com";
+  hostname === "fm-matrix.lockated.com"|| hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
-const isPulseSite = hostname === "pulse.lockated.com"|| hostname === "localhost";
+const isPulseSite = hostname === "pulse.lockated.com";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
@@ -333,9 +335,23 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
+  
   if (isViSite) {
     const response = await fetch(
       `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isViUatSite) {
+    const response = await fetch(
+      `https://vi-uat-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

@@ -355,6 +355,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           lock_role: response.lock_role,
           is_vendor: response.is_vendor,
           supplier_id: response.supplier_id,
+          designation: response.designation,
         });
         if (response.supplier_id) {
           localStorage.setItem("vendor_id", response.supplier_id.toString());
@@ -405,6 +406,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           lock_role: response.lock_role,
           is_vendor: response.is_vendor,
           supplier_id: response.supplier_id,
+          designation: response.designation,
         });
         if (response.supplier_id) {
           localStorage.setItem("vendor_id", response.supplier_id.toString());
@@ -446,6 +448,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
         lock_role: response.lock_role,
         is_vendor: response.is_vendor,
         supplier_id: response.supplier_id,
+        designation: response.designation,
       });
       if (response.supplier_id) {
         localStorage.setItem("vendor_id", response.supplier_id.toString());

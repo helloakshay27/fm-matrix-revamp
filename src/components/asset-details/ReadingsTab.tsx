@@ -312,9 +312,11 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
       const formattedFromDate = formatDate(fromDate);
       const formattedToDate = formatDate(toDate);
 
-      const url = `https://${baseUrl}/pms/assets/${assetId}/readings_json.json?access_token=${token}&readings_date_range=${formattedFromDate} - ${formattedToDate}`;
+      const url = `https://${baseUrl}/pms/assets/${assetId}/readings_json.json?readings_date_range=${formattedFromDate} - ${formattedToDate}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error('Failed to fetch data');
 
       const data: ApiResponse = await response.json();

@@ -1,10 +1,20 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardCheck, FileText, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, FilePenLine, Plus, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { viAuditBasePath } from "@/components/vi-audit/viAuditData";
-import { ActionPlanRecord, AuditLoadingState, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  hasSubmittedActionTaken,
+  isPlanPendingByActionOwner,
+  viAuditBasePath,
+} from "@/components/vi-audit/viAuditData";
+import {
+  ActionPlanRecord,
+  ActionTakenList,
+  AuditLoadingState,
+  AuditStatusPill,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
-import { useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
+import { VI_AUDIT_DETAIL_URLS, useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
   "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
@@ -16,7 +26,7 @@ const ActionOwnerActionPlanDetailPage = () => {
   const navigate = useNavigate();
   const { id, observationId, planId } = useParams();
   const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
-  const { audit, loading: auditLoading } = useViAuditDetail(id);
+  const { audit, loading: auditLoading } = useViAuditDetail(id, VI_AUDIT_DETAIL_URLS.actionOwner);
   const observation = audit?.observations.find((o) => o.id === observationId);
 
   const basePath = viAuditBasePath("action-owner");
@@ -40,8 +50,15 @@ const ActionOwnerActionPlanDetailPage = () => {
     );
   }
 
-  const { plan, kind, canEdit } = found;
-  const isClosed = plan.status === "Closed By Action Owner" || canEdit === false;
+  const { plan, kind } = found;
+  // "Add Action Taken" while the plan is still pending by the action owner, or while the
+  // observation is still "Pending By SPOC" — and only until an action taken has been submitted.
+  const isPending =
+    !hasSubmittedActionTaken(plan) &&
+    (isPlanPendingByActionOwner(plan) || observation?.status === "Pending By SPOC");
+  const actionTaken = plan.capas ?? [];
+  // A CAPA saved with "Save Draft" (not submitted yet) — the button continues it.
+  const hasDraftActionTaken = actionTaken.some((capa) => capa.status && capa.status !== "closed");
 
   return (
     <div className="p-6 min-h-screen">
@@ -59,7 +76,7 @@ const ActionOwnerActionPlanDetailPage = () => {
         <AuditStatusPill status={plan.status} />
       </div>
       <p className="mb-6 pl-11 text-sm text-[rgba(26,26,24,0.48)]">
-        ID: {[audit?.auditCode, observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
+        ID: {[audit?.auditCode, observation?.observationNo ?? observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
       </p>
 
       {/* Parent audit */}
@@ -82,7 +99,7 @@ const ActionOwnerActionPlanDetailPage = () => {
 
       {/* Parent observation */}
       {observation && (
-      <DetailCard icon={sectionIcon(FileText)} title={observation.id} className="mb-5">
+      <DetailCard icon={sectionIcon(FileText)} title={observation.observationNo ?? observation.id} className="mb-5">
         <div className="flex items-start justify-between gap-4">
           <p className="line-clamp-2 text-sm text-[#1A1A18]">{observation.description}</p>
           <button type="button" onClick={() => navigate(observationPath)} className={viewMoreClass}>
@@ -103,15 +120,35 @@ const ActionOwnerActionPlanDetailPage = () => {
         </div>
       </DetailCard>
 
-      {!isClosed && (
+      {/* Actions taken so far (CAPAs) */}
+      {actionTaken.length > 0 && (
+        <DetailCard
+          icon={sectionIcon(CheckCircle2)}
+          title={kind === "corrective" ? "Corrective Action Taken" : "Preventive Action Taken"}
+          className="mb-5"
+        >
+          <ActionTakenList actions={actionTaken} />
+        </DetailCard>
+      )}
+
+      {isPending && (
         <div className="fm-action-bar pt-4 sm:pt-6">
           <button
             type="button"
             className="fm-action-primary"
             onClick={() => navigate(`${observationPath}/plans/${plan.id}/action-taken`)}
           >
-            <Plus className="w-4 h-4" />
-            Add Action Taken
+            {hasDraftActionTaken ? (
+              <>
+                <FilePenLine className="w-4 h-4" />
+                Continue Draft
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add Action Taken
+              </>
+            )}
           </button>
         </div>
       )}
