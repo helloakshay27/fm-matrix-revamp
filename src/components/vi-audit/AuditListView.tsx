@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Pencil, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export const AuditListView = ({
   pagination,
   editDrafts = false,
   onFilterClick,
+  onSearch,
 }: {
   title: string;
   stats: AuditListStat[];
@@ -55,14 +56,25 @@ export const AuditListView = ({
   editDrafts?: boolean;
   /** Opens the page's filter dialog from the table's filter button. */
   onFilterClick?: () => void;
+  /** Server-side search by Audit ID — called (debounced) with the search box text. */
+  onSearch?: (term: string) => void;
 }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Searching through the API: wait for typing to pause, then let the page refetch.
+  useEffect(() => {
+    if (!onSearch) return;
+    const timer = setTimeout(() => onSearch(searchTerm.trim()), 400);
+    return () => clearTimeout(timer);
+    // onSearch is recreated by the page on every render; only the text matters here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
   const rows = data ?? VI_AUDIT_LIST;
   const filteredAudits = rows.filter((a) => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return true;
+    if (!term || onSearch) return true;
     return (
       a.requestorName.toLowerCase().includes(term) ||
       a.mailId.toLowerCase().includes(term) ||
@@ -139,7 +151,8 @@ export const AuditListView = ({
         loading={loading}
         loadingMessage="Loading audits..."
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search..."
+        searchPlaceholder={onSearch ? "Search by Audit ID..." : "Search..."}
+        disableClientSearch={!!onSearch}
         enableExport
         exportFileName={storageKey}
         emptyMessage="No audits found"

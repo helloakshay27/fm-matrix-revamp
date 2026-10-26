@@ -8,6 +8,7 @@ import {
   AuditFilterDialog,
   EMPTY_AUDIT_FILTERS,
   auditFiltersToParams,
+  auditSearchToParams,
   type AuditStatusOption,
   type ViAuditFilters,
 } from "@/components/vi-audit/AuditFilterDialog";
@@ -21,11 +22,12 @@ const STATUS_OPTIONS: AuditStatusOption[] = [
 const SpocAuditListPage = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<ViAuditFilters>(EMPTY_AUDIT_FILTERS);
+  const [search, setSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { audits, pagination, loading } = useViAuditList(
     page,
     VI_AUDIT_LIST_ENDPOINTS.spoc,
-    auditFiltersToParams(filters),
+    { ...auditFiltersToParams(filters), ...auditSearchToParams(search) },
   );
 
   // Overall totals for the stats cards — GET /vi_audits/dashboard.json?role=spoc
@@ -48,6 +50,10 @@ const SpocAuditListPage = () => {
       data={audits}
       loading={loading}
       onFilterClick={() => setIsFilterOpen(true)}
+      onSearch={(term) => {
+        setSearch(term);
+        setPage(1);
+      }}
       pagination={{
         currentPage: pagination.currentPage,
         totalPages: pagination.totalPages,
