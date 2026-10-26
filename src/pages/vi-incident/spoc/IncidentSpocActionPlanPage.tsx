@@ -171,12 +171,6 @@ const IncidentSpocActionPlanPage = () => {
       return { ...prev, [itemId]: { ...current, [type]: current[type].map((plan, i) => i === index ? { ...plan, ...patch } : plan) } };
     });
 
-  const addPlan = (itemId: string, type: ViIncidentActionType) =>
-    setPlans((prev) => {
-      const current = prev[itemId] ?? emptyItemPlans();
-      return { ...prev, [itemId]: { ...current, [type]: [...current[type], emptyPlan()] } };
-    });
-
   const removePlan = (itemId: string, type: ViIncidentActionType, index: number) =>
     setPlans((prev) => {
       const current = prev[itemId] ?? emptyItemPlans();
@@ -535,7 +529,7 @@ const IncidentSpocActionPlanPage = () => {
         <>
           <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
             <p className="text-sm text-[rgba(26,26,24,0.48)]">
-              Add at least one corrective and one preventive action plan for each root cause identified. Use Add More to add additional actions.
+              Add one corrective and one preventive action plan for each root cause identified.
             </p>
           </DetailCard>
 
@@ -602,17 +596,6 @@ const IncidentSpocActionPlanPage = () => {
                           </div>
                         </div>
                       ))}
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          className="fm-button-fix border border-brand bg-white text-brand hover:bg-brand-selected inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-                          aria-label={`Add more ${ACTION_TYPE_LABEL[type]} actions for ${item.name}`}
-                          onClick={() => addPlan(item.id, type)}
-                          disabled={saving}
-                        >
-                          + Add More
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
