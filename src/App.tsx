@@ -727,6 +727,15 @@ const FunctionalHeadObservationDetailPage = lazy(
       "./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"
     )
 );
+const AuditorActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorActionPlanDetailPage")
+);
+const SpocActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanDetailPage")
+);
+const FunctionalHeadActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadActionPlanDetailPage")
+);
 
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
@@ -6145,6 +6154,10 @@ function App() {
                               element={<AuditorObservationDetailPage />}
                             />
                             <Route
+                              path="/safety/audit-list/:id/observations/:observationId/plans/:planId"
+                              element={<AuditorActionPlanDetailPage />}
+                            />
+                            <Route
                               path="/safety/audit/spoc"
                               element={<SpocAuditListPage />}
                             />
@@ -6155,6 +6168,10 @@ function App() {
                             <Route
                               path="/safety/audit/spoc/:id/observations/:observationId"
                               element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/plans/:planId"
+                              element={<SpocActionPlanDetailPage />}
                             />
                             <Route
                               path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
@@ -6191,6 +6208,10 @@ function App() {
                             <Route
                               path="/safety/audit/functional-head/:id/observations/:observationId"
                               element={<FunctionalHeadObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId/plans/:planId"
+                              element={<FunctionalHeadActionPlanDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"
