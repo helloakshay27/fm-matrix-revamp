@@ -73,6 +73,8 @@ const SpocObservationDetailPage = () => {
       audit={auditWithObservation}
       loading={auditLoading || observationLoading}
       auditPath={auditPath}
+      // A plan opens its detail page (plan + action taken by the action owner).
+      onSelectPlan={(plan) => navigate(`${auditPath}/observations/${observationId}/plans/${plan.id}`)}
       // Breached plan (target date passed, not closed by the action owner): SPOC extends it.
       // After extending, re-load just that plan so it shows the new date and reason (no page reload).
       renderPlanFooter={(plan, { refreshPlan }) =>
