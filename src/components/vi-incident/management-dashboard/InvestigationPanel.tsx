@@ -1,14 +1,12 @@
 import { BOARDS, CHARTS, PROGRESS } from "./data";
 import { ChartCard } from "./ChartCard";
-import { DownloadIcon } from "./icons";
 
-export function InvestigationPanel({ highlighted, onDownload, onDrill }: { highlighted: boolean; onDownload: (section: string) => void; onDrill: (key: string) => void }) {
+export function InvestigationPanel({ highlighted, onDrill }: { highlighted: boolean; onDrill: (key: string) => void }) {
   const spocs = BOARDS.filter((item) => item.meta.includes("SPOC"));
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-inv">
       <div className="acc-hd">
         <div><div className="acc-title">Investigation (SPOC)</div><div className="acc-sub">SPOC review, whether an investigation is needed, and what caused the incident</div></div>
-        <div className="acc-hd-actions"><button type="button" className="acc-dl-btn" onClick={() => onDownload("Investigation")}><DownloadIcon size={13} />Excel</button></div>
       </div>
       <div className="g g3">
         <ChartCard title="Investigation Required?" sub="SPOC decision per incident" spec={CHARTS.invReq} options={["donut", "bar"]} />

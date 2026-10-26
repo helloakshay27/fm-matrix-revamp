@@ -1,5 +1,5 @@
 import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck, FileText, ShieldCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +19,7 @@ import {
   PlanStatusPill,
   planTargetLabel,
 } from "@/components/vi-incident/IncidentActionPlanCards";
-import { PendingWithLine } from "@/components/vi-incident/IncidentDetailView";
+import { IncidentInfoCards, IncidentInvestigationCard, PendingWithLine } from "@/components/vi-incident/IncidentDetailView";
 import { useViIncidentDetail } from "@/components/vi-incident/viIncidentApi";
 import {
   groupPlansByItem,
@@ -72,6 +72,7 @@ const PlanRecord = ({ plan }: { plan: ViIncidentActionPlan }) => {
 const IncidentFunctionalHeadPlanDetailPage = () => {
   const { id, planId } = useParams();
   const navigate = useNavigate();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const { incident, loading } = useViIncidentDetail(id);
   const group = useMemo(
     () => (incident ? groupPlansByItem(incident.checklistItems, incident.actionPlans).find((g) => g.item.id === planId) : undefined),
@@ -118,13 +119,24 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
           </div>
           <button
             type="button"
-            onClick={() => navigate(incidentPath)}
+            onClick={() => setDetailsOpen((open) => !open)}
+            aria-expanded={detailsOpen}
+            aria-controls="functional-head-incident-details"
             className="text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]"
           >
-            View More
+            {detailsOpen ? "View Less" : "View More"}
           </button>
         </div>
       </DetailCard>
+
+      <div id="functional-head-incident-details" hidden={!detailsOpen}>
+        {detailsOpen && (
+          <>
+            <IncidentInfoCards incident={incident} />
+            <IncidentInvestigationCard incident={incident} />
+          </>
+        )}
+      </div>
 
       <Tabs defaultValue="root-cause" className="w-full">
         <TabsList className={`${auditTabsListClass} mb-5`}>

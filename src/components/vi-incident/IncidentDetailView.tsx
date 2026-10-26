@@ -8,18 +8,22 @@ import { AttachmentLinks } from "./IncidentFormFields";
 import { IncidentStatusPill } from "./IncidentListView";
 import { incidentPendingWith, type ViIncidentRecord } from "./viIncidentData";
 
-/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
-export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) => (
-  <>
+export const IncidentReporterCard = ({ incident }: { incident: ViIncidentRecord }) => (
     <DetailCard icon={sectionIcon(User)} title="Reporter Details" className="mb-5">
       <FieldGrid
         fields={[
           { label: "Name", value: incident.reporter.name },
           { label: "Mail ID", value: incident.reporter.mailId },
-          { label: "Employer", value: incident.reporter.employer },
+          { label: "Designation", value: incident.reporter.designation },
         ]}
       />
     </DetailCard>
+);
+
+/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
+export const IncidentInfoCards = ({ incident, showReporter = true }: { incident: ViIncidentRecord; showReporter?: boolean }) => (
+  <>
+    {showReporter && <IncidentReporterCard incident={incident} />}
 
     <DetailCard icon={sectionIcon(FileText)} title="Basic Details" className="mb-5">
       <FieldGrid

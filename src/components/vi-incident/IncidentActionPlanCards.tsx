@@ -87,7 +87,9 @@ export const OwnerStatusList = ({
       <p className="mt-2 text-xs font-medium text-[rgba(26,26,24,0.68)]">
         {pending.length
           ? `Pending with: ${pending.map((a) => (isMine?.(a) ? `${ownerName(a)} (You)` : ownerName(a))).join(", ")}`
-          : "All action owners have taken action"}
+          : isPlanClosed(plan)
+            ? "All action owners have taken action"
+            : "Action plan is still pending"}
       </p>
     </div>
   );

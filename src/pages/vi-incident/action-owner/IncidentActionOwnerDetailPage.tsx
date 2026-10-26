@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList, FileText } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
 import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
-import { IncidentHeader } from "@/components/vi-incident/IncidentDetailView";
+import { IncidentHeader, IncidentInfoCards, IncidentInvestigationCard, IncidentReporterCard } from "@/components/vi-incident/IncidentDetailView";
 import { IncidentActionPlanCards } from "@/components/vi-incident/IncidentActionPlanCards";
 import {
   isMyAssignment,
@@ -15,8 +15,8 @@ import {
 import { hasMyActionDraft } from "@/components/vi-incident/viIncidentData";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
 
-const ViewMoreToggle = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
-  <button type="button" onClick={onClick} className="text-sm font-medium text-[#1A1A18] underline underline-offset-2">
+const ViewMoreToggle = ({ open, onClick, controls }: { open: boolean; onClick: () => void; controls?: string }) => (
+  <button type="button" onClick={onClick} aria-expanded={open} aria-controls={controls} className="text-sm font-medium text-[#1A1A18] underline underline-offset-2">
     {open ? "View Less" : "View More"}
   </button>
 );
@@ -56,6 +56,7 @@ const IncidentActionOwnerDetailPage = () => {
   return (
     <div className="p-6 min-h-screen">
       <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} draft={hasMyDraft} />
+      <IncidentReporterCard incident={incident} />
 
       <DetailCard icon={sectionIcon(FileText)} title="Incident Summary" className="mb-5">
         <div className="mb-3 flex justify-end">
@@ -83,13 +84,22 @@ const IncidentActionOwnerDetailPage = () => {
 
       <DetailCard icon={sectionIcon(ClipboardList)} title="Incident Details" className="mb-5">
         <div className="mb-3 flex justify-end">
-          <ViewMoreToggle open={detailsOpen} onClick={() => setDetailsOpen((v) => !v)} />
+          <ViewMoreToggle open={detailsOpen} onClick={() => setDetailsOpen((v) => !v)} controls="action-owner-incident-details" />
         </div>
         <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
         <p className={`text-sm text-[#1A1A18] whitespace-pre-wrap ${detailsOpen ? "" : "line-clamp-2"}`}>
           {incident.incident || "-"}
         </p>
       </DetailCard>
+
+      <div id="action-owner-incident-details" hidden={!detailsOpen}>
+        {detailsOpen && (
+          <>
+            <IncidentInfoCards incident={incident} showReporter={false} />
+            <IncidentInvestigationCard incident={incident} />
+          </>
+        )}
+      </div>
 
       {plans.length ? (
         <IncidentActionPlanCards incident={incident} plans={plans} isMine={isMine} />

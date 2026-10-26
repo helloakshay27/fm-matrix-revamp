@@ -1,14 +1,12 @@
 import { BOARDS, CHARTS, OVERDUE_PLANS } from "./data";
 import { ChartCard } from "./ChartCard";
-import { DownloadIcon } from "./icons";
 
-export function CapaPanel({ highlighted, onDownload, onDrill }: { highlighted: boolean; onDownload: (section: string) => void; onDrill: (key: string) => void }) {
+export function CapaPanel({ highlighted, onDrill }: { highlighted: boolean; onDrill: (key: string) => void }) {
   const owners = BOARDS.filter((item) => item.meta.includes("Plans"));
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-capa">
       <div className="acc-hd">
         <div><div className="acc-title">Action Plans (CAPA)</div><div className="acc-sub">Corrective and preventive plans, who owes the next step, and what is past its target date</div></div>
-        <div className="acc-hd-actions"><button type="button" className="acc-dl-btn" onClick={() => onDownload("CAPA")}><DownloadIcon size={13} />Excel</button></div>
       </div>
       <div className="g g3">
         <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state" spec={CHARTS.capaStatus} options={["bar", "table"]} />

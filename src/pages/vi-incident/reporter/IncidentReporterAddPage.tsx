@@ -320,7 +320,7 @@ const IncidentReporterAddPage = () => {
             <div className="space-y-2">
               <InfoRow label="Name" value={incident?.reporter.name || loggedInUser.name} />
               <InfoRow label="Mail ID" value={incident?.reporter.mailId || loggedInUser.email} />
-              <InfoRow label="Employer" value={incident?.reporter.employer || loggedInUser.designation} />
+              <InfoRow label="Designation" value={incident?.reporter.designation || loggedInUser.designation} />
             </div>
           </DetailCard>
 
