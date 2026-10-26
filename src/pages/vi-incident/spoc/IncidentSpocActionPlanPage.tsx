@@ -25,7 +25,6 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
-  todayIso,
   type ViIncidentActionType,
   type ViIncidentChecklistItem,
 } from "@/components/vi-incident/viIncidentData";
@@ -34,6 +33,7 @@ import { INCIDENT_SPOC_PATH } from "./IncidentSpocListPage";
 const ACTION_TYPES: ViIncidentActionType[] = ["corrective", "preventive"];
 
 interface PlanDraft {
+  key: string;
   description: string;
   owners: ViActiveUserOption[];
   targetDate: string;
@@ -42,16 +42,19 @@ interface PlanDraft {
   extensionReason: string;
 }
 
-type ItemPlans = Record<ViIncidentActionType, PlanDraft>;
+type ItemPlans = Record<ViIncidentActionType, PlanDraft[]>;
 
-const emptyPlan = (): PlanDraft => ({ description: "", owners: [], targetDate: "", extendTargetDate: "", extensionReason: "" });
-const emptyItemPlans = (): ItemPlans => ({ corrective: emptyPlan(), preventive: emptyPlan() });
+const emptyPlan = (): PlanDraft => ({ key: crypto.randomUUID(), description: "", owners: [], targetDate: "", extendTargetDate: "", extensionReason: "" });
+const emptyItemPlans = (): ItemPlans => ({
+  corrective: [{ ...emptyPlan(), key: "corrective-initial" }],
+  preventive: [{ ...emptyPlan(), key: "preventive-initial" }],
+});
 const hasContent = (plan: PlanDraft) => Boolean(plan.description.trim() || plan.owners.length || plan.targetDate);
 const isNonNegative = (value: string) => value.trim() !== "" && Number(value) >= 0;
 
 // SPOC: investigation + action plan for an incident (PATCH /vi_incidents/:id/investigation.json).
-// Step 1 — investigation required? + root causes (checklist sub-sub categories); step 2 — a
-// corrective and a preventive plan per root cause, each with its responsible persons.
+// Step 1 — investigation required? + root causes (checklist sub-sub categories); step 2 —
+// corrective and preventive plans per root cause, each with its responsible persons.
 const IncidentSpocActionPlanPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -93,14 +96,20 @@ const IncidentSpocActionPlanPage = () => {
     setSelectedItems(incident.checklistItems.map((item) => item.id));
     const saved: Record<string, ItemPlans> = {};
     for (const plan of incident.actionPlans) {
-      saved[plan.checklistItemId] ??= emptyItemPlans();
-      saved[plan.checklistItemId][plan.actionType] = {
+      saved[plan.checklistItemId] ??= { corrective: [], preventive: [] };
+      saved[plan.checklistItemId][plan.actionType].push({
+        key: crypto.randomUUID(),
         description: plan.description,
         owners: plan.assignments.map((a) => a.owner).filter((o): o is ViActiveUserOption => o !== null),
         targetDate: plan.targetDate,
         extendTargetDate: plan.extendTargetDate,
         extensionReason: plan.extensionReason,
-      };
+      });
+    }
+    for (const itemPlans of Object.values(saved)) {
+      for (const type of ACTION_TYPES) {
+        if (!itemPlans[type].length) itemPlans[type].push(emptyPlan());
+      }
     }
     setPlans(saved);
   }, [incident]);
@@ -154,10 +163,23 @@ const IncidentSpocActionPlanPage = () => {
 
   const plansFor = (itemId: string) => plans[itemId] ?? emptyItemPlans();
 
-  const updatePlan = (itemId: string, type: ViIncidentActionType, patch: Partial<PlanDraft>) =>
+  const updatePlan = (itemId: string, type: ViIncidentActionType, index: number, patch: Partial<PlanDraft>) =>
     setPlans((prev) => {
       const current = prev[itemId] ?? emptyItemPlans();
-      return { ...prev, [itemId]: { ...current, [type]: { ...current[type], ...patch } } };
+      return { ...prev, [itemId]: { ...current, [type]: current[type].map((plan, i) => i === index ? { ...plan, ...patch } : plan) } };
+    });
+
+  const addPlan = (itemId: string, type: ViIncidentActionType) =>
+    setPlans((prev) => {
+      const current = prev[itemId] ?? emptyItemPlans();
+      return { ...prev, [itemId]: { ...current, [type]: [...current[type], emptyPlan()] } };
+    });
+
+  const removePlan = (itemId: string, type: ViIncidentActionType, index: number) =>
+    setPlans((prev) => {
+      const current = prev[itemId] ?? emptyItemPlans();
+      if (current[type].length <= 1) return prev;
+      return { ...prev, [itemId]: { ...current, [type]: current[type].filter((_, i) => i !== index) } };
     });
 
   const buildBody = (submit: boolean) => {
@@ -175,11 +197,11 @@ const IncidentSpocActionPlanPage = () => {
         breach_safety_rule_other_value:
           required && breachOfRules && breachRuleIsOther ? breachRuleOther.trim() || null : null,
         investigation_summary: required ? summary.trim() : null,
-        investigation_conclusion_id: required && !breachOfRules ? toId(conclusionId) : null,
+        investigation_conclusion_id: required ? toId(conclusionId) : null,
       },
       checklist_sub_sub_category_ids: itemIds.map(toId),
       action_plans: itemIds.flatMap((itemId) =>
-        ACTION_TYPES.map((type) => ({ type, plan: plansFor(itemId)[type] }))
+        ACTION_TYPES.flatMap((type) => plansFor(itemId)[type].map((plan) => ({ type, plan })))
           // Drafts skip untouched plans; on submit every plan is sent (and was validated).
           .filter(({ plan }) => submit || hasContent(plan))
           .map(({ type, plan }) => ({
@@ -225,8 +247,12 @@ const IncidentSpocActionPlanPage = () => {
       toast.error(`Select at least one item under "${emptyParent.name}", or untick it`);
       return;
     }
-    if (breachOfRules ? !breachRuleId : !conclusionId) {
-      toast.error(breachOfRules ? "Please select the safety rule breached" : "Please select the investigation conclusion");
+    if (breachOfRules && !breachRuleId) {
+      toast.error("Please select the safety rule breached");
+      return;
+    }
+    if (!conclusionId) {
+      toast.error("Please select the investigation conclusion");
       return;
     }
     if (breachOfRules && breachRuleIsOther && !breachRuleOther.trim()) {
@@ -252,12 +278,13 @@ const IncidentSpocActionPlanPage = () => {
   const handleSubmitPlans = () => {
     for (const [index, item] of orderedItems.entries()) {
       for (const type of ACTION_TYPES) {
-        const plan = plansFor(item.id)[type];
-        if (!plan.description.trim() || !plan.owners.length || !plan.targetDate) {
-          toast.error(
-            `${index + 1}. ${item.name}: ${ACTION_TYPE_LABEL[type]} plan, Responsible Person and Target Date are required`,
-          );
-          return;
+        for (const [planIndex, plan] of plansFor(item.id)[type].entries()) {
+          if (!plan.description.trim() || !plan.owners.length || !plan.targetDate) {
+            toast.error(
+              `${index + 1}. ${item.name}: ${ACTION_TYPE_LABEL[type]} action ${planIndex + 1} requires a plan, Responsible Person and Target Date`,
+            );
+            return;
+          }
         }
       }
     }
@@ -425,8 +452,8 @@ const IncidentSpocActionPlanPage = () => {
                   <span className="text-sm text-gray-600">{breachOfRules ? "Yes" : "No"}</span>
                   <Switch sx={auditSwitchSx} checked={breachOfRules} onChange={(e) => setBreachOfRules(e.target.checked)} />
                 </div>
-                <div className="mt-4 max-w-md">
-                  {breachOfRules ? (
+                {breachOfRules && (
+                  <div className="mt-4 max-w-md">
                     <div className="space-y-5">
                       <IncidentSelectField
                         label="Safety Rule Breached"
@@ -450,21 +477,22 @@ const IncidentSpocActionPlanPage = () => {
                         />
                       )}
                     </div>
-                  ) : (
-                    <IncidentSelectField
-                      label="Investigation Conclusion"
-                      required
-                      value={conclusionId}
-                      onChange={setConclusionId}
-                      options={masters.investigationConclusions}
-                      loading={mastersLoading}
-                      placeholder="Select conclusion"
-                    />
-                  )}
-                </div>
+                  </div>
+                )}
               </DetailCard>
 
               <DetailCard icon={sectionIcon(Search)} title="Investigation Summary" className="mb-5">
+                <div className="mb-5 max-w-md">
+                  <IncidentSelectField
+                    label="Investigation Conclusion"
+                    required
+                    value={conclusionId}
+                    onChange={setConclusionId}
+                    options={masters.investigationConclusions}
+                    loading={mastersLoading}
+                    placeholder="Select conclusion"
+                  />
+                </div>
                 <TextField
                   fullWidth
                   multiline
@@ -503,8 +531,8 @@ const IncidentSpocActionPlanPage = () => {
       {step === 2 && (
         <>
           <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
-            <p className="text-sm text-gray-500">
-              Add a corrective and a preventive action plan for each root cause identified.
+            <p className="text-sm text-[rgba(26,26,24,0.48)]">
+              Add at least one corrective and one preventive action plan for each root cause identified. Use Add More to add additional actions.
             </p>
           </DetailCard>
 
@@ -518,42 +546,69 @@ const IncidentSpocActionPlanPage = () => {
               {item.path && <p className="-mt-2 mb-4 text-xs text-gray-500">{item.path}</p>}
               <div className="space-y-6">
                 {ACTION_TYPES.map((type, typeIndex) => {
-                  const plan = plansFor(item.id)[type];
+                  const typePlans = plansFor(item.id)[type];
                   return (
-                    <div key={type} className={typeIndex > 0 ? "border-t border-gray-200 pt-6" : ""}>
-                      <div className="space-y-5">
-                        <TextField
-                          fullWidth
-                          multiline
-                          minRows={3}
-                          label={requiredLabel(`${ACTION_TYPE_LABEL[type]} Action Plan`)}
-                          placeholder="Describe the actions to be taken..."
-                          value={plan.description}
-                          onChange={(e) => updatePlan(item.id, type, { description: e.target.value })}
-                          sx={auditFieldSx}
-                          InputLabelProps={{ shrink: true }}
-                        />
-                        {/* Same label component and input height on both fields, so they line up in one row */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-5">
-                          <MultiUserSelectField
-                            label="Responsible Person"
-                            required
-                            value={plan.owners}
-                            onChange={(owners) => updatePlan(item.id, type, { owners })}
-                            placeholder="Search by email or mobile"
+                    <div key={type} className={typeIndex > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+                      {typePlans.map((plan, planIndex) => (
+                        <div key={plan.key} className="space-y-5 mb-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold">{ACTION_TYPE_LABEL[type]} Action {planIndex + 1}</span>
+                            {typePlans.length > 1 && (
+                              <button
+                                type="button"
+                                className="text-sm text-red-600 hover:underline"
+                                aria-label={`Remove ${ACTION_TYPE_LABEL[type]} action ${planIndex + 1} for ${item.name}`}
+                                onClick={() => removePlan(item.id, type, planIndex)}
+                                disabled={saving}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <TextField
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            label={requiredLabel(`${ACTION_TYPE_LABEL[type]} Action Plan`)}
+                            placeholder="Describe the actions to be taken..."
+                            value={plan.description}
+                            onChange={(e) => updatePlan(item.id, type, planIndex, { description: e.target.value })}
+                            sx={auditFieldSx}
+                            InputLabelProps={{ shrink: true }}
                           />
-                          <div>
-                            <AutocompleteLabel required>Select Target Date</AutocompleteLabel>
-                            <TextField
-                              fullWidth
-                              type="date"
-                              value={plan.targetDate}
-                              onChange={(e) => updatePlan(item.id, type, { targetDate: e.target.value })}
-                              inputProps={{ min: todayIso(), "aria-label": "Select Target Date" }}
-                              sx={{ "& .MuiOutlinedInput-root": { height: { xs: 36, sm: 40, md: 45 } } }}
+                          {/* Same label component and input height on both fields, so they line up in one row */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-5">
+                            <MultiUserSelectField
+                              label="Responsible Person"
+                              required
+                              value={plan.owners}
+                              onChange={(owners) => updatePlan(item.id, type, planIndex, { owners })}
+                              placeholder="Search by email or mobile"
                             />
+                            <div>
+                              <AutocompleteLabel required>Select Target Date</AutocompleteLabel>
+                              <TextField
+                                fullWidth
+                                type="date"
+                                value={plan.targetDate}
+                                onChange={(e) => updatePlan(item.id, type, planIndex, { targetDate: e.target.value })}
+                                inputProps={{ "aria-label": "Select Target Date" }}
+                                sx={{ "& .MuiOutlinedInput-root": { height: { xs: 36, sm: 40, md: 45 } } }}
+                              />
+                            </div>
                           </div>
                         </div>
+                      ))}
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          className="fm-button-fix border border-brand bg-white text-brand hover:bg-brand-selected inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                          aria-label={`Add more ${ACTION_TYPE_LABEL[type]} actions for ${item.name}`}
+                          onClick={() => addPlan(item.id, type)}
+                          disabled={saving}
+                        >
+                          + Add More
+                        </button>
                       </div>
                     </div>
                   );
