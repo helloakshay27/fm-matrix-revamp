@@ -1,9 +1,11 @@
+import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Trophy, Tag, Loader2, User as UserIcon, ClipboardList } from "lucide-react";
-import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
-import { DetailCard } from "@/components/ui/detail-card";
+import { Gift, Trophy, Tag, Loader2, User as UserIcon, ClipboardList } from "lucide-react";
+import { FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import { toast } from "sonner";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
 import {
@@ -226,29 +228,13 @@ const PulseContestRewardCreate = () => {
 
     return (
         <div className="p-4 sm:p-6">
-            {/* Page Header */}
-            <div className="mb-4 sm:mb-6">
-              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
-                  aria-label="Go back"
-                >
-                  <ArrowLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                <span>Reward List</span>
-                <span>{">"}</span>
-                <span className="text-gray-900 font-medium">Create New Reward</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW REWARD</h1>
-            </div>
+            <PulsePageHeader title="New Reward" icon={Gift} parent={{ label: "Rewards", to: "/pulse/rewards" }} />
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Left column — main form (2/3 width) */}
                 <div className="xl:col-span-2 space-y-4 sm:space-y-6">
                     {/* Contest & Prize Section */}
-                    <FormSection title="CONTEST & PRIZE" icon={Trophy}>
+                    <FormSection title="Contest & prize" icon={Trophy}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Contest */}
                             <div>
@@ -329,7 +315,7 @@ const PulseContestRewardCreate = () => {
                     </FormSection>
 
                     {/* User Section */}
-                    <FormSection title="USER" icon={UserIcon}>
+                    <FormSection title="User" icon={UserIcon}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <FormControl
@@ -373,7 +359,7 @@ const PulseContestRewardCreate = () => {
                     </FormSection>
 
                     {/* Reward Details Section */}
-                    <FormSection title="REWARD DETAILS" icon={Tag}>
+                    <FormSection title="Reward details" icon={Tag}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Reward Type */}
                             <div>

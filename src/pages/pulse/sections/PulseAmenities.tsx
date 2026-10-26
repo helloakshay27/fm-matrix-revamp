@@ -31,6 +31,7 @@ import {
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 import { usePulseEvents } from "@/components/PostHogPulseEvents";
+import { CHART_SERIES_PALETTE as SERIES } from "@/styles/chartPalette";
 
 const C = {
   green: "#32B188",
@@ -44,17 +45,17 @@ const C = {
 
 // Static placeholder — no backing API yet for booking-source attribution.
 const STATIC_BOOKING_SOURCE = [
-  { name: "App", pct: 35, color: C.blue },
-  { name: "Email", pct: 28, color: C.red },
-  { name: "Admin Booking", pct: 18, color: C.green },
-  { name: "Other", pct: 19, color: C.orange },
+  { name: "App", pct: 35, color: SERIES[0] },
+  { name: "Email", pct: 28, color: SERIES[1] },
+  { name: "Admin Booking", pct: 18, color: SERIES[2] },
+  { name: "Other", pct: 19, color: SERIES[3] },
 ];
 
 // Cycled by position to color the Booking Status / Payment Channels donuts
 // for any category that isn't recognized by name (see statusColor/
 // paymentChannelColor below) — both are arbitrary-length breakdowns from the
 // API, not fixed categories.
-const DONUT_COLOR_PALETTE = [C.green, C.orange, C.purple, C.blue, C.red, C.teal, C.gray];
+const DONUT_COLOR_PALETTE = [...SERIES];
 
 // Booking Status / Payment Channels segments are colored by matching the
 // category name rather than plain array position — the two donuts have
@@ -64,17 +65,17 @@ const DONUT_COLOR_PALETTE = [C.green, C.orange, C.purple, C.blue, C.red, C.teal,
 // unrecognized (e.g. a "failed" status).
 function statusColor(status: string, index: number) {
   const s = status.toLowerCase();
-  if (s.includes("confirm")) return C.green;
-  if (s.includes("pend")) return C.orange;
-  if (s.includes("cancel")) return C.purple;
-  if (s.includes("fail")) return C.red;
+  if (s.includes("confirm")) return SERIES[0];
+  if (s.includes("pend")) return SERIES[1];
+  if (s.includes("cancel")) return SERIES[2];
+  if (s.includes("fail")) return SERIES[7];
   return DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length];
 }
 
 function paymentChannelColor(method: string, index: number) {
   const m = method.toLowerCase();
-  if (m.includes("upi") || m.includes("net")) return C.green;
-  if (m.includes("wallet")) return C.purple;
+  if (m.includes("upi") || m.includes("net")) return SERIES[0];
+  if (m.includes("wallet")) return SERIES[2];
   return DONUT_COLOR_PALETTE[index % DONUT_COLOR_PALETTE.length];
 }
 
@@ -83,12 +84,7 @@ function paymentChannelColor(method: string, index: number) {
 const REVENUE_BAR_COLORS = ["#8052B833", "#8052B866", "#8052B899", "#8052B8CC", "#8052B8"];
 
 // Utilization By Facility — one brand color per row, cycling if there are more rows.
-const UTIL_BAR_COLORS = [
-  "var(--color-primary)",
-  "var(--color-secondary-teal)",
-  "var(--color-info)",
-  "var(--color-secondary-purple)",
-];
+const UTIL_BAR_COLORS = [...SERIES];
 
 // "payment failed" -> "Payment Failed", "pay_on_facility" -> "Pay On Facility",
 // but short all-caps codes like "NA" are left alone.
@@ -432,8 +428,8 @@ export function PulseAmenities({ filters }: Props) {
         {renderTrendCard(
           "Utilisation Trend",
           [
-            { key: "new", name: "New", color: "var(--color-primary)" },
-            { key: "returning", name: "Returning", color: "#C9AEEB" },
+            { key: "new", name: "New", color: SERIES[0] },
+            { key: "returning", name: "Returning", color: SERIES[1] },
           ],
           utilPoints,
           facilityUtil?.utilisation_trend.growth_percentage ?? 0,
@@ -442,8 +438,8 @@ export function PulseAmenities({ filters }: Props) {
         {renderTrendCard(
           "Bookable vs Requestable",
           [
-            { key: "bookable", name: "Bookable", color: "#5DB297" },
-            { key: "requestable", name: "Requestable", color: "#EAB588" },
+            { key: "bookable", name: "Bookable", color: SERIES[0] },
+            { key: "requestable", name: "Requestable", color: SERIES[1] },
           ],
           utilPoints,
           facilityUtil?.bookable_vs_requestable.growth_percentage ?? 0,
@@ -554,7 +550,7 @@ export function PulseAmenities({ filters }: Props) {
                     outerRadius="70%"
                     dataKey="value"
                   >
-                    {[C.green, C.orange, C.red, C.gray].map((color, i) => (
+                    {SERIES.slice(0, 4).map((color, i) => (
                       <Cell key={i} fill={color} />
                     ))}
                   </Pie>
@@ -590,7 +586,7 @@ export function PulseAmenities({ filters }: Props) {
                     outerRadius="70%"
                     dataKey="value"
                   >
-                    {[C.blue, C.purple, C.gray].map((color, i) => (
+                    {SERIES.slice(0, 3).map((color, i) => (
                       <Cell key={i} fill={color} />
                     ))}
                   </Pie>
@@ -617,8 +613,8 @@ export function PulseAmenities({ filters }: Props) {
                     outerRadius="70%"
                     dataKey="value"
                   >
-                    <Cell fill={C.teal} />
-                    <Cell fill={C.orange} />
+                    <Cell fill={SERIES[0]} />
+                    <Cell fill={SERIES[1]} />
                   </Pie>
                   <Tooltip />
                   <Legend />
@@ -651,13 +647,13 @@ export function PulseAmenities({ filters }: Props) {
                 <Bar
                   dataKey="request_count"
                   name="Request"
-                  fill={C.orange}
+                  fill={SERIES[1]}
                   stackId="bookings"
                 />
                 <Bar
                   dataKey="bookable_count"
                   name="Bookable"
-                  fill={C.teal}
+                  fill={SERIES[0]}
                   stackId="bookings"
                   radius={[3, 3, 0, 0]}
                 />
@@ -695,14 +691,14 @@ export function PulseAmenities({ filters }: Props) {
                     <td className="pd-num">{f.total}</td>
                     <td
                       className="pd-num"
-                      style={{ color: C.green, fontWeight: 500 }}
+                      style={{ fontWeight: 500 }}
                     >
                       {f.confirmed}
                     </td>
-                    <td className="pd-num" style={{ color: C.orange }}>
+                    <td className="pd-num">
                       {f.pending}
                     </td>
-                    <td className="pd-num" style={{ color: C.red }}>
+                    <td className="pd-num">
                       {f.cancelled}
                     </td>
                     <td className="pd-num pd-revenue">
@@ -772,6 +768,13 @@ export function PulseAmenities({ filters }: Props) {
                       </td>
                     </tr>
                   ))}
+                {bookingLogs.bookings.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="pd-empty">
+                      No bookings in this period
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

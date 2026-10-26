@@ -1,3 +1,4 @@
+import { PulsePageHeader as PageTitle } from "@/pages/pulse/components/PulsePageHeader";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -123,6 +124,7 @@ const NotificationApprovalMatrix = () => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen space-y-4">
+            <PageTitle title="Notification Approvers" />
             <EnhancedTable
                 data={approvers}
                 columns={columns}

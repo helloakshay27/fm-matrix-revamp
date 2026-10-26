@@ -300,7 +300,7 @@ const isFmSite =
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
-const isPulseSite = hostname === "pulse.lockated.com";
+const isPulseSite = hostname === "pulse.lockated.com"|| hostname === "localhost";
 
 const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com" || hostname === "localhost";
 

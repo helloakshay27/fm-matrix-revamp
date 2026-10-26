@@ -1,10 +1,11 @@
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AssetTabsList, AssetTabsTrigger } from "@/components/common/AssetTabBar";
-import { DetailCard } from "@/components/ui/detail-card";
+import { PulseDetailCard as DetailCard } from "@/pages/pulse/components/PulseDetailCard";
 import {
   FileText,
   Paperclip,
@@ -373,7 +374,7 @@ export const RideDetail = () => {
         </div>
         <div className="flex flex-col items-center justify-center h-96">
           <AlertCircle className="w-12 h-12 text-[#C72030] mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Failed to Load Ride Details</h2>
+          <h2 className="text-sm font-semibold mb-2">Failed to Load Ride Details</h2>
           <p className="text-gray-500 mb-4">{error}</p>
           <Button onClick={() => navigate(-1)}>Go Back</Button>
         </div>
@@ -384,12 +385,7 @@ export const RideDetail = () => {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-white px-6 py-4">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <span className="cursor-pointer hover:text-gray-700" onClick={() => navigate(-1)}>
-          Carpool
-        </span>{" "}&gt; <span className="text-gray-700">Ride Detail</span>
-      </div>
+      <PulsePageHeader title="Ride Detail" parent={{ label: "Carpool", to: "/pulse/carpool/rides" }} onBack={() => navigate(-1)} />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <AssetTabsList
@@ -622,7 +618,7 @@ export const RideDetail = () => {
                 <Info label="Booking Date" value={fmt(ride?.created_at)} />
                 <Info label="Seat" value={`${passengers.length}/${ride?.available_seats ?? 0}`} />
                 <Info label="Gender Preference" value={ride?.gender_preference ?? "N/A"} />
-                <Info label="Status" value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
+                <StatusInfo value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
                 <Info label="Leaving From" value={ride?.start_location ?? "N/A"} />
                 <Info label="Price Per Person" value={ride?.price ? `₹${ride.price}` : "N/A"} />
                 <Info label="Destination" value={ride?.end_location ?? "N/A"} />
@@ -661,7 +657,7 @@ export const RideDetail = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-gray-500 mb-2">Report:</p>
-                  <Badge className="bg-[#E57373] text-white px-4 py-1 mb-2">
+                  <Badge className="bg-[rgba(231,132,142,0.18)] text-[#a3343f] hover:bg-[rgba(231,132,142,0.18)] rounded-full px-[10px] py-[3px] text-[11px] font-medium mb-2">
                     {totalReportsCount} Report{totalReportsCount > 1 ? "s" : ""}
                   </Badge>
                   {allPassengerReports[0]?.report_date && (
@@ -782,7 +778,7 @@ export const RideDetail = () => {
                     <Info label="Correspondence Address" value={driverDetail.correspondence_address || "N/A"} />
                     <Info label="Registration Number" value={vehicle?.registration_number ?? "N/A"} />
                     <Info label="Ride Date" value={fmt(ride?.start_time)} />
-                    <Info label="Status" value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
+                    <StatusInfo value={ride?.status === "open" ? "Active" : (ride?.status ?? "N/A")} />
                     <Info label="Leaving From" value={ride?.start_location ?? "N/A"} />
                     <Info label="Destination" value={ride?.end_location ?? "N/A"} />
                     <Info label="Price Per Person" value={ride?.price ? `₹${ride.price}` : "N/A"} />
@@ -920,8 +916,11 @@ export const RideDetail = () => {
                   <div>
                     <p className="text-sm text-gray-500 mb-2">Reviews:</p>
                     <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-base font-medium">
+                      <Star
+                        className={driverDetail.reviews_count > 0 ? "w-5 h-5 fill-[#1a1a1a] text-[#1a1a1a]" : "w-5 h-5 text-gray-500"}
+                        strokeWidth={1.8}
+                      />
+                      <span className="text-sm font-medium text-gray-900">
                         {driverDetail.reviews_count > 0
                           ? `${(driverDetail.reviews.reduce((s, r) => s + r.ratings, 0) / driverDetail.reviews.length).toFixed(1)} Rating Out Of 5 (${driverDetail.reviews_count} review${driverDetail.reviews_count > 1 ? "s" : ""})`
                           : "No ratings yet"}
@@ -944,7 +943,7 @@ export const RideDetail = () => {
         {/* ── Passenger's Detail Tab ────────────────────────────────────── */}
         <TabsContent value="Passenger's Detail">
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Total User's</h2>
+            <h2 className="text-sm font-semibold">Total User's</h2>
             <EnhancedTaskTable
               data={passengerTableData}
               columns={[
@@ -1007,6 +1006,14 @@ export const RideDetail = () => {
 };
 
 /* Reusable helpers */
+// 07.05 — read-only state uses the shared low-tint pill
+const StatusInfo: React.FC<{ value: string }> = ({ value }) => (
+  <div>
+    <p className="text-gray-400 mb-1">Status</p>
+    <span className={`bg-pill ${value === "Active" ? "bg-pill-success" : ""}`}>{value}</span>
+  </div>
+);
+
 const Info: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
     <p className="text-gray-400 mb-1">{label}</p>

@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -111,24 +111,7 @@ const EditCustomNotificationPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="px-6 pt-4 sm:pt-6">
-        <div className="mb-4 sm:mb-6">
-          <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-            <button
-              type="button"
-              onClick={() => navigate("/pulse/notifications")}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-4 h-4 text-gray-600" />
-            </button>
-            <span>Notification List</span>
-            <span>{">"}</span>
-            <span className="text-gray-900 font-medium">Edit Notification</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT NOTIFICATION</h1>
-        </div>
-      </div>
+      <div className="px-6 pt-6"><PulsePageHeader title="Edit Notification" parent={{ label: "Notifications", to: "/pulse/notifications" }} /></div>
       <CustomNotificationForm
         submitLabel="Save Changes"
         submittingLabel="Saving..."
