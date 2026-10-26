@@ -1234,9 +1234,11 @@ const FeedbackDashboard = () => {
           {
             params: {
               job_id: jobId,
-              access_token: accessToken,
             },
-            headers: { Accept: "application/json" },
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
             timeout: 20000,
           }
         );
