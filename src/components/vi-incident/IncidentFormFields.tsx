@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { SelectField } from "@/components/vi-audit/AuditFormFields";
+import { IncidentSelectControl as SelectField } from "./IncidentSelectControl";
 import { toast } from "sonner";
 import { FileText, Paperclip, X } from "lucide-react";
 import { AutocompleteLabel, UserAutocomplete } from "@/components/vi-audit/ViUserPicker";
@@ -36,9 +36,15 @@ export function IncidentSelectField(props: ComponentProps<typeof SelectField>) {
   };
 
   return (
-    <div ref={wrapperRef} onMouseDownCapture={measure} onKeyDownCapture={measure}>
+    <div ref={wrapperRef}>
       <SelectField
         {...props}
+        onOpen={() => {
+          // Measure as part of opening, rather than rerendering during pointer/key
+          // capture. Menu option clicks must never trigger another measurement.
+          measure();
+          props.onOpen?.();
+        }}
         menuProps={{
           // Keep the menu inside the dialog/page subtree: a portalled menu counts as an outside click
           // for Radix dialogs (closing them on select). Matches the global MUI theme default.
