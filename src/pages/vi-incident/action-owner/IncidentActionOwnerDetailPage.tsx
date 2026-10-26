@@ -13,6 +13,7 @@ import {
   useViIncidentMyAssignmentIds,
 } from "@/components/vi-incident/viIncidentApi";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
+import { hasMyActionDraft } from "@/components/vi-incident/viIncidentData";
 
 const ViewMoreToggle = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
   <button type="button" onClick={onClick} className="text-sm font-medium text-gray-900 underline underline-offset-2">
@@ -52,7 +53,7 @@ const IncidentActionOwnerDetailPage = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
-      <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} />
+      <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} draft={hasMyActionDraft(incident, isMine)} />
 
       <DetailCard icon={sectionIcon(FileText)} title="Incident Summary" className="mb-5">
         <div className="mb-3 flex justify-end">

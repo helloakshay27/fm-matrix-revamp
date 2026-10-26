@@ -1,3 +1,4 @@
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
+  hasSpocDraft,
   type ViIncidentActionType,
   type ViIncidentChecklistItem,
 } from "@/components/vi-incident/viIncidentData";
@@ -323,6 +325,7 @@ const IncidentSpocActionPlanPage = () => {
         </button>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentNo}</h1>
         <span className="text-sm text-gray-500">Action Plan</span>
+        {hasSpocDraft(incident) && <IncidentStatusPill status="Draft" />}
       </div>
 
       {step === 1 && (

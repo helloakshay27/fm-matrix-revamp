@@ -15,7 +15,7 @@ const IncidentReporterListPage = () => {
       title="Incident — Reporter"
       detailBasePath={INCIDENT_REPORTER_PATH}
       storageKey="vi-incident-list-reporter"
-      editDrafts
+      editPath={(incident) => (incident.canEdit ? `${INCIDENT_REPORTER_PATH}/${incident.id}/edit` : null)}
       leftActions={
         <Button
           className="h-[42px] rounded-[8px] px-[22px] bg-brand hover:bg-brand-hover text-white"

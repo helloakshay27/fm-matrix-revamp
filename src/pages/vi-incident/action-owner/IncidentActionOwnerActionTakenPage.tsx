@@ -1,3 +1,4 @@
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,6 +24,7 @@ import {
 } from "@/components/vi-incident/viIncidentApi";
 import {
   ACTION_TYPE_LABEL,
+  isAssignmentDraft,
   todayIso,
   type ViIncidentActionPlan,
   type ViIncidentAssignment,
@@ -147,6 +149,7 @@ const IncidentActionOwnerActionTakenPage = () => {
         </button>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentNo}</h1>
         <span className="text-sm text-gray-500">Action Taken</span>
+        {rows.some(({ assignment }) => isAssignmentDraft(assignment)) && <IncidentStatusPill status="Draft" />}
       </div>
 
       <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">

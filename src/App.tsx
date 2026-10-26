@@ -761,6 +761,9 @@ const IncidentActionOwnerActionTakenPage = lazy(
 const IncidentFunctionalHeadListPage = lazy(
   () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadListPage")
 );
+const IncidentFunctionalHeadDetailPage = lazy(
+  () => import("./pages/vi-incident/functional-head/IncidentFunctionalHeadDetailPage")
+);
 // const InspectionInspectorListPage = lazy(() =>
 //   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
 //     default: m.InspectionInspectorListPage,
@@ -6056,6 +6059,14 @@ function App() {
                             <Route
                               path="/safety/vi-incident/functional-head"
                               element={<IncidentFunctionalHeadListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id"
+                              element={<IncidentFunctionalHeadDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id/plans/:planId"
+                              element={<IncidentFunctionalHeadPlanDetailPage />}
                             />
                             <Route
                               path="/safety/vi-inspection/inspector"
