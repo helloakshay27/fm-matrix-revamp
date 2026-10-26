@@ -233,6 +233,23 @@ export const toIncidentRecord = (r: Raw, index = 0): ViIncidentRecord => {
   const reported = dateTimeParts(text(r.reported_at, r.submitted_at, r.created_at));
 
   const reporter = obj(r.reporter ?? r.created_by ?? r.user);
+  const loggedInUser = getUser();
+  const reporterId = text(reporter.id, r.reporter_id, r.created_by_id);
+  const reporterEmail = text(reporter.email, r.reporter_email, r.created_by_email);
+  const isLoggedInReporter = reporterId && loggedInUser?.id != null
+    ? reporterId === String(loggedInUser.id)
+    : Boolean(reporterEmail && loggedInUser?.email && reporterEmail.toLowerCase() === loggedInUser.email.toLowerCase());
+  // Like Inspection, prefer designation over legacy employer/company fields.
+  // The login profile can fill a missing designation only for this same reporter.
+  const reporterDesignation = text(
+    reporter.designation,
+    r.reporter_designation,
+    isLoggedInReporter ? loggedInUser?.designation : undefined,
+    reporter.employer_name,
+    reporter.employer,
+    reporter.company_name,
+    r.reporter_employer,
+  );
   const spocUser = toUser(r, "spoc");
   const functionalHeadUser = toUser(r, "functional_head");
 
@@ -285,7 +302,7 @@ export const toIncidentRecord = (r: Raw, index = 0): ViIncidentRecord => {
     reporter: {
       name: text(personName(reporter), r.reporter_name, r.created_by_name),
       mailId: text(reporter.email, r.reporter_email),
-      employer: text(reporter.employer, reporter.designation, reporter.company_name, r.reporter_employer),
+      designation: reporterDesignation,
     },
     dateOfReport: displayDate(reported.date),
     timeOfReport: displayTime(reported.time),

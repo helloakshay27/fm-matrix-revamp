@@ -737,6 +737,9 @@ const FunctionalHeadActionPlanDetailPage = lazy(
   () => import("./pages/vi-audit/functional-head/FunctionalHeadActionPlanDetailPage")
 );
 
+const ViIncidentManagementDashboardPage = lazy(
+  () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -2043,6 +2046,10 @@ function App() {
                             element={<RevampDashboardPage />}
                           />
 
+                          <Route
+                            path="/vi-incident/management-dashboard"
+                            element={<ViIncidentManagementDashboardPage />}
+                          />
                           {/* Backend Routes */}
                           <Route
                             path="/backend-console"

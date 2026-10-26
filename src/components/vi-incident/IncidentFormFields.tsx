@@ -84,12 +84,12 @@ export const fileToDataUrl = (file: File): Promise<string> =>
   });
 
 const Chip = ({ children, onRemove, label }: { children: ReactNode; onRemove: () => void; label: string }) => (
-  <span className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-900">
+  <span className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]">
     <span className="truncate">{children}</span>
     <button
       type="button"
       onClick={onRemove}
-      className="text-gray-500 hover:text-gray-900"
+      className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18]"
       aria-label={`Remove ${label}`}
     >
       <X className="w-3 h-3" />
@@ -131,12 +131,12 @@ const AttachmentThumb = ({
           src={src}
           alt={name}
           onError={() => setBroken(true)}
-          className="h-20 w-24 rounded-[10px] object-cover border border-gray-200"
+          className="h-20 w-24 rounded-[10px] object-cover border border-[rgba(26,26,24,0.09)]"
         />
       ) : (
         <div
-          className={`flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-[10px] px-1 text-gray-500 ${
-            cardTone === "white" ? "bg-white" : "bg-gray-100"
+          className={`flex h-20 w-24 flex-col items-center justify-center gap-1 rounded-[10px] px-1 text-[rgba(26,26,24,0.48)] ${
+            cardTone === "white" ? "bg-white" : "bg-[#F5F4F0]"
           }`}
         >
           <FileText className="w-5 h-5" />
@@ -147,7 +147,7 @@ const AttachmentThumb = ({
         <button
           type="button"
           onClick={onRemove}
-          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-gray-600 shadow hover:text-gray-900"
+          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[rgba(26,26,24,0.68)] shadow hover:text-[#1A1A18]"
           aria-label={`Remove ${name}`}
         >
           <X className="w-3 h-3" />
@@ -186,7 +186,7 @@ export function AttachmentPicker({
 }) {
   return (
     <div>
-      <label className="inline-flex items-center justify-center gap-2 h-9 px-4 text-sm border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50 cursor-pointer">
+      <label className="fm-action-secondary inline-flex cursor-pointer">
         <Paperclip className="w-4 h-4" />
         {label}
         <input
@@ -300,7 +300,7 @@ export const AttachmentLinks = ({ attachments, tone = "muted" }: { attachments: 
           href={attachment.url}
           target="_blank"
           rel="noreferrer"
-          className="rounded-[10px] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30"
+          className="rounded-[10px] transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A18]/30"
           aria-label={`Open ${attachment.name}`}
         >
           {thumb}

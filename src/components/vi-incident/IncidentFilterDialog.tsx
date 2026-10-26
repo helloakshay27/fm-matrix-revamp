@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { TextField } from "@mui/material";
-import { auditFieldSx } from "@/components/vi-audit/ViAuditUi";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IncidentSelectField } from "./IncidentFormFields";
 import type { MasterOption } from "@/components/vi-audit/useViAuditMasters";
@@ -88,7 +87,7 @@ export const IncidentFilterDialog = ({
           translate(0,0) — becomes their positioning frame, pushing them away from the input. */}
       <DialogContent className="left-0 right-0 top-[5vh] mx-auto translate-x-0 translate-y-0 transform-none data-[state=open]:animate-none data-[state=closed]:animate-none sm:max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl p-8">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-gray-900">Filters</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-[#1A1A18]">Filters</DialogTitle>
         </DialogHeader>
 
         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-5">
@@ -99,7 +98,6 @@ export const IncidentFilterDialog = ({
             value={draft.dateFrom}
             onChange={(e) => set({ dateFrom: e.target.value })}
             inputProps={{ max: draft.dateTo || undefined }}
-            sx={auditFieldSx}
             InputLabelProps={{ shrink: true }}
           />
           <TextField
@@ -109,7 +107,6 @@ export const IncidentFilterDialog = ({
             value={draft.dateTo}
             onChange={(e) => set({ dateTo: e.target.value })}
             inputProps={{ min: draft.dateFrom || undefined }}
-            sx={auditFieldSx}
             InputLabelProps={{ shrink: true }}
           />
           <TextField
@@ -118,7 +115,6 @@ export const IncidentFilterDialog = ({
             label="Time of Incident"
             value={draft.timeOfIncident}
             onChange={(e) => set({ timeOfIncident: e.target.value })}
-            sx={auditFieldSx}
             InputLabelProps={{ shrink: true }}
           />
           <IncidentSelectField
@@ -194,10 +190,10 @@ export const IncidentFilterDialog = ({
           />
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-center pt-4">
+        <div className="fm-action-bar pt-4">
           <button
             type="button"
-            className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            className="fm-action-secondary"
             onClick={() => {
               setDraft(EMPTY_INCIDENT_FILTERS);
               onApply(EMPTY_INCIDENT_FILTERS);
@@ -208,7 +204,7 @@ export const IncidentFilterDialog = ({
           </button>
           <button
             type="button"
-            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            className="fm-action-primary"
             onClick={() => {
               onApply(draft);
               onClose();

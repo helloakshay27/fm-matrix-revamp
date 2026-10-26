@@ -8,18 +8,22 @@ import { AttachmentLinks } from "./IncidentFormFields";
 import { IncidentStatusPill } from "./IncidentListView";
 import { incidentPendingWith, type ViIncidentRecord } from "./viIncidentData";
 
-/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
-export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) => (
-  <>
+export const IncidentReporterCard = ({ incident }: { incident: ViIncidentRecord }) => (
     <DetailCard icon={sectionIcon(User)} title="Reporter Details" className="mb-5">
       <FieldGrid
         fields={[
           { label: "Name", value: incident.reporter.name },
           { label: "Mail ID", value: incident.reporter.mailId },
-          { label: "Employer", value: incident.reporter.employer },
+          { label: "Designation", value: incident.reporter.designation },
         ]}
       />
     </DetailCard>
+);
+
+/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
+export const IncidentInfoCards = ({ incident, showReporter = true }: { incident: ViIncidentRecord; showReporter?: boolean }) => (
+  <>
+    {showReporter && <IncidentReporterCard incident={incident} />}
 
     <DetailCard icon={sectionIcon(FileText)} title="Basic Details" className="mb-5">
       <FieldGrid
@@ -51,9 +55,9 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
     </DetailCard>
 
     <DetailCard icon={sectionIcon(ClipboardList)} title="Incident Details" className="mb-5">
-      <div className="mb-4 border-b border-gray-200 pb-4">
-        <div className="text-xs text-gray-500 mb-1">Incident</div>
-        <p className="text-sm text-gray-900 whitespace-pre-wrap">{incident.incident || "-"}</p>
+      <div className="mb-4 border-b border-[rgba(26,26,24,0.09)] pb-4">
+        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
+        <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{incident.incident || "-"}</p>
       </div>
       <FieldGrid
         columns={2}
@@ -63,11 +67,11 @@ export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) 
         ]}
       />
       <div className="mt-4">
-        <div className="text-xs text-gray-500 mb-1">Attachments ({incident.attachments.length})</div>
+        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Attachments ({incident.attachments.length})</div>
         {incident.attachments.length ? (
           <AttachmentLinks attachments={incident.attachments} />
         ) : (
-          <span className="text-sm font-medium text-gray-900">-</span>
+          <span className="text-sm font-medium text-[#1A1A18]">-</span>
         )}
       </div>
       <div className="mt-4">
@@ -127,9 +131,9 @@ export const IncidentInvestigationCard = ({ incident }: { incident: ViIncidentRe
                 : { label: "Investigation Conclusion", value: inv.conclusion },
             ]}
           />
-          <div className="mt-4 border-t border-gray-200 pt-4">
-            <div className="text-xs text-gray-500 mb-1">Investigation Summary</div>
-            <p className="text-sm text-gray-900 whitespace-pre-wrap">{inv.summary || "-"}</p>
+          <div className="mt-4 border-t border-[rgba(26,26,24,0.09)] pt-4">
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Investigation Summary</div>
+            <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{inv.summary || "-"}</p>
           </div>
         </>
       ) : (
@@ -154,6 +158,7 @@ export const IncidentHeader = ({
 }: {
   incident: ViIncidentRecord;
   onBack: () => void;
+  /** Adds a "Draft" pill (unless the status already reads Draft). */
   draft?: boolean;
   children?: ReactNode;
 }) => {
@@ -164,12 +169,12 @@ export const IncidentHeader = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
           aria-label="Back to incident list"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Incident — {incident.incidentNo}</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
         <IncidentStatusPill status={incident.status} />
         {draft && incident.status !== "Draft" && <IncidentStatusPill status="Draft" />}
         {children}
@@ -214,6 +219,7 @@ export const IncidentDetailView = ({
   incident: ViIncidentRecord | null;
   loading: boolean;
   listPath: string;
+  /** The viewing role has saved its part as a draft — shown as a "Draft" pill in the heading. */
   draft?: boolean;
   /** Sticky action bar content, e.g. the SPOC's "Create Action Plan" button. */
   footer?: ReactNode;
@@ -226,7 +232,7 @@ export const IncidentDetailView = ({
   if (!incident) return <AuditLoadingState message="Incident not found." onBack={() => navigate(listPath)} />;
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen">
+    <div className="p-6 min-h-screen">
       <IncidentHeader incident={incident} onBack={() => navigate(listPath)} draft={draft} />
 
       <IncidentInfoCards incident={incident} />
@@ -234,7 +240,7 @@ export const IncidentDetailView = ({
       {children}
 
       {footer && (
-        <div className="flex flex-wrap gap-4 justify-center sticky bottom-0 -mx-6 mt-6 border-t border-gray-200 bg-white px-6 py-4">
+        <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">
           {footer}
         </div>
       )}

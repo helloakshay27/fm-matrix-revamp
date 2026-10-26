@@ -40,7 +40,7 @@ const IncidentReporterDetailPage = () => {
           <>
             <button
               type="button"
-              className="fm-button-fix inline-flex items-center justify-center gap-2 border border-brand bg-white text-brand hover:bg-brand-selected px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
+              className="fm-action-secondary w-full sm:w-auto"
               onClick={() => navigate(`${INCIDENT_REPORTER_PATH}/${id}/edit`)}
               disabled={submitting}
             >
@@ -48,7 +48,7 @@ const IncidentReporterDetailPage = () => {
             </button>
             <button
               type="button"
-              className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
+              className="fm-action-primary w-full sm:w-auto"
               onClick={submitDraft}
               disabled={submitting}
             >

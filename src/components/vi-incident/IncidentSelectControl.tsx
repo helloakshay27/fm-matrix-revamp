@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { MenuItem, TextField, type MenuProps } from "@mui/material";
-import { auditFieldSx } from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import type { MasterOption } from "@/components/vi-audit/useViAuditMasters";
 
@@ -49,7 +48,6 @@ export function IncidentSelectControl({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled || loading}
-      sx={auditFieldSx}
       InputLabelProps={{ shrink: true }}
       SelectProps={{
         displayEmpty: true,
