@@ -35,13 +35,13 @@ import { INCIDENT_FUNCTIONAL_HEAD_PATH } from "./IncidentFunctionalHeadListPage"
 const PlanRecord = ({ plan }: { plan: ViIncidentActionPlan }) => {
   const taken = plan.assignments.filter((a) => a.actionTaken && a.status === "closed");
   return (
-    <div className="overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
+    <div className="overflow-hidden rounded-[12px] border border-gray-200">
       <div className="px-4 py-4">
         <div className="mb-1 flex items-center justify-between gap-3">
           <PlanStatusPill plan={plan} />
           <DueLabel label={viIncidentPlanDueLabel([plan])} />
         </div>
-        <p className="mt-2 text-sm text-[#1A1A18] whitespace-pre-wrap">{plan.description || "-"}</p>
+        <p className="mt-2 text-sm text-gray-900 whitespace-pre-wrap">{plan.description || "-"}</p>
         <div className="mt-3">
           <FieldGrid
             columns={2}
@@ -95,15 +95,15 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
         <button
           type="button"
           onClick={() => navigate(incidentPath)}
-          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-[#F5F4F0]"
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] hover:bg-gray-100"
           aria-label="Back to incident"
         >
-          <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Action Plan — {group.item.name}</h1>
+        <h1 className="text-xl font-semibold text-gray-900">Action Plan — {group.item.name}</h1>
         <AuditStatusPill status={closed ? "Closed By Action Owner" : "Pending By Action Owner"} />
       </div>
-      <p className="pl-11 text-sm text-[rgba(26,26,24,0.48)]">Incident {incident.incidentNo}</p>
+      <p className="pl-11 text-sm text-gray-500">Incident {incident.incidentNo}</p>
       <PendingWithLine names={pendingOwnerNames(plans)} className="mt-1 pl-11" />
       <div className="mb-6" />
 
@@ -111,9 +111,9 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
       <DetailCard icon={sectionIcon(ClipboardCheck)} title={`Incident ${incident.incidentNo}`} className="mb-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-sm font-semibold text-[#1A1A18]">{incident.classification}</div>
-            <div className="text-sm text-[rgba(26,26,24,0.68)]">{incident.incidentLocation}</div>
-            <div className="flex items-center gap-2 pt-1 text-sm text-[rgba(26,26,24,0.48)]">
+            <div className="text-sm font-semibold text-gray-900">{incident.classification}</div>
+            <div className="text-sm text-gray-600">{incident.incidentLocation}</div>
+            <div className="flex items-center gap-2 pt-1 text-sm text-gray-500">
               Status: <IncidentStatusPill status={incident.status} />
             </div>
           </div>
@@ -122,7 +122,7 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
             onClick={() => setDetailsOpen((open) => !open)}
             aria-expanded={detailsOpen}
             aria-controls="functional-head-incident-details"
-            className="text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]"
+            className="text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-600"
           >
             {detailsOpen ? "View Less" : "View More"}
           </button>
@@ -155,13 +155,13 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
           <DetailCard icon={sectionIcon(FileText)} title="Root Cause Details" className="mb-5">
             <div className="space-y-5">
               <div>
-                <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Checklist Item</div>
-                <div className="mb-0.5 text-sm font-semibold text-[#1A1A18]">{group.item.name}</div>
-                <div className="text-xs text-[rgba(26,26,24,0.48)]">{group.item.path}</div>
+                <div className="text-xs text-gray-500 mb-1">Checklist Item</div>
+                <div className="mb-0.5 text-sm font-semibold text-gray-900">{group.item.name}</div>
+                <div className="text-xs text-gray-500">{group.item.path}</div>
               </div>
               <div>
-                <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
-                <p className="text-sm text-[#1A1A18] whitespace-pre-wrap">{incident.incident || "-"}</p>
+                <div className="text-xs text-gray-500 mb-1">Incident</div>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">{incident.incident || "-"}</p>
               </div>
               <FieldGrid
                 fields={[
@@ -185,7 +185,7 @@ const IncidentFunctionalHeadPlanDetailPage = () => {
                 {group[type].length ? (
                   group[type].map((plan) => <PlanRecord key={plan.id} plan={plan} />)
                 ) : (
-                  <p className="text-sm text-[rgba(26,26,24,0.48)]">No plan added.</p>
+                  <p className="text-sm text-gray-500">No plan added.</p>
                 )}
               </div>
             </DetailCard>

@@ -136,14 +136,15 @@ export interface ViIncidentRecord {
 
 /** Status tone classes for the incident status pill. */
 export const VI_INCIDENT_STATUS_TONE: Record<string, string> = {
-  Draft: "bg-[#FBE3D8] text-[#B5502A]",
-  Open: "bg-[#DCE8F4] text-[#2F5F8F]",
-  Closed: "bg-[#DDEBD3] text-[#4A6B2E]",
-  "Pending By SPOC": "bg-[#F5B5A6] text-[#8A2F1B]",
-  "Pending By Action Owner": "bg-[#F8E4C7] text-[#8A5A12]",
-  "Closed By Action Owner": "bg-[#DDEBD3] text-[#4A6B2E]",
-  "Closed By SPOC": "bg-[#DDEBD3] text-[#4A6B2E]",
-  "Incident Closed": "bg-[#DDEBD3] text-[#4A6B2E]",
+  Draft: "bg-yellow-100 text-yellow-700",
+  Open: "bg-blue-100 text-blue-700",
+  Closed: "bg-green-100 text-green-700",
+  "Pending By SPOC": "bg-yellow-100 text-yellow-700",
+  "Pending By Action Owner": "bg-yellow-100 text-yellow-700",
+  "Closed By Action Owner": "bg-green-100 text-green-700",
+  "Closed By SPOC": "bg-green-100 text-green-700",
+  "Incident Closed": "bg-green-100 text-green-700",
+  default: "bg-orange-100 text-orange-700",
 };
 
 export const INCIDENT_COLUMNS: ColumnConfig[] = [

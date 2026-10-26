@@ -12,7 +12,6 @@ import {
   Search,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -44,14 +43,13 @@ export interface IncidentListStat {
 export type IncidentStatsBuilder = (dashboard: Record<string, unknown>) => IncidentListStat[];
 
 // Same summary-card standard as the audit lists.
-const summaryCardClass =
-  "!bg-[#F5F4F0] !rounded-2xl !px-5 !py-[18px] !shadow-none hover:!shadow-none !cursor-default";
-const summaryIconTileClass = "!w-9 !h-9 !bg-white !rounded-[10px]";
+// Plain StatsCard (ticket list look), not clickable — same as the audit lists.
+const summaryCardClass = "cursor-default hover:shadow-[0px_1px_8px_rgba(45,45,45,0.05)]";
 
 export const IncidentStatusPill = ({ status }: { status: string }) => (
   <span
-    className={`inline-flex items-center whitespace-nowrap rounded-full px-[10px] py-[3px] text-[11px] font-medium ${
-      VI_INCIDENT_STATUS_TONE[status] ?? VI_INCIDENT_STATUS_TONE.Closed
+    className={`inline-flex items-center whitespace-nowrap px-2 py-1 rounded text-xs font-medium ${
+      VI_INCIDENT_STATUS_TONE[status] ?? VI_INCIDENT_STATUS_TONE.default
     }`}
   >
     {status || "-"}
@@ -163,43 +161,40 @@ export const IncidentListView = ({
   };
 
   const renderActions = (item: ViIncidentRecord) => (
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+    <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
+      <button
+        type="button"
+        className="p-1 hover:bg-gray-100 rounded transition-colors"
         onClick={() => navigate(`${detailBasePath}/${item.id}`)}
         title="View incident"
       >
-        <Eye className="w-4 h-4" />
-      </Button>
+        <Eye className="w-4 h-4 text-gray-600 cursor-pointer" />
+      </button>
       {editPath?.(details.get(item.id) ?? item) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+        <button
+        type="button"
+        className="p-1 hover:bg-gray-100 rounded transition-colors"
           onClick={() => navigate(editPath(details.get(item.id) ?? item)!)}
           title="Edit draft"
         >
-          <Pencil className="w-4 h-4" />
-        </Button>
+          <Pencil className="w-4 h-4 text-gray-600 cursor-pointer hover:text-brand" />
+        </button>
       )}
     </div>
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-xl font-semibold text-[#1A1A18] mb-4">{title}</h1>
+    <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">{title}</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px] mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {buildStats(dashboard).map(({ title: statTitle, value, icon: Icon }) => (
           <StatsCard
             key={statTitle}
             title={statTitle}
             value={value}
-            icon={<Icon className="w-[18px] h-[18px]" style={{ color: "rgba(26, 26, 24, 0.48)" }} />}
+            icon={<Icon className="w-6 h-6 text-brand" />}
             className={summaryCardClass}
-            iconWrapperClassName={summaryIconTileClass}
           />
         ))}
       </div>

@@ -16,7 +16,7 @@ import { hasMyActionDraft } from "@/components/vi-incident/viIncidentData";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
 
 const ViewMoreToggle = ({ open, onClick, controls }: { open: boolean; onClick: () => void; controls?: string }) => (
-  <button type="button" onClick={onClick} aria-expanded={open} aria-controls={controls} className="text-sm font-medium text-[#1A1A18] underline underline-offset-2">
+  <button type="button" onClick={onClick} aria-expanded={open} aria-controls={controls} className="text-sm font-medium text-gray-900 underline underline-offset-2">
     {open ? "View Less" : "View More"}
   </button>
 );
@@ -86,8 +86,8 @@ const IncidentActionOwnerDetailPage = () => {
         <div className="mb-3 flex justify-end">
           <ViewMoreToggle open={detailsOpen} onClick={() => setDetailsOpen((v) => !v)} controls="action-owner-incident-details" />
         </div>
-        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
-        <p className={`text-sm text-[#1A1A18] whitespace-pre-wrap ${detailsOpen ? "" : "line-clamp-2"}`}>
+        <div className="text-xs text-gray-500 mb-1">Incident</div>
+        <p className={`text-sm text-gray-900 whitespace-pre-wrap ${detailsOpen ? "" : "line-clamp-2"}`}>
           {incident.incident || "-"}
         </p>
       </DetailCard>
@@ -104,14 +104,14 @@ const IncidentActionOwnerDetailPage = () => {
       {plans.length ? (
         <IncidentActionPlanCards incident={incident} plans={plans} isMine={isMine} />
       ) : (
-        <p className="py-8 text-center text-sm text-[rgba(26,26,24,0.48)]">No action plans assigned to you.</p>
+        <p className="py-8 text-center text-sm text-gray-500">No action plans assigned to you.</p>
       )}
 
       {canAddActionTaken && (
-        <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">
+        <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-gray-200 bg-white px-6 py-4">
           <button
             type="button"
-            className="fm-action-primary w-full sm:w-auto"
+            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
             onClick={() => navigate(`${INCIDENT_ACTION_OWNER_PATH}/${id}/action-taken`)}
           >
             Add Action Taken
