@@ -1,6 +1,8 @@
+import { DetailCard } from "@/components/ui/detail-card";
 import { useState, useEffect } from "react";
-import { Eye, Pencil, File } from "lucide-react";
-import { Switch } from "@mui/material";
+import { Eye, Pencil, Info, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -274,40 +276,25 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                 </>
             ) : (
                 <>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-[#F6F4EE] p-4 flex items-center justify-between border-b border-gray-200">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                    <File size={16} />
-                                </div>
-                                <span className="font-semibold text-lg text-gray-800">Community Details</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                    <DetailCard
+                        title="Community Details"
+                        icon={<Info className="w-[18px] h-[18px] text-gray-500" />}
+                        headerActions={
+                            <>
                                 <Switch
+                                    id="community-details-status"
                                     checked={isActive}
-                                    onChange={() => handleStatusChange(Number(id), isActive)}
+                                    onCheckedChange={() => handleStatusChange(Number(id), isActive)}
                                     disabled={isToggling === Number(id)}
-                                    sx={{
-                                        '& .MuiSwitch-switchBase.Mui-checked': {
-                                            color: '#04A231',
-                                        },
-                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                            backgroundColor: '#04A231',
-                                        },
-                                        '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                                            color: '#C72030',
-                                        },
-                                        '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                                            backgroundColor: 'rgba(199, 32, 48, 0.5)',
-                                        },
-                                    }}
                                 />
-                                <span className="text-sm font-medium text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-white">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <Label htmlFor="community-details-status" className="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {isActive ? 'Active' : 'Inactive'}
+                                </Label>
+                            </>
+                        }
+                    >
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Community Image */}
                                 <div className="bg-gray-100 h-72">
                                     <img
@@ -372,23 +359,21 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </DetailCard>
 
                     {/* Community Member Details Section */}
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
-                            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-                                <File size={16} />
-                            </div>
-                            <span className="font-semibold text-lg text-gray-800">Community Member Details</span>
-                        </div>
+                    <DetailCard
+                        title="Community Member Details"
+                        icon={<Users className="w-[18px] h-[18px] text-gray-500" />}
+                    >
+                        <div>
 
                         <EnhancedTable
                             data={members}
                             columns={memberColumns}
                             renderCell={renderMemberCell}
                             hideColumnsButton={true}
-                            hideTableSearch={true}
+                            hideTableSearch={false}
                             selectable={true}
                             enableSelection={true}
                             onSelectItem={(itemId: string, checked: boolean) => {
@@ -414,7 +399,8 @@ const CommunityDetailsTab = ({ communityId, setCommunityName, setCommunityImg }:
                             selectedItems={selectedMemberIds}
                             getItemId={(item: any) => String(item.id)}
                         />
-                    </div>
+                        </div>
+                    </DetailCard>
                 </>
             )}
 

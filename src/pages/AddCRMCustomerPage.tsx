@@ -1,22 +1,68 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
-import { Button } from "../components/ui/button";
-import {
+import { ArrowLeft,
   Calendar,
-  Trash2,
   Settings,
-  ArrowLeft,
   Globe,
-  Plus,
   X,
+  Plus,
 } from "lucide-react";
 import { TextField } from "@mui/material";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { createCustomer } from "@/store/slices/cusomerSlice";
 import { toast } from "sonner";
 import ReactSelect from 'react-select';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+
+const requiredLabel = (text: string) => (
+  <span>
+    {text}
+    <span className="fm-required-mark">*</span>
+  </span>
+);
+
+// Enable Sites multi-select — Asset form ke MUI field jaisi height/border
+const siteSelectStyles = {
+  control: (base: any) => ({
+    ...base,
+    minHeight: '45px',
+    border: '1px solid #c4c4c4',
+    // theme.css ka --radius-input — MUI fields jaisa same radius
+    borderRadius: 'var(--radius-input)',
+    boxShadow: 'none',
+    '&:hover': {
+      border: '1px solid #1a1a1a'
+    }
+  }),
+  menuPortal: (base: any) => ({
+    ...base,
+    zIndex: 9999
+  }),
+  menu: (base: any) => ({
+    ...base,
+    zIndex: 9999
+  }),
+  multiValue: (base: any) => ({
+    ...base,
+    backgroundColor: '#f1f5f9',
+    borderRadius: '4px'
+  }),
+  multiValueLabel: (base: any) => ({
+    ...base,
+    color: '#334155'
+  }),
+  multiValueRemove: (base: any) => ({
+    ...base,
+    color: '#64748b',
+    borderRadius: '0px',
+    '&:hover': {
+      backgroundColor: '#e2e8f0',
+      color: '#475569'
+    }
+  })
+};
 
 export const AddCRMCustomerPage = () => {
   const dispatch = useAppDispatch();
@@ -212,7 +258,7 @@ export const AddCRMCustomerPage = () => {
       console.log(error);
       const message = typeof error === 'string'
         ? error
-        : error?.message || "Failed to create customer";
+        : error?.response?.data?.error || error?.message || "Failed to create customer";
       toast.error(message);
     }
   };
@@ -227,495 +273,336 @@ export const AddCRMCustomerPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center gap-4">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Add New Customer
-          </h1>
+          <span>Customer List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Create New Customer</span>
         </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW CUSTOMER</h1>
       </div>
 
-      {/* Main Content */}
-      <div className="w-full mx-auto p-6 space-y-4">
+      <div className="space-y-4 sm:space-y-6">
         {/* Basic Details Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Settings className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
-                Basic Details
-              </h2>
-            </div>
+        <FormSection title="BASIC DETAILS" icon={Settings}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <TextField
+              label={requiredLabel("Customer Name")}
+              placeholder="Enter Customer Name"
+              variant="outlined"
+              fullWidth
+              value={formData.customerName}
+              onChange={(e) => handleInputChange("customerName", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
+            <TextField
+              label="Email"
+              placeholder="Enter Email"
+              variant="outlined"
+              fullWidth
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              onBlur={(e) => {
+                const value = e.target.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (value && !emailRegex.test(value)) {
+                  toast.error("Please enter a valid email address");
+                }
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
+            <TextField
+              label="Mobile"
+              placeholder="Enter Mobile"
+              variant="outlined"
+              fullWidth
+              value={formData.mobile}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d{0,10}$/.test(value)) {
+                  handleInputChange("mobile", value);
+                }
+              }}
+              inputProps={{
+                maxLength: 10,
+                inputMode: "numeric",
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
+            <TextField
+              label="Customer Type"
+              placeholder="Enter Customer Type"
+              variant="outlined"
+              fullWidth
+              value={formData.customerType}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleInputChange("customerType", value);
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
+            <TextField
+              label="Company Code"
+              placeholder="Enter Company Code"
+              variant="outlined"
+              fullWidth
+              value={formData.companyCode}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleInputChange("companyCode", value);
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
+            {/* <TextField
+              label="Customer Code*"
+              variant="outlined"
+              fullWidth
+              value={formData.customerCode}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleInputChange("customerCode", value);
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            /> */}
+            {/* Swatch field ke andar — baaki inputs ki tarah same row, same radius */}
+            <TextField
+              label="Color Code"
+              variant="outlined"
+              fullWidth
+              value={formData.colorCode}
+              onChange={(e) =>
+                handleInputChange("colorCode", e.target.value)
+              }
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                sx: assetFieldStyles,
+                startAdornment: (
+                  <input
+                    type="color"
+                    value={formData.colorCode}
+                    onChange={(e) =>
+                      handleInputChange("colorCode", e.target.value)
+                    }
+                    aria-label="Pick color"
+                    className="w-7 h-7 ml-2 shrink-0 cursor-pointer rounded-md border border-gray-200 bg-transparent p-0.5"
+                  />
+                ),
+              }}
+            />
           </div>
 
-          <div className="p-6">
-            {/* Customer Information Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <TextField
-                  label="Customer Name*"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.customerName}
-                  onChange={(e) => handleInputChange("customerName", e.target.value)}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Email"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (value && !emailRegex.test(value)) {
-                      toast.error("Please enter a valid email address");
-                    }
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Mobile"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.mobile}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d{0,10}$/.test(value)) {
-                      handleInputChange("mobile", value);
-                    }
-                  }}
-                  inputProps={{
-                    maxLength: 10,
-                    inputMode: "numeric",
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Customer Type"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.customerType}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    handleInputChange("customerType", value);
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <TextField
-                  label="Company Code"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.companyCode}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    handleInputChange("companyCode", value);
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                />
-                {/* <TextField
-                  label="Customer Code*"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={formData.customerCode}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    handleInputChange("customerCode", value);
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
-                /> */}
-              </div>
-               <div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={formData.colorCode}
-                      onChange={(e) =>
-                        handleInputChange("colorCode", e.target.value)
-                      }
-                      className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors"
-                    />
-                    <TextField
-                      label="Color Code"
-                      variant="outlined"
-                      size="small"
-                      value={formData.colorCode}
-                      onChange={(e) =>
-                        handleInputChange("colorCode", e.target.value)
-                      }
-                      sx={{
-                        flex: 1,
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                          height: "40px",
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-             
-            </div>
-
-            {/* Enable Sites Multi-Select */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Enable Sites <span className="text-red-500">*</span>
-              </label>
-              <ReactSelect
-                isMulti
-                options={sites.map(site => ({
+          {/* Enable Sites Multi-Select */}
+          <div className="mt-6">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              {requiredLabel("Enable Sites")}
+            </label>
+            <ReactSelect
+              isMulti
+              options={sites.map(site => ({
+                value: site.id,
+                label: site.name
+              }))}
+              onChange={(selected) => {
+                if (!selected || selected.length === 0) {
+                  setSelectedSiteIds([]);
+                  return;
+                }
+                const siteIds = selected.map(s => s.value);
+                setSelectedSiteIds(siteIds);
+              }}
+              value={sites
+                .filter(site => selectedSiteIds.includes(site.id))
+                .map(site => ({
                   value: site.id,
                   label: site.name
-                }))}
-                onChange={(selected) => {
-                  if (!selected || selected.length === 0) {
-                    setSelectedSiteIds([]);
-                    return;
-                  }
-                  const siteIds = selected.map(s => s.value);
-                  setSelectedSiteIds(siteIds);
-                }}
-                value={sites
-                  .filter(site => selectedSiteIds.includes(site.id))
-                  .map(site => ({
-                    value: site.id,
-                    label: site.name
-                  }))
-                }
-                placeholder="Select sites..."
-                noOptionsMessage={() => "No sites available"}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    minHeight: '40px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: 'none',
-                    '&:hover': {
-                      border: '1px solid #cbd5e1'
-                    }
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 9999
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: '#f1f5f9',
-                    borderRadius: '4px'
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: '#334155'
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: '#64748b',
-                    borderRadius: '0px',
-                    '&:hover': {
-                      backgroundColor: '#e2e8f0',
-                      color: '#475569'
-                    }
-                  })
-                }}
-              />
-            </div>
+                }))
+              }
+              placeholder="Select sites..."
+              noOptionsMessage={() => "No sites available"}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={siteSelectStyles}
+            />
           </div>
-        </div>
+        </FormSection>
 
         {/* Domain Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Globe className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
-                Domain Information
-              </h2>
-            </div>
-          </div>
-
-          <div className="p-6">
+        <FormSection
+          title="DOMAIN INFORMATION"
+          icon={Globe}
+          headerActions={
+            <button type="button" onClick={addNewDomain} className="fm-custom-field-btn">
+              <Plus className="w-4 h-4" />
+              Add Domain
+            </button>
+          }
+        >
+          <div className="space-y-4">
             {domains.map((domain, index) => (
-              <div
-                key={domain.id}
-                className="flex items-center gap-4 mb-4 last:mb-0"
-              >
+              <div key={domain.id} className="flex items-center gap-3">
                 <TextField
                   label={`Domain ${index + 1}`}
                   variant="outlined"
                   fullWidth
-                  size="small"
                   value={domain.domain}
                   onChange={(e) =>
                     handleDomainChange(domain.id, e.target.value)
                   }
                   placeholder="e.g., lockated.com"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                    },
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: assetFieldStyles }}
                 />
                 {domains.length > 1 && (
                   <button
+                    type="button"
                     onClick={() => removeDomain(domain.id)}
-                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full bg-brand text-white hover:bg-brand-hover transition-colors"
+                    aria-label={`Remove domain ${index + 1}`}
                   >
-                    <X className="w-5 h-5 text-red-500" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
             ))}
-            <Button
-              onClick={addNewDomain}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Domain
-            </Button>
           </div>
-        </div>
+        </FormSection>
 
         {/* Lease Information Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-[#F6F4EE] p-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E0D3] rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <h2 className="text-lg font-semibold text-[#1a1a1a]">
-                Lease Information
-              </h2>
-            </div>
-          </div>
-
-          <div className="p-6 space-y-4">
+        <FormSection
+          title="LEASE INFORMATION"
+          icon={Calendar}
+          headerActions={
+            <button type="button" onClick={addNewLease} className="fm-custom-field-btn">
+              <Plus className="w-4 h-4" />
+              Add Lease
+            </button>
+          }
+        >
+          <div className="space-y-4">
             {leases.map((lease, index) => (
               <div
                 key={lease.id}
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                className={index > 0 ? "pt-4 border-t border-gray-200" : undefined}
               >
-                {index > 0 && (
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-md font-medium text-gray-700">
+                {leases.length > 1 && (
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700">
                       Lease {index + 1}
                     </h4>
+                    <button
+                      type="button"
+                      onClick={() => removeLease(lease.id)}
+                      className="flex items-center justify-center h-7 w-7 rounded-full bg-brand text-white hover:bg-brand-hover transition-colors"
+                      aria-label={`Remove lease ${index + 1}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <TextField
-                      label="Lease Start Date"
-                      variant="outlined"
-                      fullWidth
-                      size="small"
-                      type="date"
-                      value={lease.leaseStartDate}
-                      onChange={(e) =>
-                        handleLeaseChange(
-                          lease.id,
-                          "leaseStartDate",
-                          e.target.value
-                        )
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <TextField
+                    label="Lease Start Date"
+                    variant="outlined"
+                    fullWidth
+                    type="date"
+                    value={lease.leaseStartDate}
+                    onChange={(e) =>
+                      handleLeaseChange(
+                        lease.id,
+                        "leaseStartDate",
+                        e.target.value
+                      )
+                    }
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: assetFieldStyles }}
+                  />
+                  <TextField
+                    label="Lease End Date"
+                    variant="outlined"
+                    fullWidth
+                    type="date"
+                    value={lease.leaseEndDate}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (
+                        lease.leaseStartDate &&
+                        value < lease.leaseStartDate
+                      ) {
+                        toast.error(
+                          "End date cannot be earlier than start date"
+                        );
+                        return;
                       }
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                        },
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <TextField
-                      label="Lease End Date"
-                      variant="outlined"
-                      fullWidth
-                      size="small"
-                      type="date"
-                      value={lease.leaseEndDate}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (
-                          lease.leaseStartDate &&
-                          value < lease.leaseStartDate
-                        ) {
-                          toast.error(
-                            "End date cannot be earlier than start date"
-                          );
-                          return;
-                        }
-                        handleLeaseChange(lease.id, "leaseEndDate", value);
-                      }}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      inputProps={{
-                        min: lease.leaseStartDate || undefined,
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                        },
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <TextField
-                      label="Free Parking"
-                      variant="outlined"
-                      fullWidth
-                      size="small"
-                      type="number"
-                      value={lease.freeParking}
-                      onChange={(e) =>
-                        handleLeaseChange(
-                          lease.id,
-                          "freeParking",
-                          e.target.value
-                        )
-                      }
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Paid Parking Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <div className="flex items-end gap-2">
-                      <TextField
-                        label="Paid Parking"
-                        variant="outlined"
-                        fullWidth
-                        size="small"
-                        type="number"
-                        value={lease.paidParking}
-                        onChange={(e) =>
-                          handleLeaseChange(
-                            lease.id,
-                            "paidParking",
-                            e.target.value
-                          )
-                        }
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "8px",
-                          },
-                        }}
-                      />
-                      {leases.length > 1 && (
-                        <button
-                          onClick={() => removeLease(lease.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors h-10"
-                        >
-                          <Trash2 className="w-5 h-5 text-red-500" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                      handleLeaseChange(lease.id, "leaseEndDate", value);
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{
+                      min: lease.leaseStartDate || undefined,
+                    }}
+                    InputProps={{ sx: assetFieldStyles }}
+                  />
+                  <TextField
+                    label="Free Parking"
+                    placeholder="Enter Free Parking"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={lease.freeParking}
+                    onChange={(e) =>
+                      handleLeaseChange(
+                        lease.id,
+                        "freeParking",
+                        e.target.value
+                      )
+                    }
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: assetFieldStyles }}
+                  />
+                  <TextField
+                    label="Paid Parking"
+                    placeholder="Enter Paid Parking"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={lease.paidParking}
+                    onChange={(e) =>
+                      handleLeaseChange(
+                        lease.id,
+                        "paidParking",
+                        e.target.value
+                      )
+                    }
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: assetFieldStyles }}
+                  />
                 </div>
               </div>
             ))}
-
-            {/* Add Lease Button */}
-            <Button
-              onClick={addNewLease}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Lease
-            </Button>
           </div>
-        </div>
+        </FormSection>
 
-        {/* Submit and Cancel Buttons */}
-        <div className="flex flex-col justify-center sm:flex-row gap-4 pt-6 border-t">
-          <Button
-            onClick={handleSave}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-11 w-40"
-          >
-            Submit
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            className="w-40 h-11"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={handleCancel}
+          onSubmit={handleSave}
+          submitLabel="Submit"
+        />
       </div>
     </div>
   );

@@ -14,7 +14,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 export const RunContestPage: React.FC = () => {
@@ -126,8 +127,8 @@ export const RunContestPage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#C72030]/10 flex items-center justify-center shrink-0">
-              <FlaskConical className="w-5 h-5 text-[#C72030]" />
+            <div className="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center shrink-0">
+              <FlaskConical className="w-5 h-5 text-brand" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-[#1a1a1a]">Run Result</h1>
@@ -142,7 +143,7 @@ export const RunContestPage: React.FC = () => {
               onClick={fetchDryRun}
               disabled={loading}
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              className="border-brand text-brand hover:bg-brand-light"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
@@ -151,7 +152,7 @@ export const RunContestPage: React.FC = () => {
             <Button
               onClick={() => setShowDistributeConfirm(true)}
               disabled={distributing || loading || !dryRunResult}
-              className="bg-[#C72030] hover:bg-[#a81c28] text-white font-semibold px-5 disabled:opacity-50"
+              className="bg-brand hover:bg-brand-hover text-white font-semibold px-5 disabled:opacity-50"
             >
               {distributing ? (
                 <>
@@ -170,11 +171,13 @@ export const RunContestPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      <Card className="w-full shadow-sm">
-        <CardContent className="p-6">
+      <DetailCard
+        title="Winners"
+        icon={<Trophy className="w-[18px] h-[18px] text-gray-500" />}
+      >
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 className="w-8 h-8 text-[#C72030] animate-spin" />
+              <Loader2 className="w-8 h-8 text-brand animate-spin" />
               <p className="text-sm text-gray-500 font-medium">Running simulation…</p>
             </div>
           ) : dryRunError ? (
@@ -188,12 +191,12 @@ export const RunContestPage: React.FC = () => {
           ) : dryRunResult ? (
             <div className="space-y-4">
               {/* Summary bar */}
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#C72030]/5 border border-[#C72030]/20">
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-brand-selected border border-brand-light">
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-[#C72030] shrink-0" />
+                  <Trophy className="w-4 h-4 text-brand shrink-0" />
                   <p className="text-sm font-semibold text-[#1a1a1a]">
                     Total Rewards Distributed:&nbsp;
-                    <span className="text-[#C72030]">{dryRunResult.total_rewards ?? 0}</span>
+                    <span className="text-brand">{dryRunResult.total_rewards ?? 0}</span>
                   </p>
                 </div>
                 {Array.isArray(dryRunResult.distribution) && dryRunResult.distribution.some((e: any) => !e.prize_won) && (() => {
@@ -208,7 +211,7 @@ export const RunContestPage: React.FC = () => {
                         dryRunResult.distribution.forEach((_: any, i: number) => { updated[i] = !allSelected; });
                         setDryRunChecked(updated);
                       }}
-                      className="px-3 py-1 text-xs font-semibold text-[#C72030] bg-white border border-[#C72030]/30 rounded-lg hover:bg-[#C72030]/5 transition-colors"
+                      className="px-3 py-1 text-xs font-semibold text-brand bg-white border border-[#C72030]/30 rounded-lg hover:bg-brand-selected transition-colors"
                     >
                       {allSelected ? "Unselect All" : "Select All"}
                     </button>
@@ -225,7 +228,7 @@ export const RunContestPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between px-4 py-2.5 bg-[#F6F4EE] border-b border-gray-200">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#C72030] uppercase tracking-wide">
+                        <span className="text-xs font-bold text-brand uppercase tracking-wide">
                           Winner #{i + 1}
                         </span>
                         {entry.prize_won && (
@@ -234,14 +237,12 @@ export const RunContestPage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={entry.prize_won ? false : (dryRunChecked[i] ?? true)}
                         disabled={entry.prize_won}
-                        onChange={(e) =>
-                          setDryRunChecked((prev) => ({ ...prev, [i]: e.target.checked }))
+                        onCheckedChange={(checked) =>
+                          setDryRunChecked((prev) => ({ ...prev, [i]: checked === true }))
                         }
-                        className="w-4 h-4 accent-[#C72030] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </div>
 
@@ -249,8 +250,8 @@ export const RunContestPage: React.FC = () => {
                       {/* User info */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[#C72030]/10 flex items-center justify-center shrink-0">
-                            <User className="w-4 h-4 text-[#C72030]" />
+                          <div className="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4 text-brand" />
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 font-medium">User</p>
@@ -303,8 +304,7 @@ export const RunContestPage: React.FC = () => {
               )}
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+      </DetailCard>
 
       {/* Distribute Confirmation Modal */}
       {showDistributeConfirm && (
@@ -312,7 +312,7 @@ export const RunContestPage: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                <Gift className="w-5 h-5 text-[#C72030]" />
+                <Gift className="w-5 h-5 text-brand" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
@@ -330,7 +330,7 @@ export const RunContestPage: React.FC = () => {
               </button>
               <button
                 onClick={() => { setShowDistributeConfirm(false); handleDistribute(); }}
-                className="px-4 py-1.5 text-sm font-medium text-white bg-[#C72030] hover:bg-[#a81c28] rounded-lg transition-colors"
+                className="px-4 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-hover rounded-lg transition-colors"
               >
                 Confirm
               </button>

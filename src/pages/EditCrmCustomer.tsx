@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
-import { Button } from "../components/ui/button";
-import { Calendar, Trash2, Settings, ArrowLeft, Globe } from "lucide-react";
-import { TextField, Card, CardContent } from "@mui/material";
+import { ArrowLeft, Calendar, Settings, Globe, X, Plus } from "lucide-react";
+import { TextField } from "@mui/material";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { toast } from "sonner";
 import { editCustomer, getCustomerById } from "@/store/slices/cusomerSlice";
@@ -23,6 +23,40 @@ interface Domain {
     domain: string;
     _destroy?: boolean;
 }
+
+const requiredLabel = (text: string) => (
+    <span>
+        {text}
+        <span className="fm-required-mark">*</span>
+    </span>
+);
+
+// Enable Sites multi-select — Asset form ke MUI field jaisi height/border
+const siteSelectStyles = {
+    control: (base: any) => ({
+        ...base,
+        minHeight: '45px',
+        border: '1px solid #c4c4c4',
+        // theme.css ka --radius-input — MUI fields jaisa same radius
+        borderRadius: 'var(--radius-input)',
+        boxShadow: 'none',
+        '&:hover': { border: '1px solid #1a1a1a' }
+    }),
+    menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
+    menu: (base: any) => ({ ...base, zIndex: 9999 }),
+    multiValue: (base: any) => ({
+        ...base,
+        backgroundColor: '#f1f5f9',
+        borderRadius: '4px'
+    }),
+    multiValueLabel: (base: any) => ({ ...base, color: '#334155' }),
+    multiValueRemove: (base: any) => ({
+        ...base,
+        color: '#64748b',
+        borderRadius: '0px',
+        '&:hover': { backgroundColor: '#e2e8f0', color: '#475569' }
+    })
+};
 
 export const EditCrmCustomer = () => {
     const dispatch = useAppDispatch();
@@ -277,420 +311,328 @@ export const EditCrmCustomer = () => {
             ).unwrap();
             toast.success("Customer updated successfully");
             navigate(`/crm/customers`);
-        } catch (error) {
+        } catch (error: any) {
             console.log(error);
-            toast.error("Failed to update customer");
+            const message = typeof error === 'string'
+                ? error
+                : error?.response?.data?.error || error?.message || "Failed to update customer";
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="p-6 min-h-screen bg-gray-50">
-            <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-2"
-                        aria-label="Go back"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <p className="text-gray-600 text-sm">Back</p>
-                    </button>
-                </div>
+        <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <span>Customer List</span>
+                <span>{">"}</span>
+                <span className="text-gray-900 font-medium">Edit Customer</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT CUSTOMER</h1>
             </div>
-            <Card
-                sx={{
-                    borderRadius: "12px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                }}
-            >
-                <CardContent sx={{ p: 4 }}>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Settings className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">BASIC DETAILS</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                            <div>
-                                <TextField
-                                    label="Customer Name*"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.customerName}
-                                    onChange={(e) => handleInputChange("customerName", e.target.value)}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <TextField
-                                    label="Email"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => handleInputChange("email", e.target.value)}
-                                    onBlur={(e) => {
-                                        const value = e.target.value;
-                                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                        if (value && !emailRegex.test(value)) {
-                                            toast.error("Please enter a valid email address");
-                                        }
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <TextField
-                                    label="Mobile"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.mobile}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (/^\d{0,10}$/.test(value)) {
-                                            handleInputChange("mobile", value);
-                                        }
-                                    }}
-                                    inputProps={{
-                                        maxLength: 10,
-                                        inputMode: "numeric",
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <TextField
-                                    label="Customer Type"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.customerType}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        handleInputChange("customerType", value);
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <div>
-                                    <TextField
-                                        label="Company Code*"
-                                        variant="outlined"
-                                        fullWidth
-                                        size="small"
-                                        value={formData.companyCode}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            handleInputChange("companyCode", value);
-                                        }}
-                                        sx={{
-                                            "& .MuiOutlinedInput-root": {
-                                                borderRadius: "8px",
-                                            },
-                                        }}
-                                    />
-                                </div>
 
-                                {/* <TextField
-                                    label="Customer Code"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.customerCode}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        handleInputChange("customerCode", value);
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                /> */}
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
+            <div className="space-y-4 sm:space-y-6">
+                {/* Basic Details */}
+                <FormSection title="BASIC DETAILS" icon={Settings}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <TextField
+                            label={requiredLabel("Customer Name")}
+                            placeholder="Enter Customer Name"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.customerName}
+                            onChange={(e) => handleInputChange("customerName", e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                        <TextField
+                            label="Email"
+                            placeholder="Enter Email"
+                            variant="outlined"
+                            fullWidth
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => handleInputChange("email", e.target.value)}
+                            onBlur={(e) => {
+                                const value = e.target.value;
+                                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                if (value && !emailRegex.test(value)) {
+                                    toast.error("Please enter a valid email address");
+                                }
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                        <TextField
+                            label="Mobile"
+                            placeholder="Enter Mobile"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.mobile}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d{0,10}$/.test(value)) {
+                                    handleInputChange("mobile", value);
+                                }
+                            }}
+                            inputProps={{
+                                maxLength: 10,
+                                inputMode: "numeric",
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                        <TextField
+                            label="Customer Type"
+                            placeholder="Enter Customer Type"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.customerType}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleInputChange("customerType", value);
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                        <TextField
+                            label={requiredLabel("Company Code")}
+                            placeholder="Enter Company Code"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.companyCode}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleInputChange("companyCode", value);
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
+                        {/* <TextField
+                            label="Customer Code"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.customerCode}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                handleInputChange("customerCode", value);
+                            }}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        /> */}
+                        {/* Swatch field ke andar — baaki inputs ki tarah same row, same radius */}
+                        <TextField
+                            label="Color Code"
+                            variant="outlined"
+                            fullWidth
+                            value={formData.colorCode}
+                            onChange={(e) => handleInputChange("colorCode", e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{
+                                sx: assetFieldStyles,
+                                startAdornment: (
                                     <input
                                         type="color"
                                         value={formData.colorCode}
                                         onChange={(e) => handleInputChange("colorCode", e.target.value)}
-                                        className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors"
+                                        aria-label="Pick color"
+                                        className="w-7 h-7 ml-2 shrink-0 cursor-pointer rounded-md border border-gray-200 bg-transparent p-0.5"
+                                    />
+                                ),
+                            }}
+                        />
+                    </div>
+
+                    {/* Enable Sites Multi-Select */}
+                    <div className="mt-6">
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            {requiredLabel("Enable Sites")}
+                        </label>
+                        <ReactSelect
+                            isMulti
+                            options={sites.map(site => ({
+                                value: site.id,
+                                label: site.name
+                            }))}
+                            onChange={(selected) => {
+                                if (!selected || selected.length === 0) {
+                                    setSelectedSiteIds([]);
+                                    return;
+                                }
+                                setSelectedSiteIds(selected.map(s => s.value));
+                            }}
+                            value={sites
+                                .filter(site => selectedSiteIds.includes(site.id))
+                                .map(site => ({
+                                    value: site.id,
+                                    label: site.name
+                                }))
+                            }
+                            placeholder="Select sites..."
+                            noOptionsMessage={() => "No sites available"}
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={siteSelectStyles}
+                        />
+                    </div>
+                </FormSection>
+
+                {/* Lease Information */}
+                <FormSection
+                    title="LEASE INFORMATION"
+                    icon={Calendar}
+                    headerActions={
+                        <button type="button" onClick={addNewLease} className="fm-custom-field-btn">
+                            <Plus className="w-4 h-4" />
+                            Add Lease
+                        </button>
+                    }
+                >
+                    <div className="space-y-4">
+                        {leases.map((lease, index) => (
+                            <div
+                                key={index}
+                                className={index > 0 ? "pt-4 border-t border-gray-200" : undefined}
+                            >
+                                {leases.length > 1 && (
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-sm font-semibold text-gray-700">Lease {index + 1}</h4>
+                                        {lease.id === undefined && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeLease(index)}
+                                                className="flex items-center justify-center h-7 w-7 rounded-full bg-brand text-white hover:bg-brand-hover transition-colors"
+                                                aria-label={`Remove lease ${index + 1}`}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <TextField
+                                        label="Lease Start Date"
+                                        variant="outlined"
+                                        fullWidth
+                                        type="date"
+                                        value={lease.leaseStartDate}
+                                        onChange={(e) => handleLeaseChange(index, "leaseStartDate", e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                        InputProps={{ sx: assetFieldStyles }}
                                     />
                                     <TextField
-                                        label="Color Code"
+                                        label="Lease End Date"
                                         variant="outlined"
-                                        size="small"
-                                        value={formData.colorCode}
-                                        onChange={(e) => handleInputChange("colorCode", e.target.value)}
-                                        sx={{
-                                            flex: 1,
-                                            "& .MuiOutlinedInput-root": {
-                                                borderRadius: "8px",
-                                                height: "40px",
-                                            },
+                                        fullWidth
+                                        type="date"
+                                        value={lease.leaseEndDate}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (lease.leaseStartDate && value < lease.leaseStartDate) {
+                                                toast.error("End date cannot be earlier than start date");
+                                                return;
+                                            }
+                                            handleLeaseChange(index, "leaseEndDate", value);
                                         }}
+                                        InputLabelProps={{ shrink: true }}
+                                        inputProps={{ min: lease.leaseStartDate || undefined }}
+                                        InputProps={{ sx: assetFieldStyles }}
+                                    />
+                                    <TextField
+                                        label={requiredLabel("Free Parking")}
+                                        placeholder="Enter Free Parking"
+                                        variant="outlined"
+                                        fullWidth
+                                        type="number"
+                                        value={lease.freeParking}
+                                        onChange={(e) => handleLeaseChange(index, "freeParking", e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                        InputProps={{ sx: assetFieldStyles }}
+                                    />
+                                    <TextField
+                                        label="Paid Parking"
+                                        placeholder="Enter Paid Parking"
+                                        variant="outlined"
+                                        fullWidth
+                                        type="number"
+                                        value={lease.paidParking}
+                                        onChange={(e) => handleLeaseChange(index, "paidParking", e.target.value)}
+                                        InputLabelProps={{ shrink: true }}
+                                        InputProps={{ sx: assetFieldStyles }}
                                     />
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Enable Sites Multi-Select */}
-                        <div className="mt-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Enable Sites <span className="text-red-500">*</span>
-                            </label>
-                            <ReactSelect
-                                isMulti
-                                options={sites.map(site => ({
-                                    value: site.id,
-                                    label: site.name
-                                }))}
-                                onChange={(selected) => {
-                                    if (!selected || selected.length === 0) {
-                                        setSelectedSiteIds([]);
-                                        return;
-                                    }
-                                    setSelectedSiteIds(selected.map(s => s.value));
-                                }}
-                                value={sites
-                                    .filter(site => selectedSiteIds.includes(site.id))
-                                    .map(site => ({
-                                        value: site.id,
-                                        label: site.name
-                                    }))
-                                }
-                                placeholder="Select sites..."
-                                noOptionsMessage={() => "No sites available"}
-                                menuPortalTarget={document.body}
-                                menuPosition="fixed"
-                                styles={{
-                                    control: (base) => ({
-                                        ...base,
-                                        minHeight: '40px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        boxShadow: 'none',
-                                        '&:hover': { border: '1px solid #cbd5e1' }
-                                    }),
-                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                    menu: (base) => ({ ...base, zIndex: 9999 }),
-                                    multiValue: (base) => ({
-                                        ...base,
-                                        backgroundColor: '#f1f5f9',
-                                        borderRadius: '4px'
-                                    }),
-                                    multiValueLabel: (base) => ({ ...base, color: '#334155' }),
-                                    multiValueRemove: (base) => ({
-                                        ...base,
-                                        color: '#64748b',
-                                        borderRadius: '0px',
-                                        '&:hover': { backgroundColor: '#e2e8f0', color: '#475569' }
-                                    })
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Calendar className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">LEASE INFORMATION</h3>
-                        </div>
-                        {leases.map((lease, index) => (
-                            <Card
-                                key={index}
-                                sx={{
-                                    mb: 3,
-                                    borderRadius: "8px",
-                                    border: "1px solid #e5e7eb",
-                                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    {index > 0 && (
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-md font-medium text-gray-700">Lease {index + 1}</h4>
-                                        </div>
-                                    )}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <div>
-                                            <TextField
-                                                label="Lease Start Date"
-                                                variant="outlined"
-                                                fullWidth
-                                                size="small"
-                                                type="date"
-                                                value={lease.leaseStartDate}
-                                                onChange={(e) => handleLeaseChange(index, "leaseStartDate", e.target.value)}
-                                                InputLabelProps={{ shrink: true }}
-                                                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <TextField
-                                                label="Lease End Date"
-                                                variant="outlined"
-                                                fullWidth
-                                                size="small"
-                                                type="date"
-                                                value={lease.leaseEndDate}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    if (lease.leaseStartDate && value < lease.leaseStartDate) {
-                                                        toast.error("End date cannot be earlier than start date");
-                                                        return;
-                                                    }
-                                                    handleLeaseChange(index, "leaseEndDate", value);
-                                                }}
-                                                InputLabelProps={{ shrink: true }}
-                                                inputProps={{ min: lease.leaseStartDate || undefined }}
-                                                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <TextField
-                                                label="Free Parking*"
-                                                variant="outlined"
-                                                fullWidth
-                                                size="small"
-                                                type="number"
-                                                value={lease.freeParking}
-                                                onChange={(e) => handleLeaseChange(index, "freeParking", e.target.value)}
-                                                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <div className="flex items-end gap-2">
-                                                <TextField
-                                                    label="Paid Parking"
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    size="small"
-                                                    type="number"
-                                                    value={lease.paidParking}
-                                                    onChange={(e) => handleLeaseChange(index, "paidParking", e.target.value)}
-                                                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
-                                                />
-                                                {lease.id === undefined && leases.length > 1 && (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="p-2 h-10"
-                                                        onClick={() => removeLease(index)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
                         ))}
-                        <div className="mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={addNewLease}
-                            >
-                                Add Lease
-                            </Button>
-                        </div>
                     </div>
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Calendar className="w-5 h-5" />
-                            <h3 className="text-lg font-semibold">DOMAINS</h3>
-                        </div>
+                </FormSection>
+
+                {/* Domains */}
+                <FormSection
+                    title="DOMAINS"
+                    icon={Globe}
+                    headerActions={
+                        <button type="button" onClick={addNewDomain} className="fm-custom-field-btn">
+                            <Plus className="w-4 h-4" />
+                            Add Domain
+                        </button>
+                    }
+                >
+                    <div className="space-y-4">
                         {domains
                             .filter((domain) => !domain._destroy)
                             .map((domain, index) => {
                                 const actualIndex = domains.findIndex((d, i) => d === domain);
                                 return (
-                                    <Card
+                                    <div
                                         key={actualIndex}
-                                        sx={{
-                                            mb: 3,
-                                            borderRadius: "8px",
-                                            border: "1px solid #e5e7eb",
-                                            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                                        }}
+                                        className="flex items-center gap-3"
                                     >
-                                        <CardContent sx={{ p: 3 }}>
-                                            <div className="flex items-center gap-4">
-                                                <TextField
-                                                    label={`Domain ${index + 1}`}
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    size="small"
-                                                    value={domain.domain}
-                                                    onChange={(e) => handleDomainChange(actualIndex, e.target.value)}
-                                                    placeholder="e.g., example.com"
-                                                    sx={{
-                                                        "& .MuiOutlinedInput-root": {
-                                                            borderRadius: "8px",
-                                                        },
-                                                    }}
-                                                />
-                                                {/* Show trash for existing domains always; for new domains only when not the last visible one */}
-                                                {(domain.id ||
-                                                    domains.filter((d) => !d._destroy).length > 1) && (
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            className="p-2 h-10"
-                                                            onClick={() => removeDomain(actualIndex)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                        <TextField
+                                            label={`Domain ${index + 1}`}
+                                            variant="outlined"
+                                            fullWidth
+                                            value={domain.domain}
+                                            onChange={(e) => handleDomainChange(actualIndex, e.target.value)}
+                                            placeholder="e.g., example.com"
+                                            InputLabelProps={{ shrink: true }}
+                                            InputProps={{ sx: assetFieldStyles }}
+                                        />
+                                        {/* Show trash for existing domains always; for new domains only when not the last visible one */}
+                                        {(domain.id ||
+                                            domains.filter((d) => !d._destroy).length > 1) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeDomain(actualIndex)}
+                                                    className="flex items-center justify-center h-7 w-7 shrink-0 rounded-full bg-brand text-white hover:bg-brand-hover transition-colors"
+                                                    aria-label={`Remove domain ${index + 1}`}
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                    </div>
                                 );
                             })}
-                        <div className="mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={addNewDomain}
-                            >
-                                Add Domain
-                            </Button>
-                        </div>
                     </div>
-                    <div className="flex justify-center pt-4 border-t border-gray-200">
-                        <Button
-                            onClick={handleSave}
-                            className="bg-[#c72030] text-white px-6 py-2"
-                            disabled={isSaving}
-                        >
-                            {isSaving ? "Saving..." : "Save"}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+                </FormSection>
+
+                <FormActionBar
+                    onCancel={() => navigate(-1)}
+                    onSubmit={handleSave}
+                    submitLabel="Save"
+                    isSubmitting={isSaving}
+                />
+            </div>
         </div>
     );
 };

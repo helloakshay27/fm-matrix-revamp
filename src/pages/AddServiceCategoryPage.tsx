@@ -2,32 +2,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Paperclip } from "lucide-react";
 import { TextField } from "@mui/material";
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
+import { AttachmentUpload } from "@/components/common/AttachmentUpload";
 
-const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
-    },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-  },
-};
+const requiredLabel = (text: string) => (
+  <span>
+    {text}
+    <span className="fm-required-mark">*</span>
+  </span>
+);
 
 export const AddServiceCategoryPage = () => {
   const navigate = useNavigate();
@@ -47,8 +32,7 @@ export const AddServiceCategoryPage = () => {
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageSelect = (file?: File) => {
 
     if (!file) {
       setImageFile(null);
@@ -66,14 +50,12 @@ export const AddServiceCategoryPage = () => {
 
     if (!validTypes.includes(file.type)) {
       toast.error("Please select only image files (JPEG, PNG, GIF, WebP).");
-      e.target.value = "";
       return;
     }
 
     const maxSize = 3 * 1024 * 1024; // 3MB
     if (file.size > maxSize) {
       toast.error("Image must be less than 3MB.");
-      e.target.value = "";
       return;
     }
 
@@ -143,11 +125,11 @@ export const AddServiceCategoryPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={handleCancel}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
@@ -158,126 +140,57 @@ export const AddServiceCategoryPage = () => {
           <span>{">"}</span>
           <span className="text-gray-900 font-medium">Create New Service Category</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE CATEGORY</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW SERVICE CATEGORY</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Service Category Details Card */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z" fill="#C72030" />
-                </svg>
-              </span>
-              Service Category Details
-            </h2>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Service Category Details */}
+        <FormSection title="SERVICE CATEGORY DETAILS" icon={LayoutGrid}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Service Category Name */}
+            <TextField
+              fullWidth
+              label={requiredLabel("Service Category Name")}
+              required
+              value={formData.service_cat_name}
+              onChange={(e) => handleInputChange("service_cat_name", e.target.value)}
+              placeholder="Enter Service Category Name"
+              variant="outlined"
+              InputLabelProps={{ required: false, shrink: true }}
+              InputProps={{ sx: assetFieldStyles }}
+            />
           </div>
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Service Category Name */}
-              <TextField
-                fullWidth
-                label="Service Category Name"
-                required
-                value={formData.service_cat_name}
-                onChange={(e) => handleInputChange("service_cat_name", e.target.value)}
-                placeholder="Enter Service Category Name"
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        </FormSection>
 
-        {/* Add Attachments */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030" />
-                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3" />
-                </svg>
-              </span>
-              Add Service Image
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                id="file-upload"
-              />
-              <Button
-                type="button"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                variant="outline"
-                className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Image
-              </Button>
+        {/* Service Image */}
+        <FormSection title="SERVICE IMAGE" icon={Paperclip}>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            {requiredLabel("Upload Service Image")}
+          </h3>
+          <AttachmentUpload
+            chooseText="Choose Image"
+            uploadText="Upload Image"
+            emptyText="No image chosen"
+            accept="image/*"
+            files={imageFile ? [imageFile] : []}
+            onFilesSelected={(files) => handleImageSelect(files[0])}
+            onRemove={removeImage}
+          />
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Service Category Preview"
+              className="mt-4 w-32 h-32 object-cover rounded-lg border border-gray-200"
+            />
+          )}
+        </FormSection>
 
-              {/* Display attached image */}
-              {imagePreview && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
-                    <div className="flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-gray-500" />
-                      <span>{imageFile?.name}</span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={removeImage}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                  <div className="relative inline-block">
-                    <img
-                      src={imagePreview}
-                      alt="Service Category Preview"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="!bg-[#D77754] hover:!bg-[#CA6A48] px-8 py-2"
-          >
-            <span className="!text-white font-medium">{loading ? 'Creating...' : 'Create Category'}</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={handleCancel}
+          submitLabel="Create Category"
+          isSubmitting={loading}
+          submitAsFormSubmit
+        />
       </form>
     </div>
   );

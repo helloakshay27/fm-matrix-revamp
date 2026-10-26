@@ -1,6 +1,7 @@
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormSection, FormActionBar, assetFieldStyles } from '@/components/common/FormSection';
+import { DetailCard } from '@/components/ui/detail-card';
 import { useEffect, useState } from 'react';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { createExpiryRule, fetchLogs, fetchWalletRule } from '@/store/slices/pointExpirySlice';
@@ -114,168 +115,105 @@ const CRMWalletPointExpiry = () => {
     }
 
     return (
-        <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
-            <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <div className='flex items-center justify-between'>
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                R
-                            </span>
-                            RULE SETUP
-                        </CardTitle>
-
-                        {
-                            !addAllowed && shouldShow("Wallet", "update") && (
-                                <Button
-                                    variant="ghost"
-                                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
-                                    onClick={() => navigate('/crm/point-expiry/edit')}
-                                >
-                                    <Pen size={15} /> Edit
-                                </Button>
-                            )
-                        }
+        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen space-y-4 sm:space-y-6">
+            <FormSection
+                title="RULE SETUP"
+                icon={Settings}
+                headerActions={
+                    !addAllowed && shouldShow("Wallet", "update") ? (
+                        <Button
+                            variant="ghost"
+                            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
+                            onClick={() => navigate('/crm/point-expiry/edit')}
+                        >
+                            <Pen size={15} /> Edit
+                        </Button>
+                    ) : undefined
+                }
+            >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                        <TextField
+                            fullWidth
+                            label="Rule Name"
+                            value={formData.rule_name}
+                            onChange={(e) => setFormData({ ...formData, rule_name: e.target.value })}
+                            variant="outlined"
+                            defaultValue="New Rule"
+                            disabled={!addAllowed}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: assetFieldStyles }}
+                        />
                     </div>
-                </CardHeader>
-                <CardContent
-                    className="px-[50px] py-[25px] bg-white"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
                     <TextField
                         fullWidth
-                        label="Rule Name"
-                        value={formData.rule_name}
-                        onChange={(e) => setFormData({ ...formData, rule_name: e.target.value })}
+                        value={formData.complementary_condition}
+                        onChange={(e) => setFormData({ ...formData, complementary_condition: e.target.value })}
+                        select
+                        label="Customer Complimentary Point Destruction"
                         variant="outlined"
-                        defaultValue="New Rule"
-                        margin="normal"
+                        defaultValue="Weekly"
                         disabled={!addAllowed}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                    background: '#ffffff !important',
-                            },
-                            '& .MuiInputLabel-root': {
-                                    background: '#ffffff !important',
-                            },
-                        }}
-                    />
-                    <div className="flex items-center justify-between gap-4">
-                        <TextField
-                            fullWidth
-                            value={formData.complementary_condition}
-                            onChange={(e) => setFormData({ ...formData, complementary_condition: e.target.value })}
-                            select
-                            label="Customer Complimentary Point Destruction"
-                            variant="outlined"
-                            defaultValue="Weekly"
-                            margin="normal"
-                            disabled={!addAllowed}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    background: '#ffffff !important',
-                                },
-                                '& .MuiInputLabel-root': {
-                                    background: '#ffffff !important',
-                                },
-                            }}
-                        >
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: assetFieldStyles }}
+                    >
                             <MenuItem value="" disabled>Select</MenuItem>
                             <MenuItem value="daily">Daily</MenuItem>
                             <MenuItem value="weekly">Weekly</MenuItem>
                             <MenuItem value="monthly">Monthly</MenuItem>
                             <MenuItem value="yearly">Yearly</MenuItem>
-                        </TextField>
-                        <TextField
-                            fullWidth
-                            select
-                            value={formData.purchase_condition}
-                            onChange={(e) => setFormData({ ...formData, purchase_condition: e.target.value })}
-                            label="Customer Purchase Point Destruction"
-                            variant="outlined"
-                            defaultValue="Monthly"
-                            margin="normal"
-                            disabled={!addAllowed}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    background: '#ffffff !important',
-                                },
-                                '& .MuiInputLabel-root': {
-                                    background: '#ffffff !important',
-                                },
-                            }}
-                        >
+                    </TextField>
+                    <TextField
+                        fullWidth
+                        select
+                        value={formData.purchase_condition}
+                        onChange={(e) => setFormData({ ...formData, purchase_condition: e.target.value })}
+                        label="Customer Purchase Point Destruction"
+                        variant="outlined"
+                        defaultValue="Monthly"
+                        disabled={!addAllowed}
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: assetFieldStyles }}
+                    >
                             <MenuItem value="" disabled>Select</MenuItem>
                             <MenuItem value="daily">Daily</MenuItem>
                             <MenuItem value="weekly">Weekly</MenuItem>
                             <MenuItem value="monthly">Monthly</MenuItem>
                             <MenuItem value="yearly">Yearly</MenuItem>
-                        </TextField>
-                    </div>
-                </CardContent>
-            </Card>
+                    </TextField>
+                </div>
+            </FormSection>
 
             {
                 addAllowed && (
-                    <div className='flex items-center justify-center gap-3'>
-                        {shouldShow("Wallet", "create") && (
-                        <Button
-                            onClick={() => setShowRuleCreateAlert(true)}
-                            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
-                        >
-                            Create Rule
-                        </Button>
-                        )}
-                        <Button
-                            onClick={resetForm}
-                            variant="outline"
-                            className="fm-button-fix border-[#DA7756] text-[#DA7756] hover:bg-[#fdf0ea]"
-                        >
-                            Cancel
-                        </Button>
-                    </div>
+                    shouldShow("Wallet", "create") ? (
+                        <FormActionBar
+                            onCancel={resetForm}
+                            onSubmit={() => setShowRuleCreateAlert(true)}
+                            submitLabel="Create Rule"
+                        />
+                    ) : (
+                        <div className="fm-action-bar pt-4 sm:pt-6">
+                            <button type="button" onClick={resetForm} className="fm-action-secondary min-w-[120px]">
+                                Cancel
+                            </button>
+                        </div>
+                    )
                 )
             }
 
             {!addAllowed &&
-                <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <CardHeader
-                        className="bg-[#F6F4EE]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                L
-                            </span>
-                            LOGS
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent
-                        className="px-[50px] py-[25px] bg-white"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
-                        <div className="">
-                            <div className="relative">
-                                {/* Background gradient */}
-                                <div className="absolute inset-0 bg-gradient-glow opacity-30" />
+                <DetailCard title="Logs" icon={<History className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
+                    <div className="relative">
+                        {/* Background gradient */}
+                        <div className="absolute inset-0 bg-gradient-glow opacity-30" />
 
-                                {/* Content */}
-                                <div className="relative z-10">
-                                    <LogsTimeline logs={logs} title="Activity Logs" />
-                                </div>
-                            </div>
+                        {/* Content */}
+                        <div className="relative z-10">
+                            <LogsTimeline logs={logs} title="Activity Logs" />
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </DetailCard>
             }
 
             <RuleAlert

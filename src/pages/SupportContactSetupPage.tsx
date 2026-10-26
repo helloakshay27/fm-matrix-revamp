@@ -96,14 +96,11 @@ const SupportContactSetupPage = () => {
   };
 
   const leftActions = (
-    <Button onClick={() => navigate("/pulse/support-contact-setup/add")}>
-      <Plus size={18} />
-      Add
-    </Button>
+    <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => navigate("/pulse/support-contact-setup/add")}><Plus className="w-4 h-4 mr-2" />Add</Button>
   );
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <EnhancedTable
         data={contacts}
         columns={columns}
@@ -113,7 +110,7 @@ const SupportContactSetupPage = () => {
         loading={loading}
         emptyMessage="No support contacts found"
         pagination={false}
-        hideTableSearch={true}
+        hideTableSearch={false}
         hideColumnsButton={true}
         getItemId={(item: SupportContact) =>
           `${item.call_us}-${item.mail_us}-${item.whatsapp_support}`

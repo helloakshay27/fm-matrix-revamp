@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAudienceUsersQuery } from "../hooks/useAudienceUsersQuery";
 import type { NotificationTargetSelection } from "../types/customNotification";
 
@@ -37,12 +39,15 @@ export function NotificationUserInlineList({
     <div>
       {users.length > 0 && (
         <div className="px-4 py-2 border-b border-gray-100">
-          <Input
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-9"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-9"
+            />
+          </div>
         </div>
       )}
       {filteredUsers.length === 0 ? (
@@ -56,11 +61,9 @@ export function NotificationUserInlineList({
               key={user.id}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selectedIds.includes(user.id)}
-                onChange={() => onToggle(user)}
-                className="w-4 h-4 text-brand focus:ring-brand rounded"
+                onCheckedChange={() => onToggle(user)}
               />
               <span className="text-sm text-gray-900">{user.name}</span>
             </label>

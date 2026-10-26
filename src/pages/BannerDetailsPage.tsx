@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DetailCard } from '@/components/ui/detail-card';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchBannersById } from '@/store/slices/bannerSlice';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { ArrowLeft, Eye, FileText } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
@@ -52,22 +52,11 @@ const BannerDetailsPage = () => {
                     </h1>
                 </div>
 
-                <Card className="mb-6">
-                    <CardHeader
-                        className="bg-[#F6F4EE]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                                D
-                            </span>
-                            DETAILS
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent
-                        className="px-[80px] py-[31px] bg-[#F6F7F7]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
+                <DetailCard
+                    title="Details"
+                    icon={<FileText className="w-[18px] h-[18px] text-gray-500" />}
+                    className="mb-6"
+                >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="flex">
@@ -91,7 +80,7 @@ const BannerDetailsPage = () => {
                                 <div className="flex">
                                     <span className="text-[#1A1A1A80] w-40 text-14">Banner</span>
                                     <div
-                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                        className="flex relative flex-col items-center border border-gray-200 rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-gray-50"
                                     >
                                         <button
                                             className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
@@ -116,8 +105,7 @@ const BannerDetailsPage = () => {
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                </DetailCard>
 
                 <AttachmentPreviewModal
                     isModalOpen={isModalOpen}

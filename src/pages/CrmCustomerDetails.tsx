@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Edit2, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Edit2, Globe, User, X } from 'lucide-react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -10,6 +10,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { toast } from 'sonner';
 import { getCustomerById } from '@/store/slices/cusomerSlice';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { DetailCard } from '@/components/ui/detail-card';
 
 interface Customer {
     id?: number;
@@ -158,7 +159,7 @@ export const CrmCustomerDetails = () => {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading customer details...</p>
                 </div>
             </div>
@@ -198,7 +199,7 @@ export const CrmCustomerDetails = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+            <DetailCard title="Basic Details" icon={<User className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                 <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
@@ -249,10 +250,9 @@ export const CrmCustomerDetails = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DetailCard>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h3>
+            <DetailCard title="Lease Information" icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                 <EnhancedTable
                     data={lease}
                     columns={leaseColumns}
@@ -262,10 +262,9 @@ export const CrmCustomerDetails = () => {
                     hideColumnsButton={true}
                     hideTableSearch={true}
                 />
-            </div>
+            </DetailCard>
 
-            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Domains</h3>
+            <DetailCard title="Domains" icon={<Globe className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                 {domains.length > 0 ? (
                     <div className="space-y-2">
                         {domains.map((domain) => (
@@ -273,7 +272,7 @@ export const CrmCustomerDetails = () => {
                                 key={domain.id}
                                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
                             >
-                                <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
+                                <div className="w-2 h-2 bg-brand rounded-full"></div>
                                 <span className="text-sm text-gray-900">{domain.domain}</span>
                             </div>
                         ))}
@@ -281,7 +280,7 @@ export const CrmCustomerDetails = () => {
                 ) : (
                     <p className="text-sm text-gray-500">No domains found</p>
                 )}
-            </div>
+            </DetailCard>
 
             <Dialog
                 open={topUpDialogOpen}

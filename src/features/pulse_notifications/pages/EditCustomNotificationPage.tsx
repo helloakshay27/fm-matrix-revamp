@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -109,16 +110,34 @@ const EditCustomNotificationPage = () => {
   }
 
   return (
-    <CustomNotificationForm
-      headerTitle="Edit Notification"
-      headerSubtitle="Update this notification's content and audience."
-      submitLabel="Save Changes"
-      submittingLabel="Saving..."
-      isSubmitting={updateNotification.isPending}
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      onCancel={() => navigate("/pulse/notifications")}
-    />
+    <div className="bg-gray-50 min-h-screen">
+      <div className="px-6 pt-4 sm:pt-6">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+            <button
+              type="button"
+              onClick={() => navigate("/pulse/notifications")}
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <span>Notification List</span>
+            <span>{">"}</span>
+            <span className="text-gray-900 font-medium">Edit Notification</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT NOTIFICATION</h1>
+        </div>
+      </div>
+      <CustomNotificationForm
+        submitLabel="Save Changes"
+        submittingLabel="Saving..."
+        isSubmitting={updateNotification.isPending}
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate("/pulse/notifications")}
+      />
+    </div>
   );
 };
 

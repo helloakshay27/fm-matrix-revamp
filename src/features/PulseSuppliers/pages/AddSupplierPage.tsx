@@ -25,10 +25,9 @@ const AddSupplierPage = () => {
 
     return (
         <SupplierForm
-            headerTitle="Add Supplier"
-            headerSubtitle="Enter the supplier's details to add them to the directory."
+            currentLabel="Create New Supplier"
+            headerTitle="NEW SUPPLIER"
             submitLabel="Submit"
-            submittingLabel="Submitting..."
             isSubmitting={createSupplier.isPending}
             onSubmit={handleSubmit}
             onCancel={() => navigate(SUPPLIER_LIST_PATH)}

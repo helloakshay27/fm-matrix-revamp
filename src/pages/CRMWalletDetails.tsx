@@ -2,7 +2,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import RuleAlert from "@/components/RuleAlert";
 import RuleCreateForm from "@/components/RuleCreateForm";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -15,7 +15,7 @@ import {
 import { Switch } from "@mui/material";
 import axios from "axios";
 import { format } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, Repeat, User, Wallet } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -233,7 +233,7 @@ const CRMWalletDetails = () => {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading wallet details...</p>
                 </div>
             </div>
@@ -253,31 +253,13 @@ const CRMWalletDetails = () => {
                 </button>
 
                 <Button
-                    className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
+                    className="bg-brand hover:bg-brand text-white cursor-not-allowed"
                     type="button"
                 >
                     Available Balance: {walletDetails.total_wallet_balance}
                 </Button>
             </div>
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                        <span
-                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                            style={{ color: '#C72030' }}
-                        >
-                            C
-                        </span>
-                        CUSTOMER DETAILS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent
-                    className="px-[70px] py-[31px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+            <DetailCard title="Customer Details" icon={<User className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -327,28 +309,9 @@ const CRMWalletDetails = () => {
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+            </DetailCard>
 
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                        <span
-                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                            style={{ color: '#C72030' }}
-                        >
-                            W
-                        </span>
-                        WALLET DETAILS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent
-                    className="px-[70px] py-[31px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+            <DetailCard title="Wallet Details" icon={<Wallet className="w-[18px] h-[18px] text-gray-500" />} className="mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex">
@@ -448,39 +411,18 @@ const CRMWalletDetails = () => {
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+            </DetailCard>
 
-            <Card className="mb-6">
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
-                            <span
-                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
-                                style={{ color: '#C72030' }}
-                            >
-                                R
-                            </span>
-                            RECURRING RULE STATUS
-                        </CardTitle>
-
-                        {shouldShow("Wallet", "create") && (
-                        <Button
-                            onClick={() => setShowRuleCreateAlert(true)}
-                            className="!bg-[#DA7756] hover:!bg-[#C45F40]"
-                        >
-                            <span className="!text-white font-medium">+ Add</span>
-                        </Button>
-                        )}
-                    </div>
-                </CardHeader>
-                <CardContent
-                    className="px-[70px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
+            <DetailCard
+                title="Recurring Rule Status"
+                icon={<Repeat className="w-[18px] h-[18px] text-gray-500" />}
+                headerActions={
+                    shouldShow("Wallet", "create") ? (
+                        <Button type="button" size="sm" className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium" onClick={() => setShowRuleCreateAlert(true)}><Plus className="w-4 h-4 mr-2" />Add</Button>
+                    ) : undefined
+                }
+                className="mb-6"
+            >
                     {recurringRules.length > 0 ? (
                         recurringRules.map((rule, index) => (
                             <Fragment key={rule.id}>
@@ -524,8 +466,7 @@ const CRMWalletDetails = () => {
                             No rules found
                         </div>
                     )}
-                </CardContent>
-            </Card>
+            </DetailCard>
 
             <EnhancedTable
                 data={transactionHistory}

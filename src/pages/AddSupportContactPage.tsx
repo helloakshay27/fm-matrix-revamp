@@ -1,28 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Phone } from "lucide-react";
 import { TextField } from "@mui/material";
 import { toast } from "sonner";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
-
-const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": {
-      borderColor: "#ddd",
-    },
-    "&:hover fieldset": {
-      borderColor: "#C72030",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#C72030",
-    },
-  },
-};
+import { FormSection, FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 
 export const AddSupportContactPage = () => {
   const navigate = useNavigate();
@@ -154,29 +136,27 @@ export const AddSupportContactPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+    <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <button
+            type="button"
             onClick={() => navigate("/pulse/support-contact-setup")}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Support Contact Setup</span>
+          <span>Support Contact List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Add / Edit</span>
+          <span className="text-gray-900 font-medium">{prefillData ? "Edit Support Contact" : "Create New Support Contact"}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">SUPPORT CONTACT SETUP</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{prefillData ? "EDIT SUPPORT CONTACT" : "NEW SUPPORT CONTACT"}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Contact Details</h2>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <FormSection title="CONTACT DETAILS" icon={Phone}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TextField
               fullWidth
               label="Call Us"
@@ -185,7 +165,7 @@ export const AddSupportContactPage = () => {
               onChange={(e) => handlePhoneChange("call_us", e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: assetFieldStyles }}
               inputProps={{ inputMode: "numeric", maxLength: 10 }}
               error={!!errors.call_us}
               helperText={errors.call_us}
@@ -198,7 +178,7 @@ export const AddSupportContactPage = () => {
               onChange={(e) => handleEmailChange(e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: assetFieldStyles }}
               error={!!errors.mail_us}
               helperText={errors.mail_us}
             />
@@ -210,31 +190,20 @@ export const AddSupportContactPage = () => {
               onChange={(e) => handlePhoneChange("whatsapp_support", e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: assetFieldStyles }}
               inputProps={{ inputMode: "numeric", maxLength: 10 }}
               error={!!errors.whatsapp_support}
               helperText={errors.whatsapp_support}
             />
           </div>
-        </div>
+        </FormSection>
 
-        <div className="flex gap-4 justify-center pt-2">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="bg-[#C72030] hover:bg-[#A01828] text-white px-8 py-2"
-          >
-            {loading ? "Saving..." : "Save"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/pulse/support-contact-setup")}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
-          >
-            Cancel
-          </Button>
-        </div>
+        <FormActionBar
+          onCancel={() => navigate("/pulse/support-contact-setup")}
+          submitLabel="Save"
+          isSubmitting={loading}
+          submitAsFormSubmit
+        />
       </form>
     </div>
   );
