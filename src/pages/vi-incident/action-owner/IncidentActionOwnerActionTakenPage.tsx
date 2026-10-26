@@ -1,10 +1,11 @@
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, FieldGrid, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
 import { AttachmentPicker } from "@/components/vi-incident/IncidentFormFields";
 import { planTargetLabel } from "@/components/vi-incident/IncidentActionPlanCards";
