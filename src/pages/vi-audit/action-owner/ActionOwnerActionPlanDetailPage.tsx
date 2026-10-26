@@ -1,58 +1,23 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, Paperclip, FilePenLine, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, FilePenLine, Plus, ShieldCheck } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
 import {
   hasSubmittedActionTaken,
   isPlanPendingByActionOwner,
   viAuditBasePath,
-  type ViActionTaken,
 } from "@/components/vi-audit/viAuditData";
-import { ActionPlanRecord, AuditLoadingState, AuditStatusPill, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import {
+  ActionPlanRecord,
+  ActionTakenList,
+  AuditLoadingState,
+  AuditStatusPill,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
 import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
 import { VI_AUDIT_DETAIL_URLS, useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
 
 const viewMoreClass =
   "shrink-0 text-sm font-semibold text-[#1A1A18] underline underline-offset-4 hover:text-[rgba(26,26,24,0.68)]";
-
-// Actions already taken against the plan (its CAPAs): description, closure date, attachments.
-const ActionTakenList = ({ actions }: { actions: ViActionTaken[] }) => (
-  <div className="divide-y divide-[rgba(26,26,24,0.08)] overflow-hidden rounded-[12px] border border-[rgba(26,26,24,0.09)]">
-    {actions.map((action) => (
-      <div key={action.id} className="px-4 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-sm text-[#1A1A18] whitespace-pre-line">{action.description || "-"}</p>
-          {/* CAPA status (draft / open / closed) */}
-          {action.status && (
-            <AuditStatusPill status={action.status === "closed" ? "Closed" : action.status === "open" ? "Open" : "Draft"} />
-          )}
-        </div>
-        <div className="mt-3">
-          <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Closure Date</div>
-          <div className="text-sm font-medium text-[#1A1A18]">{action.closureDate || "-"}</div>
-        </div>
-        {action.attachments.length > 0 && (
-          <div className="mt-3">
-            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-2">Attachments</div>
-            <div className="flex flex-wrap gap-2">
-              {action.attachments.map((file, index) => (
-                <a
-                  key={`${file.name}-${index}`}
-                  href={file.url || undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18] hover:bg-[#EDEAE3]"
-                >
-                  <Paperclip className="w-3 h-3 shrink-0 text-[rgba(26,26,24,0.48)]" />
-                  <span className="truncate">{file.name}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-);
 
 // Action Owner: one corrective / preventive action plan, with "Add Action Taken".
 // Plan from GET /vi_audit_action_plans/:planId.json; parent audit / observation cards from
