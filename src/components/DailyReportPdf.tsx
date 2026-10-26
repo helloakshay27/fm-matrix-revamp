@@ -722,13 +722,13 @@ const DailyReportPdf: React.FC<DailyReportProps> = ({ title = 'Daily Report' }) 
         const toDate = formatDate(endDateObj);
         const reportStart = startDate || localStorage.getItem('reportStartDate') || fromDate;
         const reportEnd = endDate || localStorage.getItem('reportEndDate') || toDate;
-        const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${encodeURIComponent(siteId)}&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}&start_date=${encodeURIComponent(reportStart)}&end_date=${encodeURIComponent(reportEnd)}&access_token=${encodeURIComponent(token)}`;
+        const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${encodeURIComponent(siteId)}&from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}&start_date=${encodeURIComponent(reportStart)}&end_date=${encodeURIComponent(reportEnd)}`;
         console.log('[WeeklyReport] Ageing Matrix date range', { fromDate, toDate, reportStart, reportEnd, url });
         console.log('[WeeklyReport] Fetching Tickets Ageing Matrix (matrix / T1..T5 format):', url);
         const controller = new AbortController();
         setAgeingLoading(true);
         setAgeingError(null);
-        fetch(url, { method: 'GET', signal: controller.signal })
+        fetch(url, { method: 'GET', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
             .then(async res => {
                 const status = res.status;
                 let txt = '';

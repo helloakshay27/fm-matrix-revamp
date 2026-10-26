@@ -451,7 +451,8 @@ export const PurchaseOrderEditPage: React.FC = () => {
         setVendorDetailLoading(true);
         try {
             const res = await axios.get(
-                `https://${baseUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+                `https://${baseUrl}/pms/suppliers/${vendorId}.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             const data = res.data?.supplier || res.data;
             setVendorDetail(data);
@@ -704,7 +705,8 @@ export const PurchaseOrderEditPage: React.FC = () => {
             if (!id) { setLoadingPO(false); return; }
             try {
                 const res = await axios.get(
-                    `https://${baseUrl}/pms/purchase_orders/${id}.json?access_token=${token}&lock_account_id=${lock_account_id}`
+                    `https://${baseUrl}/pms/purchase_orders/${id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
                 const po = res.data?.purchase_order || res.data?.pms_purchase_order || res.data;
                 await applyPOData(po, vendorList, loadedItemOptions);
@@ -1094,12 +1096,13 @@ export const PurchaseOrderEditPage: React.FC = () => {
 
         try {
             await axios.put(
-                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json?access_token=${token}`,
+                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json`,
                 {
                     pms_supplier: {
                         [activeAddressType === 'billing' ? 'billing_addresses_attributes' : 'shipping_addresses_attributes']: [addressAttr],
                     },
-                }
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             setBook(prev => addressFormMode === 'edit'
                 ? prev.map(item => String(item.id) === String(targetId) ? payload : item)
@@ -1134,8 +1137,9 @@ export const PurchaseOrderEditPage: React.FC = () => {
         };
         try {
             await axios.put(
-                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json?access_token=${token}`,
-                { pms_supplier: { gst_details_attributes: [gstAttr] } }
+                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json`,
+                { pms_supplier: { gst_details_attributes: [gstAttr] } },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             setShowNewGstForm(false); setEditingGstDetailId(null); setGstManageModalOpen(false);
             toast.success('Tax information saved');
@@ -1145,7 +1149,9 @@ export const PurchaseOrderEditPage: React.FC = () => {
 
     const handleVendorChange = async (vendorId: string) => {
         try {
-            const res = await axios.get(`https://${baseUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`);
+            const res = await axios.get(`https://${baseUrl}/pms/suppliers/${vendorId}.json`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             setVendorDetails(res.data?.supplier || res.data);
             setVendorDrawerOpen(true);
         } catch { toast.error('Failed to load vendor details'); }
@@ -1267,9 +1273,9 @@ export const PurchaseOrderEditPage: React.FC = () => {
             };
 
             const response = await axios.put(
-                `https://${baseUrl}/pms/purchase_orders/${id}.json?access_token=${token}`,
+                `https://${baseUrl}/pms/purchase_orders/${id}.json`,
                 payload,
-                { headers: { 'Content-Type': 'application/json' } }
+                { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
             );
 
             if (response.status === 200 || response.status === 201) {

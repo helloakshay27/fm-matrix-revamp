@@ -11,7 +11,6 @@ const buildUrl = (path: string, fromDate: Date, toDate: Date, extra: Record<stri
   const params = new URLSearchParams({
     from_date: fmt(fromDate),
     to_date: fmt(toDate),
-    access_token: API_CONFIG.TOKEN || '',
     ...extra,
   });
   return `${API_CONFIG.BASE_URL}${path}?${params}`;
