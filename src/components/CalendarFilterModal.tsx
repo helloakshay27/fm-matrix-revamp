@@ -221,11 +221,13 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
         : `https://${cleanBaseUrl}`;
       
       // Build the API URL - ensure proper format
-      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&access_token=${accessToken}&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
+      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
       
       console.log('Fetching custom forms for calendar filter from:', apiUrl);
       
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);

@@ -559,8 +559,8 @@ export const AMCDetailsPage = () => {
         formData.append("amc_history[documents][]", file);
       });
       const res = await fetch(
-        `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
-        { method: "POST", body: formData }
+        `https://${baseUrl}/pms/asset_amcs/amc_history_update.json`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
       );
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
 

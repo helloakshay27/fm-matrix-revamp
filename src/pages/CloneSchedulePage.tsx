@@ -1335,11 +1335,12 @@ const CloneSchedulePage = () => {
 
       // Make POST API call to create a new schedule
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/pms/custom_forms?access_token=${API_CONFIG.TOKEN}`,
+        `${API_CONFIG.BASE_URL}/pms/custom_forms`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': getAuthHeader(),
           },
           body: JSON.stringify(payload),
         }

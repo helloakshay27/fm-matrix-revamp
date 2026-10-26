@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { API_CONFIG } from '@/config/apiConfig';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Types
 export interface Site {
@@ -84,7 +84,7 @@ export const fetchSites = createAsyncThunk<Site[]>(
   'serviceLocation/fetchSites',
   async () => {
     const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/sites.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.sites;
   }
@@ -94,7 +94,7 @@ export const fetchBuildings = createAsyncThunk<Building[], number>(
   'serviceLocation/fetchBuildings',
   async (siteId: number) => {
     const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.buildings.map((item: any) => item);
   }
@@ -104,7 +104,7 @@ export const fetchAllBuildings = createAsyncThunk<Building[], number>(
   'serviceLocation/fetchAllBuildings',
   async (siteId: number) => {
     const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.buildings.map((item: any) => item);
   }
@@ -112,9 +112,12 @@ export const fetchAllBuildings = createAsyncThunk<Building[], number>(
 
 export const fetchWings = createAsyncThunk<Wing[], number>(
   'serviceLocation/fetchWings',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`
+      : `${API_CONFIG.BASE_URL}/pms/wings.json`;
+    const response = await axios.get(url, {
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.wings || [];
   }
@@ -122,19 +125,26 @@ export const fetchWings = createAsyncThunk<Wing[], number>(
 
 export const fetchAreas = createAsyncThunk<Area[], { buildingId: number; wingId?: number }>(
   'serviceLocation/fetchAreas',
-  async ({ buildingId, wingId }) => {
-    const params: Record<string, any> = { access_token: API_CONFIG.TOKEN };
+  async (paramsObj) => {
+    const { buildingId, wingId } = paramsObj || {};
+    const params: Record<string, any> = {};
     if (wingId) params.wing_id = wingId;
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/areas.json`, { params });
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/areas.json`
+      : `${API_CONFIG.BASE_URL}/pms/areas.json`;
+    const response = await axios.get(url, { params, headers: { Authorization: getAuthHeader() } });
     return response.data.areas || [];
   }
 );
 
 export const fetchFloors = createAsyncThunk<Floor[], number>(
   'serviceLocation/fetchFloors',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/floors.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/floors.json`
+      : `${API_CONFIG.BASE_URL}/pms/floors.json`;
+    const response = await axios.get(url, {
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.floors || [];
   }
@@ -144,7 +154,7 @@ export const fetchGroups = createAsyncThunk<Group[]>(
   'serviceLocation/fetchGroups',
   async () => {
     const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+      headers: { Authorization: getAuthHeader() }
     });
     console.log('Groups API Response:', response.data);
     // Use asset_groups from response
@@ -154,9 +164,12 @@ export const fetchGroups = createAsyncThunk<Group[]>(
 
 export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
   'serviceLocation/fetchSubGroups',
-  async (groupId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
-      params: { access_token: API_CONFIG.TOKEN }
+  async (groupId) => {
+    const url = groupId
+      ? `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`
+      : `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json`;
+    const response = await axios.get(url, {
+      headers: { Authorization: getAuthHeader() }
     });
     console.log('SubGroups API Response:', response.data);
     // Use asset_groups from response (subgroups should be in the same structure)
@@ -166,9 +179,12 @@ export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
 
 export const fetchRooms = createAsyncThunk<Room[], number>(
   'serviceLocation/fetchRooms',
-  async (buildingId: number) => {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/rooms.json`, {
-      params: { access_token: API_CONFIG.TOKEN }
+  async (buildingId) => {
+    const url = buildingId
+      ? `${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/rooms.json`
+      : `${API_CONFIG.BASE_URL}/pms/rooms.json`;
+    const response = await axios.get(url, {
+      headers: { Authorization: getAuthHeader() }
     });
     return response.data.rooms || [];
   }

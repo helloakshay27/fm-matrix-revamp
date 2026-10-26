@@ -29,7 +29,6 @@ import {
   getFullUrl,
   getAuthHeader,
   ENDPOINTS,
-  API_CONFIG,
 } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { useGaFunnelEvents } from "@/components/PostHogGaFunnelEvents";
@@ -192,11 +191,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
             visitorId.toString()
           );
 
-          // Add access token if available
-          if (API_CONFIG.TOKEN) {
-            urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
-          }
-
           console.log(
             "🚀 Calling OTP verification API:",
             urlWithParams.toString()
@@ -348,11 +342,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
           // Add query parameters
           urlWithParams.searchParams.append("id", visitorId.toString());
-
-          // Add access token if available
-          if (API_CONFIG.TOKEN) {
-            urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
-          }
 
           console.log("🚀 Calling resend OTP API:", urlWithParams.toString());
 
