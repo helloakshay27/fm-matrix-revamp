@@ -2,10 +2,13 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ClipboardCheck, FileText, User } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AuditLoadingState,
   FieldGrid,
   sectionIcon,
+  auditTabsListClass,
+  auditTabTriggerClass,
 } from "@/components/vi-audit/ViAuditUi";
 import { AttachmentLinks } from "@/components/vi-incident/IncidentFormFields";
 import { InspectionStatusPill } from "./InspectionListView";
@@ -177,87 +180,102 @@ export const InspectionDetailView = ({
         />
       </div>
 
-      <DetailCard
-        icon={sectionIcon(User)}
-        title="Inspector Details"
-        className="mb-5"
-      >
-        <FieldGrid
-          fields={[
-            { label: "Name", value: inspection.inspector?.name },
-            { label: "Mail ID", value: inspection.inspector?.email },
-            { label: "Designation", value: inspection.inspector?.designation },
-          ]}
-        />
-      </DetailCard>
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className={`${auditTabsListClass} mb-5`}>
+          <TabsTrigger value="details" className={auditTabTriggerClass}>
+            Inspection Details
+          </TabsTrigger>
+          <TabsTrigger value="checklist" className={auditTabTriggerClass}>
+            Checklist ({responses.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="mt-0">
+          <DetailCard
+            icon={sectionIcon(User)}
+            title="Inspector Details"
+            className="mb-5"
+          >
+            <FieldGrid
+              fields={[
+                { label: "Name", value: inspection.inspector?.name },
+                { label: "Mail ID", value: inspection.inspector?.email },
+                { label: "Designation", value: inspection.inspector?.designation },
+              ]}
+            />
+          </DetailCard>
 
-      <DetailCard
-        icon={sectionIcon(FileText)}
-        title="Basic Details"
-        className="mb-5"
-      >
-        <FieldGrid
-          columns={4}
-          fields={[
-            { label: "Inspection No.", value: inspection.inspectionNo },
-            {
-              label: "Date of Inspection",
-              value: formatInspectionDate(inspection.inspectionDate),
-            },
-            { label: "Circle", value: inspection.circle },
-            { label: "Personnel Area", value: inspection.personalArea },
-            { label: "Work Location", value: inspection.workLocation },
-            { label: "Type of Facility", value: inspection.facilityType },
-            { label: "Function", value: inspection.department },
-            { label: "Inspection Type", value: inspection.inspectionType },
-            { label: "SPOC", value: inspection.spoc?.name },
-            {
-              label: "Functional Head",
-              value: inspection.functionalHead?.name,
-            },
-            {
-              label: "Target Date",
-              value: formatInspectionDate(inspection.targetDate),
-            },
-            {
-              label: "Submitted On",
-              value: formatInspectionDate(inspection.submittedAt),
-            },
-            {
-              label: "Inspection Location",
-              value: inspection.inspectorLocation,
-              span: true,
-            },
-          ]}
-        />
-      </DetailCard>
+          <DetailCard
+            icon={sectionIcon(FileText)}
+            title="Basic Details"
+            className="mb-5"
+          >
+            <FieldGrid
+              columns={4}
+              fields={[
+                { label: "Inspection No.", value: inspection.inspectionNo },
+                {
+                  label: "Date of Inspection",
+                  value: formatInspectionDate(inspection.inspectionDate),
+                },
+                { label: "Circle", value: inspection.circle },
+                { label: "Personnel Area", value: inspection.personalArea },
+                { label: "Work Location", value: inspection.workLocation },
+                { label: "Type of Facility", value: inspection.facilityType },
+                { label: "Function", value: inspection.department },
+                { label: "Inspection Type", value: inspection.inspectionType },
+                { label: "SPOC", value: inspection.spoc?.name },
+                {
+                  label: "Functional Head",
+                  value: inspection.functionalHead?.name,
+                },
+                {
+                  label: "Target Date",
+                  value: formatInspectionDate(inspection.targetDate),
+                },
+                {
+                  label: "Submitted On",
+                  value: formatInspectionDate(inspection.submittedAt),
+                },
+                {
+                  label: "Inspection Location",
+                  value: inspection.inspectorLocation,
+                  span: true,
+                },
+              ]}
+            />
+          </DetailCard>
 
-      <DetailCard
-        icon={sectionIcon(ClipboardCheck)}
-        title="Inspection Checklist"
-        className="mb-5"
-        headerActions={
-          responses.length > 1 ? (
-            <button
-              type="button"
-              onClick={() => setChecklistExpanded((v) => !v)}
-              className="text-sm font-medium text-[#1A1A18] underline underline-offset-2"
-            >
-              {checklistExpanded ? "View Less" : "View All"}
-            </button>
-          ) : undefined
-        }
-      >
-        {responses.length ? (
-          <div className="space-y-4">{visible.map(renderResponse)}</div>
-        ) : (
-          <p className="text-sm text-[rgba(26,26,24,0.48)]">
-            {onlyMyResponses
-              ? "No checklist items are assigned to you on this inspection."
-              : "No checklist responses."}
-          </p>
-        )}
-      </DetailCard>
+        </TabsContent>
+        <TabsContent value="checklist" className="mt-0">
+          <DetailCard
+            icon={sectionIcon(ClipboardCheck)}
+            title="Inspection Checklist"
+            className="mb-5"
+            headerActions={
+              responses.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setChecklistExpanded((v) => !v)}
+                  className="text-sm font-medium text-[#1A1A18] underline underline-offset-2"
+                >
+                  {checklistExpanded ? "View Less" : "View All"}
+                </button>
+              ) : undefined
+            }
+          >
+            {responses.length ? (
+              <div className="space-y-4">{visible.map(renderResponse)}</div>
+            ) : (
+              <p className="text-sm text-[rgba(26,26,24,0.48)]">
+                {onlyMyResponses
+                  ? "No checklist items are assigned to you on this inspection."
+                  : "No checklist responses."}
+              </p>
+            )}
+          </DetailCard>
+
+        </TabsContent>
+      </Tabs>
 
       {footerContent && (
         <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">

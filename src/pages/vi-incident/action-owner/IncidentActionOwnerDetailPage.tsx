@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList, FileText } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuditLoadingState, sectionIcon, auditTabsListClass, auditTabTriggerClass } from "@/components/vi-audit/ViAuditUi";
 import { IncidentHeader, IncidentInfoCards, IncidentInvestigationCard, IncidentReporterCard } from "@/components/vi-incident/IncidentDetailView";
 import { IncidentActionPlanCards } from "@/components/vi-incident/IncidentActionPlanCards";
 import {
@@ -56,56 +57,71 @@ const IncidentActionOwnerDetailPage = () => {
   return (
     <div className="p-6 min-h-screen">
       <IncidentHeader incident={incident} onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} draft={hasMyDraft} />
-      <IncidentReporterCard incident={incident} />
+      <Tabs defaultValue="plans" className="w-full">
+        <TabsList className={`${auditTabsListClass} mb-5`}>
+          <TabsTrigger value="details" className={auditTabTriggerClass}>
+            Incident Details
+          </TabsTrigger>
+          <TabsTrigger value="plans" className={auditTabTriggerClass}>
+            Action Plans ({plans.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="mt-0">
+          <IncidentReporterCard incident={incident} />
 
-      <DetailCard icon={sectionIcon(FileText)} title="Incident Summary" className="mb-5">
-        <div className="mb-3 flex justify-end">
-          <ViewMoreToggle open={summaryOpen} onClick={() => setSummaryOpen((v) => !v)} />
-        </div>
-        <FieldGrid
-          columns={3}
-          fields={[
-            { label: "Incident Location", value: incident.incidentLocation },
-            { label: "Incident Date & Time", value: `${incident.dateOfIncident} ${incident.timeOfIncident}`.trim() },
-            { label: "Status", value: incident.status },
-            ...(summaryOpen
-              ? [
-                  { label: "Reporter", value: incident.reporter.name },
-                  { label: "Circle", value: incident.circle },
-                  { label: "Personnel Area", value: incident.personnelArea },
-                  { label: "Classification", value: incident.classification },
-                  { label: "Category", value: incident.category },
-                  { label: "Assigned SPOC", value: incident.spoc },
-                ]
-              : []),
-          ]}
-        />
-      </DetailCard>
+          <DetailCard icon={sectionIcon(FileText)} title="Incident Summary" className="mb-5">
+            <div className="mb-3 flex justify-end">
+              <ViewMoreToggle open={summaryOpen} onClick={() => setSummaryOpen((v) => !v)} />
+            </div>
+            <FieldGrid
+              columns={3}
+              fields={[
+                { label: "Incident Location", value: incident.incidentLocation },
+                { label: "Incident Date & Time", value: `${incident.dateOfIncident} ${incident.timeOfIncident}`.trim() },
+                { label: "Status", value: incident.status },
+                ...(summaryOpen
+                  ? [
+                      { label: "Reporter", value: incident.reporter.name },
+                      { label: "Circle", value: incident.circle },
+                      { label: "Personnel Area", value: incident.personnelArea },
+                      { label: "Classification", value: incident.classification },
+                      { label: "Category", value: incident.category },
+                      { label: "Assigned SPOC", value: incident.spoc },
+                    ]
+                  : []),
+              ]}
+            />
+          </DetailCard>
 
-      <DetailCard icon={sectionIcon(ClipboardList)} title="Incident Details" className="mb-5">
-        <div className="mb-3 flex justify-end">
-          <ViewMoreToggle open={detailsOpen} onClick={() => setDetailsOpen((v) => !v)} controls="action-owner-incident-details" />
-        </div>
-        <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
-        <p className={`text-sm text-[#1A1A18] whitespace-pre-wrap ${detailsOpen ? "" : "line-clamp-2"}`}>
-          {incident.incident || "-"}
-        </p>
-      </DetailCard>
+          <DetailCard icon={sectionIcon(ClipboardList)} title="Incident Details" className="mb-5">
+            <div className="mb-3 flex justify-end">
+              <ViewMoreToggle open={detailsOpen} onClick={() => setDetailsOpen((v) => !v)} controls="action-owner-incident-details" />
+            </div>
+            <div className="text-xs text-[rgba(26,26,24,0.48)] mb-1">Incident</div>
+            <p className={`text-sm text-[#1A1A18] whitespace-pre-wrap ${detailsOpen ? "" : "line-clamp-2"}`}>
+              {incident.incident || "-"}
+            </p>
+          </DetailCard>
 
-      <div id="action-owner-incident-details" hidden={!detailsOpen}>
-        {detailsOpen && (
-          <>
-            <IncidentInfoCards incident={incident} showReporter={false} />
-            <IncidentInvestigationCard incident={incident} />
-          </>
-        )}
-      </div>
+          <div id="action-owner-incident-details" hidden={!detailsOpen}>
+            {detailsOpen && (
+              <>
+                <IncidentInfoCards incident={incident} showReporter={false} />
+                <IncidentInvestigationCard incident={incident} />
+              </>
+            )}
+          </div>
 
-      {plans.length ? (
-        <IncidentActionPlanCards incident={incident} plans={plans} isMine={isMine} />
-      ) : (
-        <p className="py-8 text-center text-sm text-[rgba(26,26,24,0.48)]">No action plans assigned to you.</p>
-      )}
+        </TabsContent>
+        <TabsContent value="plans" className="mt-0">
+          {plans.length ? (
+            <IncidentActionPlanCards incident={incident} plans={plans} isMine={isMine} />
+          ) : (
+            <p className="py-8 text-center text-sm text-[rgba(26,26,24,0.48)]">No action plans assigned to you.</p>
+          )}
+
+        </TabsContent>
+      </Tabs>
 
       {canAddActionTaken && (
         <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">
