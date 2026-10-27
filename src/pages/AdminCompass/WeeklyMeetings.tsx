@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isEmbeddedMode } from "@/utils/embeddedMode";
 import WeeklyReviews from "@/components/AdminCompass/WeeklyReviews";
 import WeeklyLog from "@/components/AdminCompass/WeeklyLog";
 import MeetingHistory from "@/components/AdminCompass/MeetingHistory";
@@ -187,7 +188,8 @@ const WeeklyMeetings = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState("");
 
   return (
-    <div className="weekly-meetings-page p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
+    // Inside a host product's frame (Business Genie) the page fills the frame rather than sitting in a centred column.
+    <div className={`weekly-meetings-page p-6 space-y-6 bg-[#f6f4ee] ${isEmbeddedMode() ? "" : "max-w-7xl mx-auto"}`}>
       <style>{responsiveStyles}</style>
       {/* Header Section */}
       <div className="weekly-meetings-header flex justify-between items-start">

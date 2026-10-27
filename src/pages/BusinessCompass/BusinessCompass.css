@@ -488,6 +488,12 @@
   color: #1a1a1a;
 }
 
+/* Inside a host product's frame (Business Genie) the page fills the frame rather than sitting in a centred column. */
+.bc-daily-page--fill {
+  max-width: none;
+  margin: 0;
+}
+
 @media (max-width: 640px) {
   .bc-daily-page {
     padding: 16px 16px 72px;

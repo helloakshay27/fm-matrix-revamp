@@ -8,6 +8,7 @@ import HistoryTab from "./AdminCompassComponent/Historytab";
 import AnalyticsTab from "./AdminCompassComponent/Analyticstab";
 import SettingsTab from "./AdminCompassComponent/Settingstab";
 import DailyTab from "./AdminCompassComponent/Dailytab";
+import { isEmbeddedMode } from "@/utils/embeddedMode";
 
 const tabs = ["Daily", "Daily Log", "History", "Reports", "Analytics", "Settings"];
 
@@ -61,7 +62,8 @@ const DailyMeeting = () => {
         boxSizing: "border-box",
       }}
     >
-      <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
+      {/* Inside a host product's frame (Business Genie) the page fills the frame rather than sitting in a centred column. */}
+      <div style={isEmbeddedMode() ? { width: "100%" } : { width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
       {/* ── Page Header ── */}
       <div style={{ marginBottom: "8px" }}>
         <h1
