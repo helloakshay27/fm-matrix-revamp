@@ -229,7 +229,6 @@ export const VisitorsDashboard = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFromDate, setExportFromDate] = useState('');
   const [exportToDate, setExportToDate] = useState('');
-  const EXPORT_MAX_RANGE_DAYS = 10;
 
   // exportFromDate/exportToDate are DD/MM/YYYY strings from MaterialDatePicker
   const parseDDMMYYYY = (value: string): Date | null => {
@@ -244,10 +243,8 @@ export const VisitorsDashboard = () => {
     if (!from || !to) return '';
     const fromDate = parseDDMMYYYY(from);
     const toDate = parseDDMMYYYY(to);
-    if (!fromDate || !toDate) return '';
+    if (!fromDate || !toDate) return 'Invalid date format';
     if (fromDate > toDate) return '"From" date cannot be later than "To" date';
-    const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays > EXPORT_MAX_RANGE_DAYS) return `Date range cannot exceed ${EXPORT_MAX_RANGE_DAYS} days`;
     return '';
   };
 
@@ -1605,6 +1602,12 @@ export const VisitorsDashboard = () => {
   };
 
   const handleExport = async () => {
+    if (visitorFilters.startDate && !exportFromDate) {
+      setExportFromDate(visitorFilters.startDate);
+    }
+    if (visitorFilters.endDate && !exportToDate) {
+      setExportToDate(visitorFilters.endDate);
+    }
     setExportDialogOpen(true);
   };
 
