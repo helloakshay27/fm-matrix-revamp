@@ -2347,6 +2347,16 @@ const RegisterInvitationPage = lazy(() =>
     default: m.RegisterInvitationPage,
   }))
 );
+const BookingWebviewPage = lazy(() =>
+  import("@/pages/BookingWebviewPage").then((m) => ({
+    default: m.BookingWebviewPage,
+  }))
+);
+const BookingConfirmedPage = lazy(() =>
+  import("@/pages/BookingConfirmedPage").then((m) => ({
+    default: m.BookingConfirmedPage,
+  }))
+);
 const ForgotPasswordOTPPage = lazy(() =>
   import("@/pages/ForgotPasswordOTPPage").then((m) => ({
     default: m.ForgotPasswordOTPPage,
@@ -4790,6 +4800,15 @@ function App() {
                           <Route
                             path="/register-invitation"
                             element={<RegisterInvitationPage />}
+                          />
+                          {/* A shared availability link: public, no sign-in (the booking link's own token is the key) */}
+                          <Route
+                            path="/booking/:token"
+                            element={<BookingWebviewPage />}
+                          />
+                          <Route
+                            path="/booking/:token/confirmed"
+                            element={<BookingConfirmedPage />}
                           />
                           <Route
                             path="/forgot-password-otp"

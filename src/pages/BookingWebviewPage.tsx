@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -28,12 +29,30 @@ interface Day {
   slots: Slot[];
 }
 
+/** How a visitor can book. `guest` connects nothing: the host's calendar takes the meeting and the visitor is mailed. */
+type BookingProvider = "guest" | "google" | "outlook" | "zimbra" | "nextcloud";
+
+const PROVIDER_LABELS: Record<BookingProvider, string> = {
+  guest: "Just book it — no calendar needed",
+  google: "Add it to my Google Calendar",
+  outlook: "Add it to my Outlook calendar",
+  zimbra: "Add it to my Zimbra calendar",
+  nextcloud: "Add it to my Nextcloud calendar",
+};
+
 interface AvailabilityResponse {
   owner_name: string;
   label: string;
   duration_minutes: number;
+  /** The host's time zone, which working hours are in. */
+  time_zone?: string;
+  /** The ways to book this server offers; older servers send none and offer Google and Outlook. */
+  providers?: BookingProvider[];
+  guest_disclaimer?: string;
   days: Day[];
 }
+
+const FALLBACK_PROVIDERS: BookingProvider[] = ["google", "outlook"];
 
 const formatSlotTime = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
@@ -61,7 +80,9 @@ export const BookingWebviewPage = () => {
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [bookerName, setBookerName] = useState("");
   const [bookerEmail, setBookerEmail] = useState("");
-  const [provider, setProvider] = useState<"google" | "outlook">("google");
+  const [provider, setProvider] = useState<BookingProvider>("google");
+  const [guestConsent, setGuestConsent] = useState(false);
+  const [calendarSecret, setCalendarSecret] = useState(""); // a Zimbra password / Nextcloud app password: used once, never kept
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -69,6 +90,8 @@ export const BookingWebviewPage = () => {
       try {
         const response = await baseClient.get(`/public/booking_links/${token}`);
         setData(response.data);
+        const offered: BookingProvider[] = response.data.providers?.length ? response.data.providers : FALLBACK_PROVIDERS;
+        setProvider(offered.includes("guest") ? "guest" : offered[0]);
         const firstBookable = response.data.days.find((d: Day) => d.slots.some((s) => s.available));
         setActiveDate(firstBookable?.date ?? response.data.days[0]?.date ?? null);
       } catch (err) {
@@ -82,6 +105,8 @@ export const BookingWebviewPage = () => {
     if (token) fetchAvailability();
   }, [token]);
 
+  const offeredProviders: BookingProvider[] = data?.providers?.length ? data.providers : FALLBACK_PROVIDERS;
+
   const activeDay = useMemo(
     () => data?.days.find((d) => d.date === activeDate) ?? null,
     [data, activeDate]
@@ -94,6 +119,16 @@ export const BookingWebviewPage = () => {
       return;
     }
 
+    if (provider === "guest" && !guestConsent) {
+      toast.error("Please accept the note about booking as a guest");
+      return;
+    }
+    const needsSecret = provider === "zimbra" || provider === "nextcloud";
+    if (needsSecret && !calendarSecret) {
+      toast.error(provider === "zimbra" ? "Enter your Zimbra password" : "Enter your Nextcloud app password");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const response = await baseClient.post(`/public/booking_links/${token}/bookings`, {
@@ -102,10 +137,14 @@ export const BookingWebviewPage = () => {
         provider,
         start_time: selectedSlot.start_time,
         end_time: selectedSlot.end_time,
+        ...(provider === "guest" ? { guest_consent: true } : {}),
+        ...(provider === "zimbra" ? { zimbra_password: calendarSecret } : {}),
+        ...(provider === "nextcloud" ? { nextcloud_app_password: calendarSecret } : {}),
       });
 
-      // Leaving the SPA here is expected — connect_url is a real OAuth consent redirect.
-      window.location.href = response.data.connect_url;
+      // Google / Outlook: leaving the SPA is expected — connect_url is a real OAuth consent redirect. Every other way of booking is
+      // finished by now, so the visitor goes straight to the confirmation.
+      window.location.href = response.data.connect_url ?? response.data.confirmation_url;
     } catch (err: any) {
       const message =
         err?.response?.data?.error ||
@@ -143,6 +182,11 @@ export const BookingWebviewPage = () => {
           <p className="text-[#2c2c2c]/60">
             {data.duration_minutes} min with {data.owner_name}
           </p>
+          {data.time_zone && (
+            <p className="text-xs text-[#2c2c2c]/40">
+              Times are shown in your time zone. {data.owner_name}'s calendar is in {data.time_zone.replace(/_/g, " ")}.
+            </p>
+          )}
         </div>
 
         {/* Date strip — stands in for the reference design's month-grid day picker */}
@@ -235,25 +279,47 @@ export const BookingWebviewPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Which calendar should this be added to?</Label>
+                <Label>How would you like to book?</Label>
                 <RadioGroup
                   value={provider}
-                  onValueChange={(v) => setProvider(v as "google" | "outlook")}
-                  className="flex gap-6"
+                  onValueChange={(v) => setProvider(v as BookingProvider)}
+                  className="flex flex-col gap-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="google" id="provider_google" />
-                    <Label htmlFor="provider_google" className="font-normal">Google Calendar</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="outlook" id="provider_outlook" />
-                    <Label htmlFor="provider_outlook" className="font-normal">Outlook</Label>
-                  </div>
+                  {offeredProviders.map((p) => (
+                    <div key={p} className="flex items-center gap-2">
+                      <RadioGroupItem value={p} id={`provider_${p}`} />
+                      <Label htmlFor={`provider_${p}`} className="font-normal">{PROVIDER_LABELS[p]}</Label>
+                    </div>
+                  ))}
                 </RadioGroup>
-                <p className="text-xs text-[#2c2c2c]/50">
-                  You'll be asked to briefly sign in so the invite can be created on your own calendar,
-                  with {data.owner_name} added as a guest.
-                </p>
+
+                {provider === "guest" ? (
+                  <div className="flex items-start gap-2 pt-1">
+                    <Checkbox id="guest_consent" checked={guestConsent} onCheckedChange={(v) => setGuestConsent(v === true)} />
+                    <Label htmlFor="guest_consent" className="text-xs font-normal leading-snug text-[#2c2c2c]/60">
+                      {data.guest_disclaimer ??
+                        `You're booking as a guest. ${data.owner_name} will host the meeting and send you the invite by email. We use your name and email only to arrange it.`}
+                    </Label>
+                  </div>
+                ) : provider === "zimbra" || provider === "nextcloud" ? (
+                  <div className="space-y-2 pt-1">
+                    <Input
+                      type="password"
+                      value={calendarSecret}
+                      onChange={(e) => setCalendarSecret(e.target.value)}
+                      placeholder={provider === "zimbra" ? "Your Zimbra password" : "Your Nextcloud app password"}
+                      autoComplete="new-password"
+                    />
+                    <p className="text-xs text-[#2c2c2c]/50">
+                      Used once to put the meeting on your calendar, with {data.owner_name} as a guest. It is not kept.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#2c2c2c]/50">
+                    You'll be asked to briefly sign in so the invite can be created on your own calendar,
+                    with {data.owner_name} added as a guest. Nothing of your calendar is kept.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <Button variant="outline" onClick={() => setSelectedSlot(null)} disabled={submitting}>
@@ -265,7 +331,7 @@ export const BookingWebviewPage = () => {
                   className="bg-[#e9704d] hover:bg-[#d35f3d] text-white"
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-                  Confirm & connect calendar
+                  {provider === "google" || provider === "outlook" ? "Confirm & connect calendar" : "Confirm booking"}
                 </Button>
               </div>
             </CardContent>
