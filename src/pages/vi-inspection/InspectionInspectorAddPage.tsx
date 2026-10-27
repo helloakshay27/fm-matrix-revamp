@@ -46,7 +46,18 @@ import {
 const INSPECTOR_PATH = INSPECTION_PATHS.inspector;
 
 // The inspector's current position (browser geolocation) — the nearby-sites lookup needs it.
-type GeoStatus = "idle" | "locating" | "ready" | "denied" | "error";
+type GeoStatus = "idle" | "locating" | "ready" | "denied" | "policy" | "error";
+
+// The site can switch geolocation off for every page with a Permissions-Policy header
+// (geolocation=()); the browser then rejects without prompting and no retry can help.
+const geolocationAllowedBySite = () => {
+  const doc = document as Document & {
+    permissionsPolicy?: { allowsFeature: (feature: string) => boolean };
+    featurePolicy?: { allowsFeature: (feature: string) => boolean };
+  };
+  const policy = doc.permissionsPolicy ?? doc.featurePolicy;
+  return policy ? policy.allowsFeature("geolocation") : true;
+};
 interface GeoState {
   status: GeoStatus;
   coords: { latitude: number; longitude: number } | null;
@@ -186,6 +197,10 @@ const InspectionInspectorAddPage = () => {
       setGeo({ status: "error", coords: null });
       return;
     }
+    if (!geolocationAllowedBySite()) {
+      setGeo({ status: "policy", coords: null });
+      return;
+    }
     setGeo((prev) => ({ status: "locating", coords: prev.coords }));
     navigator.geolocation.getCurrentPosition(
       (position) =>
@@ -222,7 +237,9 @@ const InspectionInspectorAddPage = () => {
     geo.status === "locating"
       ? "Getting your current location..."
       : geo.status === "denied"
-        ? "Location access is blocked. Allow location for this site in your browser, then retry."
+        ? "Location access is blocked. Allow location for this site in your browser (address bar → site settings → Location), then retry."
+        : geo.status === "policy"
+          ? "Location is turned off for this site by its security policy (Permissions-Policy: geolocation). Please contact the admin."
         : geo.status === "error"
           ? "Couldn't get your current location."
           : geo.status === "ready" && !nearbyLoading && nearbySites.length === 0
