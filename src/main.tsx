@@ -4,6 +4,7 @@ import "./index.css";
 import "./styles/product-pages.css";
 import "./styles/feature-system.css";
 import { initColorPatch } from "./utils/colorPatch.ts";
+import { hasEmbeddedSession, isEmbeddedMode } from "./utils/embeddedMode.ts";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
@@ -47,6 +48,11 @@ if (
   // window.location.hostname === "lockated.gophygital.work" ||
   window.location.hostname === "localhost"
   || window.location.hostname === "club.lockated.com"
+  // Shown inside a host product's page (Business Genie): the brand theme is what colours the buttons (fm-button-brand reads
+  // --color-primary, which only theme.css defines), so it loads whatever address serves the app — without it every "Add" is
+  // white text on nothing.
+  || isEmbeddedMode()
+  || hasEmbeddedSession()
 ) {
 import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
 // Initialise runtime color patcher — overrides MUI inline styles and any
