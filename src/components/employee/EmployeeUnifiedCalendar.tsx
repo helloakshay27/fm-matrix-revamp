@@ -7,6 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
+import { CalendarConnections } from "@/components/employee/calendar-sync/CalendarConnections";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,7 +17,6 @@ import {
   Users,
   Briefcase,
   Ticket,
-  RefreshCw,
   BarChart3,
 } from "lucide-react";
 import {
@@ -1104,59 +1104,8 @@ export const EmployeeUnifiedCalendar: React.FC<
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Sync Google Calendar */}
-          <Button
-            onClick={async () => {
-              const user = JSON.parse(localStorage.getItem("user") || "{}");
-              const email =
-                user?.email ||
-                localStorage.getItem("userEmail") ||
-                localStorage.getItem("email");
-              if (!email) {
-                toast.error("User email not found. Please log in again.");
-                return;
-              }
-              try {
-                toast.info("Checking Google Calendar connection...");
-                const domain = getBaseUrl()?.replace(/^https?:\/\//, "") || "";
-                const statusRes = await fetch(
-                  `https://${domain}/google_calander/status?email=${encodeURIComponent(email)}`
-                );
-                if (!statusRes.ok) throw new Error("Failed to check status");
-                const statusData = await statusRes.json();
-                if (statusData.connected === true) {
-                  calendarAnalytics.onAccountConnected("google");
-                  toast.info("Syncing Google Calendar events...");
-                  const syncRes = await fetch(
-                    `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
-                  );
-                  if (syncRes.ok) {
-                    calendarAnalytics.onCalendarSyncSucceeded("google");
-                    toast.success("Google Calendar synced!");
-                    fetchCalendarData();
-                  } else {
-                    calendarAnalytics.onCalendarSyncFailed("sync_request_failed", "google");
-                    toast.error("Failed to sync");
-                  }
-                } else {
-                  calendarAnalytics.onConnectPromptAccepted("google");
-                  toast.info("Opening Google Calendar connection...");
-                  window.open(
-                    `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
-                    "_blank"
-                  );
-                }
-              } catch {
-                calendarAnalytics.onCalendarSyncFailed("connection_check_failed", "google");
-                toast.error("Failed to process Google Calendar request");
-              }
-            }}
-            variant="outline"
-            className="flex items-center gap-2 px-4 py-2 h-10"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Sync Google Calendar
-          </Button>
+          {/* Connected calendars, sharing and new meetings — see calendar-sync/CalendarConnections */}
+          <CalendarConnections onChanged={fetchCalendarData} />
 
           {/* Opens the Calendar usage-analytics dashboard the events in this module feed. */}
           <Button
