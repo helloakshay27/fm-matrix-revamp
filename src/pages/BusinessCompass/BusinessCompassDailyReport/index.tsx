@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import "../BusinessCompass.css";
+import { isEmbeddedMode } from "@/utils/embeddedMode";
 import { DailyReportProvider, useDailyReport } from "./context/DailyReportContext";
 import { PageHeader } from "./components/PageHeader";
 import { AiSuggestionsCard } from "./components/AiSuggestionsCard";
@@ -52,7 +53,7 @@ const DailyReportPage = () => {
   const { activeTab, setActiveTab } = useDailyReport();
 
   return (
-    <div className="bc-daily-page space-y-6 w-full max-w-full overflow-x-hidden">
+    <div className={`bc-daily-page ${isEmbeddedMode() ? "bc-daily-page--fill" : ""} space-y-6 w-full max-w-full overflow-x-hidden`}>
       <div className="space-y-6">
         <PageHeader />
         {activeTab === "submit" && <AiSuggestionsCard />}
