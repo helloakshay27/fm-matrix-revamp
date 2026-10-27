@@ -22,6 +22,21 @@ interface EmbeddedConfig {
 let cachedBaseUrl: string | null = null;
 let cachedOrgId: string | null = null;
 
+export const getBackendUrlFromQuery = (): string | null => {
+  const backendUrl = new URLSearchParams(window.location.search)
+    .get("backend_url")
+    ?.trim();
+  if (!backendUrl) return null;
+
+  const normalizedUrl = /^https?:\/\//i.test(backendUrl)
+    ? backendUrl
+    : `https://${backendUrl}`;
+  const baseUrl = normalizedUrl.replace(/\/+$/, "");
+
+  saveBaseUrl(baseUrl);
+  return baseUrl;
+};
+
 /**
  * Get embedded mode configuration from URL parameters
  */
@@ -97,6 +112,13 @@ export const hasEmbeddedSession = (): boolean => {
  * This makes an API call to get the organization's backend_domain
  */
 export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
+  const backendUrl = getBackendUrlFromQuery();
+  if (backendUrl) {
+    cachedBaseUrl = backendUrl;
+    cachedOrgId = orgId;
+    return backendUrl;
+  }
+
   // Return cached URL if org_id matches
   if (cachedBaseUrl && cachedOrgId === orgId) {
     console.warn("📦 Using cached base URL for org_id:", orgId, cachedBaseUrl);

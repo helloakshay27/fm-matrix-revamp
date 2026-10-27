@@ -5,6 +5,7 @@ import {
   isEmbeddedMode,
   getEmbeddedToken,
   getEmbeddedOrgId,
+  getBackendUrlFromQuery,
   resolveBaseUrlByOrgId,
   storeEmbeddedData,
 } from "@/utils/embeddedMode";
@@ -12,25 +13,13 @@ import {
 // Create configured axios instance (do not set a global Content-Type)
 export const apiClient = axios.create({});
 
-const getSwitchBackendUrl = (): string | null => {
-  const backendUrl = new URLSearchParams(window.location.search)
-    .get("backend_url")
-    ?.trim();
-  if (!backendUrl) return null;
-
-  const normalizedUrl = /^https?:\/\//i.test(backendUrl)
-    ? backendUrl
-    : `https://${backendUrl}`;
-  return normalizedUrl.replace(/\/+$/, "");
-};
-
 // Request interceptor to dynamically set baseURL and auth header
 apiClient.interceptors.request.use(
   async (config) => {
     try {
       // A module switch can pass its target API in the page URL. It must win
       // over org/host defaults so requests follow the selected module.
-      const switchBackendUrl = getSwitchBackendUrl();
+      const switchBackendUrl = getBackendUrlFromQuery();
 
       // Check for embedded mode first
       const embeddedConfig = getEmbeddedConfig();
@@ -91,7 +80,7 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.error("❌ Error in apiClient interceptor:", error);
       // Fallback to standard config
-      config.baseURL = getSwitchBackendUrl() || API_CONFIG.BASE_URL;
+      config.baseURL = getBackendUrlFromQuery() || API_CONFIG.BASE_URL;
       const headers: AxiosRequestHeaders =
         (config.headers as AxiosRequestHeaders) || ({} as AxiosRequestHeaders);
       headers.Authorization = getAuthHeader();
