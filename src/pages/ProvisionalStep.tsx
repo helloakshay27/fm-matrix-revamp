@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import type { Investigator, CorrectiveAction, PreventiveAction } from '../IncidentNewDetails';
 
 interface ProvisionalStepProps {
+    actionValidationErrors: { corrective: boolean; preventive: boolean };
     incident: Incident | null;
     investigators: Investigator[];
     incidentOverTime: string;
@@ -41,6 +42,7 @@ interface ProvisionalStepProps {
 }
 
 const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
+    actionValidationErrors,
     incident,
     investigators,
     incidentOverTime,
@@ -258,7 +260,8 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                 <div className="p-4 space-y-4">
                     {/* Corrective Actions */}
                     <div>
-                        <h4 className="font-semibold text-sm mb-3">Corrective Actions:</h4>
+                        <h4 className="font-semibold text-sm mb-1">Corrective Actions <span className="text-red-600">*</span></h4>
+                        {actionValidationErrors.corrective && <p className="text-sm text-red-600 mb-3">Corrective Action is required.</p>}
 
                         {correctiveActions.length > 0 && (
                             <div className="space-y-4">
@@ -374,7 +377,8 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
 
                     {/* Preventive Actions */}
                     <div className="border-t border-gray-300 pt-4">
-                        <h4 className="font-semibold text-sm mb-3">Preventive Actions:</h4>
+                        <h4 className="font-semibold text-sm mb-1">Preventive Actions <span className="text-red-600">*</span></h4>
+                        {actionValidationErrors.preventive && <p className="text-sm text-red-600 mb-3">Preventive Action is required.</p>}
 
                         {preventiveActions.length > 0 && (
                             <div className="space-y-4">

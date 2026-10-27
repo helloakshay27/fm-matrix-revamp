@@ -199,6 +199,8 @@ export const IncidentNewDetails = () => {
     const [statusRca, setStatusRca] = useState('');
     const [statusCorrectiveAction, setStatusCorrectiveAction] = useState('');
     const [statusPreventiveAction, setStatusPreventiveAction] = useState('');
+    const [actionValidationErrors, setActionValidationErrors] = useState({ corrective: false, preventive: false });
+    const [statusActionErrors, setStatusActionErrors] = useState({ corrective: false, preventive: false });
 
     // Fetch functions
     const fetchInternalUsers = useCallback(async () => {
@@ -1052,14 +1054,13 @@ export const IncidentNewDetails = () => {
 
             } else if (currentStep === 3) {
                 setLoading(true);
-                const validCorrectiveActions = correctiveActions?.filter(a => a.action && a.description) || [];
-                const hasCorrectiveAction = validCorrectiveActions.length > 0 || (selectedCorrectiveAction && correctiveActionDescription);
+                const hasCorrectiveAction = correctiveActions.some(a => Boolean(a.action?.trim() && a.description?.trim())) || Boolean(selectedCorrectiveAction.trim() && correctiveActionDescription.trim());
+                const hasPreventiveAction = preventiveActions.some(a => Boolean(a.action?.trim() && a.description?.trim())) || Boolean(selectedPreventiveAction.trim() && preventiveActionDescription.trim());
+                setActionValidationErrors({ corrective: !hasCorrectiveAction, preventive: !hasPreventiveAction });
 
-                const validPreventiveActions = preventiveActions?.filter(a => a.action && a.description) || [];
-                const hasPreventiveAction = validPreventiveActions.length > 0 || (selectedPreventiveAction && preventiveActionDescription);
-
-                if (!hasCorrectiveAction) {
-                    toast.error('Please add at least one corrective action with action type and description');
+                if (!hasCorrectiveAction || !hasPreventiveAction) {
+                    if (!hasCorrectiveAction) toast.error('Corrective Action is required.');
+                    if (!hasPreventiveAction) toast.error('Preventive Action is required.');
                     setLoading(false);
                     return;
                 }
@@ -1178,6 +1179,15 @@ export const IncidentNewDetails = () => {
             } else if (currentStep === 4) {
                 // Final Closure Submission
                 setLoading(true);
+                const hasCorrectiveAction = correctiveActions.some(a => Boolean(a.action?.trim() && a.description?.trim()));
+                const hasPreventiveAction = preventiveActions.some(a => Boolean(a.action?.trim() && a.description?.trim()));
+                setActionValidationErrors({ corrective: !hasCorrectiveAction, preventive: !hasPreventiveAction });
+                if (!hasCorrectiveAction || !hasPreventiveAction) {
+                    if (!hasCorrectiveAction) toast.error('Corrective Action is required.');
+                    if (!hasPreventiveAction) toast.error('Preventive Action is required.');
+                    setLoading(false);
+                    return;
+                }
 
                 let baseUrl = localStorage.getItem('baseUrl') || '';
                 const token = localStorage.getItem('token') || '';
@@ -1738,16 +1748,14 @@ export const IncidentNewDetails = () => {
             return;
         }
         if (statusUpdateValue === 'closed') {
+            const correctiveMissing = !statusCorrectiveAction.trim();
+            const preventiveMissing = !statusPreventiveAction.trim();
+            setStatusActionErrors({ corrective: correctiveMissing, preventive: preventiveMissing });
+            if (correctiveMissing) toast.error('Corrective Action is required.');
+            if (preventiveMissing) toast.error('Preventive Action is required.');
+            if (correctiveMissing || preventiveMissing) return;
             if (!statusRca.trim()) {
                 toast.error('Please enter the RCA');
-                return;
-            }
-            if (!statusCorrectiveAction.trim()) {
-                toast.error('Please enter the corrective action');
-                return;
-            }
-            if (!statusPreventiveAction.trim()) {
-                toast.error('Please enter the preventive action');
                 return;
             }
         }
@@ -2297,25 +2305,27 @@ export const IncidentNewDetails = () => {
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-800">Corrective Action <span className="text-brand">*</span></label>
+                                        <label className="text-sm font-semibold text-gray-800">Corrective Action <span className="text-red-600">*</span></label>
                                         <textarea
                                             value={statusCorrectiveAction}
-                                            onChange={(e) => setStatusCorrectiveAction(e.target.value)}
+                                            onChange={(e) => { setStatusCorrectiveAction(e.target.value); if (e.target.value.trim()) setStatusActionErrors(prev => ({ ...prev, corrective: false })); }}
                                             placeholder="Enter corrective action taken..."
                                             rows={2}
-                                            className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
+                                            className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent ${statusActionErrors.corrective ? 'border-red-500' : 'border-[#D0D5DD]'}`}
                                         />
+                                        {statusActionErrors.corrective && <p className="text-sm text-red-600">Corrective Action is required.</p>}
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-800">Preventive Action <span className="text-brand">*</span></label>
+                                        <label className="text-sm font-semibold text-gray-800">Preventive Action <span className="text-red-600">*</span></label>
                                         <textarea
                                             value={statusPreventiveAction}
-                                            onChange={(e) => setStatusPreventiveAction(e.target.value)}
+                                            onChange={(e) => { setStatusPreventiveAction(e.target.value); if (e.target.value.trim()) setStatusActionErrors(prev => ({ ...prev, preventive: false })); }}
                                             placeholder="Enter preventive action to avoid recurrence..."
                                             rows={2}
-                                            className="w-full border border-[#D0D5DD] rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent"
+                                            className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-transparent ${statusActionErrors.preventive ? 'border-red-500' : 'border-[#D0D5DD]'}`}
                                         />
+                                        {statusActionErrors.preventive && <p className="text-sm text-red-600">Preventive Action is required.</p>}
                                     </div>
                                 </>
                             )}
@@ -2468,6 +2478,7 @@ export const IncidentNewDetails = () => {
                                 investigators={investigators}
                                 incidentOverTime={incidentOverTime}
                                 correctiveActions={correctiveActions}
+                                actionValidationErrors={actionValidationErrors}
                                 setCorrectiveActions={setCorrectiveActions}
                                 preventiveActions={preventiveActions}
                                 setPreventiveActions={setPreventiveActions}
@@ -2502,6 +2513,7 @@ export const IncidentNewDetails = () => {
                                 investigators={investigators}
                                 incidentOverTime={incidentOverTime}
                                 correctiveActions={correctiveActions}
+                                actionValidationErrors={actionValidationErrors}
                                 setCorrectiveActions={setCorrectiveActions}
                                 preventiveActions={preventiveActions}
                                 setPreventiveActions={setPreventiveActions}
