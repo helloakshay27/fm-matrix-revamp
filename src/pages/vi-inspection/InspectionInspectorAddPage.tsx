@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -37,6 +37,7 @@ import {
   useViInspectionChecklistQuestions,
   useViInspectionDetail,
   useViInspectionMasters,
+  useViInspectionNearbySites,
   type InspectionFormInput,
 } from "@/components/vi-inspection/viInspectionApi";
 import {
@@ -47,6 +48,13 @@ import {
 } from "@/components/vi-inspection/viInspectionData";
 
 const INSPECTOR_PATH = INSPECTION_PATHS.inspector;
+
+// The inspector's current position (browser geolocation) — the nearby-sites lookup needs it.
+type GeoStatus = "idle" | "locating" | "ready" | "denied" | "error";
+interface GeoState {
+  status: GeoStatus;
+  coords: { latitude: number; longitude: number } | null;
+}
 const TOTAL_STEPS = 3;
 
 interface AnswerDraft {
@@ -80,6 +88,7 @@ interface BasicDraft {
   work_location_id: string;
   inspection_type_id: string;
   inspector_location: string;
+  inspection_site_id: string;
   department_id: string;
   facility_type_id: string;
 }
@@ -91,6 +100,7 @@ const EMPTY_BASIC: BasicDraft = {
   work_location_id: "",
   inspection_type_id: "",
   inspector_location: "",
+  inspection_site_id: "",
   department_id: "",
   facility_type_id: "",
 };
@@ -106,7 +116,7 @@ const InspectionInspectorAddPage = () => {
   const loggedInUser = useMemo(getLoggedInUser, []);
   const { masters, loading: mastersLoading } = useViInspectionMasters();
   // Inspection types come from their own API (GET /vi_inspection_type_masters.json), which carries
-  // lat_long_required — it decides whether the Inspector Location field is shown.
+  // lat_long_required — it decides whether the Inspection Location field is shown.
   const { data: inspectionTypes = [], isLoading: inspectionTypesLoading } =
     useInspectionTypeOptions();
   const { inspection, loading: inspectionLoading } = useViInspectionDetail(id);
@@ -135,6 +145,7 @@ const InspectionInspectorAddPage = () => {
       work_location_id: inspection.workLocationId,
       inspection_type_id: inspection.inspectionTypeId,
       inspector_location: inspection.inspectorLocation,
+      inspection_site_id: inspection.inspectionSiteId,
       department_id: inspection.departmentId,
       facility_type_id: inspection.facilityTypeId,
     });
@@ -172,6 +183,58 @@ const InspectionInspectorAddPage = () => {
       ?.lat_long_required
   );
 
+  // Current location (sent with every inspection); lat/long types also list the sites within 2 km of it.
+  const [geo, setGeo] = useState<GeoState>({ status: "idle", coords: null });
+  const locate = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeo({ status: "error", coords: null });
+      return;
+    }
+    setGeo((prev) => ({ status: "locating", coords: prev.coords }));
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        setGeo({
+          status: "ready",
+          coords: { latitude: position.coords.latitude, longitude: position.coords.longitude },
+        }),
+      (error) =>
+        setGeo({ status: error.code === error.PERMISSION_DENIED ? "denied" : "error", coords: null }),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }, []);
+  useEffect(() => {
+    if (geo.status === "idle") locate();
+  }, [geo.status, locate]);
+  const { sites: nearbySites, loading: nearbyLoading } = useViInspectionNearbySites(
+    latLongRequired ? basic.inspection_type_id : "",
+    geo.coords
+  );
+  // A draft's saved site stays selectable even if it's no longer within 2 km.
+  const siteOptions = useMemo(() => {
+    const savedId = inspection?.inspectionSiteId;
+    if (
+      savedId &&
+      basic.inspection_site_id === savedId &&
+      !nearbySites.some((site) => site.value === savedId)
+    ) {
+      const name = inspection.inspectionSite || inspection.inspectorLocation;
+      return [...nearbySites, { value: savedId, name, label: name }];
+    }
+    return nearbySites;
+  }, [nearbySites, inspection, basic.inspection_site_id]);
+  const siteHint =
+    geo.status === "locating"
+      ? "Getting your current location..."
+      : geo.status === "denied"
+        ? "Location access is blocked. Allow location for this site in your browser, then retry."
+        : geo.status === "error"
+          ? "Couldn't get your current location."
+          : geo.status === "ready" && !nearbyLoading && nearbySites.length === 0
+            ? "No sites found within 2 km of your current location."
+            : geo.status === "ready"
+              ? "Sites within 2 km of your current location, nearest first."
+              : "";
+
   const setBasic = (patch: Partial<BasicDraft>) =>
     setBasicState((prev) => ({ ...prev, ...patch }));
   const answerFor = (questionId: string) =>
@@ -188,7 +251,13 @@ const InspectionInspectorAddPage = () => {
     if (Object.values(answers).some(hasContent))
       toast.info("Checklist answers were cleared for the new inspection type");
     setAnswers({});
-    setBasic({ inspection_type_id: typeId });
+    // Sites belong to a type too.
+    setBasic({ inspection_type_id: typeId, inspection_site_id: "", inspector_location: "" });
+  };
+
+  const changeSite = (siteId: string) => {
+    const site = siteOptions.find((option) => option.value === siteId);
+    setBasic({ inspection_site_id: siteId, inspector_location: site?.name ?? "" });
   };
 
   const validateStepOne = () => {
@@ -198,9 +267,8 @@ const InspectionInspectorAddPage = () => {
       !basic.personal_area_id && "Personnel Area",
       !basic.work_location_id && "Work Location",
       !basic.inspection_type_id && "Inspection Type",
-      latLongRequired &&
-        !basic.inspector_location.trim() &&
-        "Inspector Location",
+      latLongRequired && !basic.inspection_site_id && "Inspection Location",
+      latLongRequired && !geo.coords && "Current location (allow location access)",
       !basic.department_id && "Function",
       !basic.facility_type_id && "Type of Facility",
     ].filter(Boolean);
@@ -251,6 +319,9 @@ const InspectionInspectorAddPage = () => {
     ...basic,
     // Only types with lat_long_required ask for it; otherwise it's cleared.
     inspector_location: latLongRequired ? basic.inspector_location.trim() : "",
+    latitude: geo.coords ? String(geo.coords.latitude) : "",
+    longitude: geo.coords ? String(geo.coords.longitude) : "",
+    inspection_site_id: latLongRequired ? basic.inspection_site_id : "",
     spoc_id: spoc?.id ?? "",
     functional_head_id: functionalHead?.id ?? "",
     target_date: targetDate,
@@ -445,16 +516,32 @@ const InspectionInspectorAddPage = () => {
                 placeholder="Select inspection type"
               />
               {latLongRequired && (
-                <TextField
-                  fullWidth
-                  label={requiredLabel("Inspector Location")}
-                  placeholder="Enter inspector location"
-                  value={basic.inspector_location}
-                  onChange={(e) =>
-                    setBasic({ inspector_location: e.target.value })
-                  }
-                  InputLabelProps={{ shrink: true }}
-                />
+                <div>
+                  <IncidentSelectField
+                    label="Inspection Location"
+                    required
+                    value={basic.inspection_site_id}
+                    onChange={changeSite}
+                    options={siteOptions}
+                    loading={geo.status === "locating" || nearbyLoading}
+                    disabled={!geo.coords && siteOptions.length === 0}
+                    placeholder="Select inspector location"
+                  />
+                  {siteHint && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      {siteHint}
+                      {(geo.status === "denied" || geo.status === "error") && (
+                        <button
+                          type="button"
+                          onClick={locate}
+                          className="ml-1 font-semibold text-brand underline underline-offset-2"
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </p>
+                  )}
+                </div>
               )}
               <IncidentSelectField
                 label="Function"

@@ -181,6 +181,8 @@ export const toInspectionRecord = (r: Raw): ViInspectionRecord => {
     inspectionTypeId: masterId(r, "inspection_type"),
     inspectionType: masterName(r, "inspection_type"),
     inspectorLocation: text(r.inspector_location),
+    inspectionSiteId: masterId(r, "inspection_site"),
+    inspectionSite: masterName(r, "inspection_site"),
     departmentId: masterId(r, "department"),
     department: text(masterName(r, "department"), r.function_name),
     facilityTypeId: masterId(r, "facility_type"),
@@ -263,6 +265,56 @@ export const useViInspectionChecklistQuestions = (inspectionTypeId: string) => {
       .sort((a, b) => a.position - b.position);
   }, [json]);
   return { questions, loading };
+};
+
+export interface ViInspectionNearbySite extends MasterOption {
+  /** Site name only (the option label also carries code and distance). */
+  name: string;
+}
+
+/**
+ * Active sites of a lat_long_required type within 2 km of the inspector, nearest first
+ * (GET /vi_inspections/nearby_sites.json?inspection_type_id=&latitude=&longitude=). Skipped until
+ * the type and the inspector's coordinates are known.
+ */
+export const useViInspectionNearbySites = (
+  inspectionTypeId: string,
+  coords: { latitude: number; longitude: number } | null,
+) => {
+  const { json, loading } = useViInspectionQuery(
+    inspectionTypeId && coords
+      ? `/vi_inspections/nearby_sites.json?${new URLSearchParams({
+          inspection_type_id: inspectionTypeId,
+          latitude: String(coords.latitude),
+          longitude: String(coords.longitude),
+        })}`
+      : null,
+    "Failed to load nearby sites",
+  );
+  const sites = useMemo<ViInspectionNearbySite[]>(() => {
+    const root = obj(json);
+    const rows = Array.isArray(json)
+      ? (json as Raw[])
+      : Array.isArray(root.data)
+        ? (root.data as Raw[])
+        : arr(obj(root.data).sites, obj(root.data).nearby_sites, root.sites, root.nearby_sites);
+    return rows
+      .map((r) => {
+        const name = text(r.name, r.site_name);
+        const code = text(r.code);
+        const distance = Number(r.distance_m);
+        const away = Number.isFinite(distance)
+          ? distance >= 1000 ? `${(distance / 1000).toFixed(1)} km` : `${Math.round(distance)} m`
+          : "";
+        return {
+          value: text(r.id),
+          name,
+          label: [code ? `${name} (${code})` : name, away].filter(Boolean).join(" — "),
+        };
+      })
+      .filter((site) => site.value && site.name);
+  }, [json]);
+  return { sites, loading };
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -354,6 +406,10 @@ export interface InspectionFormInput {
   work_location_id: string;
   inspection_type_id: string;
   inspector_location: string;
+  /** Lat/long-required types only: the inspector's coordinates and the nearby site picked. */
+  latitude?: string;
+  longitude?: string;
+  inspection_site_id?: string;
   department_id: string;
   facility_type_id: string;
   spoc_id: string;
@@ -365,7 +421,11 @@ export interface InspectionFormInput {
 // Multipart so checklist attachments go with the form (vi_inspection[checklist_responses][i][attachments][]).
 const inspectionFormData = ({ responses, ...fields }: InspectionFormInput, submit: boolean) => {
   const form = new FormData();
-  Object.entries(fields).forEach(([key, value]) => form.append(`vi_inspection[${key}]`, value ?? ""));
+  Object.entries(fields).forEach(([key, value]) => {
+    // Location fields only go out when set (other types don't use them).
+    if (value === undefined || (["latitude", "longitude", "inspection_site_id"].includes(key) && !value)) return;
+    form.append(`vi_inspection[${key}]`, value ?? "");
+  });
   responses.forEach((r, i) => {
     const prefix = `vi_inspection[checklist_responses][${i}]`;
     form.append(`${prefix}[checklist_question_master_id]`, r.questionId);

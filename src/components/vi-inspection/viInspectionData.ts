@@ -104,6 +104,9 @@ export interface ViInspectionRecord {
   inspectionTypeId: string;
   inspectionType: string;
   inspectorLocation: string;
+  /** Nearby site picked as the inspector location (types with lat_long_required). */
+  inspectionSiteId: string;
+  inspectionSite: string;
   departmentId: string;
   department: string;
   facilityTypeId: string;
@@ -212,7 +215,7 @@ export const INSPECTION_COLUMNS: ColumnConfig[] = [
   { key: "personalArea", label: "Personnel Area", sortable: true, defaultVisible: true },
   { key: "workLocation", label: "Work Location", sortable: true, defaultVisible: true },
   { key: "facilityType", label: "Type of Facility", sortable: true, defaultVisible: true },
-  { key: "inspectorLocation", label: "Inspector Location", sortable: true, defaultVisible: false },
+  { key: "inspectorLocation", label: "Inspection Location", sortable: true, defaultVisible: false },
   { key: "spocName", label: "SPOC", sortable: true, defaultVisible: true },
   { key: "functionalHeadName", label: "Functional Head", sortable: true, defaultVisible: true },
   { key: "targetDateLabel", label: "Target Date", sortable: true, defaultVisible: true },

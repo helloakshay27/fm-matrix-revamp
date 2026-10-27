@@ -224,7 +224,7 @@ export const InspectionDetailView = ({
               value: formatInspectionDate(inspection.submittedAt),
             },
             {
-              label: "Inspector Location",
+              label: "Inspection Location",
               value: inspection.inspectorLocation,
               span: true,
             },
