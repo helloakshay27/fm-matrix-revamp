@@ -1993,6 +1993,15 @@ function App() {
                             path="/register-invitation"
                             element={<RegisterInvitationPage />}
                           />
+                          {/* A shared availability link: public, no sign-in (the booking link's own token is the key) */}
+                          <Route
+                            path="/booking/:token"
+                            element={<BookingWebviewPage />}
+                          />
+                          <Route
+                            path="/booking/:token/confirmed"
+                            element={<BookingConfirmedPage />}
+                          />
                           <Route
                             path="/forgot-password-otp"
                             element={<ForgotPasswordOTPPage />}
