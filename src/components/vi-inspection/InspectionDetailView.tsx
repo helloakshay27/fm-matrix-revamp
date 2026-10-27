@@ -157,10 +157,23 @@ export const InspectionDetailView = ({
             { label: "Function", value: inspection.department },
             { label: "Inspection Type", value: inspection.inspectionType },
             { label: "SPOC", value: inspection.spoc?.name },
-            { label: "Functional Head", value: inspection.functionalHead?.name },
-            { label: "Target Date", value: formatInspectionDate(inspection.targetDate) },
-            { label: "Submitted On", value: formatInspectionDate(inspection.submittedAt) },
-            { label: "Inspector Location", value: inspection.inspectorLocation, span: true },
+            {
+              label: "Functional Head",
+              value: inspection.functionalHead?.name,
+            },
+            {
+              label: "Target Date",
+              value: formatInspectionDate(inspection.targetDate),
+            },
+            {
+              label: "Submitted On",
+              value: formatInspectionDate(inspection.submittedAt),
+            },
+            {
+              label: "Inspection Location",
+              value: inspection.inspectorLocation,
+              span: true,
+            },
           ]}
         />
       </DetailCard>
