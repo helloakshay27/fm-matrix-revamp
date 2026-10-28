@@ -89,13 +89,13 @@ export const SCOPES: Record<Persona, Scope> = {
     title: "Audit · Pan India View",
     scope: "880 audits and 3,412 observations across 22 circles",
     role: "Pan India",
-    k: [880, 109, 312, 459, 3412, 365, 3047, 1208, 1839],
+    k: [880, 109, 312, 459, 3412, 365, 3047, 3047, 1208, 1839],
   },
   circle: {
     title: "Audit · Maharashtra & Goa Circle",
     scope: "74 audits and 286 observations · 12 clusters · 84 work locations",
     role: "Circle Manager",
-    k: [74, 9, 26, 39, 286, 31, 255, 101, 154],
+    k: [74, 9, 26, 39, 286, 31, 255, 255, 101, 154],
   },
 };
 
@@ -119,9 +119,10 @@ export const INFO = {
   obs: "All observations on submitted audits.",
   spoc: "Observations with status Pending By SPOC · no action plan created yet (CAPA plan not started).",
   started: "Observations with at least one corrective or preventive plan created by the SPOC.",
+  actions: "All actions raised on observations · Pending By Action Owner + Closed By Action Owner.",
   ao: "Observations with status Pending By Action Owner · plan created, action taken not yet recorded.",
   closedao: "Observations with status Closed By Action Owner.",
-  heatmap: "% complete for each stage per circle. Green ≥90%, Teal 80–90%, Amber 70–80%, Red <70%. On-time and No Extension are proposed measures based on Target Date and Extend Target Date.",
+  heatmap: "% complete for each stage per circle. Green ≥90%, Teal 80–90%, Amber 70–80%, Red <70%. On-time, Extended CAPA and Delayed CAPA are proposed measures based on Target Date and Extend Target Date.",
   followup: "Circles ranked by the average of the five heatmap stages, lowest first.",
   aging: "Days from observation submission to today, for observations still Pending By SPOC. Proposed measure.",
   overdue: "Pending plans where today is later than the Target Date. Proposed measure.",
@@ -137,6 +138,7 @@ export const KPI_CONFIG: KpiConfig[] = [
   { id: "kpi-obs", label: "Total Observations", group: "obs", panel: "acc-obs", section: "Observations", color: "var(--lav)", tint: "rgba(206,203,246,.28)", icon: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z|M14 2v6h6", info: INFO.obs },
   { id: "kpi-spoc", label: "Pending Action Plan by SPOC", group: "capa", panel: "acc-capa", section: "CAPA", color: "var(--err)", tint: "rgba(231,132,142,.18)", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2|M9 11a4 4 0 100-8 4 4 0 000 8z", info: INFO.spoc },
   { id: "kpi-started", label: "CAPA Plan Started", group: "capa", panel: "acc-capa", section: "CAPA", color: "var(--teal)", tint: "rgba(158,200,186,.26)", icon: "M5 12h14|M12 5l7 7-7 7", info: INFO.started },
+  { id: "kpi-actions", label: "Total Actions", group: "capa", panel: "acc-capa", section: "CAPA", color: "var(--blue)", tint: "rgba(107,155,204,.16)", icon: "M9 11l3 3L22 4|M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11", info: INFO.actions },
   { id: "kpi-ao", label: "Action Pending by Action Owner", group: "capa", panel: "acc-capa", section: "CAPA", color: "var(--warn)", tint: "rgba(237,196,136,.22)", icon: "M12 8v4l3 3|M12 22a10 10 0 100-20 10 10 0 000 20z", info: INFO.ao },
   { id: "kpi-closedao", label: "Action Taken / Closed by Action Owner", group: "capa", panel: "acc-capa", section: "CAPA", color: "var(--ok)", tint: "rgba(16,140,114,.14)", icon: "M9 12l2 2 4-4|M12 22a10 10 0 100-20 10 10 0 000 20z", info: INFO.closedao },
 ];
@@ -200,8 +202,8 @@ export interface HeatCell {
 }
 
 export const HEATMAP: HeatCell[] = CIRCLES.slice(0, 12).map((circle, i) => {
-  const values = [0, 1, 2, 3, 4].map((j) => Math.max(52, Math.min(99, Math.round(94 - ((i * 7 + j * 11) % 38) - (i > 8 ? 6 : 0)))));
-  const average = Math.round((values.reduce((a, b) => a + b, 0) / 5) * 10) / 10;
+  const values = [0, 1, 2, 3, 4, 5].map((j) => Math.max(52, Math.min(99, Math.round(94 - ((i * 7 + j * 11) % 38) - (i > 8 ? 6 : 0)))));
+  const average = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
   return { circle, values, average };
 });
 
@@ -355,6 +357,7 @@ export const DRILLS: Record<string, DrillModel> = {
   "kpi-obs": { crumb: "Overview › Observations", title: "Total Observations · 3,412", blocks: [{ kind: "stats", items: [["365", "Pending SPOC"], ["1208", "Pending Action Owner"], ["1839", "Closed"]] }, { kind: "heading", text: "By Circle" }, { kind: "table", headers: ["Circle", "Observations", "Closed"], rows: byCircle(6, (i) => [320 - i * 24, 170 - i * 14]) }] },
   "kpi-spoc": { crumb: "Overview › CAPA", title: "Pending Action Plan by SPOC · 365", blocks: [{ kind: "stats", items: [["365", "Pending"], ["155", "Waiting > 7 days"]] }, { kind: "heading", text: "Waiting longest" }, { kind: "table", headers: ["Observation", "Audit", "SPOC", "Days"], rows: [["Obs01", "Audit01", "Shahab Mirza", 41], ["Obs05", "Audit01", "Shahab Mirza", 33], ["Obs18", "Audit09", "Meera Iyer", 29]] }] },
   "kpi-started": { crumb: "Overview › CAPA", title: "CAPA Plan Started · 3,047", blocks: [{ kind: "stats", items: [["3047", "Plans created"], ["89.3%", "Of observations"]] }, { kind: "note", text: "Includes observations with a plan created, whether or not the Action Owner has recorded the action taken." }] },
+  "kpi-actions": { crumb: "Overview › CAPA", title: "Total Actions · 3,047", blocks: [{ kind: "stats", items: [["3047", "Total"], ["1208", "Pending"], ["1839", "Closed"]] }, { kind: "note", text: "Total Actions = Pending By Action Owner + Closed By Action Owner." }] },
   "kpi-ao": { crumb: "Overview › CAPA", title: "Action Pending by Action Owner · 1,208", blocks: [{ kind: "stats", items: [["1208", "Pending"], ["128", "Past target date"]] }, { kind: "heading", text: "Next due" }, { kind: "table", headers: ["Plan", "Observation", "Action Owner", "Target"], rows: [["Ca01", "Obs02", "Vama Shah", "18 Sep"], ["Pa01", "Obs02", "Vama Shah", "18 Sep"], ["Ca01", "Obs04", "Rohit Patil", "19 Sep"]] }] },
   "kpi-closedao": { crumb: "Overview › CAPA", title: "Closed by Action Owner · 1,839", blocks: [{ kind: "stats", items: [["1839", "Closed"], ["53.9%", "Of observations"]] }, { kind: "heading", text: "Recently closed" }, { kind: "table", headers: ["Plan", "Observation", "Closure date"], rows: [["Ca02", "Obs02", "18 Sep 2026"], ["Pa02", "Obs02", "18 Sep 2026"], ["Ca01", "Obs03", "17 Sep 2026"]] }] },
   "alert-spoc": { crumb: "Priority Actions", title: "Waiting for SPOC action plan > 7 days · 155", blocks: [{ kind: "stats", items: [["71", "8–14 days"], ["52", "15–30 days"], ["32", "30+ days"]] }, { kind: "heading", text: "By SPOC" }, { kind: "table", headers: ["SPOC", "Pending"], rows: SPOC_BOARD }, { kind: "note", text: "Proposed measure · days counted from observation submission." }] },
