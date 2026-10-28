@@ -1440,11 +1440,11 @@ export const AMCDetailsPage = () => {
               >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", color: "#6366F1", count: occurrenceCounts.scheduled },
-                    { label: "Open", color: "#EF4444", count: occurrenceCounts.open },
-                    { label: "In Progress", color: "#F59E0B", count: occurrenceCounts.in_progress },
-                    { label: "Closed", color: "#10B981", count: occurrenceCounts.closed },
-                    { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
+                    { label: "Upcoming Schedule", count: occurrenceCounts.scheduled },
+                    { label: "Open", count: occurrenceCounts.open },
+                    { label: "In Progress", count: occurrenceCounts.in_progress },
+                    { label: "Closed", count: occurrenceCounts.closed },
+                    { label: "Overdue", count: occurrenceCounts.overdue },
                   ];
 
                   // Already filtered by the API (q[task_status_eq] = selected card).
