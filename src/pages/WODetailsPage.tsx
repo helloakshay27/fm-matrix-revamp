@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Images,
   Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -66,6 +67,12 @@ interface Attachment {
 }
 
 const boqColumns: ColumnConfig[] = [
+{
+  key: "delivery_completion",
+  label: "Delivery Completion",
+  sortable: true,
+  draggable: true,
+},
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
@@ -192,7 +199,8 @@ const debitCreditColumns: ColumnConfig[] = [
   { key: "created_by", label: "Created By", sortable: true, draggable: true },
   { key: "attachments", label: "Attachments", sortable: true, draggable: true },
 ];
-
+const isTrue = (val: unknown) =>
+  val === true || val === "true" || val === 1 || val === "1";
 const formatIndian = (val: string | number | null | undefined): string => {
   if (val === "" || val === null || val === undefined) return "-";
   const n = parseFloat(String(val));
@@ -243,7 +251,7 @@ export const WODetailsPage = () => {
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const [workOrder, setWorkOrder] = useState({
+  const [workOrder, setWorkOrder] = useState<any>({
     letter_of_indent: false,
     plant_detail_id: null,
     external_id: null,
@@ -474,8 +482,9 @@ export const WODetailsPage = () => {
   const handlePrint = async () => {
     setPrinting(true);
     try {
+      const qs = "?static=false";
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/po_signed_pdfs/work_order/${id}${qs}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -493,13 +502,64 @@ export const WODetailsPage = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.message || "Failed to download PDF");
     } finally {
       setPrinting(false);
     }
   };
+  const boqTableData = (workOrder.inventories || []).map((item: any) => ({
+  ...item,
+  deleted: isTrue(item.deleted),
+  delivery_completion: isTrue(item.delivery_completion),
+}));
+const renderBoqCell = (item: any, columnKey: string) => {
+  if (columnKey === "delivery_completion") {
+    return item.delivery_completion ? (
+      <span
+        className="inline-flex items-center text-green-600"
+        title="Delivery Completed"
+      >
+        <CheckCircle2 className="w-5 h-5" />
+      </span>
+    ) : (
+      "-"
+    );
+  }
+
+  const amountKeys = [
+    "rate",
+    "cgst_amount",
+    "sgst_amount",
+    "igst_amount",
+    "tcs_amount",
+    "tax_amount",
+    "total_amount",
+  ];
+
+  let content: any = item[columnKey];
+  if (amountKeys.includes(columnKey)) {
+    content = <span className="font-medium">{formatIndian(item[columnKey])}</span>;
+  } else if (columnKey === "expected_date") {
+    content = (
+      <span className="font-medium">
+        {item[columnKey] ? format(item[columnKey], "dd/MM/yyyy") : "-"}
+      </span>
+    );
+  }
+
+  if (item.deleted) {
+    return (
+      <span className="text-gray-400 line-through opacity-60 select-none">
+        {content ?? "-"}
+      </span>
+    );
+  }
+  return content;
+};
+
+  const preparedBy = (workOrder?.work_order as any)?.created_by ?? "—";
 
   if (loading) {
     return (
@@ -613,7 +673,7 @@ export const WODetailsPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(
                         approval.status
                       )}`}
                     >
@@ -629,7 +689,7 @@ export const WODetailsPage = () => {
                 </Tooltip>
               ) : (
                 <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                  className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(
                     approval.status
                   )}`}
                 >
@@ -649,12 +709,12 @@ export const WODetailsPage = () => {
         </div>
       </TooltipProvider>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start">
@@ -702,12 +762,12 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -808,7 +868,7 @@ export const WODetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Advance Amount</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{workOrder.work_order?.advance_amount || "-"}</span>
+            <span className="text-gray-900 font-medium">{formatIndian(workOrder.work_order?.advance_amount)}</span>
           </div>
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">Description</span>
@@ -818,12 +878,12 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ClipboardList className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ClipboardList className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
@@ -838,21 +898,7 @@ export const WODetailsPage = () => {
             pageSize={10}
             emptyMessage="No BOQ data available"
             className="min-w-[1200px] h-max"
-            renderCell={(item, columnKey) => {
-              const amountKeys = ["rate", "cgst_amount", "sgst_amount", "igst_amount", "tcs_amount", "tax_amount", "total_amount"];
-              if (amountKeys.includes(columnKey)) {
-                return <span className="font-medium">{formatIndian(item[columnKey])}</span>;
-              } else if (columnKey === "expected_date") {
-                return (
-                  <span className="font-medium">
-                    {item[columnKey]
-                      ? format(item[columnKey], "dd/MM/yyyy")
-                      : "-"}
-                  </span>
-                );
-              }
-              return item[columnKey];
-            }}
+            renderCell={renderBoqCell}
           />
         </div>
 
@@ -890,12 +936,12 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ScrollText className="w-4 h-4" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ScrollText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
         </div>
         <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
@@ -908,7 +954,7 @@ export const WODetailsPage = () => {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <p className="font-medium text-gray-900">
-              PREPARED BY: {workOrder.work_order?.created_by || "—"}
+              PREPARED BY: {preparedBy}
             </p>
           </div>
           <div>
@@ -917,12 +963,12 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
-        <div className="flex items-center gap-3 p-6">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <Images className="w-4 h-4" />
+      <Card className="rounded-2xl shadow-sm border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <Images className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
         </div>
         <CardContent>
           {Array.isArray(workOrder.attachments) &&
@@ -940,12 +986,12 @@ export const WODetailsPage = () => {
                 return (
                   <div
                     key={attachment.id}
-                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
                       <>
                         <button
-                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                           title="View"
                           onClick={() => {
                             setSelectedAttachment(attachment);
@@ -1022,13 +1068,14 @@ export const WODetailsPage = () => {
         </CardContent>
       </Card>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
         </div>
+
 
         <div className="overflow-x-auto">
           <EnhancedTable
@@ -1044,6 +1091,10 @@ export const WODetailsPage = () => {
                     {item.id}
                   </span>
                 );
+              }
+              const amountKeys = ["total_amount", "payable_amount", "retention_amount", "tds_amount", "qc_amount"];
+              if (amountKeys.includes(columnKey)) {
+                return formatIndian(item[columnKey]);
               }
               return item[columnKey] || "-";
             }}
@@ -1070,17 +1121,23 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={paymentData}
             columns={paymentColumn}
+            renderCell={(item, columnKey) => {
+              if (columnKey === "amount") {
+                return formatIndian(item[columnKey]);
+              }
+              return item[columnKey] || "-";
+            }}
             storageKey="payment-table"
             hideColumnsButton={true}
             hideTableExport={true}
@@ -1094,18 +1151,21 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-3">
-          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-            <ReceiptText className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+            <ReceiptText className="w-[18px] h-[18px]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+          <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={debitCreditNote || []}
             columns={debitCreditColumns}
             renderCell={(item, columnKey) => {
+              if (columnKey === "amount") {
+                return formatIndian(item[columnKey]);
+              }
               return item[columnKey] || "-";
             }}
             storageKey="debit-credit-table"
@@ -1139,6 +1199,7 @@ export const WODetailsPage = () => {
       )}
 
       <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }}
         open={openRejectDialog}
         onClose={handleRejectCancel}
         maxWidth="sm"
@@ -1166,13 +1227,17 @@ export const WODetailsPage = () => {
             }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRejectCancel} variant="outline">
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
+          <Button
+            onClick={handleRejectCancel}
+            variant="outline"
+            className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleRejectConfirm}
-            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+            className="fm-action-primary"
           >
             Reject
           </Button>

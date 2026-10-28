@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Images,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -89,6 +90,8 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  deleted?: boolean | string | number;
+  delivery_completion?: boolean | string | number | null;
 }
 
 interface Attachment {
@@ -178,6 +181,12 @@ interface PODetails {
 
 // Table column configurations
 const inventoryTableColumns: ColumnConfig[] = [
+  {
+  key: "delivery_completion",
+  label: "Delivery Completion",
+  sortable: true,
+  draggable: true,
+},
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
   {
     key: "sac_hsn_code",
@@ -195,6 +204,7 @@ const inventoryTableColumns: ColumnConfig[] = [
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "total_value", label: "Amount", sortable: true, draggable: true },
+  
   // {
   //   key: "approved_qty",
   //   label: "Approved Qty",
@@ -417,8 +427,10 @@ export const PODetailsPage = () => {
     }
     setPrinting(true)
     try {
+      const qs  = '?static=false';
       const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        // `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/po_signed_pdfs/purchase_order/${id}${qs}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
@@ -597,6 +609,7 @@ export const PODetailsPage = () => {
     }
   };
 
+  const isDeleted = (val: unknown) => val === true || val === "true" || val === 1 || val === "1";
   const inventoryTableData =
     poDetails.pms_pr_inventories?.map((item, index) => ({
       id: item.id || index,
@@ -611,6 +624,8 @@ export const PODetailsPage = () => {
       total_value: formatIndian(item.total_value),
       approved_qty: item.approved_qty?.toString() || "-",
       transfer_qty: item.transfer_qty?.toString() || "-",
+      deleted: isDeleted(item.deleted),
+      delivery_completion: isDeleted(item.delivery_completion),
     })) || [];
 
   const grnTableData =
@@ -646,7 +661,7 @@ export const PODetailsPage = () => {
     poDetails.payment_details?.map((item, index) => ({
       id: item.grn_id || index,
       grn_id: item.grn_id?.toString() || "-",
-      amount: item.amount?.toString() || "-",
+      amount: formatIndian(item.amount),
       payment_mode: item.payment_mode || "-",
       transaction_number: item.transaction_number || "-",
       status: item.status || "-",
@@ -663,7 +678,7 @@ export const PODetailsPage = () => {
     poDetails.debit_notes?.map((item, index) => ({
       id: item.id || index,
       type: item.note_type || "-",
-      amount: item.amount?.toString() || "-",
+      amount: formatIndian(item.amount),
       description: item.note || "-",
       approved: item.approved,
       approved_on: item.approved_at
@@ -676,13 +691,30 @@ export const PODetailsPage = () => {
       created_by: item.creator_name || "-",
     })) || [];
 
-  const renderCell = (item: any, columnKey: string) => {
-    const value = item[columnKey] ?? "-";
-    if (columnKey === "inventory_name") {
-      return value;
-    }
-    return value;
-  };
+ const renderCell = (item: any, columnKey: string) => {
+  if (columnKey === "delivery_completion") {
+    return item.delivery_completion === true ? (
+      <span
+        className="inline-flex items-center text-green-600"
+        title="Delivery Completed"
+      >
+        <CheckCircle2 className="w-5 h-5" />
+      </span>
+    ) : (
+      "-"
+    );
+  }
+
+  const value = item[columnKey] ?? "-";
+  if (item.deleted === true) {
+    return (
+      <span className="text-gray-400 line-through opacity-60 select-none">
+        {value}
+      </span>
+    );
+  }
+  return value;
+};
 
   if (loading) {
     return (
@@ -777,7 +809,7 @@ export const PODetailsPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-full font-medium w-max cursor-pointer ${getStatusColor(
                         level.status_label
                       )}`}
                     >
@@ -793,7 +825,7 @@ export const PODetailsPage = () => {
                 </Tooltip>
               ) : (
                 <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                  className={`px-3 py-1 text-sm rounded-full font-medium w-max ${getStatusColor(
                     level.status_label
                   )}`}
                 >
@@ -811,12 +843,12 @@ export const PODetailsPage = () => {
       </TooltipProvider>
 
       <div className="space-y-6">
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Billing Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Billing Details</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -866,12 +898,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Purchase Order</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Purchase Order</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -986,7 +1018,7 @@ export const PODetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {poDetails.advance_amount ?? "-"}
+                  {formatIndian(poDetails.advance_amount)}
                 </span>
               </div>
               <div className="flex items-start">
@@ -1007,12 +1039,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ClipboardList className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ClipboardList className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PO Items</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">PO Items</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1020,6 +1052,8 @@ export const PODetailsPage = () => {
               columns={inventoryTableColumns}
               storageKey="po-items-table"
               hideColumnsButton={true}
+              isRowDisabled={(item: any) => item.deleted === true}
+              rowClassName={(item: any) => item.deleted === true ? 'opacity-100 pointer-events-none' : ''}
               hideTableExport={true}
               hideTableSearch={true}
               exportFileName="po-items-details"
@@ -1037,7 +1071,7 @@ export const PODetailsPage = () => {
                     Net Amount (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.net_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.net_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1045,7 +1079,7 @@ export const PODetailsPage = () => {
                     Total Taxable Value Of PO:
                   </span>
                   <span className="font-medium">
-                    {poDetails.net_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.net_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1053,7 +1087,7 @@ export const PODetailsPage = () => {
                     Taxes (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.total_taxable_amount ?? "-"}
+                    {formatIndian(poDetails.total_taxable_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1061,7 +1095,7 @@ export const PODetailsPage = () => {
                     Total PO Value (INR):
                   </span>
                   <span className="font-medium">
-                    {poDetails.total_amount_formatted ?? "-"}
+                    {formatIndian(poDetails.total_amount_formatted)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">
@@ -1079,12 +1113,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ScrollText className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ScrollText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Notes & Terms</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Notes & Terms</h3>
           </div>
           <CardContent className="text-wrap break-words">
             <div className="space-y-6">
@@ -1128,12 +1162,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
-          <div className="flex items-center gap-3 p-6">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <Images className="w-4 h-4" />
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <Images className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
           </div>
           <CardContent>
             {Array.isArray(poDetails.attachments) &&
@@ -1151,12 +1185,12 @@ export const PODetailsPage = () => {
                   return (
                     <div
                       key={attachment.id}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      className="flex relative flex-col items-center border rounded-full pt-10 px-3 pb-6 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
                       {isImage ? (
                         <>
                           <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            className="absolute top-2 left-1/2 ml-0.5 z-10 p-1 text-gray-600 hover:text-black rounded-[8px]"
                             title="View"
                             onClick={() => {
                               setSelectedAttachment(attachment);
@@ -1233,12 +1267,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">GRN Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1272,12 +1306,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1297,12 +1331,12 @@ export const PODetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-border">
+        <Card className="rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <ReceiptText className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-gray-100 text-gray-500 shrink-0">
+              <ReceiptText className="w-[18px] h-[18px]" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+            <h3 className="text-sm font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1343,6 +1377,7 @@ export const PODetailsPage = () => {
         )}
 
         <Dialog
+      PaperProps={{ sx: { borderRadius: "16px" } }}
           open={openRejectDialog}
           onClose={() => setOpenRejectDialog(false)}
           maxWidth="sm"
@@ -1370,16 +1405,17 @@ export const PODetailsPage = () => {
               }}
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1.5, justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { ml: 0 } }}>
             <Button
               onClick={() => setOpenRejectDialog(false)}
               variant="outline"
+              className="h-[42px] sm:h-[42px] px-[22px] text-[13px] font-semibold rounded-[8px]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleRejectConfirm}
-              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+              className="fm-action-primary"
             >
               Reject
             </Button>

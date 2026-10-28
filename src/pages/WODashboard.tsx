@@ -466,7 +466,7 @@ export const WODashboard = () => {
       case "all_level_approved":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+            className={`inline-flex items-center justify-center text-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
               item?.all_level_approved ? "Approved" : item?.all_level_approved === false ? "Rejected" : "Pending"
             )}`}
           >
@@ -486,7 +486,6 @@ export const WODashboard = () => {
             onCheckedChange={() =>
               handleCheckboxChange(item)
             }
-            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
         );
@@ -497,30 +496,73 @@ export const WODashboard = () => {
     }
   };
 
-  const renderActions = (item: any) => (
-    <div className="flex items-center gap-3">
-      {
-        shouldShow("WO", "show") && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={() => navigate(`/finance/wo/details/${item.id}`, {
-              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-            })}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        )
-      }
+  // const renderActions = (item: any) => (
+  //   <div className="flex items-center gap-3">
+  //     {
+  //       shouldShow("WO", "show") && (
+  //         <Button
+  //           size="sm"
+  //           variant="ghost"
+  //           className="p-1"
+  //           onClick={() => navigate(`/finance/wo/details/${item.id}`, {
+  //             state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //           })}
+  //         >
+  //           <Eye className="w-4 h-4" />
+  //         </Button>
+  //       )
+  //     }
 
-      {
-        shouldShow("WO", "update") && item.all_level_approved === null && <Button
+  //     {
+  //       shouldShow("WO", "update") && item.all_level_approved === null && <Button
+  //         size="sm"
+  //         variant="ghost"
+  //         className="p-1"
+  //         onClick={(e) => {
+  //           e.stopPropagation();
+  //           navigate(`/finance/wo/edit/${item.id}`, {
+  //             state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //           });
+  //         }}
+  //       >
+  //         <Edit className="w-4 h-4" />
+  //       </Button>
+  //     }
+  //   </div>
+  // );
+
+  const renderActions = (item: any) => {
+  const disabled = item.active === false;
+  return (
+    <div className="flex items-center gap-3" data-actions>
+      {shouldShow("WO", "show") && (
+        <Button
           size="sm"
           variant="ghost"
-          className="p-1"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "WO inactive" : "View"}
+          onClick={() =>
+            !disabled &&
+            navigate(`/finance/wo/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            })
+          }
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
+
+      {shouldShow("WO", "update") && item.all_level_approved === null && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "WO inactive" : "Edit"}
           onClick={(e) => {
             e.stopPropagation();
+            if (disabled) return;
             navigate(`/finance/wo/edit/${item.id}`, {
               state: { returnTo: buildReturnToPath(location.pathname, location.search) },
             });
@@ -528,10 +570,10 @@ export const WODashboard = () => {
         >
           <Edit className="w-4 h-4" />
         </Button>
-      }
+      )}
     </div>
   );
-
+};
   const handleRefresh = () => {
     cache.invalidatePattern(`${CACHE_PREFIX}*`);
     fetchData();
@@ -716,6 +758,10 @@ export const WODashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
+        isRowDisabled={(item: any) => item.active === false}
+        rowClassName={(item: any) =>
+          item.active === false ? "opacity-60 pointer-events-none" : ""
+        } 
         storageKey="wo-dashboard-columns"
         className="min-w-[1200px]"
         emptyMessage="No work orders found"
