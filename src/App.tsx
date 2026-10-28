@@ -2332,6 +2332,9 @@ const HolidayCalendarPage = lazy(() =>
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
 );
+const SsoLoginPage = lazy(() =>
+  import("@/pages/SsoLoginPage").then((m) => ({ default: m.SsoLoginPage }))
+);
 const OTPVerificationPage = lazy(() =>
   import("@/pages/OTPVerificationPage").then((m) => ({
     default: m.OTPVerificationPage,
@@ -4779,6 +4782,7 @@ function App() {
                               )
                             }
                           />
+                          <Route path="/sso-login" element={<SsoLoginPage />} />
                           <Route
                             path="/otp-verification"
                             element={<OTPVerificationPage />}
