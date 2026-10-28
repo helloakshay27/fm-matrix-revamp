@@ -82,6 +82,9 @@ export const Header = () => {
     role_name?: string;
   } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+  const currentUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user")!)
+    : null;
 
   const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
   const isMobile = useIsMobile();
@@ -127,14 +130,16 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
-    hostname === "club.lockated.com" || hostname === "recess-club.panchshil.com";
+    hostname === "club.lockated.com" ||
+    hostname === "recess-club.panchshil.com";
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
-    org_id === "90" || hostname.includes("localhost")
+    org_id === "90" ||
+    hostname.includes("localhost");
 
   const isLocalhost =
     hostname.includes("localhost") ||
@@ -153,7 +158,8 @@ export const Header = () => {
   // the entry above already renders there, and two identical "Usage Analytics" rows in
   // the same profile menu is what the original localhost condition produced.
   // External-role users (lock_role_name saved at Pulse login) must not see the Pulse dashboard.
-  const isExternalRole = localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
+  const isExternalRole =
+    localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
   const showPulseUsageAnalytics = isPulseSite && !isExternalRole;
 
   const navigate = useNavigate();
@@ -167,7 +173,8 @@ export const Header = () => {
     {
       key: "vi",
       label: "Usage Analytics",
-      shouldShow: () => (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
+      shouldShow: () =>
+        (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
       onSelect: () => {
         window.location.href = usageAnalyticsPath;
       },
@@ -175,7 +182,8 @@ export const Header = () => {
     {
       key: "pulse",
       label: "Usage Analytics",
-      shouldShow: () => showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
+      shouldShow: () =>
+        showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
       onSelect: () => navigate("/pulse"),
     },
   ];
@@ -208,7 +216,8 @@ export const Header = () => {
       email: u?.email ?? undefined,
       // §6.5 person properties. `designation` and `is_approved` are in the spec but this
       // app's login response carries neither, so they are omitted rather than faked.
-      user_name: [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      user_name:
+        [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
       contact_number: u?.mobile ?? u?.phone ?? undefined,
       role: u?.lock_role?.name ?? undefined,
       is_logged_in: true,
@@ -295,7 +304,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -462,8 +471,8 @@ export const Header = () => {
   };
 
   const handleFmPosthog = () => {
-    navigate('/fm-usage-analytics')
-  }
+    navigate("/fm-usage-analytics");
+  };
 
   const logoClassName =
     "max-h-10 w-auto max-w-full object-contain sm:max-h-12 md:max-h-[60px]";
@@ -486,10 +495,11 @@ export const Header = () => {
             )}
           </button>
           <div
-            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${isMobileUiSite()
-              ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
-              : "w-16"
-              }`}
+            className={`flex h-full flex-shrink-0 items-center overflow-hidden sm:w-28 md:w-40 lg:w-44 ${
+              isMobileUiSite()
+                ? "w-[120px] max-md:max-w-[120px] max-md:[&>svg]:h-auto max-md:[&>svg]:w-full max-md:[&_img]:h-auto max-md:[&_img]:max-w-full"
+                : "w-16"
+            }`}
           >
             {isOmanSite ? (
               <svg
@@ -689,7 +699,6 @@ export const Header = () => {
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
-
                 </button>
               )}
               {/* {canShowMSafeDashboard && (
@@ -985,15 +994,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -1085,7 +1096,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex min-w-0 items-center text-gray-600 text-xs mt-0.5">
@@ -1162,10 +1173,23 @@ export const Header = () => {
                       <User className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="font-medium">My Profile</span>
                     </DropdownMenuItem>
-                    {(isClubSite ||
-                      window.location.pathname.startsWith("/club-management")) && (
+                    {currentUser?.email === "chetan.bafna@lockated.com" && (
                       <DropdownMenuItem
-                        onClick={() => navigate("/club-management/usage-dashboard")}
+                        onClick={() => navigate("/vas/ceo-dashboard")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">CEO Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
+                    {(isClubSite ||
+                      window.location.pathname.startsWith(
+                        "/club-management"
+                      )) && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          navigate("/club-management/usage-dashboard")
+                        }
                         className="mx-2 my-1 rounded-md"
                       >
                         <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
