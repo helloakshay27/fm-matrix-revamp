@@ -16,6 +16,8 @@ interface EmbeddedConfig {
   orgId: string | null;
   accessToken: string | null;
   userId: string | null;
+  /** What the host says this person is in their workspace (founder, hr, manager), or null when the host does not say. */
+  roles: string[] | null;
 }
 
 // Cache for resolved base URL to avoid repeated API calls
@@ -48,8 +50,18 @@ export const getEmbeddedConfig = (): EmbeddedConfig => {
     orgId: urlParams.get("org_id") || urlParams.get("organization_id"),
     accessToken: urlParams.get("access_token") || urlParams.get("token"),
     userId: urlParams.get("user_id"),
+    roles: parseRoles(urlParams.get("bg_roles")),
   };
 };
+
+/** "founder,hr" -> ["founder", "hr"]; an empty value is a person with no role; no parameter at all is null (not said). */
+const parseRoles = (value: string | null): string[] | null =>
+  value === null
+    ? null
+    : value
+        .split(",")
+        .map((r) => r.trim().toLowerCase())
+        .filter(Boolean);
 
 /**
  * Check if current session is in embedded mode
@@ -78,6 +90,9 @@ export const storeEmbeddedData = (config: EmbeddedConfig): void => {
     sessionStorage.setItem("embedded_user_id", config.userId);
     localStorage.setItem("user_id", config.userId);
   }
+  if (config.roles) {
+    sessionStorage.setItem("embedded_roles", config.roles.join(","));
+  }
 };
 
 /**
@@ -94,6 +109,23 @@ export const getEmbeddedToken = (): string | null => {
 export const getEmbeddedOrgId = (): string | null => {
   const config = getEmbeddedConfig();
   return config.orgId || sessionStorage.getItem("embedded_org_id");
+};
+
+/**
+ * What the host product (Business Genie) says this person is in their workspace: any of "founder", "hr", "manager". From the
+ * address, else what an earlier page of this session stored. Null when no host said (PATM opened on its own), so nothing here
+ * changes for a person who is not in a host's frame. A hint for what to show — the API still decides what is allowed.
+ */
+export const getEmbeddedRoles = (): string[] | null =>
+  getEmbeddedConfig().roles ??
+  parseRoles(sessionStorage.getItem("embedded_roles"));
+
+/** Whether the host says this person leads (founder, HR or manager); null when it does not say. */
+export const isEmbeddedLeader = (): boolean | null => {
+  const roles = getEmbeddedRoles();
+  return roles === null
+    ? null
+    : roles.some((r) => r === "founder" || r === "hr" || r === "manager");
 };
 
 /**
@@ -249,6 +281,7 @@ export const clearEmbeddedMode = (): void => {
   sessionStorage.removeItem("embedded_token");
   sessionStorage.removeItem("embedded_org_id");
   sessionStorage.removeItem("embedded_user_id");
+  sessionStorage.removeItem("embedded_roles");
   cachedBaseUrl = null;
   cachedOrgId = null;
 };
@@ -385,6 +418,8 @@ export default {
   resolveBaseUrlByOrgId,
   initializeEmbeddedMode,
   clearEmbeddedMode,
+  getEmbeddedRoles,
+  isEmbeddedLeader,
   appendEmbeddedParams,
   initializeEmbeddedNavigation,
 };

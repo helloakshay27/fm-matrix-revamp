@@ -21,6 +21,7 @@ import {
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { baseClient } from "@/utils/withoutTokenBase";
+import { isEmbeddedLeader } from "@/utils/embeddedMode";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
@@ -984,9 +985,10 @@ export const ProjectsDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-4">
-      {/* Action Button */}
+      {/* Action Button — in a host product's frame (Business Genie) for the founder, HR and managers, whatever view this browser last
+          picked; on its own, in the admin view */}
       {
-        localStorage.getItem("selectedView") === "admin" && (
+        (isEmbeddedLeader() ?? localStorage.getItem("selectedView") === "admin") && (
           <Button
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => setShowActionPanel(true)}
