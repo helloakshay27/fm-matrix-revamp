@@ -1324,7 +1324,7 @@ export const AMCDetailsPage = () => {
             >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", count: occurrenceCounts.scheduled },
+                    { label: "Upcoming Schedule", count: occurrenceCounts.scheduled },
                     { label: "Open", count: occurrenceCounts.open },
                     { label: "In Progress", count: occurrenceCounts.in_progress },
                     { label: "Closed", count: occurrenceCounts.closed },
