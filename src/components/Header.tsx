@@ -20,6 +20,7 @@ import {
   Shield,
   Menu,
   Activity,
+  BarChart3,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -73,6 +74,9 @@ export const Header = () => {
     role_name?: string;
   } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+  const currentUser = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user")!)
+    : null;
 
   const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
 
@@ -238,7 +242,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -577,7 +581,6 @@ export const Header = () => {
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
-
                 </button>
               )} */}
               {canShowMSafeDashboard && (
@@ -852,15 +855,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -952,7 +957,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex min-w-0 items-center text-gray-600 text-xs mt-0.5">
@@ -1027,6 +1032,15 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
+                {currentUser?.email === "chetan.bafna@lockated.com" && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/vas/ceo-dashboard")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">CEO Dashboard</span>
+                  </DropdownMenuItem>
+                )}
                 {isLocalhost && (
                   <DropdownMenuItem
                     onClick={() => (window.location.href = "/posthog-dashboard")}
