@@ -549,9 +549,9 @@ export const WorkOrderAddPage: React.FC = () => {
                   mt: 1,
                 }}
               >
-                <InputLabel shrink>Select Service PR*</InputLabel>
+                <InputLabel shrink>Select Service PR</InputLabel>
                 <MuiSelect
-                  label="Select Service PR*"
+                  label="Select Service PR"
                   value={formData.servicePr}
                   onChange={(e) =>
                     handleInputChange("servicePr", e.target.value)

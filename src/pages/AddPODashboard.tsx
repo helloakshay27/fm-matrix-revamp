@@ -565,9 +565,9 @@ export const AddPODashboard = () => {
 
               <div className="grid grid-cols-3 gap-4">
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Select Material PR*</InputLabel>
+                  <InputLabel shrink>Select Material PR</InputLabel>
                   <MuiSelect
-                    label="Select Material PR*"
+                    label="Select Material PR"
                     value={formData.materialPR}
                     onChange={handleMaterialPRChange}
                     displayEmpty
