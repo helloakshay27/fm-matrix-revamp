@@ -108,10 +108,44 @@ export const hasEmbeddedSession = (): boolean => {
 };
 
 /**
+ * The Lockated API of the deployment a page's host belongs to — where that deployment's organisation directory is, and where
+ * its organisations are served from (one host for both). The FM site (fm-matrix.lockated.com…) is fm-uat-api; a Pulse site is
+ * pulse-api; and so on.
+ */
+export const apiHostFor = (hostname: string): string => {
+  if (
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("web.gophygital.work") ||
+    hostname.includes("lockated.gophygital.work")
+  ) {
+    return "https://live-api.gophygital.work";
+  }
+  if (hostname.includes("dev-fm-matrix.lockated.com")) return "https://dev-api.lockated.com";
+  if (
+    hostname.includes("fm-matrix.lockated.com") ||
+    hostname.includes("fm-uat.gophygital.work") ||
+    hostname.includes("fm.gophygital.work")
+  ) {
+    return "https://fm-uat-api.lockated.com";
+  }
+  if (
+    hostname.includes("pulse.lockated.com") ||
+    hostname.includes("pulse.panchshil.com") ||
+    hostname.includes("pulse.gophygital.work")
+  ) {
+    return "https://pulse-api.lockated.com";
+  }
+  // Local development reads the live directory
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "https://live-api.gophygital.work";
+  return "https://fm-uat-api.lockated.com";
+};
+
+/**
  * Resolve base URL dynamically based on org_id
  * This makes an API call to get the organization's backend_domain
  */
 export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
+  // The embedding product says which backend it is (?backend_url=…): nothing to look up
   const backendUrl = getBackendUrlFromQuery();
   if (backendUrl) {
     cachedBaseUrl = backendUrl;
@@ -125,37 +159,11 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
     return cachedBaseUrl;
   }
 
-  const hostname = window.location.hostname;
-
-  // Determine API endpoint based on hostname
-  let apiUrl = "";
-  if (
-    hostname.includes("vi-web.gophygital.work") ||
-    hostname.includes("web.gophygital.work") ||
-    hostname.includes("lockated.gophygital.work")
-  ) {
-    apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  } else if (hostname.includes("dev-fm-matrix.lockated.com")) {
-    apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  } else if (
-    hostname.includes("fm-matrix.lockated.com") ||
-    hostname.includes("fm-uat.gophygital.work") ||
-    hostname.includes("fm.gophygital.work")
-  ) {
-    apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  } else if (
-    hostname.includes("pulse.lockated.com") ||
-    hostname.includes("pulse.panchshil.com") ||
-    hostname.includes("pulse.gophygital.work")
-  ) {
-    apiUrl = `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  } else if (hostname === "localhost" || hostname === "127.0.0.1") {
-    // Default to live-api for localhost development
-    apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  } else {
-    // Default fallback
-    apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-  }
+  // The directory to ask is the page's own deployment's — and so is the API to fall back to when it cannot say: a page on the FM
+  // site whose lookup fails or finds nothing must still talk to the FM API, never to Pulse's (that is where the token would
+  // otherwise be sent, and what ProtectedRoute would then save as this session's base URL).
+  const deployment = apiHostFor(window.location.hostname);
+  const apiUrl = `${deployment}/api/users/get_organizations_by_email.json?org_id=${orgId}`;
 
   try {
     console.warn("🔍 Resolving base URL for org_id:", orgId, "from:", apiUrl);
@@ -212,12 +220,12 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
     }
 
     // Fallback
-    const fallbackUrl = "https://pulse-api.lockated.com";
+    const fallbackUrl = deployment;
     console.warn("⚠️ Using fallback base URL:", fallbackUrl);
     return fallbackUrl;
   } catch (error) {
     console.error("❌ Error resolving base URL:", error);
-    const fallbackUrl = "https://pulse-api.lockated.com";
+    const fallbackUrl = deployment;
     return fallbackUrl;
   }
 };
