@@ -1984,6 +1984,9 @@ const ViAuditManagementDashboardPage = lazy(
 const ViIncidentManagementDashboardPage = lazy(
   () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
 );
+const ViInspectionManagementDashboardPage = lazy(
+  () => import("./pages/vi-inspection/dashboard/ViInspectionManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -2687,6 +2690,11 @@ const LockFunctionEdit = lazy(() =>
 const LockModuleList = lazy(() =>
   import("./pages/settings/LockModuleList").then((m) => ({
     default: m.LockModuleList,
+  }))
+);
+const LockPhasesList = lazy(() =>
+  import("./pages/settings/LockPhasesList").then((m) => ({
+    default: m.LockPhasesList,
   }))
 );
 const LockSubFunctionList = lazy(() =>
@@ -5019,6 +5027,10 @@ function App() {
                             path="/vi-incident/management-dashboard"
                             element={<ViIncidentManagementDashboardPage />}
                           />
+                          <Route
+                            path="/vi-inspection/management-dashboard"
+                            element={<ViInspectionManagementDashboardPage />}
+                          />
 
                           {/* Backend Routes */}
                           <Route
@@ -5138,6 +5150,10 @@ function App() {
                             <Route
                               path="settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="settings/modules"
@@ -10737,6 +10753,10 @@ function App() {
                             <Route
                               path="/settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="/settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="/settings/account/lock-function"
