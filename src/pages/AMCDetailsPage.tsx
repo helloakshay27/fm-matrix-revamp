@@ -10,6 +10,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailCard } from "@/components/ui/detail-card";
 import {
   Table,
   TableBody,
@@ -204,6 +205,7 @@ interface VisitLogEntry {
   status?: string;
   remarks?: string | null;
   assets_covered?: string[] | null;
+  asset_names?: string | null;
   technician?: Technician | null;
   attachment?: VisitAttachment | null;
   attachments?: VisitAttachment[];
@@ -298,6 +300,10 @@ export const AMCDetailsPage = () => {
   const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [assetCoverageDialog, setAssetCoverageDialog] = useState<{
+    names: string[];
+    attachments: VisitAttachment[];
+  } | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
   const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
   const [visitEditVisitDate, setVisitEditVisitDate] = useState("");
@@ -312,10 +318,31 @@ export const AMCDetailsPage = () => {
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
   const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
-  const [visitFreqPage, setVisitFreqPage] = useState(1);
-  const [visitFlatPage, setVisitFlatPage] = useState(1);
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
+
+  const getVisitAssetNames = (visit: any): string[] => {
+    const names = typeof visit.asset_names === "string"
+      ? visit.asset_names.split(",").map((name: string) => name.trim()).filter(Boolean)
+      : [];
+    if (names.length > 0) return names;
+
+    const coveredIds: unknown[] = Array.isArray(visit.assets_covered)
+      ? visit.assets_covered
+      : Array.isArray(visit.asset_ids)
+        ? visit.asset_ids
+        : Array.isArray(visit.amc_asset_ids)
+          ? visit.amc_asset_ids
+          : [];
+    const amcAssets = (amcData as any)?.amc_assets ?? [];
+
+    return coveredIds.map((id) => {
+      const asset = amcAssets.find((candidate: any) =>
+        String(candidate.asset_id ?? candidate.id) === String(id)
+      );
+      return asset?.asset_name || `Asset ${String(id)}`;
+    });
+  };
 
   const downloadVisitAttachment = async (url: string, name: string) => {
     try {
@@ -350,36 +377,38 @@ export const AMCDetailsPage = () => {
     }
   };
 
-  const renderVisitAttachments = (visit: any) => {
-    const list: VisitAttachment[] = [
-      ...(visit.attachments || []),
-      ...(visit.attachment ? [visit.attachment] : []),
-    ].filter((a) => a?.document || a?.document_url);
-    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+  const renderAttachmentItems = (
+    list: VisitAttachment[],
+    emptyMessage: string = "No attachments available."
+  ) => {
+    const normalized = list.filter((a) => a?.document || a?.document_url);
+    if (!normalized.length) return <p className="text-sm text-gray-500">{emptyMessage}</p>;
+
     return (
-      <div className="flex flex-col gap-1">
-        {list.map((a, ai) => {
+      <div className="flex flex-col gap-2">
+        {normalized.map((a, ai) => {
           const url = a.document || a.document_url || "";
           const name =
             a.filename ||
             a.document_file_name ||
             getFileNameFromUrl(url) ||
             `File ${ai + 1}`;
+
           return (
-            <div key={a.id ?? ai} className="flex items-center gap-2">
+            <div key={a.id ?? ai} className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
               <a
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-brand hover:underline text-sm"
+                className="flex items-center gap-2 text-sm text-brand hover:underline min-w-0"
               >
-                <FileText className="w-3.5 h-3.5" />
-                {name}
+                <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{name}</span>
               </a>
               <button
                 type="button"
                 title="Download"
-                className="text-gray-500 hover:text-brand"
+                className="text-gray-500 hover:text-brand flex-shrink-0"
                 onClick={() => downloadVisitAttachment(url, name)}
               >
                 <Download className="w-3.5 h-3.5" />
@@ -389,6 +418,29 @@ export const AMCDetailsPage = () => {
         })}
       </div>
     );
+  };
+
+  const renderVisitAttachments = (visit: any) => {
+    const list: VisitAttachment[] = [
+      ...(visit.attachments || []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ];
+    const content = renderAttachmentItems(list, "No attachments available.");
+    return (
+      <div className="flex flex-col gap-1">
+        {list.some((a) => a?.document || a?.document_url) ? content : <span className="text-gray-400 text-sm">—</span>}
+      </div>
+    );
+  };
+
+  const openAssetCoverageDialog = (visit: any) => {
+    const names = getVisitAssetNames(visit);
+    const attachments: VisitAttachment[] = [
+      ...(Array.isArray(visit.attachments) ? visit.attachments : []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ];
+
+    setAssetCoverageDialog({ names, attachments });
   };
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
@@ -563,11 +615,11 @@ export const AMCDetailsPage = () => {
         formData.append("amc_history[documents][]", file);
       });
       const res = await fetch(
-        `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
-        { method: "POST", body: formData }
+        `https://${baseUrl}/pms/asset_amcs/amc_history_update.json`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
       );
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
-
+      
       const statusLower = visitEditStatus.toLowerCase();
       if (statusLower === 'completed' || statusLower === 'done') {
         onAMCVisitCompleted({
@@ -755,22 +807,10 @@ export const AMCDetailsPage = () => {
           backgroundColor: "rgba(250, 250, 250, 1)",
         }}
       >
-        <style>{`
-          .top-level-tabs button[data-state="active"] {
-            background-color: rgba(237, 234, 227, 1) !important;
-            color: rgba(199, 32, 48, 1) !important;
-          }
-        `}</style>
         <Tabs defaultValue="amc-information" className="w-full" onValueChange={setActiveTab}>
           <TabsList
-            className="top-level-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-            style={{
-              gap: "0",
-              padding: "0",
-              backgroundColor: "rgba(246, 247, 247, 1)",
-              height: "50px",
-              marginBottom: "16px",
-            }}
+            className="inline-flex w-fit max-w-full overflow-x-auto rounded-xl p-[3px] gap-[3px] mb-4 h-auto"
+            style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
           >
             {[
               { label: "AMC Information", value: "amc-information" },
@@ -784,25 +824,7 @@ export const AMCDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                style={{
-                  width: "230px",
-                  height: "36px",
-                  paddingTop: "10px",
-                  paddingRight: "20px",
-                  paddingBottom: "10px",
-                  paddingLeft: "20px",
-                  borderRadius: "0",
-                  border: "none",
-                  margin: "0",
-                  fontFamily: "Work Sans",
-                  fontWeight: 500,
-                  fontSize: "14px",
-                  lineHeight: "100%",
-                  letterSpacing: "0%",
-                  color: "rgba(26, 26, 26, 1)",
-                  backgroundColor: "rgba(246, 247, 247, 1)",
-                }}
+                className="rounded-lg py-2 px-4 text-[12.5px] font-semibold whitespace-nowrap border-0 text-gray-500 bg-transparent data-[state=active]:bg-white data-[state=active]:text-[#1A1A1A] data-[state=active]:shadow-sm"
               >
                 {tab.label}
               </TabsTrigger>
@@ -892,105 +914,53 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
+              title="SUPPLIER INFORMATION"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                          stroke="#C72030"
-                          strokeWidth="1.5"
-                        />
-                        <path
-                          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                          stroke="#C72030"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                    </div>
-                    SUPPLIER INFORMATION
-                  </CardTitle>
-                  {/* <Button
-                    className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
-                    style={{
-                      backgroundColor: "#F6F4EE",
-                      color: '#C72030',
-                      border: "1px solid #C72030",
-                      borderRadius: "4px",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                    }}
-
-
-                  >
-                    View Supplier
-                  </Button> */}
-                </div>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Name
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_name || "—"}
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Name
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Company Name
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_name || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Mobile 1
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_mobile || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Email
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      {amcDetails.amc_vendor_email || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">
-                      Mobile 2
-                    </div>
-                    <div className="text-base text-gray-900 font-semibold">
-                      —
-                    </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_name || "—"}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Company Name
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_name || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Mobile 1
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_mobile || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Email
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    {amcDetails.amc_vendor_email || "—"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-500 font-normal">
+                    Mobile 2
+                  </div>
+                  <div className="text-base text-gray-900 font-semibold">
+                    —
+                  </div>
+                </div>
+              </div>
+            </DetailCard>
           </TabsContent>
 
           {/* Attachments */}
@@ -999,29 +969,13 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Paperclip className="w-[18px] h-[18px] text-gray-500" />}
+              title="ATTACHMENTS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                    <Paperclip className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  ATTACHMENTS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* AMC Contracts Card */}
-                  <div className="bg-[#F6F4EE] rounded-lg p-6">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
                       AMC Contracts
                     </h3>
@@ -1174,7 +1128,7 @@ export const AMCDetailsPage = () => {
                   </div>
 
                   {/* AMC Invoice Card */}
-                  <div className="bg-[#F6F4EE] rounded-lg p-6">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
                       Other Documents
                     </h3>
@@ -1408,8 +1362,7 @@ export const AMCDetailsPage = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* Scheduled AMC */}
@@ -1418,26 +1371,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />}
+              title="Scheduled Tasks"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Calendar className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  Scheduled Tasks
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {(() => {
                   const statusCards = [
                     { label: "Upcoming Schedule", count: occurrenceCounts.scheduled },
@@ -1455,22 +1392,25 @@ export const AMCDetailsPage = () => {
                   return (
                     <div className="space-y-6">
                       {/* Status Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-[14px] mb-6">
                         {statusCards.map((card) => {
+                          const isSelected = occurrenceStatusFilter === card.label;
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-brand" : ""
-                                }`}
-                              style={{ backgroundColor: "#F6F4EE" }}
+                              className="rounded-2xl cursor-pointer"
+                              style={{
+                                backgroundColor: isSelected ? "rgba(230, 226, 218, 1)" : "#F5F4F0",
+                                padding: "18px 20px",
+                              }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
                                 setOccurrencePage(1);
                               }}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                  <Calendar className="w-5 h-5" style={{ color: "#C72030" }} />
+                                <div className="w-9 h-9 bg-white rounded-[10px] flex items-center justify-center shrink-0">
+                                  <Calendar className="w-[18px] h-[18px] text-gray-500" />
                                 </div>
                                 <div>
                                   <div className="text-2xl font-bold text-black">
@@ -1582,8 +1522,7 @@ export const AMCDetailsPage = () => {
                     </div>
                   );
                 })()}
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* Tickets */}
@@ -1592,26 +1531,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Ticket className="w-[18px] h-[18px] text-gray-500" />}
+              title="TICKETS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Ticket className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  TICKETS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {ticketsError && (
                   <div className="text-brand-error text-sm mb-3">{ticketsError}</div>
                 )}
@@ -1634,12 +1557,13 @@ export const AMCDetailsPage = () => {
                         case "status":
                           return item.status ? (
                             <span
-                              className={`px-2 py-1 text-xs rounded ${item.status.toLowerCase() === "open"
+                              className={`px-2 py-1 text-xs rounded ${
+                                item.status.toLowerCase() === "open"
                                   ? "bg-gray-200 text-gray-900"
                                   : item.status.toLowerCase() === "pending"
                                     ? "bg-brand text-white"
                                     : "bg-gray-100 text-gray-800"
-                                }`}
+                              }`}
                             >
                               {item.status}
                             </span>
@@ -1670,8 +1594,7 @@ export const AMCDetailsPage = () => {
                     getItemId={(item) => String(item.id)}
                   />
                 </div>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
 
           {/* AMC Visits History */}
@@ -1680,26 +1603,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Calendar className="w-[18px] h-[18px] text-gray-500" />}
+              title="AMC VISITS"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <Calendar className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  AMC VISITS
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 {visitLogsByFrequency && visitLogsByFrequency.length > 0 ? (
                   <div className="space-y-4">
                     {/* Frequency Tab Buttons */}
@@ -1733,7 +1640,7 @@ export const AMCDetailsPage = () => {
                             { label: "Pending", value: group.pending ?? 0, icon: Clock },
                             { label: "Missed", value: group.missed ?? 0, icon: AlertCircle },
                           ].map((card) => (
-                            <div key={card.label} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                            <div key={card.label} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
                               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
                                 <card.icon className="w-6 h-6 text-[#C72030]" />
                               </div>
@@ -1789,15 +1696,23 @@ export const AMCDetailsPage = () => {
                                   return item.scheduled_time || "—";
                                 case "actual_visit_date":
                                   return item.actual_visit_date || "—";
-                                case "assets_covered":
-                                  return Array.isArray(item.assets_covered) &&
-                                    item.assets_covered.length > 0 ? (
-                                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                      {item.assets_covered.length}
-                                    </span>
+                                case "assets_covered": {
+                                  const assetsCovered = Array.isArray(item.assets_covered)
+                                    ? item.assets_covered
+                                    : [];
+                                  return assetsCovered.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openAssetCoverageDialog(item)}
+                                      aria-label={`View ${assetsCovered.length} covered assets`}
+                                      className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 hover:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                    >
+                                      {assetsCovered.length}
+                                    </button>
                                   ) : (
                                     "—"
                                   );
+                                }
                                 case "technician":
                                   return item.technician_name || "—";
                                 case "remarks":
@@ -1809,14 +1724,15 @@ export const AMCDetailsPage = () => {
                                 case "status":
                                   return item.status ? (
                                     <span
-                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${item.status.toLowerCase() === "completed"
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                        item.status.toLowerCase() === "completed"
                                           ? "bg-green-100 text-green-800"
                                           : item.status.toLowerCase() === "missed"
                                             ? "bg-red-100 text-red-800"
                                             : item.status.toLowerCase() === "pending"
                                               ? "bg-amber-100 text-amber-800"
                                               : "bg-gray-100 text-gray-700"
-                                        }`}
+                                      }`}
                                     >
                                       {item.status.toUpperCase()}
                                     </span>
@@ -1850,106 +1766,161 @@ export const AMCDetailsPage = () => {
                 ) : (
                   /* Fallback: flat visit table when no frequency groups */
                   (() => (
-                    <div className="w-full min-w-0 max-w-full">
-                      <EnhancedTable
-                        data={amcVisitData.map((visit: any) => ({
-                          ...visit,
-                          technician_name: visit.technician?.name || "",
-                        }))}
-                        columns={visitFlatColumns}
-                        renderCell={(item: any, columnKey: string) => {
-                          const isSelected = selectedVisitId === item.id;
-                          switch (columnKey) {
-                            case "select":
-                              return (
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() =>
-                                    setSelectedVisitId(isSelected ? null : item.id)
-                                  }
-                                  className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
-                                />
-                              );
-                            case "visit_number":
-                              return (
-                                <span className="font-medium text-gray-900">
-                                  {item.visit_number ?? "—"}
-                                </span>
-                              );
-                            case "visit_date":
-                              return item.visit_date
-                                ? new Date(item.visit_date).toLocaleDateString("en-GB")
-                                : "—";
-                            case "actual_visit_date": {
-                              const raw = item.actual_visit_date as string | undefined;
-                              if (!raw) return "—";
-                              if (raw.includes("/")) return raw;
-                              const d = new Date(raw);
-                              return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                            }
-                            case "technician":
-                              return item.technician_name || "—";
-                            case "remarks":
-                              return (
-                                <span className="max-w-[200px] inline-block whitespace-normal break-words">
-                                  {item.remarks || "—"}
-                                </span>
-                              );
-                            case "status":
-                              return item.status ? (
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${item.status.toLowerCase() === "completed"
-                                      ? "bg-green-100 text-green-800"
-                                      : item.status.toLowerCase() === "cancelled"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-gray-100 text-gray-700"
+                      <div className="w-full min-w-0 max-w-full">
+                        <EnhancedTable
+                          data={amcVisitData.map((visit: any) => ({
+                            ...visit,
+                            technician_name: visit.technician?.name || "",
+                          }))}
+                          columns={visitFlatColumns}
+                          renderCell={(item: any, columnKey: string) => {
+                            const isSelected = selectedVisitId === item.id;
+                            switch (columnKey) {
+                              case "select":
+                                return (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() =>
+                                      setSelectedVisitId(isSelected ? null : item.id)
+                                    }
+                                    className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
+                                  />
+                                );
+                              case "visit_number":
+                                return (
+                                  <span className="font-medium text-gray-900">
+                                    {item.visit_number ?? "—"}
+                                  </span>
+                                );
+                              case "visit_date":
+                                return item.visit_date
+                                  ? new Date(item.visit_date).toLocaleDateString("en-GB")
+                                  : "—";
+                              case "actual_visit_date": {
+                                const raw = item.actual_visit_date as string | undefined;
+                                if (!raw) return "—";
+                                if (raw.includes("/")) return raw;
+                                const d = new Date(raw);
+                                return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                              }
+                              case "technician":
+                                return item.technician_name || "—";
+                              case "remarks":
+                                return (
+                                  <span className="max-w-[200px] inline-block whitespace-normal break-words">
+                                    {item.remarks || "—"}
+                                  </span>
+                                );
+                              case "status":
+                                return item.status ? (
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                      item.status.toLowerCase() === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : item.status.toLowerCase() === "cancelled"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-700"
                                     }`}
-                                >
-                                  {String(item.status).toUpperCase()}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              );
-                            case "assets_covered": {
-                              const ids: any[] =
-                                item.asset_ids || item.amc_asset_ids || [];
-                              const total = amcDetails?.amc_assets?.length ?? 0;
-                              const covered = ids.length;
-                              return covered > 0 ? (
-                                <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-light text-brand">
-                                  {covered}
-                                  {total > 0 ? ` / ${total}` : ""}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400 text-sm">—</span>
-                              );
+                                  >
+                                    {String(item.status).toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              case "assets_covered": {
+                                const ids: any[] =
+                                  item.asset_ids || item.amc_asset_ids || [];
+                                const total = amcDetails?.amc_assets?.length ?? 0;
+                                const covered = ids.length;
+                                return covered > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openAssetCoverageDialog(item)}
+                                    aria-label={`View ${covered} covered assets`}
+                                    className="inline-flex items-center justify-center rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                  >
+                                    {covered}
+                                    {total > 0 ? ` / ${total}` : ""}
+                                  </button>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              }
+                              case "attachment":
+                                return renderVisitAttachments(item);
+                              default:
+                                return "—";
                             }
-                            case "attachment":
-                              return renderVisitAttachments(item);
-                            default:
-                              return "—";
+                          }}
+                          storageKey="amc-details-visits-flat"
+                          enableSearch
+                          searchTerm={visitsSearchTerm}
+                          onSearchChange={setVisitsSearchTerm}
+                          searchPlaceholder="Search visits..."
+                          hideTableExport
+                          emptyMessage="No visit history found."
+                          pagination
+                          pageSize={15}
+                          getItemId={(item) => String(item.id)}
+                          rowClassName={(item) =>
+                            selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
                           }
-                        }}
-                        storageKey="amc-details-visits-flat"
-                        enableSearch
-                        searchTerm={visitsSearchTerm}
-                        onSearchChange={setVisitsSearchTerm}
-                        searchPlaceholder="Search visits..."
-                        hideTableExport
-                        emptyMessage="No visit history found."
-                        pagination
-                        pageSize={15}
-                        getItemId={(item) => String(item.id)}
-                        rowClassName={(item) =>
-                          selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
-                        }
-                      />
-                    </div>
-                  ))()
+                        />
+                      </div>
+                    ))()
                 )}
-              </CardContent>
-            </Card>
+            </DetailCard>
+
+            <Dialog
+              open={assetCoverageDialog !== null}
+              onOpenChange={(open) => {
+                if (!open) setAssetCoverageDialog(null);
+              }}
+            >
+              <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Assets Covered</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-5 py-2">
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                      Asset Names
+                    </h3>
+                    {assetCoverageDialog?.names.length ? (
+                      <ul className="space-y-2">
+                        {assetCoverageDialog.names.map((name, index) => (
+                          <li
+                            key={`${name}-${index}`}
+                            className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800"
+                          >
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No asset names are available for this visit.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                      Attachments
+                    </h3>
+                    {assetCoverageDialog ? (
+                      renderAttachmentItems(
+                        assetCoverageDialog.attachments,
+                        "No attachments are available for this visit."
+                      )
+                    ) : (
+                      <p className="text-sm text-gray-500">No attachments available.</p>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
@@ -1979,7 +1950,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Visit Date</label>
                       <input
                         type="date"
-                        disabled={visitEditVisitDate}
+                        disabled={Boolean(visitEditVisitDate)}
                         value={visitEditVisitDate}
                         onChange={(e) => setVisitEditVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -2419,43 +2390,10 @@ export const AMCDetailsPage = () => {
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
-            <Card
-              className="border-[#D9D9D9] bg-white shadow-sm"
-              style={{
-                borderRadius: "4px",
-                background: "#FFF",
-                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
-              }}
+            <DetailCard
+              icon={<Settings className="w-[18px] h-[18px] text-gray-500" />}
+              title="ASSET / SERVICE"
             >
-              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                        stroke="#C72030"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                        stroke="#C72030"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                  </div>
-                  ASSET / SERVICE
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="p-6"
-                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
-              >
                 <div className="w-full min-w-0 max-w-full">
                   {isServiceAmc ? (
                     <EnhancedTable
@@ -2477,10 +2415,11 @@ export const AMCDetailsPage = () => {
                           case "status":
                             return (
                               <span
-                                className={`px-2 py-1 text-xs rounded ${item.status === "Active"
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.status === "Active"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-gray-100 text-gray-800"
-                                  }`}
+                                }`}
                               >
                                 {item.status || "—"}
                               </span>
@@ -2545,10 +2484,11 @@ export const AMCDetailsPage = () => {
                           case "asset_status":
                             return (
                               <span
-                                className={`px-2 py-1 text-xs rounded ${item.asset_status === "active"
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.asset_status === "active"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-gray-100 text-gray-800"
-                                  }`}
+                                }`}
                               >
                                 {item.asset_status?.replace("_", " ") || "—"}
                               </span>
@@ -2590,8 +2530,7 @@ export const AMCDetailsPage = () => {
                     />
                   )}
                 </div>
-              </CardContent>
-            </Card>
+            </DetailCard>
           </TabsContent>
         </Tabs>
       </div>
