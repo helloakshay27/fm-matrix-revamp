@@ -15,10 +15,12 @@ export const apiErrorMessage = (body: unknown): string => {
   return "";
 };
 
-// Audit / CAPA attachments: the audit API only accepts PDF, JPEG, JPG and PNG.
-const ALLOWED_ATTACHMENT_EXTENSIONS = ["pdf", "jpeg", "jpg", "png"];
-const ALLOWED_ATTACHMENT_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-export const ATTACHMENT_ACCEPT = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png";
+// Audit / CAPA attachments: PNG and JPEG (JPG) images only.
+const ALLOWED_ATTACHMENT_EXTENSIONS = ["png", "jpeg", "jpg"];
+const ALLOWED_ATTACHMENT_MIME_TYPES = ["image/png", "image/jpeg"];
+export const ATTACHMENT_ACCEPT = ".png,.jpeg,.jpg,image/png,image/jpeg";
+/** Shown when a picked file isn't allowed. */
+export const ATTACHMENT_TYPES_LABEL = "Only PNG and JPEG images are accepted.";
 
 export const isAllowedAttachment = (file: File) => {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -45,3 +47,9 @@ export const fileToNamedDataUrl = (file: File): Promise<string> =>
     reader.onerror = () => reject(reader.error ?? new Error(`Could not read ${file.name}`));
     reader.readAsDataURL(file);
   });
+
+/**
+ * Value of the "Others" choice in the classification / category / sub category dropdowns. When
+ * picked, the API gets the matching `*_id` blank and the free text in `*_other`.
+ */
+export const OTHER_OPTION_VALUE = "__other__";

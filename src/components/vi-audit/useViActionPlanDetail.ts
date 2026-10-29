@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import type { ViActionPlan, ViPlanKind } from "./viAuditData";
@@ -98,5 +98,15 @@ export const useViActionPlans = (planIds: string[]) => {
     return () => controller.abort();
   }, [key]);
 
-  return useMemo(() => ({ plans, loading }), [plans, loading]);
+  // Re-load one plan in place (e.g. after its target date is extended) without the page loader.
+  const refreshPlan = useCallback(async (planId: string) => {
+    try {
+      const detail = await fetchViActionPlan(planId);
+      setPlans((prev) => ({ ...prev, [planId]: detail }));
+    } catch (error) {
+      console.error(`Failed to reload action plan ${planId}:`, error);
+    }
+  }, []);
+
+  return useMemo(() => ({ plans, loading, refreshPlan }), [plans, loading, refreshPlan]);
 };

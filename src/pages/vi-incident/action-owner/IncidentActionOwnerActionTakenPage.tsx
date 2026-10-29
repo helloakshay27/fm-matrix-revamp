@@ -1,79 +1,136 @@
-import { useMemo, useState } from "react";
+import { IncidentFieldGrid as FieldGrid } from "@/components/vi-incident/IncidentFieldGrid";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Paperclip, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
-import { sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
-import { getViIncident, getViIncidentActionPlans } from "@/components/vi-incident/viIncidentData";
-import { saveSubmittedActionTaken } from "@/components/vi-incident/viIncidentActionTakenStore";
+import { AttachmentPicker } from "@/components/vi-incident/IncidentFormFields";
+import { planTargetLabel } from "@/components/vi-incident/IncidentActionPlanCards";
+import {
+  errorToast,
+  myActionPlans,
+  saveViIncidentAssignment,
+  submitViIncidentAssignment,
+  useViIncidentDetail,
+  useViIncidentMyAssignmentIds,
+} from "@/components/vi-incident/viIncidentApi";
+import {
+  ACTION_TYPE_LABEL,
+  isAssignmentDraft,
+  todayIso,
+  type ViIncidentActionPlan,
+  type ViIncidentAssignment,
+  type ViIncidentAttachment,
+} from "@/components/vi-incident/viIncidentData";
+import { IncidentStatusPill } from "@/components/vi-incident/IncidentListView";
 import { INCIDENT_ACTION_OWNER_PATH } from "./IncidentActionOwnerListPage";
 
-// Same file types as the other incident / audit attachments.
-const ALLOWED_EXTENSIONS = ["pdf", "jpeg", "jpg", "png"];
-const ATTACHMENT_ACCEPT = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png";
-const isAllowedAttachment = (file: File) =>
-  ALLOWED_EXTENSIONS.includes(file.name.split(".").pop()?.toLowerCase() ?? "");
-
 interface ActionTakenEntry {
-  corrective: string;
-  preventive: string;
-  attachments: File[];
+  actionTaken: string;
   closureDate: string;
+  files: File[];
+  saved: ViIncidentAttachment[];
+  removedIds: string[];
 }
 
-const todayIso = () => new Date().toISOString().split("T")[0];
-
-// Action Owner: add the corrective & preventive action taken for each plan assigned to them.
-// The Incident API is not live yet: Save Draft / Submit validate the form and return to the incident.
+// Action Owner: the action taken for each of their open / draft assignments on the incident.
+// Save Draft — PATCH /vi_incident_action_assignments/:id.json (multipart, with files);
+// Submit — the same save, then POST .../:id/submit.json. The last owner's submit closes the incident.
 const IncidentActionOwnerActionTakenPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const incidentPath = `${INCIDENT_ACTION_OWNER_PATH}/${id}`;
-  const plans = useMemo(() => getViIncidentActionPlans(getViIncident(id)), [id]);
+  const { incident, loading: incidentLoading } = useViIncidentDetail(id);
+  const { ids: myAssignmentIds, loading: assignmentsLoading } = useViIncidentMyAssignmentIds(id);
+  const loading = incidentLoading || assignmentsLoading;
 
-  const [entries, setEntries] = useState<ActionTakenEntry[]>(() =>
-    plans.map(() => ({ corrective: "", preventive: "", attachments: [], closureDate: todayIso() })),
-  );
+  // One row per pending assignment, with the plan it belongs to.
+  const rows = useMemo<{ plan: ViIncidentActionPlan; assignment: ViIncidentAssignment; itemName: string }[]>(() => {
+    if (!incident) return [];
+    const itemName = (itemId: string) => incident.checklistItems.find((item) => item.id === itemId)?.name ?? "";
+    return myActionPlans(incident, myAssignmentIds).flatMap((plan) =>
+      plan.assignments
+        .filter((a) => a.status !== "closed")
+        .map((assignment) => ({ plan, assignment, itemName: itemName(plan.checklistItemId) })),
+    );
+  }, [incident, myAssignmentIds]);
 
-  const updateEntry = (index: number, patch: Partial<ActionTakenEntry>) =>
-    setEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
+  const [entries, setEntries] = useState<Record<string, ActionTakenEntry>>({});
+  const [saving, setSaving] = useState(false);
+  const submitted = useRef(new Set<string>());
 
-  const handleSaveDraft = () => {
-    toast.success("Action taken saved to draft");
-    navigate(incidentPath);
-  };
-
-  const handleSubmit = () => {
-    for (const [index, entry] of entries.entries()) {
-      const label = `${index + 1}. ${plans[index].cause}`;
-      if (!entry.corrective.trim() || !entry.preventive.trim() || !entry.closureDate) {
-        toast.error(`${label}: Corrective action, Preventive action and Closure Date are required`);
-        return;
-      }
-    }
-    saveSubmittedActionTaken(
-      id,
+  // Start from what was saved as a draft.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (loading || !incident || prefilled.current) return;
+    prefilled.current = true;
+    setEntries(
       Object.fromEntries(
-        plans.map((plan, index) => [
-          plan.id,
+        rows.map(({ assignment }) => [
+          assignment.id,
           {
-            corrective: entries[index].corrective.trim(),
-            preventive: entries[index].preventive.trim(),
-            closureDate: new Date(entries[index].closureDate).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            }),
-            attachments: entries[index].attachments.map((file) => file.name),
+            actionTaken: assignment.actionTaken,
+            closureDate: assignment.closureDate || todayIso(),
+            files: [],
+            saved: assignment.attachments,
+            removedIds: [],
           },
         ]),
       ),
     );
-    toast.success("Action taken submitted successfully");
-    navigate(incidentPath);
+  }, [loading, incident, rows]);
+
+  const updateEntry = (assignmentId: string, patch: Partial<ActionTakenEntry>) =>
+    setEntries((prev) => ({ ...prev, [assignmentId]: { ...prev[assignmentId], ...patch } }));
+
+  const save = async (submit: boolean) => {
+    if (saving) return;
+    if (submit) {
+      const invalid = rows.findIndex(({ assignment }) => {
+        const entry = entries[assignment.id];
+        return !entry?.actionTaken.trim() || !entry.closureDate;
+      });
+      if (invalid !== -1) {
+        toast.error(`${invalid + 1}. ${rows[invalid].itemName}: Action taken and Closure Date are required`);
+        return;
+      }
+    }
+    setSaving(true);
+    try {
+      // Assignments are saved one by one. On a partial failure, what already went through is
+      // remembered so a retry neither re-uploads files nor re-submits (a second submit is a 403).
+      for (const { assignment } of rows) {
+        const entry = entries[assignment.id];
+        if (!entry || submitted.current.has(assignment.id)) continue;
+        await saveViIncidentAssignment(assignment.id, {
+          actionTaken: entry.actionTaken.trim(),
+          closureDate: entry.closureDate,
+          files: entry.files,
+          removeAttachmentIds: entry.removedIds,
+        });
+        updateEntry(assignment.id, { files: [], removedIds: [] });
+        if (submit) {
+          await submitViIncidentAssignment(assignment.id, entry.actionTaken.trim(), entry.closureDate);
+          submitted.current.add(assignment.id);
+        }
+      }
+      toast.success(submit ? "Action taken submitted successfully" : "Action taken saved to draft");
+      navigate(incidentPath);
+    } catch (error) {
+      errorToast(submit ? "Failed to submit action taken" : "Failed to save draft", error);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) return <AuditLoadingState message="Loading incident..." />;
+  if (!incident) return <AuditLoadingState message="Incident not found." onBack={() => navigate(INCIDENT_ACTION_OWNER_PATH)} />;
+  if (!rows.length || incident.storedStatus !== "open") {
+    return <AuditLoadingState message="No pending actions on this incident." onBack={() => navigate(incidentPath)} />;
+  }
 
   return (
     <div className="p-6 min-h-screen">
@@ -86,92 +143,59 @@ const IncidentActionOwnerActionTakenPage = () => {
         >
           <ArrowLeft className="w-4 h-4 text-[rgba(26,26,24,0.68)]" />
         </button>
-        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A18]">Incident — {incident.incidentNo}</h1>
         <span className="text-sm text-[rgba(26,26,24,0.48)]">Action Taken</span>
+        {rows.some(({ assignment }) => isAssignmentDraft(assignment)) && (
+          <IncidentStatusPill status="Draft" />
+        )}
       </div>
 
       <DetailCard icon={sectionIcon(ShieldCheck)} title="CAPA - Corrective & Preventive Actions" className="mb-5">
         <div className="space-y-8">
-          {plans.map((plan, index) => {
-            const entry = entries[index];
+          {rows.map(({ plan, assignment, itemName }, index) => {
+            const entry = entries[assignment.id];
+            if (!entry) return null;
+            const typeLabel = ACTION_TYPE_LABEL[plan.actionType];
             return (
-              <div key={plan.id} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
-                <div className="mb-4 text-sm font-semibold text-[#1A1A18]">
-                  {index + 1}. {plan.cause}
+              <div key={assignment.id} className={index > 0 ? "border-t border-[rgba(26,26,24,0.09)] pt-6" : ""}>
+                <div className="mb-1 text-sm font-semibold text-[#1A1A18]">
+                  {index + 1}. {itemName || "Action plan"}
+                </div>
+                <div className="mb-4 rounded-[12px] bg-[#F7F6F2] px-4 py-3">
+                  <div className="mb-1 text-xs font-semibold text-[rgba(26,26,24,0.48)]">{typeLabel} Action Plan</div>
+                  <p className="mb-3 text-sm text-[#1A1A18] whitespace-pre-wrap">{plan.description || "-"}</p>
+                  <FieldGrid columns={2} fields={[{ label: "Target Date", value: planTargetLabel(plan) }]} />
                 </div>
                 <div className="space-y-5">
                   <TextField
                     fullWidth
                     multiline
                     minRows={3}
-                    label={requiredLabel("Corrective Action taken")}
-                    placeholder="Describe immediate actions to be taken..."
-                    value={entry.corrective}
-                    onChange={(e) => updateEntry(index, { corrective: e.target.value })}
+                    label={requiredLabel(`${typeLabel} Action taken`)}
+                    placeholder="Describe the action taken..."
+                    value={entry.actionTaken}
+                    onChange={(e) => updateEntry(assignment.id, { actionTaken: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                   />
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={3}
-                    label={requiredLabel("Preventive Action taken")}
-                    placeholder="Describe immediate actions to be taken..."
-                    value={entry.preventive}
-                    onChange={(e) => updateEntry(index, { preventive: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
+                  <AttachmentPicker
+                    label="Upload Attachment"
+                    files={entry.files}
+                    onFilesChange={(files) => updateEntry(assignment.id, { files })}
+                    existing={entry.saved}
+                    onRemoveExisting={(attachment) =>
+                      updateEntry(assignment.id, {
+                        saved: entry.saved.filter((a) => a !== attachment),
+                        removedIds: attachment.id ? [...entry.removedIds, attachment.id] : entry.removedIds,
+                      })
+                    }
                   />
-                  <div>
-                    <label className="fm-action-secondary inline-flex cursor-pointer">
-                      <Paperclip className="w-4 h-4" />
-                      Upload Attachment
-                      <input
-                        type="file"
-                        multiple
-                        accept={ATTACHMENT_ACCEPT}
-                        className="hidden"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          const rejected = files.filter((f) => !isAllowedAttachment(f));
-                          if (rejected.length) {
-                            toast.error(
-                              `${rejected.map((f) => f.name).join(", ")} not allowed. Only PDF, JPEG, JPG and PNG files are accepted.`,
-                            );
-                          }
-                          updateEntry(index, { attachments: [...entry.attachments, ...files.filter(isAllowedAttachment)] });
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    {entry.attachments.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {entry.attachments.map((file, fileIndex) => (
-                          <span
-                            key={`${file.name}-${fileIndex}`}
-                            className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full bg-[#F5F4F0] px-3 py-1 text-xs text-[#1A1A18]"
-                          >
-                            <span className="truncate">{file.name}</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateEntry(index, { attachments: entry.attachments.filter((_, i) => i !== fileIndex) })
-                              }
-                              className="text-[rgba(26,26,24,0.48)] hover:text-[#1A1A18]"
-                              aria-label={`Remove ${file.name}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   <div className="max-w-sm">
                     <TextField
                       fullWidth
                       type="date"
                       label={requiredLabel("Select closure Date")}
                       value={entry.closureDate}
-                      onChange={(e) => updateEntry(index, { closureDate: e.target.value })}
+                      onChange={(e) => updateEntry(assignment.id, { closureDate: e.target.value })}
                       InputLabelProps={{ shrink: true }}
                     />
                   </div>
@@ -183,10 +207,10 @@ const IncidentActionOwnerActionTakenPage = () => {
       </DetailCard>
 
       <div className="fm-action-bar pt-4 sm:pt-6">
-        <button type="button" className="fm-action-secondary" onClick={handleSaveDraft}>
+        <button type="button" className="fm-action-secondary" onClick={() => save(false)} disabled={saving}>
           Save Draft
         </button>
-        <button type="button" className="fm-action-primary" onClick={handleSubmit}>
+        <button type="button" className="fm-action-primary" onClick={() => save(true)} disabled={saving}>
           Submit
         </button>
       </div>

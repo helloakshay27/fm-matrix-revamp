@@ -93,7 +93,8 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
                 <div>Plan Created</div>
                 <div>Action Taken</div>
                 <div>On-time</div>
-                <div>No Extension</div>
+                <div>Extended CAPA</div>
+                <div>Delayed CAPA</div>
               </div>
               {HEATMAP.map((row) => (
                 <div key={row.circle} className="hm-row">

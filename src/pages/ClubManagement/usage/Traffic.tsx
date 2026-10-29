@@ -41,6 +41,9 @@ export function Traffic() {
     name: tab === "staff" ? "Active Staff" : tab === "views" ? "Views" : "Sessions",
   };
   const sessionMix = chartData.deviceRows.map(([label, value, color]) => ({ label, value, color }));
+  // Tiles come from traffic_session; the usage chart and session mix from usage_and_distribution.
+  const tilesLoading = trafficQuery.isLoading;
+  const chartLoading = usageQuery.isLoading;
   const deltaLabel = (value: number | null) => value == null ? null : `${value > 0 ? "+" : ""}${value}% vs prev. period`;
 
   return (
@@ -49,12 +52,13 @@ export function Traffic() {
         <h2>Traffic &amp; Session</h2>
       </div>
 
-      {(trafficQuery.isLoading || usageQuery.isLoading) && <div className="bmnote" role="status">Loading traffic analytics…</div>}
+      {(tilesLoading || chartLoading) && <span className="sr-only" role="status">Loading traffic analytics…</span>}
       {(trafficQuery.isError || usageQuery.isError) && <div className="bmnote" role="alert">Some traffic analytics could not be loaded. Available metrics remain visible.</div>}
       {(!trafficQuery.isLoading && !trafficQuery.data || !usageQuery.isLoading && !usageQuery.data) && !trafficQuery.isError && !usageQuery.isError && <div className="bmnote">Some traffic analytics are unavailable for this date range.</div>}
 
       <div className="tiles" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
         <Tile
+          loading={tilesLoading}
           label="Active Staff"
           val={chartData.tiles[0].disp}
           dir={chartData.tiles[0].delta == null ? "flat" : chartData.tiles[0].delta >= 0 ? "up" : "dn"}
@@ -62,6 +66,7 @@ export function Traffic() {
           sub={chartData.tiles[0].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Screen Views"
           val={chartData.tiles[1].disp}
           dir={chartData.tiles[1].delta == null ? "flat" : chartData.tiles[1].delta >= 0 ? "up" : "dn"}
@@ -69,6 +74,7 @@ export function Traffic() {
           sub={chartData.tiles[1].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Sessions"
           val={chartData.tiles[2].disp}
           dir={chartData.tiles[2].delta == null ? "flat" : chartData.tiles[2].delta >= 0 ? "up" : "dn"}
@@ -76,6 +82,7 @@ export function Traffic() {
           sub={chartData.tiles[2].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Session Duration"
           val={chartData.tiles[3].disp}
           dir={chartData.tiles[3].delta == null ? "flat" : chartData.tiles[3].delta >= 0 ? "up" : "dn"}
@@ -83,6 +90,7 @@ export function Traffic() {
           sub={chartData.tiles[3].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Bounce Rate"
           val={chartData.tiles[4].disp}
           dir={chartData.tiles[4].delta == null ? "flat" : chartData.tiles[4].delta <= 0 ? "up" : "dn"}
@@ -90,6 +98,7 @@ export function Traffic() {
           sub={chartData.tiles[4].sub}
         />
         <Tile
+          loading={tilesLoading}
           label="Recently Active"
           val={chartData.tiles[5].disp}
           dir="flat"
@@ -103,6 +112,8 @@ export function Traffic() {
           eyebrow="Usage over time · SVG chart"
           title="Usage over time"
           purpose="Active staff, screen views, and sessions over time, with the previous period overlaid for comparison. Built on the proposed distinct_id join key."
+          loading={chartLoading}
+          skeleton="line"
         >
           <ChartTabs
             value={tab}
@@ -135,6 +146,8 @@ export function Traffic() {
           eyebrow="Session mix"
           title="What staff touch in a session"
           purpose="Share of sessions that touch each top-level area at least once — shows where staff attention concentrates in a working session on this desktop-only console."
+          loading={chartLoading || tilesLoading}
+          skeleton="bars"
         >
           <HBarList rows={sessionMix} />
           <div className="kv" style={{ marginTop: 14 }}>

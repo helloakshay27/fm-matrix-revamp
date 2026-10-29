@@ -52,12 +52,12 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
                 <div className="dl-row" onClick={() => onDrill("kpi-ao")}>
                   <span className="dl-sw" style={{ background: "#FDE2C8", border: "1px solid #E8C9A5" }} />
                   <span className="dl-lbl">Pending By Action Owner</span>
-                  <span className="dl-val">{fmt(values[7])}</span>
+                  <span className="dl-val">{fmt(values[8])}</span>
                 </div>
                 <div className="dl-row" onClick={() => onDrill("kpi-closedao")}>
                   <span className="dl-sw" style={{ background: "#6B9BCC" }} />
                   <span className="dl-lbl">Closed By Action Owner</span>
-                  <span className="dl-val">{fmt(values[8])}</span>
+                  <span className="dl-val">{fmt(values[9])}</span>
                 </div>
               </div>
             </div>

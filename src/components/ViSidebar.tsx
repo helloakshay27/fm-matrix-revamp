@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
-import { BulkUploadExternalUsersModal, type ViBulkUploadUserType } from "./BulkUploadExternalUsersModal";
+import {
+  BulkUploadExternalUsersModal,
+  type ViBulkUploadUserType,
+} from "./BulkUploadExternalUsersModal";
 import {
   Users,
   Car,
@@ -110,10 +113,22 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: ClipboardCheck,
       href: "/safety/audit",
       subItems: [
-        { name: "Auditor", href: "/safety/audit-list", color: "text-[#1a1a1a]" },
+        {
+          name: "Auditor",
+          href: "/safety/audit-list",
+          color: "text-[#1a1a1a]",
+        },
         { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/audit/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/audit/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Action Owner",
+          href: "/safety/audit/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/audit/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -121,10 +136,26 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: AlertTriangle,
       href: "/safety/vi-incident",
       subItems: [
-        { name: "Reporter", href: "/safety/vi-incident/reporter", color: "text-[#1a1a1a]" },
-        { name: "SPOC", href: "/safety/vi-incident/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/vi-incident/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/vi-incident/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Reporter",
+          href: "/safety/vi-incident/reporter",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-incident/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-incident/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-incident/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -132,10 +163,26 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: ClipboardList,
       href: "/safety/vi-inspection",
       subItems: [
-        { name: "Inspector", href: "/safety/vi-inspection/inspector", color: "text-[#1a1a1a]" },
-        { name: "SPOC", href: "/safety/vi-inspection/spoc", color: "text-[#1a1a1a]" },
-        { name: "Action Owner", href: "/safety/vi-inspection/action-owner", color: "text-[#1a1a1a]" },
-        { name: "Functional Head", href: "/safety/vi-inspection/functional-head", color: "text-[#1a1a1a]" },
+        {
+          name: "Inspector",
+          href: "/safety/vi-inspection/inspector",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-inspection/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-inspection/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-inspection/functional-head",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -308,6 +355,20 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       ],
     },
     {
+      name: "Inspection Master",
+      icon: Star,
+      subItems: [
+        {
+          name: "Inspection Type",
+          href: "/settings/inspection-master/inspection-type",
+        },
+        {
+          name: "Inspection Checklist",
+          href: "/settings/inspection-master/inspection-checklist",
+        },
+      ],
+    },
+    {
       icon: Circle,
       name: "Circle",
       href: "/safety/m-safe/circle",
@@ -352,13 +413,19 @@ const ViSidebar: React.FC = () => {
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   // Users bulk-upload modal: which list it uploads (kept while closing so the title doesn't flip).
-  const [bulkUploadType, setBulkUploadType] = useState<ViBulkUploadUserType>("external");
+  const [bulkUploadType, setBulkUploadType] =
+    useState<ViBulkUploadUserType>("external");
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sidebar items with an `action` open a modal instead of navigating.
   const runItemAction = (action: ModuleItem["action"]) => {
-    if (action === "bulk-upload-external-users" || action === "bulk-upload-internal-users") {
-      setBulkUploadType(action === "bulk-upload-internal-users" ? "internal" : "external");
+    if (
+      action === "bulk-upload-external-users" ||
+      action === "bulk-upload-internal-users"
+    ) {
+      setBulkUploadType(
+        action === "bulk-upload-internal-users" ? "internal" : "external"
+      );
       setIsBulkUploadOpen(true);
     }
   };
@@ -493,7 +560,11 @@ const ViSidebar: React.FC = () => {
     return (
       <div key={item.name} className="w-full">
         <button
-          onClick={() => (item.action ? runItemAction(item.action) : item.href && handleNavigation(item.href))}
+          onClick={() =>
+            item.action
+              ? runItemAction(item.action)
+              : item.href && handleNavigation(item.href)
+          }
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}
                         ${isActive ? "bg-[#f0e8dc] shadow-inner" : ""}
                     `}

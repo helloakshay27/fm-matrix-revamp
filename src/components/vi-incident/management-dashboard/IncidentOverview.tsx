@@ -1,16 +1,15 @@
 import { FOLLOW_UP, HEATMAP, KPI_INFO, cardInfo, fmt } from "./data";
-import { DownloadIcon, PathIcon } from "./icons";
+import { PathIcon } from "./icons";
 import { InfoButton } from "./InfoButton";
 
 interface IncidentOverviewProps {
   values: readonly number[];
   activeGroup: string | null;
   onJump: (panel: string, group: string) => void;
-  onDownload: (section: string) => void;
   onDrill: (key: string) => void;
 }
 
-export function IncidentOverview({ values, activeGroup, onJump, onDownload, onDrill }: IncidentOverviewProps) {
+export function IncidentOverview({ values, activeGroup, onJump, onDrill }: IncidentOverviewProps) {
   return (
     <>
       {/* <div className="alert-strip">
@@ -29,9 +28,6 @@ export function IncidentOverview({ values, activeGroup, onJump, onDownload, onDr
             if (kpi.id === "inc-draft") return null;
             return (
             <div key={kpi.id} className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`} style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint }} onClick={() => onJump(kpi.panel, kpi.group)}>
-              <button type="button" className="kpi-dl-btn" title="Download Excel" onClick={(event) => { event.stopPropagation(); onDownload(kpi.section); }}>
-                <DownloadIcon size={12} />
-              </button>
               <div className="kpi-top">
                 <div className="kpi-lbl">{kpi.label}<InfoButton text={kpi.info} /></div>
                 <div className="kpi-ico"><PathIcon d={kpi.icon} size={14} /></div>

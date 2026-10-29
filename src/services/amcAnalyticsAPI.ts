@@ -1,5 +1,4 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG } from '@/config/apiConfig';
 
 // Types for AMC Analytics API responses
 export interface AMCStatusData {
@@ -361,7 +360,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCStatisticsResponse>(url);
     return response.data.amcs_statistics.amcs_stats;
@@ -388,7 +387,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&breakdown_vs_preventive=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&breakdown_vs_preventive=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCBreakdownVsPreventiveResponse>(url);
     const data = response.data.amcs_statistics.breakdown_vs_preventive_visits;
@@ -417,7 +416,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_expiry_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_expiry_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCExpiryStatsResponse>(url);
     const data = response.data.amcs_statistics.amcs_expiry_stats;
@@ -436,7 +435,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_tracking=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_tracking=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCServiceTrackingResponse>(url);
     return response.data;
@@ -454,7 +453,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/expiry_analysis.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/expiry_analysis.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get(url);
     return response.data;
@@ -528,7 +527,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_unit_resource_wise=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&amcs_unit_resource_wise=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCUnitResourceWiseResponse>(url);
     const data = response.data.amcs_statistics.amcs_unit_resource_wise;
@@ -557,7 +556,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&service_stats=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCServiceStatsResponse>(url);
     const data = response.data.amcs_statistics.service_stats.overall;
@@ -589,7 +588,7 @@ export const amcAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&coverage_by_location=true&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${resolvedSiteId}&coverage_by_location=true&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get<AMCCoverageByLocationResponse>(url);
     return this.transformCoverageData(response.data.coverage_by_location);

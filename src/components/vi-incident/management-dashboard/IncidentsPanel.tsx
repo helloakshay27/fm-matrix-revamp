@@ -1,12 +1,10 @@
 import { CHARTS, RECENT, fmt, type ChartSpec } from "./data";
 import { ChartCard } from "./ChartCard";
 import { IncidentChart } from "./IncidentChart";
-import { DownloadIcon } from "./icons";
 
 interface IncidentsPanelProps {
   values: readonly number[];
   highlighted: boolean;
-  onDownload: (section: string) => void;
   onDrill: (key: string) => void;
   onRow: (index: number) => void;
 }
@@ -24,13 +22,12 @@ const INC_STATUS_SPEC: ChartSpec = {
   })),
 };
 
-export function IncidentsPanel({ values, highlighted, onDownload, onDrill, onRow }: IncidentsPanelProps) {
+export function IncidentsPanel({ values, highlighted, onDrill, onRow }: IncidentsPanelProps) {
   const closedPct = values[0] ? `${((values[3] / values[0]) * 100).toFixed(1)}%` : "0%";
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-inc">
       <div className="acc-hd">
         <div><div className="acc-title">Incidents</div><div className="acc-sub">Volume, status, where and when incidents happen, and injury impact</div></div>
-        <div className="acc-hd-actions"><button type="button" className="acc-dl-btn" onClick={() => onDownload("Incidents")}><DownloadIcon size={13} />Excel</button></div>
       </div>
       <div className="g g3">
         <ChartCard title="Incident Status" sub="Open · Closed" spec={INC_STATUS_SPEC} options={["donut", "bar"]}>

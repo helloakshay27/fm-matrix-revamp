@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   verifyOTP,
   saveUser,
+  getUser,
   saveToken,
   saveBaseUrl,
   getBaseUrl,
@@ -92,6 +93,8 @@ export const OTPVerificationPage = () => {
       // Check if response has required data
       if (response.verified === true && response.access_token) {
         const baseUrl = getBaseUrl();
+        // The sign-in response already stored the designation; keep it if this response omits it.
+        const signInDesignation = getUser()?.designation;
 
         saveUser({
           id: response.id,
@@ -104,6 +107,7 @@ export const OTPVerificationPage = () => {
           country_code: response.country_code,
           spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation ?? signInDesignation,
         });
         saveToken(response.access_token);
 

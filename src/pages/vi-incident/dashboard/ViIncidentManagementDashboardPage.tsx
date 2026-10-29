@@ -11,7 +11,6 @@ import { ToastHost } from "../../../components/vi-incident/management-dashboard/
 import { MyDashboard } from "../../../components/vi-incident/management-dashboard/MyDashboard";
 import { ShellBanner } from "../../../components/vi-incident/management-dashboard/ShellBanner";
 import { ModuleTabs, TopBar } from "../../../components/vi-incident/management-dashboard/TopBar";
-import { DownloadIcon } from "../../../components/vi-incident/management-dashboard/icons";
 import "../../../components/vi-incident/management-dashboard/incidentDashboard.css";
 import {
   ANALYTICS_CATALOG,
@@ -122,12 +121,11 @@ export function ViIncidentManagementDashboardPage() {
             <h2>{title}</h2>
             <div className="sub"><span className="live-dot" />Live · Last synced 2 min ago · <span>{scope.scope}</span></div>
           </div>
-          {/* <button type="button" className="tb-icon-btn" title="Export" onClick={() => notify("Excel export started — Incident dashboard")}><DownloadIcon /></button> */}
         </div>
-        <IncidentOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <IncidentsPanel values={scope.k} highlighted={highlight === "acc-inc"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onRow={openRow} />
-        <InvestigationPanel highlighted={highlight === "acc-inv"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <CapaPanel highlighted={highlight === "acc-capa"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
+        <IncidentOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDrill={openDrill} />
+        <IncidentsPanel values={scope.k} highlighted={highlight === "acc-inc"} onDrill={openDrill} onRow={openRow} />
+        <InvestigationPanel highlighted={highlight === "acc-inv"} onDrill={openDrill} />
+        <CapaPanel highlighted={highlight === "acc-capa"} onDrill={openDrill} />
         <IncidentDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onRow={openRow} />
         <div className="footer">Incident Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All figures are illustrative dummy data. Priority actions, aging, past-target-date, extension, time-of-day and heatmap measures are proposals derived from the Figma fields and statuses and need confirmation · October 2026</div>
       </main>

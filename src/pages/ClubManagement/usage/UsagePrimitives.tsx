@@ -203,6 +203,8 @@ export interface TileProps {
   delta?: string | null;
   dir?: "up" | "dn" | "flat";
   sub?: string;
+  /** The tile's data is still loading (first load / date-range change). */
+  loading?: boolean;
 }
 
 export function Tile({
@@ -211,21 +213,24 @@ export function Tile({
   delta,
   dir = "flat",
   sub,
+  loading = false,
 }: TileProps) {
   const { refreshing } = useUsage();
   const arrow = dir === "up" ? "▲" : dir === "dn" ? "▼" : "—";
+  const busy = loading || refreshing;
 
   return (
-    <div className="tile" aria-busy={refreshing}>
+    <div className="tile" aria-busy={busy}>
       <div className="tophead">
         <div className="lbl">{label}</div>
         <InfoPop label={label} />
       </div>
-      {refreshing ? (
+      {busy ? (
         <div className="tile-skeleton-content" aria-hidden="true">
           <span className="tile-skeleton tile-skeleton-value" />
-          {delta != null && <span className="tile-skeleton tile-skeleton-delta" />}
-          {sub && <span className="tile-skeleton tile-skeleton-sub" />}
+          {/* While loading, delta / sub aren't known yet — reserve both lines so the tile doesn't jump. */}
+          {(loading || delta != null) && <span className="tile-skeleton tile-skeleton-delta" />}
+          {(loading || sub) && <span className="tile-skeleton tile-skeleton-sub" />}
         </div>
       ) : (
         <>
@@ -248,11 +253,30 @@ export interface ChartCardProps {
   purpose: string;
   children: ReactNode;
   className?: string;
+  /** The card's data is still loading (first load / date-range change). */
+  loading?: boolean;
+  /** Placeholder shape shown while loading or refreshing; without it the content stays visible. */
+  skeleton?: SkeletonVariant;
+  /** Rows / columns for the "bars" and "table" skeletons. */
+  skeletonRows?: number;
+  skeletonCols?: number;
 }
 
-export function ChartCard({ eyebrow, title, purpose, children, className }: ChartCardProps) {
+export function ChartCard({
+  eyebrow,
+  title,
+  purpose,
+  children,
+  className,
+  loading = false,
+  skeleton,
+  skeletonRows,
+  skeletonCols,
+}: ChartCardProps) {
+  const { refreshing } = useUsage();
+  const busy = Boolean(skeleton) && (loading || refreshing);
   return (
-    <div className={`card${className ? " " + className : ""}`}>
+    <div className={`card${className ? " " + className : ""}`} aria-busy={busy}>
       <div className="card-head">
         <div className="charthead">
           <div>
@@ -262,7 +286,72 @@ export function ChartCard({ eyebrow, title, purpose, children, className }: Char
           <PurposePop title={title} purpose={purpose} />
         </div>
       </div>
-      <div className="card-body">{children}</div>
+      <div className="card-body">
+        {busy && skeleton ? <ChartSkeleton variant={skeleton} rows={skeletonRows} cols={skeletonCols} /> : children}
+      </div>
+    </div>
+  );
+}
+
+export type SkeletonVariant = "line" | "stacked" | "bars" | "table" | "kv" | "funnel";
+
+/** Shimmer placeholders sized like the real card content, so the layout doesn't jump when data lands. */
+export function ChartSkeleton({ variant, rows, cols }: { variant: SkeletonVariant; rows?: number; cols?: number }) {
+  if (variant === "line" || variant === "stacked") {
+    return (
+      <div aria-hidden="true">
+        <div className={`sk sk-chart${variant === "stacked" ? " sk-chart-tall" : ""}`} />
+        <div className="sk-legend">
+          <span className="sk" />
+          <span className="sk" />
+        </div>
+      </div>
+    );
+  }
+  if (variant === "bars") {
+    return (
+      <div className="hbars" aria-hidden="true">
+        {Array.from({ length: rows ?? 4 }, (_, i) => (
+          <div className="role" key={i}>
+            <span className="sk sk-line" style={{ width: `${70 - i * 8}%` }} />
+            <span className="sk sk-bar" style={{ width: `${85 - i * 15}%` }} />
+            <span className="sk sk-line sk-num" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (variant === "table") {
+    const columns = cols ?? 4;
+    return (
+      <div className="sk-table" aria-hidden="true">
+        {Array.from({ length: (rows ?? 5) + 1 }, (_, r) => (
+          <div className={`sk-row${r === 0 ? " sk-row-head" : ""}`} key={r} style={{ gridTemplateColumns: `2fr repeat(${columns - 1}, 1fr)` }}>
+            {Array.from({ length: columns }, (_, c) => (
+              <span className="sk sk-line" key={c} style={{ width: c === 0 ? `${75 - (r % 3) * 12}%` : "55%" }} />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (variant === "kv") {
+    return (
+      <div className="kv" aria-hidden="true">
+        <div className="sk-kv">
+          <span className="sk sk-line" />
+          <span className="sk sk-kv-value" />
+          <span className="sk sk-line sk-kv-unit" />
+        </div>
+      </div>
+    );
+  }
+  // funnel
+  return (
+    <div className="funnel" aria-hidden="true">
+      {[100, 78, 56, 38].map((width) => (
+        <span className="sk sk-funnel" key={width} style={{ width: `${width}%` }} />
+      ))}
     </div>
   );
 }

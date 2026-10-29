@@ -228,7 +228,7 @@ export const EmployeeUnifiedCalendar: React.FC<
       if (!token || !baseUrl) throw new Error("Not authenticated");
 
       // Build API URL with date filter parameters
-      let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
+      let apiUrl = `${baseUrl}/user_calendars.json?id=${userId}`;
 
       // Add date filters to API call
       if (activeFilters.dateFrom) {
@@ -244,7 +244,9 @@ export const EmployeeUnifiedCalendar: React.FC<
         apiUrl,
       });
 
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch calendar data");
@@ -365,7 +367,6 @@ export const EmployeeUnifiedCalendar: React.FC<
       try {
         const gcParams = new URLSearchParams({
           range_type: "monthly",
-          access_token: token || "",
         });
         const gcRes = await fetch(
           `${baseUrl}/api/google_calendar_events?${gcParams.toString()}`,
@@ -465,7 +466,6 @@ export const EmployeeUnifiedCalendar: React.FC<
           const params = new URLSearchParams({
             range_type: "monthly",
             user_id: String(attendee.id),
-            access_token: token,
           });
           const res = await fetch(
             `${baseUrl}/api/google_calendar_events?${params.toString()}`,

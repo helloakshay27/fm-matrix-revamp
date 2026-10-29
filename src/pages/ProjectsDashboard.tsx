@@ -205,10 +205,12 @@ const transformedProjects = (projects: any) => {
       milestoneCompletionPercent: project.avg_milestone_completion_percent || 0,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
-      taskCompletionPercent: project.avg_task_management_completion_percent || 0,
+      taskCompletionPercent:
+        project.avg_task_management_completion_percent || 0,
       subtasks: project.total_sub_task_management_count || 0,
       subtasksCompleted: project.completed_sub_task_management_count || 0,
-      subtaskCompletionPercent: project.avg_sub_task_management_completion_percent || 0,
+      subtaskCompletionPercent:
+        project.avg_sub_task_management_completion_percent || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -255,7 +257,10 @@ const statusOptions = [
   { value: "overdue", label: "Overdue" },
 ];
 
-const getErrorMessage = (error: unknown, fallback = "Something went wrong"): string => {
+const getErrorMessage = (
+  error: unknown,
+  fallback = "Something went wrong"
+): string => {
   if (typeof error === "string") return error;
   if (error && typeof error === "object") {
     const err = error as any;
@@ -307,15 +312,17 @@ export const ProjectsDashboard = () => {
 
   // Determine token source: prefer sessionStorage (mobile) over localStorage (web)
   const token =
-    sessionStorage.getItem("mobile_token") ||
-    localStorage.getItem("token");
+    sessionStorage.getItem("mobile_token") || localStorage.getItem("token");
 
   // For baseUrl: use localStorage for web, or will be resolved by baseClient for mobile
-  let baseUrl = localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
+  let baseUrl =
+    localStorage.getItem("baseUrl") ?? "lockated-api.gophygital.work";
 
   // If mobile flow and no baseUrl, will be resolved by baseClient interceptor
   if (!baseUrl && urlToken) {
-    console.log("📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor");
+    console.log(
+      "📱 Mobile flow detected - baseUrl will be resolved by baseClient interceptor"
+    );
     // After baseClient resolves it, it will be stored in localStorage automatically
   }
 
@@ -348,7 +355,9 @@ export const ProjectsDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [appliedFilters, setAppliedFilters] = useState(""); // For ProjectFilterModal
 
@@ -357,7 +366,12 @@ export const ProjectsDashboard = () => {
     (updates: Record<string, any>, replace = false) => {
       const params = new URLSearchParams(searchParams);
       Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) {
+        if (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
           params.delete(key);
         } else if (Array.isArray(value)) {
           params.delete(key);
@@ -381,18 +395,31 @@ export const ProjectsDashboard = () => {
     const urlEndDate = searchParams.get("end_date") || "";
 
     const hasFilters =
-      urlStatuses.length > 0 || urlTypes.length > 0 ||
-      urlManagers.length > 0 || urlCreatedBy.length > 0 ||
-      urlStartDate || urlEndDate;
+      urlStatuses.length > 0 ||
+      urlTypes.length > 0 ||
+      urlManagers.length > 0 ||
+      urlCreatedBy.length > 0 ||
+      urlStartDate ||
+      urlEndDate;
 
     if (hasFilters) {
       const parts: string[] = [];
-      urlStatuses.forEach((s) => parts.push(`q[status_in][]=${encodeURIComponent(s)}`));
-      urlTypes.forEach((t) => parts.push(`q[project_type_id_in][]=${encodeURIComponent(t)}`));
-      urlManagers.forEach((m) => parts.push(`q[owner_id_in][]=${encodeURIComponent(m)}`));
-      urlCreatedBy.forEach((c) => parts.push(`q[created_by_id_in][]=${encodeURIComponent(c)}`));
-      if (urlStartDate) parts.push(`q[start_date_eq]=${encodeURIComponent(urlStartDate)}`);
-      if (urlEndDate) parts.push(`q[end_date_eq]=${encodeURIComponent(urlEndDate)}`);
+      urlStatuses.forEach((s) =>
+        parts.push(`q[status_in][]=${encodeURIComponent(s)}`)
+      );
+      urlTypes.forEach((t) =>
+        parts.push(`q[project_type_id_in][]=${encodeURIComponent(t)}`)
+      );
+      urlManagers.forEach((m) =>
+        parts.push(`q[owner_id_in][]=${encodeURIComponent(m)}`)
+      );
+      urlCreatedBy.forEach((c) =>
+        parts.push(`q[created_by_id_in][]=${encodeURIComponent(c)}`)
+      );
+      if (urlStartDate)
+        parts.push(`q[start_date_eq]=${encodeURIComponent(urlStartDate)}`);
+      if (urlEndDate)
+        parts.push(`q[end_date_eq]=${encodeURIComponent(urlEndDate)}`);
       setAppliedFilters(parts.join("&"));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -433,21 +460,24 @@ export const ProjectsDashboard = () => {
     data: projectsData,
     isLoading,
     isFetching,
-    error
+    error,
   } = useProjects({
     page: currentPage,
     filters: filterString,
     search: debouncedSearchTerm,
-    sortBy: sortColumn ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn : undefined,
+    sortBy: sortColumn
+      ? COLUMN_TO_BACKEND_MAP[sortColumn] || sortColumn
+      : undefined,
     sortDirection,
   });
 
   // Extract projects and pagination
-  const currentPageProjects = projectsData?.data?.project_managements ||
+  const currentPageProjects =
+    projectsData?.data?.project_managements ||
     projectsData?.project_managements ||
     [];
-  const paginationData = projectsData?.data?.pagination ||
-    projectsData?.pagination;
+  const paginationData =
+    projectsData?.data?.pagination || projectsData?.pagination;
   const hasMore = currentPage < (paginationData?.total_pages || 1);
 
   // Accumulate projects for infinite scroll
@@ -552,21 +582,21 @@ export const ProjectsDashboard = () => {
       // Use direct axios call for web flow
       const response = baseUrl
         ? await axios.get(
-          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+            `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
         : await baseClient.get(
-          `/pms/users/get_escalate_to_users.json?type=Task`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+            `/pms/users/get_escalate_to_users.json?type=Task`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
       setOwners(response.data.users);
     } catch (error) {
       console.log(error);
@@ -634,7 +664,7 @@ export const ProjectsDashboard = () => {
         },
       };
       const response = await createMutation.mutateAsync(payload);
-      
+
       // Fire PostHog event
       const newProjectId = response?.data?.id || response?.id || "unknown";
       patmEvents.onProjectCreated(newProjectId, data.title);
@@ -652,38 +682,32 @@ export const ProjectsDashboard = () => {
     try {
       // Use baseClient for mobile flow (when baseUrl not available)
       const response = baseUrl
-        ? await axios.get(
-          `https://${baseUrl}/project_import.xlsx`,
-          {
-            responseType: 'blob',
+        ? await axios.get(`https://${baseUrl}/project_import.xlsx`, {
+            responseType: "blob",
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
-        )
-        : await baseClient.get(
-          `/project_import.xlsx`,
-          {
-            responseType: 'blob',
+          })
+        : await baseClient.get(`/project_import.xlsx`, {
+            responseType: "blob",
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
-        );
+          });
 
       // Create a download link and trigger it
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'sample_project_management.xlsx'); // specify filename
+      link.setAttribute("download", "sample_project_management.xlsx"); // specify filename
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url); // cleanup
-      toast.success('Sample format downloaded successfully');
+      toast.success("Sample format downloaded successfully");
     } catch (error) {
-      console.error('Error downloading sample file:', error);
-      toast.error('Failed to download sample file. Please try again.');
+      console.error("Error downloading sample file:", error);
+      toast.error("Failed to download sample file. Please try again.");
     }
   };
 
@@ -713,7 +737,11 @@ export const ProjectsDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/details/${item.id}`) : navigate(`/mobile-projects/${item.id}`)}
+          onClick={() =>
+            window.location.pathname.startsWith("/vas/projects")
+              ? navigate(`/vas/projects/details/${item.id}`)
+              : navigate(`/mobile-projects/${item.id}`)
+          }
         >
           <Eye className="w-4 h-4" />
         </Button>
@@ -723,7 +751,13 @@ export const ProjectsDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => window.location.pathname.startsWith("/vas/projects") ? navigate(`/vas/projects/${item.id}/milestones`) : navigate(`/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`)}
+          onClick={() =>
+            window.location.pathname.startsWith("/vas/projects")
+              ? navigate(`/vas/projects/${item.id}/milestones`)
+              : navigate(
+                  `/mobile-projects/${item.id}/milestones?token=${token}&org_id=${urlOrgId}&user_id=${urlUserId}`
+                )
+          }
         >
           <LogOut className="w-4 h-4" />
         </Button>
@@ -752,7 +786,12 @@ export const ProjectsDashboard = () => {
 
     // Cycle through: asc -> desc -> null -> asc
     if (sortColumn === columnKey) {
-      newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc";
+      newDirection =
+        sortDirection === "asc"
+          ? "desc"
+          : sortDirection === "desc"
+            ? null
+            : "asc";
     } else {
       newDirection = "asc";
     }
@@ -934,77 +973,85 @@ export const ProjectsDashboard = () => {
           </TooltipProvider>
         );
       case "completion_percent":
-        return <div className="flex items-center gap-2 cursor-pointer">
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.status === "completed" ? 1 : 0}
-          </span>
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
-            <div
-              className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
-              style={{ width: `${item.completion_percent}%` }}
-            ></div>
-            <span className="relative text-xs font-semibold text-gray-800">
-              {Math.round(item.completion_percent)}%
+        return (
+          <div className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.status === "completed" ? 1 : 0}
+            </span>
+            <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+              <div
+                className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
+                style={{ width: `${item.completion_percent}%` }}
+              ></div>
+              <span className="relative text-xs font-semibold text-gray-800">
+                {Math.round(item.completion_percent)}%
+              </span>
+            </div>
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              1
             </span>
           </div>
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            1
-          </span>
-        </div>
+        );
       case "milestoneCompletionPercent":
-        return <div className="flex items-center gap-2 cursor-pointer">
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.milestonesCompleted}
-          </span>
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
-            <div
-              className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
-              style={{ width: `${item.milestoneCompletionPercent}%` }}
-            ></div>
-            <span className="relative text-xs font-semibold text-gray-800">
-              {Math.round(item.milestoneCompletionPercent)}%
+        return (
+          <div className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.milestonesCompleted}
+            </span>
+            <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+              <div
+                className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
+                style={{ width: `${item.milestoneCompletionPercent}%` }}
+              ></div>
+              <span className="relative text-xs font-semibold text-gray-800">
+                {Math.round(item.milestoneCompletionPercent)}%
+              </span>
+            </div>
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.milestones}
             </span>
           </div>
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.milestones}
-          </span>
-        </div>
+        );
       case "taskCompletionPercent":
-        return <div className="flex items-center gap-2 cursor-pointer">
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.tasksCompleted}
-          </span>
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
-            <div
-              className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
-              style={{ width: `${item.taskCompletionPercent}%` }}
-            ></div>
-            <span className="relative text-xs font-semibold text-gray-800">
-              {Math.round(item.taskCompletionPercent)}%
+        return (
+          <div className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.tasksCompleted}
+            </span>
+            <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+              <div
+                className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
+                style={{ width: `${item.taskCompletionPercent}%` }}
+              ></div>
+              <span className="relative text-xs font-semibold text-gray-800">
+                {Math.round(item.taskCompletionPercent)}%
+              </span>
+            </div>
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.tasks}
             </span>
           </div>
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.tasks}
-          </span>
-        </div>
+        );
       case "subtaskCompletionPercent":
-        return <div className="flex items-center gap-2 cursor-pointer">
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.subtasksCompleted}
-          </span>
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
-            <div
-              className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
-              style={{ width: `${item.subtaskCompletionPercent}%` }}
-            ></div>
-            <span className="relative text-xs font-semibold text-gray-800">
-              {Math.round(item.subtaskCompletionPercent)}%
+        return (
+          <div className="flex items-center gap-2 cursor-pointer">
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.subtasksCompleted}
+            </span>
+            <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
+              <div
+                className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
+                style={{ width: `${item.subtaskCompletionPercent}%` }}
+              ></div>
+              <span className="relative text-xs font-semibold text-gray-800">
+                {Math.round(item.subtaskCompletionPercent)}%
+              </span>
+            </div>
+            <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+              {item.subtasks}
             </span>
           </div>
-          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
-            {item.subtasks}
-          </span>
-        </div>
+        );
       default:
         return item[columnKey] || "-";
     }
@@ -1013,28 +1060,27 @@ export const ProjectsDashboard = () => {
   const leftActions = (
     <div className="flex items-center gap-4">
       {/* Action Button */}
-      {
-        localStorage.getItem("selectedView") === "admin" && (
-          <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => setShowActionPanel(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
-        )
-      }
+      {localStorage.getItem("userType") !== "pms_occupant" && (
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          onClick={() => setShowActionPanel(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Action
+        </Button>
+      )}
 
       {/* Total Projects Count */}
       <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-        <span className="text-gray-700 font-medium text-sm">Total Projects:</span>
+        <span className="text-gray-700 font-medium text-sm">
+          Total Projects:
+        </span>
         <span className="text-lg font-bold text-[#C72030]">
           {paginationData?.total_count || 0}
         </span>
       </div>
     </div>
   );
-
 
   const renderEditableCell = (columnKey, value, onChange) => {
     if (columnKey === "status") {
@@ -1284,7 +1330,7 @@ export const ProjectsDashboard = () => {
               variant="outline"
               size="sm"
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
-              title='Filter'
+              title="Filter"
               onClick={() => setIsFilterModalOpen(true)}
             >
               <Filter className="w-4 h-4" />
@@ -1401,8 +1447,8 @@ export const ProjectsDashboard = () => {
         enableExport={true}
         exportFileName="projects"
         hideTableExport={true}
-      // enableFreeze={true}
-      // freezeColumnsCount={3}
+        // enableFreeze={true}
+        // freezeColumnsCount={3}
       />
 
       {/* Infinite Scroll Loader - Only visible when loading more data */}
@@ -1410,7 +1456,9 @@ export const ProjectsDashboard = () => {
         <div className="flex justify-center py-8">
           <div className="flex flex-col items-center gap-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-            <span className="text-sm text-gray-500">Loading more projects...</span>
+            <span className="text-sm text-gray-500">
+              Loading more projects...
+            </span>
           </div>
         </div>
       )}

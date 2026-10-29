@@ -1969,6 +1969,15 @@ const FunctionalHeadObservationDetailPage = lazy(
       "./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"
     )
 );
+const AuditorActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorActionPlanDetailPage")
+);
+const SpocActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanDetailPage")
+);
+const FunctionalHeadActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadActionPlanDetailPage")
+);
 const ViAuditManagementDashboardPage = lazy(
   () => import("./pages/vi-audit/dashboard/ViAuditManagementDashboardPage")
 );
@@ -2043,6 +2052,12 @@ const InspectionFunctionalHeadDetailPage = lazy(() =>
 );
 const InspectionInspectorAddPage = lazy(
   () => import("./pages/vi-inspection/InspectionInspectorAddPage")
+);
+const ViInspectionTypeMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionTypePage")
+);
+const ViInspectionChecklistMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionChecklistPage")
 );
 const InspectionSpocListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
@@ -2548,6 +2563,9 @@ const HolidayCalendarPage = lazy(() =>
 
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
+);
+const SsoLoginPage = lazy(() =>
+  import("@/pages/SsoLoginPage").then((m) => ({ default: m.SsoLoginPage }))
 );
 const OTPVerificationPage = lazy(() =>
   import("@/pages/OTPVerificationPage").then((m) => ({
@@ -5248,6 +5266,7 @@ function App() {
                               )
                             }
                           />
+                          <Route path="/sso-login" element={<SsoLoginPage />} />
                           <Route
                             path="/otp-verification"
                             element={<OTPVerificationPage />}
@@ -9328,9 +9347,13 @@ function App() {
                             <Route
                               path="/safety/vi-incident/reporter"
                               element={<IncidentReporterListPage />}
-                            />
+                            /> 
                             <Route
                               path="/safety/vi-incident/reporter/add"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/:id/edit"
                               element={<IncidentReporterAddPage />}
                             />
                             <Route
@@ -9382,6 +9405,10 @@ function App() {
                               element={<InspectionInspectorAddPage />}
                             />
                             <Route
+                              path="/safety/vi-inspection/inspector/:id/edit"
+                              element={<InspectionInspectorAddPage />}
+                            />
+                            <Route
                               path="/safety/vi-inspection/spoc"
                               element={<InspectionSpocListPage />}
                             />
@@ -9418,6 +9445,14 @@ function App() {
                               element={<InspectionFunctionalHeadDetailPage />}
                             />
                             <Route
+                              path="/settings/inspection-master/inspection-type"
+                              element={<ViInspectionTypeMasterPage />}
+                            />
+                            <Route
+                              path="/settings/inspection-master/inspection-checklist"
+                              element={<ViInspectionChecklistMasterPage />}
+                            />
+                            <Route
                               path="/safety/audit-list"
                               element={<AuditorAuditListPage />}
                             />
@@ -9438,6 +9473,10 @@ function App() {
                               element={<AuditorObservationDetailPage />}
                             />
                             <Route
+                              path="/safety/audit-list/:id/observations/:observationId/plans/:planId"
+                              element={<AuditorActionPlanDetailPage />}
+                            />
+                            <Route
                               path="/safety/audit/spoc"
                               element={<SpocAuditListPage />}
                             />
@@ -9448,6 +9487,10 @@ function App() {
                             <Route
                               path="/safety/audit/spoc/:id/observations/:observationId"
                               element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/plans/:planId"
+                              element={<SpocActionPlanDetailPage />}
                             />
                             <Route
                               path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
@@ -9484,6 +9527,10 @@ function App() {
                             <Route
                               path="/safety/audit/functional-head/:id/observations/:observationId"
                               element={<FunctionalHeadObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId/plans/:planId"
+                              element={<FunctionalHeadActionPlanDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"

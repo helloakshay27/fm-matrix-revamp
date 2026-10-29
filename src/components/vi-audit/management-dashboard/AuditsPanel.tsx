@@ -38,8 +38,8 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
           </button>
         </div>
       </div>
-      <div className="g g3">
-        <ChartCard title="Audit Status" sub="Open · Closed" spec={AUDIT_STATUS_SPEC} options={["donut", "bar"]}>
+      <div className="g g2">
+        {/* <ChartCard title="Audit Status" sub="Open · Closed" spec={AUDIT_STATUS_SPEC} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
               <div className="donut-c">
@@ -50,11 +50,6 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
                 </div>
               </div>
               <div className="donut-legend">
-                {/* <div className="dl-row" onClick={() => onDrill("kpi-draft")}>
-                  <span className="dl-sw" style={{ background: "#F4795F" }} />
-                  <span className="dl-lbl">Draft</span>
-                  <span className="dl-val">{fmt(values[1])}</span>
-                </div> */}
                 <div className="dl-row" onClick={() => onDrill("kpi-open")}>
                   <span className="dl-sw" style={{ background: "var(--vi-red)" }} />
                   <span className="dl-lbl">Open</span>
@@ -68,15 +63,15 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
               </div>
             </div>
           )}
-        </ChartCard>
-        <ChartCard title="Audit Type" sub="Corporate vs Circle audits" spec={CHARTS.auditType} options={["donut", "bar"]} />
+        </ChartCard> */}
+        {/* <ChartCard title="Audit Type" sub="Corporate vs Circle audits" spec={CHARTS.auditType} options={["donut", "bar"]} /> */}
         <ChartCard title="Audits by Function" sub="Function selected on the audit" spec={CHARTS.auditFunc} options={["donut", "bar"]} />
-      </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Audits Conducted · Last 12 Months" sub="Audits by date of audit" spec={CHARTS.auditTrend} options={["line", "bar"]} />
         <ChartCard title="Audits per Circle" sub="Top 12 circles · open vs closed" spec={CHARTS.auditCircle} options={["bar", "table"]} />
       </div>
-      <div className="card" style={{ marginTop: 16 }}>
+      {/* <div className="g g2" style={{ marginTop: 16 }}>
+        <ChartCard title="Audits Conducted · Last 12 Months" sub="Audits by date of audit" spec={CHARTS.auditTrend} options={["line", "bar"]} />
+      </div> */}
+      {/* <div className="card" style={{ marginTop: 16 }}>
         <div className="card-hd">
           <div>
             <div className="card-title">Recent Audits</div>
@@ -116,7 +111,7 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

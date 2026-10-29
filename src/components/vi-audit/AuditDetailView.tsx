@@ -5,10 +5,7 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
-  Layers,
-  Store,
   User,
-  Users,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetailCard } from "@/components/ui/detail-card";
@@ -106,38 +103,6 @@ export const AuditDetailView = ({
             />
           </DetailCard>
 
-          <DetailCard icon={sectionIcon(Layers)} title="Observation Classification" className="mb-5">
-            <FieldGrid
-              fields={[
-                { label: "Classification", value: audit.classification.classification },
-                { label: "Category", value: audit.classification.category },
-                { label: "Sub Category", value: audit.classification.subCategory },
-              ]}
-            />
-          </DetailCard>
-
-          <DetailCard icon={sectionIcon(Users)} title="People Interacted With" className="mb-5">
-            <FieldGrid
-              columns={2}
-              fields={[
-                { label: "FTE / Non-FTE", value: audit.people.fte.join(", ") },
-                {
-                  label: "Others",
-                  value: audit.people.others.map((p) => `${p.name} (${p.designation})`).join(", "),
-                },
-              ]}
-            />
-          </DetailCard>
-
-          <DetailCard icon={sectionIcon(Store)} title="Vendor Details" className="mb-5">
-            <FieldGrid
-              columns={2}
-              fields={[
-                { label: "Vendor Name", value: audit.vendor.vendorName },
-                { label: "Sub Vendor Name", value: audit.vendor.subVendorName },
-              ]}
-            />
-          </DetailCard>
         </TabsContent>
 
         {/* Observations tab — each record opens the observation detail page */}
