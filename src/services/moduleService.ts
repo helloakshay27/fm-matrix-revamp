@@ -20,6 +20,7 @@ export interface LockModule {
   created_at?: string;
   updated_at?: string;
   url?: string;
+  lock_phase?: LockPhase | null;
   lock_functions?: LockFunction[];
 }
 
@@ -49,7 +50,24 @@ export interface LockSubFunction {
   url?: string;
 }
 
+export interface LockPhase {
+  id?: number;
+  name: string;
+  show_name?: string;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  url?: string;
+}
+
 // Create payloads
+export interface CreatePhasePayload {
+  lock_phase: {
+    name: string;
+    active: boolean;
+  };
+}
+
 export interface CreateModulePayload {
   lock_module: {
     name: string;
@@ -222,6 +240,48 @@ export const moduleService = {
       return response.data
     } catch (error) {
       console.error('Error deleting sub function:', error)
+      throw error
+    }
+  },
+
+  // Phases CRUD
+  async fetchPhases(): Promise<LockPhase[]> {
+    try {
+      const response = await apiClient.get<{ data: LockPhase[] } | LockPhase[]>(ENDPOINTS.PHASES)
+      // Handle both response formats - direct array or wrapped in data property
+      return Array.isArray(response.data) ? response.data : response.data.data || []
+    } catch (error) {
+      console.error('Error fetching phases:', error)
+      throw error
+    }
+  },
+
+  async createPhase(payload: CreatePhasePayload): Promise<ApiResponse<LockPhase>> {
+    try {
+      const response = await apiClient.post<ApiResponse<LockPhase>>(ENDPOINTS.CREATE_PHASE, payload)
+      return response.data
+    } catch (error) {
+      console.error('Error creating phase:', error)
+      throw error
+    }
+  },
+
+  async updatePhase(id: number, payload: Partial<CreatePhasePayload>): Promise<ApiResponse<LockPhase>> {
+    try {
+      const response = await apiClient.put<ApiResponse<LockPhase>>(`${ENDPOINTS.UPDATE_PHASE}/${id}.json`, payload)
+      return response.data
+    } catch (error) {
+      console.error('Error updating phase:', error)
+      throw error
+    }
+  },
+
+  async deletePhase(id: number): Promise<ApiResponse<void>> {
+    try {
+      const response = await apiClient.delete<ApiResponse<void>>(`${ENDPOINTS.DELETE_PHASE}/${id}.json`)
+      return response.data
+    } catch (error) {
+      console.error('Error deleting phase:', error)
       throw error
     }
   },
