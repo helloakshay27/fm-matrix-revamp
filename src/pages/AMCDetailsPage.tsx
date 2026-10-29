@@ -300,7 +300,10 @@ export const AMCDetailsPage = () => {
   const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
-  const [coveredAssetsDialogNames, setCoveredAssetsDialogNames] = useState<string[] | null>(null);
+  const [assetCoverageDialog, setAssetCoverageDialog] = useState<{
+    names: string[];
+    attachments: VisitAttachment[];
+  } | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
   const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
   const [visitEditVisitDate, setVisitEditVisitDate] = useState("");
@@ -374,36 +377,38 @@ export const AMCDetailsPage = () => {
     }
   };
 
-  const renderVisitAttachments = (visit: any) => {
-    const list: VisitAttachment[] = [
-      ...(visit.attachments || []),
-      ...(visit.attachment ? [visit.attachment] : []),
-    ].filter((a) => a?.document || a?.document_url);
-    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+  const renderAttachmentItems = (
+    list: VisitAttachment[],
+    emptyMessage: string = "No attachments available."
+  ) => {
+    const normalized = list.filter((a) => a?.document || a?.document_url);
+    if (!normalized.length) return <p className="text-sm text-gray-500">{emptyMessage}</p>;
+
     return (
-      <div className="flex flex-col gap-1">
-        {list.map((a, ai) => {
+      <div className="flex flex-col gap-2">
+        {normalized.map((a, ai) => {
           const url = a.document || a.document_url || "";
           const name =
             a.filename ||
             a.document_file_name ||
             getFileNameFromUrl(url) ||
             `File ${ai + 1}`;
+
           return (
-            <div key={a.id ?? ai} className="flex items-center gap-2">
+            <div key={a.id ?? ai} className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
               <a
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-brand hover:underline text-sm"
+                className="flex items-center gap-2 text-sm text-brand hover:underline min-w-0"
               >
-                <FileText className="w-3.5 h-3.5" />
-                {name}
+                <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{name}</span>
               </a>
               <button
                 type="button"
                 title="Download"
-                className="text-gray-500 hover:text-brand"
+                className="text-gray-500 hover:text-brand flex-shrink-0"
                 onClick={() => downloadVisitAttachment(url, name)}
               >
                 <Download className="w-3.5 h-3.5" />
@@ -413,6 +418,29 @@ export const AMCDetailsPage = () => {
         })}
       </div>
     );
+  };
+
+  const renderVisitAttachments = (visit: any) => {
+    const list: VisitAttachment[] = [
+      ...(visit.attachments || []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ];
+    const content = renderAttachmentItems(list, "No attachments available.");
+    return (
+      <div className="flex flex-col gap-1">
+        {list.some((a) => a?.document || a?.document_url) ? content : <span className="text-gray-400 text-sm">—</span>}
+      </div>
+    );
+  };
+
+  const openAssetCoverageDialog = (visit: any) => {
+    const names = getVisitAssetNames(visit);
+    const attachments: VisitAttachment[] = [
+      ...(Array.isArray(visit.attachments) ? visit.attachments : []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ];
+
+    setAssetCoverageDialog({ names, attachments });
   };
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
@@ -1672,11 +1700,10 @@ export const AMCDetailsPage = () => {
                                   const assetsCovered = Array.isArray(item.assets_covered)
                                     ? item.assets_covered
                                     : [];
-                                  const assetNames = getVisitAssetNames(item);
                                   return assetsCovered.length > 0 ? (
                                     <button
                                       type="button"
-                                      onClick={() => setCoveredAssetsDialogNames(assetNames)}
+                                      onClick={() => openAssetCoverageDialog(item)}
                                       aria-label={`View ${assetsCovered.length} covered assets`}
                                       className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 hover:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                     >
@@ -1806,11 +1833,10 @@ export const AMCDetailsPage = () => {
                                   item.asset_ids || item.amc_asset_ids || [];
                                 const total = amcDetails?.amc_assets?.length ?? 0;
                                 const covered = ids.length;
-                                const assetNames = getVisitAssetNames(item);
                                 return covered > 0 ? (
                                   <button
                                     type="button"
-                                    onClick={() => setCoveredAssetsDialogNames(assetNames)}
+                                    onClick={() => openAssetCoverageDialog(item)}
                                     aria-label={`View ${covered} covered assets`}
                                     className="inline-flex items-center justify-center rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                                   >
@@ -1847,31 +1873,52 @@ export const AMCDetailsPage = () => {
             </DetailCard>
 
             <Dialog
-              open={coveredAssetsDialogNames !== null}
+              open={assetCoverageDialog !== null}
               onOpenChange={(open) => {
-                if (!open) setCoveredAssetsDialogNames(null);
+                if (!open) setAssetCoverageDialog(null);
               }}
             >
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Assets Covered</DialogTitle>
                 </DialogHeader>
-                {coveredAssetsDialogNames?.length ? (
-                  <ul className="space-y-2 py-2">
-                    {coveredAssetsDialogNames.map((name, index) => (
-                      <li
-                        key={`${name}-${index}`}
-                        className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-800"
-                      >
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="py-2 text-sm text-gray-500">
-                    No asset names are available for this visit.
-                  </p>
-                )}
+                <div className="space-y-5 py-2">
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                      Asset Names
+                    </h3>
+                    {assetCoverageDialog?.names.length ? (
+                      <ul className="space-y-2">
+                        {assetCoverageDialog.names.map((name, index) => (
+                          <li
+                            key={`${name}-${index}`}
+                            className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800"
+                          >
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No asset names are available for this visit.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                      Attachments
+                    </h3>
+                    {assetCoverageDialog ? (
+                      renderAttachmentItems(
+                        assetCoverageDialog.attachments,
+                        "No attachments are available for this visit."
+                      )
+                    ) : (
+                      <p className="text-sm text-gray-500">No attachments available.</p>
+                    )}
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
 
@@ -1903,7 +1950,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Visit Date</label>
                       <input
                         type="date"
-                        disabled={visitEditVisitDate}
+                        disabled={Boolean(visitEditVisitDate)}
                         value={visitEditVisitDate}
                         onChange={(e) => setVisitEditVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
