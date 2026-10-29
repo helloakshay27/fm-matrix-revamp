@@ -24,6 +24,20 @@ interface EmbeddedConfig {
 let cachedBaseUrl: string | null = null;
 let cachedOrgId: string | null = null;
 
+// The hosts a link may name as the backend. An address carried in a link (?backend_url=…) is saved as this browser's base URL and then
+// receives the token, so only Lockated's own hosts are taken from one (and this machine, for development).
+const TRUSTED_BACKENDS = ["lockated.com", "gophygital.work", "panchshil.com"];
+export const isTrustedBackend = (url: string): boolean => {
+  try {
+    const u = new URL(url);
+    const local = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    if (u.protocol !== "https:" && !(local && u.protocol === "http:")) return false;
+    return local || TRUSTED_BACKENDS.some((d) => u.hostname === d || u.hostname.endsWith(`.${d}`));
+  } catch {
+    return false;
+  }
+};
+
 export const getBackendUrlFromQuery = (): string | null => {
   const backendUrl = new URLSearchParams(window.location.search)
     .get("backend_url")
@@ -34,6 +48,10 @@ export const getBackendUrlFromQuery = (): string | null => {
     ? backendUrl
     : `https://${backendUrl}`;
   const baseUrl = normalizedUrl.replace(/\/+$/, "");
+  if (!isTrustedBackend(baseUrl)) {
+    console.warn("⚠️ Ignoring backend_url, which is not one of Lockated's hosts:", baseUrl);
+    return null;
+  }
 
   saveBaseUrl(baseUrl);
   return baseUrl;
@@ -172,25 +190,59 @@ export const apiHostFor = (hostname: string): string => {
   return "https://fm-uat-api.lockated.com";
 };
 
+// What was resolved for an organisation is kept for this tab (sessionStorage): the embedding product reloads this app in its frame on
+// every menu click, which used to ask Lockated's directory again each time.
+const SESSION_KEY = "embedded_base_url_";
+const rememberSessionBase = (orgId: string, url: string): void => {
+  try { sessionStorage.setItem(SESSION_KEY + orgId, url); } catch { /* storage unavailable: it is simply asked again */ }
+};
+const readSessionBase = (orgId: string): string | null => {
+  try {
+    const kept = sessionStorage.getItem(SESSION_KEY + orgId);
+    return kept && isTrustedBackend(kept) ? kept : null;
+  } catch {
+    return null;
+  }
+};
+// Requests that arrive while the directory is being asked (a page makes several at once) share its one answer.
+const pending = new Map<string, Promise<string>>();
+
 /**
  * Resolve base URL dynamically based on org_id
- * This makes an API call to get the organization's backend_domain
+ * The embedding product's own word (?backend_url) first, then what this tab already resolved, else one directory lookup — however
+ * many requests ask at once.
  */
-export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
+export const resolveBaseUrlByOrgId = (orgId: string): Promise<string> => {
   // The embedding product says which backend it is (?backend_url=…): nothing to look up
   const backendUrl = getBackendUrlFromQuery();
   if (backendUrl) {
     cachedBaseUrl = backendUrl;
     cachedOrgId = orgId;
-    return backendUrl;
+    return Promise.resolve(backendUrl);
   }
 
   // Return cached URL if org_id matches
   if (cachedBaseUrl && cachedOrgId === orgId) {
     console.warn("📦 Using cached base URL for org_id:", orgId, cachedBaseUrl);
-    return cachedBaseUrl;
+    return Promise.resolve(cachedBaseUrl);
   }
 
+  const kept = readSessionBase(orgId);
+  if (kept) {
+    cachedBaseUrl = kept;
+    cachedOrgId = orgId;
+    return Promise.resolve(kept);
+  }
+
+  let asking = pending.get(orgId);
+  if (!asking) {
+    asking = lookupBaseUrl(orgId).finally(() => pending.delete(orgId));
+    pending.set(orgId, asking);
+  }
+  return asking;
+};
+
+const lookupBaseUrl = async (orgId: string): Promise<string> => {
   // The directory to ask is the page's own deployment's — and so is the API to fall back to when it cannot say: a page on the FM
   // site whose lookup fails or finds nothing must still talk to the FM API, never to Pulse's (that is where the token would
   // otherwise be sent, and what ProtectedRoute would then save as this session's base URL).
@@ -212,6 +264,7 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
 
       // Save to localStorage using auth utility (handles normalization)
       saveBaseUrl(formattedUrl);
+      rememberSessionBase(orgId, formattedUrl);
 
       console.warn("✅ Base URL resolved from backend_url:", formattedUrl);
       return formattedUrl;
@@ -232,6 +285,7 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
 
         // Save to localStorage using auth utility
         saveBaseUrl(formattedUrl);
+        rememberSessionBase(orgId, formattedUrl);
 
         console.warn("✅ Base URL resolved from organization:", formattedUrl);
         return formattedUrl;
@@ -245,6 +299,7 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
         cachedBaseUrl = formattedUrl;
         cachedOrgId = orgId;
         saveBaseUrl(formattedUrl);
+        rememberSessionBase(orgId, formattedUrl);
 
         console.warn("✅ Base URL resolved from first org:", formattedUrl);
         return formattedUrl;
@@ -290,6 +345,7 @@ export const clearEmbeddedMode = (): void => {
   sessionStorage.removeItem("embedded_org_id");
   sessionStorage.removeItem("embedded_user_id");
   sessionStorage.removeItem("embedded_roles");
+  Object.keys(sessionStorage).filter((k) => k.startsWith(SESSION_KEY)).forEach((k) => sessionStorage.removeItem(k));
   cachedBaseUrl = null;
   cachedOrgId = null;
 };
