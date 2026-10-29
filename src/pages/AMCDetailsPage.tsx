@@ -205,6 +205,7 @@ interface VisitLogEntry {
   status?: string;
   remarks?: string | null;
   assets_covered?: string[] | null;
+  asset_names?: string | null;
   technician?: Technician | null;
   attachment?: VisitAttachment | null;
   attachments?: VisitAttachment[];
@@ -299,6 +300,7 @@ export const AMCDetailsPage = () => {
   const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [coveredAssetsDialogNames, setCoveredAssetsDialogNames] = useState<string[] | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
   const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
   const [visitEditVisitDate, setVisitEditVisitDate] = useState("");
@@ -315,6 +317,29 @@ export const AMCDetailsPage = () => {
   const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
+
+  const getVisitAssetNames = (visit: any): string[] => {
+    const names = typeof visit.asset_names === "string"
+      ? visit.asset_names.split(",").map((name: string) => name.trim()).filter(Boolean)
+      : [];
+    if (names.length > 0) return names;
+
+    const coveredIds: unknown[] = Array.isArray(visit.assets_covered)
+      ? visit.assets_covered
+      : Array.isArray(visit.asset_ids)
+        ? visit.asset_ids
+        : Array.isArray(visit.amc_asset_ids)
+          ? visit.amc_asset_ids
+          : [];
+    const amcAssets = (amcData as any)?.amc_assets ?? [];
+
+    return coveredIds.map((id) => {
+      const asset = amcAssets.find((candidate: any) =>
+        String(candidate.asset_id ?? candidate.id) === String(id)
+      );
+      return asset?.asset_name || `Asset ${String(id)}`;
+    });
+  };
 
   const downloadVisitAttachment = async (url: string, name: string) => {
     try {
@@ -1643,15 +1668,24 @@ export const AMCDetailsPage = () => {
                                   return item.scheduled_time || "—";
                                 case "actual_visit_date":
                                   return item.actual_visit_date || "—";
-                                case "assets_covered":
-                                  return Array.isArray(item.assets_covered) &&
-                                    item.assets_covered.length > 0 ? (
-                                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                      {item.assets_covered.length}
-                                    </span>
+                                case "assets_covered": {
+                                  const assetsCovered = Array.isArray(item.assets_covered)
+                                    ? item.assets_covered
+                                    : [];
+                                  const assetNames = getVisitAssetNames(item);
+                                  return assetsCovered.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setCoveredAssetsDialogNames(assetNames)}
+                                      aria-label={`View ${assetsCovered.length} covered assets`}
+                                      className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 hover:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                    >
+                                      {assetsCovered.length}
+                                    </button>
                                   ) : (
                                     "—"
                                   );
+                                }
                                 case "technician":
                                   return item.technician_name || "—";
                                 case "remarks":
@@ -1772,11 +1806,17 @@ export const AMCDetailsPage = () => {
                                   item.asset_ids || item.amc_asset_ids || [];
                                 const total = amcDetails?.amc_assets?.length ?? 0;
                                 const covered = ids.length;
+                                const assetNames = getVisitAssetNames(item);
                                 return covered > 0 ? (
-                                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-light text-brand">
+                                  <button
+                                    type="button"
+                                    onClick={() => setCoveredAssetsDialogNames(assetNames)}
+                                    aria-label={`View ${covered} covered assets`}
+                                    className="inline-flex items-center justify-center rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                                  >
                                     {covered}
                                     {total > 0 ? ` / ${total}` : ""}
-                                  </span>
+                                  </button>
                                 ) : (
                                   <span className="text-gray-400 text-sm">—</span>
                                 );
@@ -1805,6 +1845,35 @@ export const AMCDetailsPage = () => {
                     ))()
                 )}
             </DetailCard>
+
+            <Dialog
+              open={coveredAssetsDialogNames !== null}
+              onOpenChange={(open) => {
+                if (!open) setCoveredAssetsDialogNames(null);
+              }}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Assets Covered</DialogTitle>
+                </DialogHeader>
+                {coveredAssetsDialogNames?.length ? (
+                  <ul className="space-y-2 py-2">
+                    {coveredAssetsDialogNames.map((name, index) => (
+                      <li
+                        key={`${name}-${index}`}
+                        className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-800"
+                      >
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="py-2 text-sm text-gray-500">
+                    No asset names are available for this visit.
+                  </p>
+                )}
+              </DialogContent>
+            </Dialog>
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
