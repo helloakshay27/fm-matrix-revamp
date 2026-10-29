@@ -1984,6 +1984,9 @@ const ViAuditManagementDashboardPage = lazy(
 const ViIncidentManagementDashboardPage = lazy(
   () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
 );
+const ViInspectionManagementDashboardPage = lazy(
+  () => import("./pages/vi-inspection/dashboard/ViInspectionManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -5023,6 +5026,10 @@ function App() {
                           <Route
                             path="/vi-incident/management-dashboard"
                             element={<ViIncidentManagementDashboardPage />}
+                          />
+                          <Route
+                            path="/vi-inspection/management-dashboard"
+                            element={<ViInspectionManagementDashboardPage />}
                           />
 
                           {/* Backend Routes */}
