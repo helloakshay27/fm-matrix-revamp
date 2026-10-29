@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,9 +6,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { moduleService, CreateModulePayload } from "@/services/moduleService";
+import {
+  moduleService,
+  CreateModulePayload,
+  LockPhase,
+} from "@/services/moduleService";
 import { TextField } from "@mui/material";
 
 interface CreateModuleDialogProps {
@@ -46,8 +58,17 @@ export const CreateModuleDialog = ({
     total_billing: 2000,
     rate_type: "fixed",
     active: true,
-    phase_id: 1,
+    phase_id: undefined as number | undefined,
   });
+  const [phases, setPhases] = useState<LockPhase[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    moduleService
+      .fetchPhases()
+      .then(setPhases)
+      .catch(() => toast.error("Failed to load phases"));
+  }, [open]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -69,6 +90,10 @@ export const CreateModuleDialog = ({
       toast.error("Display name is required");
       return false;
     }
+    if (!formData.phase_id) {
+      toast.error("Phase is required");
+      return false;
+    }
     return true;
   };
 
@@ -86,7 +111,7 @@ export const CreateModuleDialog = ({
       total_billing: 2000,
       rate_type: "fixed",
       active: true,
-      phase_id: 1,
+      phase_id: undefined,
     });
     onOpenChange(false);
   };
@@ -181,6 +206,28 @@ export const CreateModuleDialog = ({
               sx={fieldStyles}
               className="sm:col-span-2"
             />
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="phase_id">Phase *</Label>
+              <Select
+                value={formData.phase_id ? String(formData.phase_id) : undefined}
+                onValueChange={(value) => {
+                  // Radix fires "" while options are still loading; ignore it
+                  if (value) handleInputChange("phase_id", Number(value));
+                }}
+              >
+                <SelectTrigger id="phase_id">
+                  <SelectValue placeholder="Select phase" />
+                </SelectTrigger>
+                <SelectContent>
+                  {phases.map((phase) => (
+                    <SelectItem key={phase.id} value={String(phase.id)}>
+                      {phase.show_name || phase.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">

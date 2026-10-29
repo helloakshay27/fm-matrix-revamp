@@ -85,7 +85,9 @@ export const RoleDashboard = () => {
       setModulesLoading(true);
       try {
         console.log("RoleDashboard: Fetching all modules...");
-        const modules = await roleService.fetchModules();
+        const modules = await roleService.fetchModules({
+          "q[lock_phase_show_name_eq]": "FM",
+        });
         console.log("RoleDashboard: Fetched modules:", modules);
         setAllModules(modules);
         await permissionService.getUserRole();
@@ -658,7 +660,7 @@ export const RoleDashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                {!isEditMode && shouldShow("Role","update")? (
+                {!isEditMode && shouldShow("Role", "update") ? (
                   <Button
                     onClick={() => setIsEditMode(true)}
                     variant="outline"

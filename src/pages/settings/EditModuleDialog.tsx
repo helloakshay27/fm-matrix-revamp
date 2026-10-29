@@ -8,11 +8,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   moduleService,
   LockModule,
+  LockPhase,
   CreateModulePayload,
 } from "@/services/moduleService";
 import {
@@ -77,8 +85,17 @@ export const EditModuleDialog = ({
     total_billing: 2000,
     rate_type: "fixed",
     active: true,
-    phase_id: 1,
+    phase_id: undefined as number | undefined,
   });
+  const [phases, setPhases] = useState<LockPhase[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    moduleService
+      .fetchPhases()
+      .then(setPhases)
+      .catch(() => toast.error("Failed to load phases"));
+  }, [open]);
 
   useEffect(() => {
     if (module) {
@@ -95,7 +112,7 @@ export const EditModuleDialog = ({
         total_billing: module.total_billing || 2000,
         rate_type: module.rate_type || "fixed",
         active: module.active,
-        phase_id: module.phase_id || 1,
+        phase_id: module.phase_id ? Number(module.phase_id) : undefined,
       });
     }
   }, [module]);
@@ -118,6 +135,10 @@ export const EditModuleDialog = ({
     }
     if (!formData.show_name.trim()) {
       toast.error("Display name is required");
+      return false;
+    }
+    if (!formData.phase_id) {
+      toast.error("Phase is required");
       return false;
     }
     return true;
@@ -321,21 +342,27 @@ export const EditModuleDialog = ({
               sx={fieldStyles}
             />
 
-            <TextField
-              label="Phase ID"
-              type="number"
-              value={formData.phase_id}
-              onChange={(e) =>
-                handleInputChange(
-                  "phase_id",
-                  parseInt(e.target.value, 10) || 1
-                )
-              }
-              inputProps={{ min: 1 }}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="phase_id">Phase *</Label>
+              <Select
+                value={formData.phase_id ? String(formData.phase_id) : undefined}
+                onValueChange={(value) => {
+                  // Radix fires "" while options are still loading; ignore it
+                  if (value) handleInputChange("phase_id", Number(value));
+                }}
+              >
+                <SelectTrigger id="phase_id">
+                  <SelectValue placeholder="Select phase" />
+                </SelectTrigger>
+                <SelectContent>
+                  {phases.map((phase) => (
+                    <SelectItem key={phase.id} value={String(phase.id)}>
+                      {phase.show_name || phase.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <TextField
               label="Rate"

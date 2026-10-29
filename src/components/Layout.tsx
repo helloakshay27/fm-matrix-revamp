@@ -250,6 +250,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "84" ||
       org_id === "1" ||
       org_id === "10" ||
+      org_id === "9" ||
+      org_id === "5" ||
+      org_id === "21" ||
+      org_id === "71" ||
       org_id === "3" ||
       org_id === "67" ||
       org_id === "63" ||
@@ -371,6 +375,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "84" ||
       org_id === "1" ||
       org_id === "10" ||
+      org_id === "9" ||
+      org_id === "5" ||
+      org_id === "21" ||
+      org_id === "71" ||
       org_id === "3" ||
       org_id === "67" ||
       org_id === "63" ||

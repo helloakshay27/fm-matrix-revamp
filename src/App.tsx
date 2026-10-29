@@ -2457,6 +2457,11 @@ const LockModuleList = lazy(() =>
     default: m.LockModuleList,
   }))
 );
+const LockPhasesList = lazy(() =>
+  import("./pages/settings/LockPhasesList").then((m) => ({
+    default: m.LockPhasesList,
+  }))
+);
 const LockSubFunctionList = lazy(() =>
   import("./pages/settings/LockSubFunctionList").then((m) => ({
     default: m.LockSubFunctionList,
@@ -4666,6 +4671,10 @@ function App() {
                             <Route
                               path="settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="settings/modules"
@@ -9785,6 +9794,10 @@ function App() {
                             <Route
                               path="/settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="/settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="/settings/account/lock-function"

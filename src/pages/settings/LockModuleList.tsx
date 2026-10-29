@@ -28,6 +28,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
+  { key: "phase", label: "Phase", sortable: true, defaultVisible: true },
   {
     key: "module_type",
     label: "Module Type",
@@ -205,6 +206,8 @@ export const LockModuleList = () => {
             {module.abbreviation || "-"}
           </Badge>
         );
+      case "phase":
+        return module.lock_phase?.name || "-";
       case "module_type":
         return module.module_type || "-";
       case "status":
