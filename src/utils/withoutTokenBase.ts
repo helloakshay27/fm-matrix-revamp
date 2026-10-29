@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { getBaseUrl } from "@/utils/auth";
+import { hasEmbeddedSession, isEmbeddedMode, resolveBaseUrlByOrgId } from "@/utils/embeddedMode";
 
 // Organization type for API response
 interface Organization {
@@ -12,6 +13,19 @@ interface Organization {
 }
 
 // Create configured axios instance
+// The directory's answer for an address, asked once however many requests want it (a page makes several at once, and this client
+// used to ask again for every one of them). A failed ask is not kept.
+const directoryAnswers = new Map<string, Promise<{ data: any }>>();
+const askDirectory = (url: string) => {
+  let answer = directoryAnswers.get(url);
+  if (!answer) {
+    answer = axios.get(url);
+    directoryAnswers.set(url, answer);
+    answer.catch(() => directoryAnswers.delete(url));
+  }
+  return answer;
+};
+
 export const baseClient = axios.create({
   headers: {
     "Content-Type": "application/json",
@@ -78,6 +92,13 @@ baseClient.interceptors.request.use(
         console.log(
           "🔓 org_id parameter detected - using public survey access mode"
         );
+      }
+
+      // Embedded in another product (Business Genie shows PATM in a frame): the page has already worked out which backend this
+      // organisation lives on (utils/embeddedMode) — share that answer rather than asking the directory again for every request.
+      if (hasOrgIdParam && (isEmbeddedMode() || hasEmbeddedSession())) {
+        config.baseURL = await resolveBaseUrlByOrgId(String(organizationId || orgId));
+        return config;
       }
 
       // Store token in session storage if available
@@ -176,7 +197,7 @@ baseClient.interceptors.request.use(
 
       // Fetch organizations from API
       console.log("📡 Fetching organizations from:", apiUrl);
-      const response = await axios.get(apiUrl);
+      const response = await askDirectory(apiUrl);
       const { organizations, backend_url } = response.data;
 
       // Priority 1: Use backend_url from API response (highest priority)
