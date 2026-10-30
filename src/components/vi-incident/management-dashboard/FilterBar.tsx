@@ -160,7 +160,10 @@ export function FilterBar({ persona, value, options, onChange, onApply, onReset 
 
   return (
     <div className="cm-filter-bar">
-      <MultiSelect label="Circle" plural="Circles" value={value.circleIds} options={options.circles} loading={options.loading} onChange={(circleIds) => onChange({ circleIds })} required={required} width={210} />
+      {/* Circle is only offered in the Circle Manager view; Pan India always covers every circle. */}
+      {persona === "circle" ? (
+        <MultiSelect label="Circle" plural="Circles" value={value.circleIds} options={options.circles} loading={options.loading} onChange={(circleIds) => onChange({ circleIds })} required={required} width={210} />
+      ) : null}
       <MultiSelect label="Function" plural="Functions" value={value.functionIds} options={options.functions} loading={options.loading} onChange={(functionIds) => onChange({ functionIds })} required={required} />
       <SingleSelect label="Personnel Area / Zone" allLabel="All Zones" value={value.zoneId} options={options.zones} onChange={(zoneId) => onChange({ zoneId })} />
       <SingleSelect label="Work Location" allLabel="All Work Locations" value={value.workLocationId} options={options.workLocations} onChange={(workLocationId) => onChange({ workLocationId })} searchable />
