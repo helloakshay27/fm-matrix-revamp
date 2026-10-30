@@ -304,6 +304,14 @@ export const AMCDetailsPage = () => {
     names: string[];
     coveredIds: string[];
     attachments: VisitAttachment[];
+    assets: Array<{
+      asset_id: number | string | null;
+      name?: string | null;
+      code?: string | null;
+      documents: VisitAttachment[];
+    }>;
+    totalAssetCount: number;
+    loading: boolean;
   } | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
   const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
@@ -314,6 +322,7 @@ export const AMCDetailsPage = () => {
   const [visitEditStatus, setVisitEditStatus] = useState("");
   const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
   const [visitEditDocuments, setVisitEditDocuments] = useState<File[]>([]);
+  const [assetDocumentsById, setAssetDocumentsById] = useState<Record<number, File[]>>({});
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
@@ -434,14 +443,14 @@ export const AMCDetailsPage = () => {
     );
   };
 
-  const openAssetCoverageDialog = (visit: any) => {
-    const names = getVisitAssetNames(visit);
-    const attachments: VisitAttachment[] = [
+  const openAssetCoverageDialog = async (visit: any) => {
+    const fallbackNames = getVisitAssetNames(visit);
+    const fallbackAttachments: VisitAttachment[] = [
       ...(Array.isArray(visit.attachments) ? visit.attachments : []),
       ...(visit.attachment ? [visit.attachment] : []),
     ];
 
-    const coveredIds: string[] = (
+    const fallbackCoveredIds: string[] = (
       Array.isArray(visit.assets_covered)
         ? visit.assets_covered
         : Array.isArray(visit.asset_ids)
@@ -451,7 +460,97 @@ export const AMCDetailsPage = () => {
             : []
     ).map((id: unknown) => String(id));
 
-    setAssetCoverageDialog({ names, coveredIds, attachments });
+    const detailsAssetCount = Number((amcData as any)?.amc_assets?.length ?? 0);
+    const totalAssetCount = detailsAssetCount > 0 ? detailsAssetCount : (fallbackNames.length || fallbackCoveredIds.length || 1);
+    const visitId = visit?.id ?? null;
+    setAssetCoverageDialog({
+      names: fallbackNames,
+      coveredIds: fallbackCoveredIds,
+      attachments: fallbackAttachments,
+      assets: [],
+      totalAssetCount,
+      loading: !!visitId,
+    });
+
+    if (!visitId) return;
+
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      if (!baseUrl || !token) {
+        setAssetCoverageDialog({
+          names: fallbackNames,
+          coveredIds: fallbackCoveredIds,
+          attachments: fallbackAttachments,
+          assets: [],
+          totalAssetCount: Number((amcData as any)?.amc_assets?.length ?? 0) || (fallbackNames.length || fallbackCoveredIds.length || 1),
+          loading: false,
+        });
+        return;
+      }
+
+      const res = await fetch(
+        `https://${baseUrl}/pms/asset_amcs/get_amc_history.json?id=${visitId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error(`History fetch failed: ${res.status}`);
+
+      const data = await res.json();
+      const historyAssets = Array.isArray(data?.assets) ? data.assets : [];
+      const resolvedAssets = historyAssets.map((asset: any) => ({
+        asset_id: asset?.asset_id ?? asset?.id ?? null,
+        name: asset?.name || asset?.asset_name || "Unknown Asset",
+        code: asset?.code || asset?.asset_code || null,
+        documents: Array.isArray(asset?.documents)
+          ? asset.documents.map((doc: any) => ({
+              id: doc?.id,
+              document_url: decodeURIComponent(String(doc?.url || doc?.document_url || doc?.document || "")),
+              document: decodeURIComponent(String(doc?.url || doc?.document_url || doc?.document || "")),
+              filename: doc?.filename || doc?.document_name || getFileNameFromUrl(doc?.url || doc?.document_url || doc?.document || "") || `asset-doc-${doc?.id ?? "unknown"}`,
+              document_file_name: doc?.document_name || doc?.filename || getFileNameFromUrl(doc?.url || doc?.document_url || doc?.document || "") || `asset-doc-${doc?.id ?? "unknown"}`,
+              created_at: doc?.created_at,
+            }))
+          : [],
+      }));
+
+      const resolvedAttachments = Array.isArray(data?.documents)
+        ? data.documents.map((doc: any) => ({
+            id: doc?.id,
+            document_url: decodeURIComponent(String(doc?.url || doc?.document_url || doc?.document || "")),
+            document: decodeURIComponent(String(doc?.url || doc?.document_url || doc?.document || "")),
+            filename: doc?.filename || doc?.document_name || getFileNameFromUrl(doc?.url || doc?.document_url || doc?.document || "") || `history-doc-${doc?.id ?? "unknown"}`,
+            document_file_name: doc?.document_name || doc?.filename || getFileNameFromUrl(doc?.url || doc?.document_url || doc?.document || "") || `history-doc-${doc?.id ?? "unknown"}`,
+            created_at: doc?.created_at,
+          }))
+        : [];
+
+      const detailsAssetCount = Number((amcData as any)?.amc_assets?.length ?? 0);
+      const totalAssetCount = detailsAssetCount > 0 ? detailsAssetCount : (resolvedAssets.length || fallbackNames.length || fallbackCoveredIds.length || 1);
+      setAssetCoverageDialog({
+        names: resolvedAssets.map((asset) => asset.name || `Asset ${asset.asset_id ?? ""}`),
+        coveredIds: resolvedAssets.map((asset) => String(asset.asset_id ?? "")),
+        attachments: resolvedAttachments,
+        assets: resolvedAssets,
+        totalAssetCount,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("AMC history fetch failed:", error);
+      setAssetCoverageDialog({
+        names: fallbackNames,
+        coveredIds: fallbackCoveredIds,
+        attachments: fallbackAttachments,
+        assets: [],
+        totalAssetCount: Number((amcData as any)?.amc_assets?.length ?? 0) || (fallbackNames.length || fallbackCoveredIds.length || 1),
+        loading: false,
+      });
+    }
   };
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
@@ -594,6 +693,7 @@ export const AMCDetailsPage = () => {
     setVisitEditStatus((visit as any).status || "");
     setVisitEditOriginalStatus((visit as any).status || "");
     setVisitEditDocuments([]);
+    setAssetDocumentsById({});
     const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
     setVisitEditSelectedAssetIds(assetIds);
     fetchVisitTechnicians();
@@ -624,6 +724,12 @@ export const AMCDetailsPage = () => {
       );
       visitEditDocuments.forEach((file) => {
         formData.append("amc_history[documents][]", file);
+      });
+      Object.entries(assetDocumentsById).forEach(([assetId, files]) => {
+        if (!files?.length) return;
+        files.forEach((file) => {
+          formData.append(`asset_documents[${assetId}][]`, file);
+        });
       });
       const res = await fetch(
         `https://${baseUrl}/pms/asset_amcs/amc_history_update.json`,
@@ -1892,12 +1998,97 @@ export const AMCDetailsPage = () => {
                   <DialogTitle>Assets Covered</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-5 py-2">
-                  <div>
-                    {(() => {
-                      const allAssets: any[] = (amcData as any)?.amc_assets ?? [];
-                      const coveredIds = assetCoverageDialog?.coveredIds ?? [];
-                      if (!allAssets.length) {
-                        return assetCoverageDialog?.names.length ? (
+                  {assetCoverageDialog?.loading ? (
+                    <p className="text-sm text-gray-500">Loading asset details...</p>
+                  ) : (
+                    <>
+                      <div>
+                        {assetCoverageDialog?.assets?.length ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
+                                Assets Covered
+                              </h3>
+                              <span className="text-sm font-semibold text-brand bg-brand-light px-2.5 py-0.5 rounded-full">
+                                {assetCoverageDialog.assets.length} covered
+                              </span>
+                            </div>
+
+                            <div className="border border-gray-200 rounded-md overflow-hidden">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow className="bg-[#EDEAE3]">
+                                    <TableHead className="w-20 font-semibold text-[#1a1a1a] text-xs">Covered</TableHead>
+                                    <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                                    <TableHead className="font-semibold text-[#1a1a1a] text-xs">Equipment ID</TableHead>
+                                    <TableHead className="font-semibold text-[#1a1a1a] text-xs">Attachments</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody className="bg-white">
+                                  {assetCoverageDialog.assets.map((asset, index) => (
+                                    <TableRow key={`${asset.asset_id ?? index}`} className="align-top border-b border-gray-100 last:border-b-0">
+                                      <TableCell className="w-20 py-3">
+                                        <input
+                                          type="checkbox"
+                                          checked={true}
+                                          readOnly
+                                          disabled
+                                          className="w-4 h-4 accent-brand cursor-default"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="py-3 text-sm text-gray-900">
+                                        {asset.name || "Unknown Asset"}
+                                      </TableCell>
+                                      <TableCell className="py-3 text-sm text-gray-600">
+                                        {asset.code || "—"}
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        {asset.documents.length ? (
+                                          <div className="flex flex-col gap-2 min-w-[180px]">
+                                            {asset.documents.map((doc, docIndex) => {
+                                              const url = doc.document_url || doc.document || "";
+                                              const fileName =
+                                                doc.filename ||
+                                                doc.document_file_name ||
+                                                getFileNameFromUrl(url) ||
+                                                `Attach ${docIndex + 1}`;
+
+                                              return (
+                                                <div
+                                                  key={`${asset.asset_id ?? index}-${docIndex}`}
+                                                  className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1.5"
+                                                >
+                                                  <span className="flex min-w-0 items-center gap-2 text-xs text-gray-700">
+                                                    <FileText className="w-3.5 h-3.5 flex-shrink-0 text-gray-500" />
+                                                    <span className="truncate">{fileName}</span>
+                                                  </span>
+                                                  <button
+                                                    type="button"
+                                                    title="Download"
+                                                    className="text-gray-500 hover:text-brand flex-shrink-0"
+                                                    onClick={() => {
+                                                      if (url) {
+                                                        downloadVisitAttachment(url, fileName);
+                                                      }
+                                                    }}
+                                                  >
+                                                    <Download className="w-3.5 h-3.5" />
+                                                  </button>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        ) : (
+                                          <span className="text-sm text-gray-500">No attachment</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        ) : assetCoverageDialog?.names?.length ? (
                           <>
                             <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
                               Asset Names
@@ -1917,94 +2108,31 @@ export const AMCDetailsPage = () => {
                           <p className="text-sm text-gray-500">
                             No asset names are available for this visit.
                           </p>
-                        );
-                      }
-                      const isCovered = (a: any) =>
-                        coveredIds.includes(String(a.asset_id ?? a.id));
-                      const coveredAssets = allAssets.filter(isCovered);
-                      const coveredCount = coveredAssets.length;
-                      if (!coveredCount) {
-                        return (
-                          <p className="text-sm text-gray-500">
-                            No assets are covered for this visit.
-                          </p>
-                        );
-                      }
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
-                              Assets
-                            </h3>
-                            <span className="text-sm font-semibold text-brand bg-brand-light px-2.5 py-0.5 rounded-full">
-                              {coveredCount} of {allAssets.length} covered
-                            </span>
-                          </div>
-                          <div className="border border-gray-200 rounded-md overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="bg-[#EDEAE3]">
-                                  <TableHead className="w-24 font-semibold text-[#1a1a1a] text-xs">Asset Covered</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Equipment Id</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody className="bg-white">
-                                {coveredAssets.map((asset) => {
-                                  const checked = true;
-                                  return (
-                                    <TableRow
-                                      key={asset.id}
-                                      className={`border-b border-gray-100 ${checked ? "bg-[#FFF8F8]" : ""}`}
-                                    >
-                                      <TableCell className="w-24">
-                                        <input
-                                          type="checkbox"
-                                          className="w-4 h-4 accent-[#C72030]"
-                                          checked={checked}
-                                          disabled
-                                          readOnly
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-sm text-gray-900 py-2">{asset.asset_name || "—"}</TableCell>
-                                      <TableCell className="text-sm text-gray-600 py-2">{asset.asset_code || "—"}</TableCell>
-                                      <TableCell className="py-2">
-                                        <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${asset.asset_status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                                          {asset.asset_status || "—"}
-                                        </span>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                        )}
+                      </div>
 
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
-                      Attachments
-                    </h3>
-                    {assetCoverageDialog ? (
-                      renderAttachmentItems(
-                        assetCoverageDialog.attachments,
-                        "No attachments are available for this visit."
-                      )
-                    ) : (
-                      <p className="text-sm text-gray-500">No attachments available.</p>
-                    )}
-                  </div>
+                      <div>
+                        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                          Visit Attachments
+                        </h3>
+                        {assetCoverageDialog ? (
+                          renderAttachmentItems(
+                            assetCoverageDialog.attachments,
+                            "No visit-level attachments are available for this visit."
+                          )
+                        ) : (
+                          <p className="text-sm text-gray-500">No attachments available.</p>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="border-b border-gray-100 pb-3">
                   <DialogTitle className="text-[#1a1a1a] font-semibold text-base uppercase tracking-wide">
                     Edit Visit Log
@@ -2130,7 +2258,7 @@ export const AMCDetailsPage = () => {
                                 className="text-xs text-red-500 hover:underline flex-shrink-0"
                                 onClick={() => setVisitEditDocuments((prev) => prev.filter((_, idx) => idx !== i))}
                               >
-                                Remove
+                                x
                               </button>
                             </li>
                           ))}
@@ -2173,14 +2301,16 @@ export const AMCDetailsPage = () => {
                                       }
                                     />
                                   </TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
                                   <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Code</TableHead>
                                   <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Docs</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody className="bg-white">
                                 {items.map((asset: any) => {
                                   const checked = visitEditSelectedAssetIds.includes(asset.asset_id);
+                                  const assetFiles = assetDocumentsById[asset.asset_id] || [];
                                   return (
                                     <TableRow
                                       key={asset.id}
@@ -2209,6 +2339,43 @@ export const AMCDetailsPage = () => {
                                         <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${asset.asset_status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                                           {asset.asset_status || "—"}
                                         </span>
+                                      </TableCell>
+                                      <TableCell className="py-2 min-w-[220px]" onClick={(e) => e.stopPropagation()}>
+                                        <div className="space-y-2">
+                                          <input
+                                            type="file"
+                                            multiple
+                                            className="block w-full text-xs text-gray-600 file:mr-2 file:rounded file:border-0 file:bg-[#C72030] file:px-2 file:py-1 file:text-xs file:font-medium file:text-white"
+                                            onChange={(e) => {
+                                              const files = Array.from(e.target.files || []);
+                                              if (!files.length) return;
+                                              setAssetDocumentsById((prev) => ({
+                                                ...prev,
+                                                [asset.asset_id]: [...(prev[asset.asset_id] || []), ...files],
+                                              }));
+                                              e.target.value = "";
+                                            }}
+                                          />
+                                          {assetFiles.length > 0 && (
+                                            <ul className="space-y-1">
+                                              {assetFiles.map((file, idx) => (
+                                                <li key={`${asset.asset_id}-${idx}`} className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-700">
+                                                  <span className="truncate">{file.name}</span>
+                                                  <button
+                                                    type="button"
+                                                    className="text-red-500 hover:underline"
+                                                    onClick={() => setAssetDocumentsById((prev) => ({
+                                                      ...prev,
+                                                      [asset.asset_id]: (prev[asset.asset_id] || []).filter((_, i) => i !== idx),
+                                                    }))}
+                                                  >
+                                                    x
+                                                  </button>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          )}
+                                        </div>
                                       </TableCell>
                                     </TableRow>
                                   );
