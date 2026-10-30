@@ -1,13 +1,14 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 /** Dev-only. The FM session token is signed for another host and vi-uat returns 401.
- *  The Postman collection already has a bearer that host accepts. Read it here so it
- *  never lands in the client bundle. */
-const readViAuditBearer = () => {
+ * Prefer VI_AUDIT_DASHBOARD_BEARER from .env.local. Fall back to a Postman collection
+ * file if present. Never ship the token in the client bundle. */
+const readViAuditBearer = (envToken = "") => {
+  if (envToken.trim()) return envToken.trim();
   try {
     const file = path.resolve(__dirname, "audit dashboardd.json");
     const collection = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -25,7 +26,11 @@ const readViAuditBearer = () => {
 };
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const viAuditBearer = readViAuditBearer(env.VI_AUDIT_DASHBOARD_BEARER || process.env.VI_AUDIT_DASHBOARD_BEARER || "");
+
+  return {
   server: {
     host: "::",
     port: 5173,
@@ -33,11 +38,11 @@ export default defineConfig(({ mode }) => ({
       "/vi-audit-dashboard": {
         target: "https://vi-uat-api.gophygital.work",
         changeOrigin: true,
+        secure: true,
         rewrite: (requestPath) => requestPath.replace(/^\/vi-audit-dashboard/, ""),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            const token = readViAuditBearer();
-            if (token) proxyReq.setHeader("Authorization", `Bearer ${token}`);
+            if (viAuditBearer) proxyReq.setHeader("Authorization", `Bearer ${viAuditBearer}`);
           });
         },
       },
@@ -143,4 +148,5 @@ export default defineConfig(({ mode }) => ({
   },
   // Disable caching in development
   cacheDir: mode === "development" ? ".vite-no-cache" : ".vite",
-}));
+};
+});

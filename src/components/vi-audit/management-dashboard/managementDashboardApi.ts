@@ -65,12 +65,15 @@ const getJson = async (path: string, params: Record<string, string | string[]>) 
   });
   const query = search.toString();
   // Localhost logins are issued by the FM host. vi-uat rejects that JWT with 401.
-  // In dev, the Vite proxy attaches the collection bearer and calls vi-uat server-side.
-  const url = import.meta.env.DEV
+  // On localhost, the Vite proxy attaches VI_AUDIT_DASHBOARD_BEARER and calls vi-uat.
+  const useDevProxy =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const url = useDevProxy
     ? `/vi-audit-dashboard/audit_dashboard/${path}?${query}`
     : `${AUDIT_DASHBOARD_BASE}/audit_dashboard/${path}?${query}`;
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (!import.meta.env.DEV) headers.Authorization = getAuthHeader();
+  if (!useDevProxy) headers.Authorization = getAuthHeader();
   const response = await fetch(url, { headers });
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return response.json();
