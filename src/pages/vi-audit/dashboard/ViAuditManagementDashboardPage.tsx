@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { AuditOverview } from "../../../components/vi-audit/management-dashboard/AuditOverview";
 import { AuditsPanel } from "../../../components/vi-audit/management-dashboard/AuditsPanel";
 import { CapaPanel } from "../../../components/vi-audit/management-dashboard/CapaPanel";
@@ -14,6 +15,7 @@ import {
   buildCharts,
   useAuditDashboardData,
   useAuditFilterOptions,
+  useRecentAudits,
   type AuditDashboardFilters,
   type ClosureRow,
   type PastTargetPlan,
@@ -106,10 +108,15 @@ export function ViAuditManagementDashboardPage() {
   const [highlight, setHighlight] = useState<string | null>(null);
   const [drill, setDrill] = useState<DrillModel | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [recentSearch, setRecentSearch] = useState("");
+  const debouncedRecentSearch = useDebounce(recentSearch, 400);
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
   const options = useAuditFilterOptions();
-  const dashboard = useAuditDashboardData(applied);
+  // Circle Manager only loads after a circle is applied; Pan India loads for all circles.
+  const sectionReady = persona === "admin" || applied.clusterIds.length > 0;
+  const dashboard = useAuditDashboardData(applied, sectionReady);
+  const recentAudits = useRecentAudits(applied, debouncedRecentSearch, sectionReady);
   const charts = buildCharts(dashboard);
 
   const scope = SCOPES[persona];
@@ -127,14 +134,24 @@ export function ViAuditManagementDashboardPage() {
     ids.length === 0 ? "" : ids.length === 1 ? `${list.find((item) => item.id === ids[0])?.name ?? ""} ${singular}` : `${ids.length} ${plural}`;
   const circleLabel = scopeLabel(options.circles, applied.clusterIds, "Circle", "Circles");
   const zoneLabel = scopeLabel(options.zones, applied.zoneIds, "Zone", "Zones");
-  const title = `Audit · ${circleLabel || "Pan India View"}${zoneLabel ? ` · ${zoneLabel}` : ""}`;
+  const title =
+    persona === "admin"
+      ? `Audit · Pan India View${zoneLabel ? ` · ${zoneLabel}` : ""}`
+      : `Audit · ${circleLabel || "Circle Manager View"}${zoneLabel ? ` · ${zoneLabel}` : ""}`;
 
   const switchPersona = (next: Persona) => {
     setPersona(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (next === "admin") {
-      setFilters((current) => ({ ...current, clusterIds: [] }));
-      setApplied((current) => (current.clusterIds.length ? { ...current, clusterIds: [] } : current));
+      // Pan India section: clear circle filters and reload nationwide.
+      const nextFilters = { ...filters, clusterIds: [] as string[] };
+      setFilters(nextFilters);
+      setApplied({ ...applied, clusterIds: [] });
+      return;
     }
+    // Circle Manager section: wait for a circle selection + Apply before loading.
+    setFilters((current) => ({ ...current, clusterIds: [] }));
+    setApplied((current) => ({ ...current, clusterIds: [] }));
   };
 
   const jumpTo = (panel: string, group: string) => {
@@ -196,45 +213,63 @@ export function ViAuditManagementDashboardPage() {
         <div className="page-hd">
           <div>
             <h2>{title}</h2>
+            {persona === "circle" && !sectionReady && (
+              <div className="sub">Select a circle and click Apply to open the Circle Manager dashboard</div>
+            )}
           </div>
         </div>
-        <AuditOverview
-          kpi={kpi}
-          closure={dashboard.closure}
-          loading={loading}
-          activeGroup={activeGroup}
-          onJump={jumpTo}
-          onCircle={(row) => setDrill(closureDrill(row))}
-        />
-        <AuditsPanel
-          highlighted={highlight === "acc-audits"}
-          loading={loading}
-          auditFunc={charts.auditFunc}
-          auditCircle={charts.auditCircle}
-          recent={dashboard.recent}
-          recentTotal={dashboard.recentTotal}
-          onAudit={(audit) => setDrill(recentDrill(audit))}
-        />
-        <ObservationsPanel
-          highlighted={highlight === "acc-obs"}
-          loading={loading}
-          obsFunc={charts.obsFunc}
-          obsCircle={charts.obsCircle}
-          journeyByCircle={dashboard.journeyByCircle}
-          journeyByFunction={dashboard.journeyByFunction}
-        />
-        <CapaPanel
-          highlighted={highlight === "acc-capa"}
-          loading={loading}
-          capaStatus={charts.capaStatus}
-          capaAging={charts.capaAging}
-          capaOverdue={charts.capaOverdue}
-          ageing={dashboard.ageing}
-          owners={dashboard.owners}
-          pastTarget={dashboard.pastTarget}
-          pastTargetTotal={dashboard.pastTargetTotal}
-          onPlan={(plan) => setDrill(planDrill(plan))}
-        />
+        {!sectionReady ? (
+          <div className="card" style={{ padding: "36px 24px", textAlign: "center" }}>
+            <div className="card-title">Circle Manager</div>
+            <div className="card-sub" style={{ marginTop: 8 }}>
+              Pick one or more circles in the filter bar, then Apply to load that circle’s audit snapshot, charts and CAPA lists.
+            </div>
+          </div>
+        ) : (
+          <>
+            <AuditOverview
+              kpi={kpi}
+              closure={dashboard.closure}
+              loading={loading}
+              activeGroup={activeGroup}
+              onJump={jumpTo}
+              onCircle={(row) => setDrill(closureDrill(row))}
+            />
+            <AuditsPanel
+              highlighted={highlight === "acc-audits"}
+              loading={loading}
+              auditFunc={charts.auditFunc}
+              auditCircle={charts.auditCircle}
+              recent={recentAudits.audits}
+              recentTotal={recentAudits.total}
+              recentLoading={recentAudits.loading}
+              recentSearch={recentSearch}
+              onRecentSearchChange={setRecentSearch}
+              onAudit={(audit) => setDrill(recentDrill(audit))}
+            />
+            <ObservationsPanel
+              highlighted={highlight === "acc-obs"}
+              loading={loading}
+              obsFunc={charts.obsFunc}
+              obsCircle={charts.obsCircle}
+              journeyByCircle={dashboard.journeyByCircle}
+              journeyByFunction={dashboard.journeyByFunction}
+            />
+            <CapaPanel
+              highlighted={highlight === "acc-capa"}
+              loading={loading}
+              capaStatus={charts.capaStatus}
+              capaStatusFunc={charts.capaStatusFunc}
+              capaAging={charts.capaAging}
+              capaOverdue={charts.capaOverdue}
+              ageing={dashboard.ageing}
+              owners={dashboard.owners}
+              pastTarget={dashboard.pastTarget}
+              pastTargetTotal={dashboard.pastTargetTotal}
+              onPlan={(plan) => setDrill(planDrill(plan))}
+            />
+          </>
+        )}
       </main>
 
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />

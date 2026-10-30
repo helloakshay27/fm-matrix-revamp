@@ -813,6 +813,7 @@
 .vad .chart-wrap{position:relative;height:220px;width:100%;max-width:100%;min-width:0;overflow:hidden}
 .vad .chart-wrap.small{height:160px}
 .vad .chart-wrap.tall{height:280px}
+.vad .chart-wrap.x-tall{height:360px}
 .vad .chart-wrap canvas{max-width:100%!important}
 
 /* Donut w/ center label */

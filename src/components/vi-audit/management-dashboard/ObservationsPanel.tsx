@@ -21,8 +21,10 @@ export function ObservationsPanel({ highlighted, loading, obsFunc, obsCircle, jo
           <div className="acc-sub">What was observed, where, and how far each observation has progressed</div>
         </div>
       </div>
-      <div className="g g2">
+      <div className="g">
         <ChartCard title="Observations by Function" sub="Observations, CAPA assigned and CAPA closed per function" spec={obsFunc ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !obsFunc} />
+      </div>
+      <div className="g" style={{ marginTop: 16 }}>
         <ChartCard title="Observations by Circle" sub="Observations, CAPA assigned and CAPA closed per circle" spec={obsCircle ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !obsCircle} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
