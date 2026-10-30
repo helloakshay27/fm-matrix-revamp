@@ -1,59 +1,52 @@
 import { useRef, useState } from "react";
 import { ActionPlansPanel } from "../../../components/vi-inspection/management-dashboard/ActionPlansPanel";
-import { AnalyticsModal } from "../../../components/vi-inspection/management-dashboard/AnalyticsModal";
-import { ChecklistPanel } from "../../../components/vi-inspection/management-dashboard/ChecklistPanel";
-import { DrillDrawer } from "../../../components/vi-inspection/management-dashboard/DrillDrawer";
 import { FilterBar } from "../../../components/vi-inspection/management-dashboard/FilterBar";
-import { DownloadIcon } from "../../../components/vi-inspection/management-dashboard/icons";
-import { InspectionDirectory } from "../../../components/vi-inspection/management-dashboard/InspectionDirectory";
 import { InspectionOverview } from "../../../components/vi-inspection/management-dashboard/InspectionOverview";
-import { InspectionsPanel } from "../../../components/vi-inspection/management-dashboard/InspectionsPanel";
 import { ToastHost } from "../../../components/vi-inspection/management-dashboard/InfoButton";
-import { MyDashboard } from "../../../components/vi-inspection/management-dashboard/MyDashboard";
 import { ShellBanner } from "../../../components/vi-inspection/management-dashboard/ShellBanner";
 import { ModuleTabs, TopBar } from "../../../components/vi-inspection/management-dashboard/TopBar";
 import "../../../components/vi-inspection/management-dashboard/inspectionDashboard.css";
+import { fmt, type ModuleKey, type Persona } from "../../../components/vi-inspection/management-dashboard/data";
 import {
-  ANALYTICS_CATALOG,
-  DRILLS,
-  ROWS,
-  SCOPES,
-  titleForFilters,
-  type DrillModel,
-  type ModuleKey,
-  type Persona,
-} from "../../../components/vi-inspection/management-dashboard/data";
+  useInspectionDashboardData,
+  useInspectionFilterOptions,
+  type InspectionDashboardFilters,
+} from "../../../components/vi-inspection/management-dashboard/viInspectionDashboardApi";
 
 interface ToastItem {
   id: number;
   message: string;
 }
 
-const DEFAULT_FROM = "2026-10-01";
-const DEFAULT_TO = "2026-10-31";
+const isoDate = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+// Default period: the current month up to today.
+const defaultFilters = (): InspectionDashboardFilters => {
+  const today = new Date();
+  return {
+    clusterIds: [],
+    functionIds: [],
+    zoneIds: [],
+    workLocationIds: [],
+    inspectionTypeIds: [],
+    dateFrom: isoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+    dateTo: isoDate(today),
+  };
+};
 
 export function ViInspectionManagementDashboardPage() {
   const [persona, setPersona] = useState<Persona>("admin");
   const [module, setModule] = useState<ModuleKey>("inspection");
-  const [title, setTitle] = useState<string>(SCOPES.admin.title);
-  const [circle, setCircle] = useState("All Circles");
-  const [zone, setZone] = useState("All Zones");
-  const [inspectionType, setInspectionType] = useState("All types");
-  const [dateFrom, setDateFrom] = useState(DEFAULT_FROM);
-  const [dateTo, setDateTo] = useState(DEFAULT_TO);
-  const [functions, setFunctions] = useState<string[]>([]);
+  // Filter bar values while editing; `applied` is what the data requests use (set on Apply / Reset).
+  const [filters, setFilters] = useState<InspectionDashboardFilters>(defaultFilters);
+  const [applied, setApplied] = useState<InspectionDashboardFilters>(filters);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [dirFilter, setDirFilter] = useState("all");
-  const [dirQuery, setDirQuery] = useState("");
-  const [drill, setDrill] = useState<DrillModel | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [savedAnalytics, setSavedAnalytics] = useState<string[]>([]);
-  const [draftAnalytics, setDraftAnalytics] = useState<string[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
-  const scope = SCOPES[persona];
+  const options = useInspectionFilterOptions();
+  const { kpi, spoc, owners, closure, loading } = useInspectionDashboardData(applied);
 
   const notify = (message: string) => {
     const id = ++toastId.current;
@@ -61,13 +54,23 @@ export function ViInspectionManagementDashboardPage() {
     window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 3000);
   };
 
-  const exportExcel = (section: string) => notify(`Excel export started — ${section}`);
+  const update = <K extends keyof InspectionDashboardFilters>(key: K) => (value: InspectionDashboardFilters[K]) =>
+    setFilters((current) => ({ ...current, [key]: value }));
+
+  // Title from the applied circles / zones: one name, a count, or Pan India when none is picked.
+  const scopeLabel = (list: { id: string; name: string }[], ids: string[], singular: string, plural: string) =>
+    ids.length === 0 ? "" : ids.length === 1 ? `${list.find((item) => item.id === ids[0])?.name ?? ""} ${singular}` : `${ids.length} ${plural}`;
+  const circleLabel = scopeLabel(options.circles, applied.clusterIds, "Circle", "Circles");
+  const zoneLabel = scopeLabel(options.zones, applied.zoneIds, "Zone", "Zones");
+  const title = `Inspection · ${circleLabel || "Pan India View"}${zoneLabel ? ` · ${zoneLabel}` : ""}`;
 
   const switchPersona = (next: Persona) => {
     setPersona(next);
-    setCircle(next === "circle" ? "Maharashtra & Goa" : "All Circles");
-    setZone("All Zones");
-    setTitle(SCOPES[next].title);
+    // Pan India has no circle filter: drop any circles picked in the Circle Manager view and reload.
+    if (next === "admin") {
+      setFilters((current) => ({ ...current, clusterIds: [] }));
+      setApplied((current) => (current.clusterIds.length ? { ...current, clusterIds: [] } : current));
+    }
   };
 
   const switchModule = (next: ModuleKey) => {
@@ -83,38 +86,48 @@ export function ViInspectionManagementDashboardPage() {
     highlightTimer.current = window.setTimeout(() => setHighlight(null), 1600);
   };
 
-  const openDrill = (key: string) => setDrill(DRILLS[key] ?? DRILLS._default);
-  const openRow = (index: number) => setDrill(ROWS[index].detail);
+  const apply = () => {
+    if (!filters.dateFrom || !filters.dateTo) {
+      notify("Select the inspection date range");
+      return;
+    }
+    if (filters.dateFrom > filters.dateTo) {
+      notify("Inspection Date From must be before Inspection Date To");
+      return;
+    }
+    if (persona === "circle" && filters.clusterIds.length === 0) {
+      notify("Select a circle");
+      return;
+    }
+    setApplied(filters);
+  };
 
   return (
     <div className="vinsp">
       <ShellBanner />
-      <TopBar persona={persona} module={module} role={scope.role} onPersona={switchPersona} onModule={switchModule} />
+      <TopBar persona={persona} module={module} role={persona === "admin" ? "Pan India" : "Circle Manager"} onPersona={switchPersona} onModule={switchModule} />
       <FilterBar
         persona={persona}
-        circle={circle}
-        zone={zone}
-        inspectionType={inspectionType}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        functions={functions}
-        onCircle={(value) => { setCircle(value); setTitle(titleForFilters(value)); }}
-        onZone={(value) => { setZone(value); setTitle(titleForFilters(circle, value)); }}
-        onInspectionType={setInspectionType}
-        onDateFrom={setDateFrom}
-        onDateTo={setDateTo}
-        onFunctions={setFunctions}
-        onApply={() => { setTitle(titleForFilters(circle)); notify(`Filters applied · dashboard refreshed for ${circle === "All Circles" ? "Pan India" : circle}`); }}
+        options={options}
+        circles={filters.clusterIds}
+        functions={filters.functionIds}
+        zones={filters.zoneIds}
+        workLocations={filters.workLocationIds}
+        inspectionTypes={filters.inspectionTypeIds}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        onCircles={update("clusterIds")}
+        onFunctions={update("functionIds")}
+        onZones={update("zoneIds")}
+        onWorkLocations={update("workLocationIds")}
+        onInspectionTypes={update("inspectionTypeIds")}
+        onDateFrom={update("dateFrom")}
+        onDateTo={update("dateTo")}
+        onApply={apply}
         onReset={() => {
-          const nextCircle = persona === "circle" ? "Maharashtra & Goa" : "All Circles";
-          setCircle(nextCircle);
-          setZone("All Zones");
-          setInspectionType("All types");
-          setDateFrom(DEFAULT_FROM);
-          setDateTo(DEFAULT_TO);
-          setFunctions([]);
-          setTitle(SCOPES[persona].title);
-          notify("Filters reset to default");
+          const next = defaultFilters();
+          setFilters(next);
+          setApplied(next);
         }}
       />
       <ModuleTabs module={module} onModule={switchModule} />
@@ -122,37 +135,15 @@ export function ViInspectionManagementDashboardPage() {
         <div className="page-hd">
           <div>
             <h2>{title}</h2>
-            <div className="sub"><span className="live-dot" />Live · Last synced 2 min ago · <span>{scope.scope}</span></div>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="tb-icon-btn" title="Export" onClick={() => exportExcel("Inspection dashboard")}><DownloadIcon /></button>
+            <div className="sub">
+              <span className="live-dot" />
+              {loading ? "Loading…" : kpi ? `Live · ${fmt(kpi.total_inspections)} inspections · ${fmt(kpi.total_observations)} observations` : "Couldn’t load inspection data"}
+            </div>
           </div>
         </div>
-        <InspectionOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDrill={openDrill} onExcel={exportExcel} />
-        <InspectionsPanel values={scope.k} highlighted={highlight === "acc-ins"} onDrill={openDrill} onExcel={exportExcel} />
-        <ChecklistPanel highlighted={highlight === "acc-chk"} onExcel={exportExcel} />
-        <ActionPlansPanel highlighted={highlight === "acc-act"} onDrill={openDrill} onExcel={exportExcel} />
-        <InspectionDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onRow={openRow} />
-        <div className="footer">Inspection Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All figures are illustrative dummy data. Checklist compliance, punch-in verification, aging, past-target-date, extension and heatmap measures are proposals derived from the Figma fields and statuses and need confirmation · October 2026</div>
+        <InspectionOverview kpi={kpi} closure={closure} loading={loading} activeGroup={activeGroup} onJump={jumpTo} />
+        <ActionPlansPanel highlighted={highlight === "acc-act"} loading={loading} spoc={spoc} owners={owners} />
       </main>
-      <main className={`content module-content${module === "mydashboard" ? " active" : ""}`}>
-        <MyDashboard
-          selected={savedAnalytics}
-          onOpenPicker={() => { setDraftAnalytics(savedAnalytics); setPickerOpen(true); }}
-          onRemove={(id) => setSavedAnalytics((current) => current.filter((item) => item !== id))}
-          onDrill={openDrill}
-        />
-      </main>
-      <AnalyticsModal
-        open={pickerOpen}
-        selected={draftAnalytics}
-        onToggle={(id) => setDraftAnalytics((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))}
-        onToggleAll={(checked) => setDraftAnalytics(checked ? ANALYTICS_CATALOG.map((item) => item.id) : [])}
-        onClear={() => setDraftAnalytics([])}
-        onApply={() => { setSavedAnalytics(draftAnalytics); setPickerOpen(false); }}
-        onClose={() => setPickerOpen(false)}
-      />
-      <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
       <ToastHost toasts={toasts} />
     </div>
   );
