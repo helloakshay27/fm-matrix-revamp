@@ -1,5 +1,6 @@
-import { CHARTS, fmt } from "./data";
+import { CHARTS, FUNCTIONS, INFO, OBS_BY_CIRCLE, OBS_BY_FUNCTION, OBS_CIRCLES, fmt } from "./data";
 import { AuditChart } from "./AuditChart";
+import { CategoryJourneyCard } from "./CategoryJourneyCard";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
 
@@ -11,10 +12,10 @@ interface ObservationsPanelProps {
 }
 
 const PROGRESS = [
-  ["Raised", "100%", "var(--blue)"],
-  ["Plan created", "89.3%", "var(--teal)"],
-  ["Action taken", "53.9%", "var(--ok)"],
-  ["On-time", "41.2%", "var(--sage)"],
+  ["Raised", "100%", "var(--terracotta)"],
+  ["Plan created", "89.3%", "var(--mustard)"],
+  ["Action taken", "53.9%", "var(--aubergine)"],
+  ["On-time", "41.2%", "var(--slate)"],
 ] as const;
 
 export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: ObservationsPanelProps) {
@@ -32,7 +33,34 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
           </button>
         </div>
       </div>
+      {/* <div className="g">
+        <ChartCard title="Total Observations" sub="Count of total observations in each audit" spec={CHARTS.obsPerAudit} options={["bar", "table"]} info={INFO.obs} />
+      </div> */}
       <div className="g g2">
+        <ChartCard title="Observations by Function" sub="Observations, CAPA assigned and CAPA closed per function" spec={CHARTS.obsFunc} options={["bar", "table"]} />
+        <ChartCard title="Observations by Circle" sub="Top 12 circles · observations, CAPA assigned and CAPA closed" spec={CHARTS.obsCircle} options={["bar", "table"]} />
+      </div>
+      <div className="g g2" style={{ marginTop: 16 }}>
+        <CategoryJourneyCard
+          title="Observations by Classification, Category & Sub Category · By Circle"
+          sub="Observations, CAPA plan initiated and CAPA plan closed · pick a circle"
+          dimensionLabel="Circle"
+          allLabel="All circles"
+          labels={OBS_CIRCLES}
+          totals={OBS_BY_CIRCLE}
+          showSubCategory
+        />
+        <CategoryJourneyCard
+          title="Observations by Classification & Category · By Function"
+          sub="Observations, CAPA plan initiated and CAPA plan closed · pick a function"
+          dimensionLabel="Function"
+          allLabel="All functions"
+          labels={FUNCTIONS}
+          totals={OBS_BY_FUNCTION}
+          showSubCategory
+        />
+      </div>
+      {/* <div className="g g2">
         <ChartCard title="Observation Status" sub="Where each observation is now" spec={CHARTS.obsStatus} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
@@ -45,17 +73,17 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
               </div>
               <div className="donut-legend">
                 <div className="dl-row" onClick={() => onDrill("kpi-spoc")}>
-                  <span className="dl-sw" style={{ background: "#F9A592" }} />
+                  <span className="dl-sw" style={{ background: "#FF8F6B" }} />
                   <span className="dl-lbl">Pending By SPOC</span>
                   <span className="dl-val">{fmt(values[5])}</span>
                 </div>
                 <div className="dl-row" onClick={() => onDrill("kpi-ao")}>
-                  <span className="dl-sw" style={{ background: "#FDE2C8", border: "1px solid #E8C9A5" }} />
+                  <span className="dl-sw" style={{ background: "#FFC400", border: "1px solid #E6D7BE" }} />
                   <span className="dl-lbl">Pending By Action Owner</span>
                   <span className="dl-val">{fmt(values[8])}</span>
                 </div>
                 <div className="dl-row" onClick={() => onDrill("kpi-closedao")}>
-                  <span className="dl-sw" style={{ background: "#6B9BCC" }} />
+                  <span className="dl-sw" style={{ background: "#5A084B" }} />
                   <span className="dl-lbl">Closed By Action Owner</span>
                   <span className="dl-val">{fmt(values[9])}</span>
                 </div>
@@ -63,7 +91,7 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
             </div>
           )}
         </ChartCard>
-        {/* <div className="card">
+        <div className="card">
           <div className="card-hd">
             <div>
               <div className="card-title">Observation Progress</div>
@@ -81,17 +109,17 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
               </div>
             ))}
           </div>
-        </div> */}
+        </div>
         <ChartCard title="Observation Classification" sub="Classification chosen by the Auditor" spec={CHARTS.obsClass} options={["donut", "bar"]} />
       </div>
       <div className="g" style={{ marginTop: 16 }}>
         <ChartCard title="Observations by Category" sub="Category and sub-category roll-up" spec={CHARTS.obsCategory} options={["bar", "donut", "table"]} />
-        {/* <ChartCard title="Observations by Type of Facility" sub="Type of Facility on the audit" spec={CHARTS.obsFacility} options={["bar", "donut"]} /> */}
+        <ChartCard title="Observations by Type of Facility" sub="Type of Facility on the audit" spec={CHARTS.obsFacility} options={["bar", "donut"]} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <ChartCard title="Observations Raised vs Closed · 12 Months" sub="Monthly volume" spec={CHARTS.obsTrend} options={["line", "bar"]} />
         <ChartCard title="Observations by Vendor" sub="Top vendors recorded on audits" spec={CHARTS.obsVendor} options={["bar", "table"]} />
-      </div>
+      </div> */}
     </div>
   );
 }

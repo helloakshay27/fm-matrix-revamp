@@ -29,7 +29,7 @@ interface FilterBarProps {
   onReset: () => void;
 }
 
-const VI_FOCUS = "#C72030";
+const VI_FOCUS = "#EE2737";
 
 const fieldStyles = {
   height: 40,
@@ -90,7 +90,7 @@ const selectMenuProps = {
 };
 
 const checkboxSx = {
-  color: "#C4B89D",
+  color: "#E6D7BE",
   "&.Mui-checked": { color: VI_FOCUS },
   py: 0.25,
 };
@@ -165,7 +165,7 @@ export function FilterBar({
             onFunctions(typeof value === "string" ? value.split(",") : value);
           }}
           input={<OutlinedInput notched label={functionLabel} />}
-          renderValue={() => <span style={{ color: functions.length ? "#2C2C2C" : "#9ca3af" }}>{functionSummary}</span>}
+          renderValue={() => <span style={{ color: functions.length ? "#2F3043" : "#8C8D98" }}>{functionSummary}</span>}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
         >
