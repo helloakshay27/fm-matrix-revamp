@@ -1,80 +1,140 @@
 import { useRef, useState } from "react";
-import { AnalyticsModal } from "../../../components/vi-audit/management-dashboard/AnalyticsModal";
-import { AuditDirectory } from "../../../components/vi-audit/management-dashboard/AuditDirectory";
 import { AuditOverview } from "../../../components/vi-audit/management-dashboard/AuditOverview";
 import { AuditsPanel } from "../../../components/vi-audit/management-dashboard/AuditsPanel";
 import { CapaPanel } from "../../../components/vi-audit/management-dashboard/CapaPanel";
 import { DrillDrawer } from "../../../components/vi-audit/management-dashboard/DrillDrawer";
 import { FilterBar } from "../../../components/vi-audit/management-dashboard/FilterBar";
 import { ToastHost } from "../../../components/vi-audit/management-dashboard/InfoButton";
-import { MyDashboard } from "../../../components/vi-audit/management-dashboard/MyDashboard";
 import { ObservationsPanel } from "../../../components/vi-audit/management-dashboard/ObservationsPanel";
 import { ShellBanner } from "../../../components/vi-audit/management-dashboard/ShellBanner";
-import { ModuleTabs, TopBar } from "../../../components/vi-audit/management-dashboard/TopBar";
-import { DownloadIcon } from "../../../components/vi-audit/management-dashboard/icons";
+import { TopBar } from "../../../components/vi-audit/management-dashboard/TopBar";
 import "../../../components/vi-audit/management-dashboard/auditDashboard.css";
+import { SCOPES, type DrillModel, type ModuleKey, type Persona } from "../../../components/vi-audit/management-dashboard/data";
 import {
-  ANALYTICS_CATALOG,
-  AUDITS,
-  DRILLS,
-  SCOPES,
-  auditDrill,
-  titleForFilters,
-  type DrillModel,
-  type ModuleKey,
-  type Persona,
-} from "../../../components/vi-audit/management-dashboard/data";
+  buildCharts,
+  useAuditDashboardData,
+  useAuditFilterOptions,
+  type AuditDashboardFilters,
+  type ClosureRow,
+  type PastTargetPlan,
+  type RecentAudit,
+} from "../../../components/vi-audit/management-dashboard/viAuditDashboardApi";
 
 interface ToastItem {
   id: number;
   message: string;
 }
 
-const DEFAULT_FROM = "2026-10-01";
-const DEFAULT_TO = "2026-10-31";
+const isoDate = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+// Default period: the current month up to today.
+const defaultFilters = (): AuditDashboardFilters => {
+  const today = new Date();
+  return {
+    clusterIds: [],
+    functionIds: [],
+    zoneIds: [],
+    workLocationIds: [],
+    auditTypeIds: [],
+    dateFrom: isoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+    dateTo: isoDate(today),
+  };
+};
+
+const recentDrill = (audit: RecentAudit): DrillModel => ({
+  crumb: `Audits › ${audit.audit_id}`,
+  title: `${audit.audit_id} · ${audit.audit_type}`,
+  blocks: [
+    { kind: "stats", items: [[String(audit.observations), "Observations"], [String(audit.capa_closed), "CAPA closed"], [audit.status || "—", "Status"]] },
+    { kind: "heading", text: "Audit details" },
+    {
+      kind: "table",
+      headers: ["Field", "Value"],
+      rows: [
+        ["Circle", audit.circle],
+        ["Function", audit.function_name],
+        ["Work Location", audit.audit_location],
+        ["Auditor", audit.auditor],
+        ["Email", audit.email],
+        ["Mobile", audit.mobile],
+        ["Submitted", audit.submitted_on],
+        ["CAPA", String(audit.capa_count)],
+        ["CAPA pending", String(audit.capa_pending)],
+      ],
+    },
+  ],
+});
+
+const closureDrill = (row: ClosureRow): DrillModel => ({
+  crumb: "Overview › Closure progress",
+  title: `${row.circle} · closure by stage`,
+  blocks: [{
+    kind: "table",
+    headers: ["Stage", "% complete"],
+    rows: [
+      ["Audit Closed", `${Math.round(row.audit_closed)}%`],
+      ["Plan Created", `${Math.round(row.action_plan_created)}%`],
+      ["Action Taken", `${Math.round(row.action_taken)}%`],
+      ["On-time", `${Math.round(row.ontime_capa)}%`],
+      ["Delayed CAPA", `${Math.round(row.delayed_capa)}%`],
+    ],
+  }],
+});
+
+const planDrill = (plan: PastTargetPlan): DrillModel => ({
+  crumb: "CAPA › Plans past target date",
+  title: `${plan.plan} · ${plan.audit}`,
+  blocks: [{
+    kind: "table",
+    headers: ["Field", "Value"],
+    rows: [
+      ["Observation", plan.observation],
+      ["Action Owner", plan.action_owner],
+      ["Target date", plan.target_date],
+      ["Days over", plan.days_over],
+      ["Status", plan.status],
+    ],
+  }],
+});
 
 export function ViAuditManagementDashboardPage() {
   const [persona, setPersona] = useState<Persona>("admin");
-  const [module, setModule] = useState<ModuleKey>("audit");
-  const [title, setTitle] = useState(SCOPES.admin.title);
-  const [circle, setCircle] = useState("All Circles");
-  const [zone, setZone] = useState("All Zones");
-  const [auditType, setAuditType] = useState("Corporate & Circle");
-  const [dateFrom, setDateFrom] = useState(DEFAULT_FROM);
-  const [dateTo, setDateTo] = useState(DEFAULT_TO);
-  const [functions, setFunctions] = useState<string[]>([]);
+  const [module] = useState<ModuleKey>("audit");
+  const [filters, setFilters] = useState<AuditDashboardFilters>(defaultFilters);
+  const [applied, setApplied] = useState<AuditDashboardFilters>(filters);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [dirFilter, setDirFilter] = useState("all");
-  const [dirQuery, setDirQuery] = useState("");
   const [drill, setDrill] = useState<DrillModel | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [savedAnalytics, setSavedAnalytics] = useState<string[]>([]);
-  const [draftAnalytics, setDraftAnalytics] = useState<string[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
+  const options = useAuditFilterOptions();
+  const dashboard = useAuditDashboardData(applied);
+  const charts = buildCharts(dashboard);
 
   const scope = SCOPES[persona];
 
   const notify = (message: string) => {
     const id = ++toastId.current;
     setToasts((current) => [...current, { id, message }]);
-    window.setTimeout(() => {
-      setToasts((current) => current.filter((item) => item.id !== id));
-    }, 3000);
+    window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 3000);
   };
+
+  const update = <K extends keyof AuditDashboardFilters>(key: K) => (value: AuditDashboardFilters[K]) =>
+    setFilters((current) => ({ ...current, [key]: value }));
+
+  const scopeLabel = (list: { id: string; name: string }[], ids: string[], singular: string, plural: string) =>
+    ids.length === 0 ? "" : ids.length === 1 ? `${list.find((item) => item.id === ids[0])?.name ?? ""} ${singular}` : `${ids.length} ${plural}`;
+  const circleLabel = scopeLabel(options.circles, applied.clusterIds, "Circle", "Circles");
+  const zoneLabel = scopeLabel(options.zones, applied.zoneIds, "Zone", "Zones");
+  const title = `Audit · ${circleLabel || "Pan India View"}${zoneLabel ? ` · ${zoneLabel}` : ""}`;
 
   const switchPersona = (next: Persona) => {
     setPersona(next);
-    setCircle(next === "circle" ? "Maharashtra & Goa" : "All Circles");
-    setZone("All Zones");
-    setTitle(SCOPES[next].title);
-  };
-
-  const switchModule = (next: ModuleKey) => {
-    setModule(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (next === "admin") {
+      setFilters((current) => ({ ...current, clusterIds: [] }));
+      setApplied((current) => (current.clusterIds.length ? { ...current, clusterIds: [] } : current));
+    }
   };
 
   const jumpTo = (panel: string, group: string) => {
@@ -85,97 +145,98 @@ export function ViAuditManagementDashboardPage() {
     highlightTimer.current = window.setTimeout(() => setHighlight(null), 1600);
   };
 
-  const openDrill = (key: string) => setDrill(DRILLS[key] ?? { crumb: "Audit", title: "Details", blocks: [{ kind: "note", text: "Detail view for this item." }] });
+  const apply = () => {
+    if (!filters.dateFrom || !filters.dateTo) {
+      notify("Select the audit date range");
+      return;
+    }
+    if (filters.dateFrom > filters.dateTo) {
+      notify("Audit Date From must be before Audit Date To");
+      return;
+    }
+    if (persona === "circle" && filters.clusterIds.length === 0) {
+      notify("Select a circle");
+      return;
+    }
+    setApplied(filters);
+  };
+
+  const { kpi, loading } = dashboard;
 
   return (
     <div className="vad">
       <ShellBanner />
-      <TopBar persona={persona} module={module} role={scope.role} onPersona={switchPersona} onModule={switchModule} />
+      <TopBar persona={persona} module={module} role={scope.role} onPersona={switchPersona} onModule={() => undefined} />
       <FilterBar
         persona={persona}
-        circle={circle}
-        zone={zone}
-        auditType={auditType}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        functions={functions}
-        onCircle={(value) => {
-          setCircle(value);
-          setTitle(titleForFilters(value, zone, persona));
-        }}
-        onZone={(value) => {
-          setZone(value);
-          setTitle(titleForFilters(circle, value, persona));
-        }}
-        onAuditType={setAuditType}
-        onDateFrom={setDateFrom}
-        onDateTo={setDateTo}
-        onFunctions={setFunctions}
-        onApply={() => {
-          setTitle(titleForFilters(circle, zone, persona));
-          notify(`Filters applied · dashboard refreshed for ${circle === "All Circles" ? "Pan India" : circle}`);
-        }}
+        options={options}
+        circles={filters.clusterIds}
+        functions={filters.functionIds}
+        zones={filters.zoneIds}
+        workLocations={filters.workLocationIds}
+        auditTypes={filters.auditTypeIds}
+        dateFrom={filters.dateFrom}
+        dateTo={filters.dateTo}
+        onCircles={update("clusterIds")}
+        onFunctions={update("functionIds")}
+        onZones={update("zoneIds")}
+        onWorkLocations={update("workLocationIds")}
+        onAuditTypes={update("auditTypeIds")}
+        onDateFrom={update("dateFrom")}
+        onDateTo={update("dateTo")}
+        onApply={apply}
         onReset={() => {
-          const nextCircle = persona === "circle" ? "Maharashtra & Goa" : "All Circles";
-          setCircle(nextCircle);
-          setZone("All Zones");
-          setAuditType("Corporate & Circle");
-          setDateFrom(DEFAULT_FROM);
-          setDateTo(DEFAULT_TO);
-          setFunctions([]);
-          setTitle(SCOPES[persona].title);
-          notify("Filters reset to default");
+          const next = defaultFilters();
+          setFilters(next);
+          setApplied(next);
         }}
       />
-      <ModuleTabs module={module} onModule={switchModule} />
 
-      <main className={`content module-content${module === "audit" ? " active" : ""}`}>
+      <main className="content module-content active">
         <div className="page-hd">
           <div>
             <h2>{title}</h2>
-            <div className="sub">
-              <span className="live-dot" />
-              Live · Last synced 2 min ago · <span>{scope.scope}</span>
-            </div>
           </div>
-          {/* <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="tb-icon-btn" title="Export" onClick={() => notify("Excel export started — Audit dashboard")}>
-              <DownloadIcon />
-            </button>
-          </div> */}
         </div>
-        <AuditOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <AuditsPanel values={scope.k} highlighted={highlight === "acc-audits"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
-        <ObservationsPanel values={scope.k} highlighted={highlight === "acc-obs"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <CapaPanel highlighted={highlight === "acc-capa"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <AuditDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
-        <div className="footer">Audit Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All figures are illustrative dummy data. Priority actions, aging, past-target-date, extension and heatmap measures are proposals derived from the Figma statuses and dates and need confirmation · October 2026</div>
-      </main>
-
-      <main className={`content module-content${module === "mydashboard" ? " active" : ""}`}>
-        <MyDashboard
-          selected={savedAnalytics}
-          onOpenPicker={() => {
-            setDraftAnalytics(savedAnalytics);
-            setPickerOpen(true);
-          }}
-          onRemove={(id) => setSavedAnalytics((current) => current.filter((item) => item !== id))}
-          onDrill={openDrill}
+        <AuditOverview
+          kpi={kpi}
+          closure={dashboard.closure}
+          loading={loading}
+          activeGroup={activeGroup}
+          onJump={jumpTo}
+          onCircle={(row) => setDrill(closureDrill(row))}
+        />
+        <AuditsPanel
+          highlighted={highlight === "acc-audits"}
+          loading={loading}
+          auditFunc={charts.auditFunc}
+          auditCircle={charts.auditCircle}
+          recent={dashboard.recent}
+          recentTotal={dashboard.recentTotal}
+          onAudit={(audit) => setDrill(recentDrill(audit))}
+        />
+        <ObservationsPanel
+          highlighted={highlight === "acc-obs"}
+          loading={loading}
+          obsFunc={charts.obsFunc}
+          obsCircle={charts.obsCircle}
+          journeyByCircle={dashboard.journeyByCircle}
+          journeyByFunction={dashboard.journeyByFunction}
+        />
+        <CapaPanel
+          highlighted={highlight === "acc-capa"}
+          loading={loading}
+          capaStatus={charts.capaStatus}
+          capaAging={charts.capaAging}
+          capaOverdue={charts.capaOverdue}
+          ageing={dashboard.ageing}
+          owners={dashboard.owners}
+          pastTarget={dashboard.pastTarget}
+          pastTargetTotal={dashboard.pastTargetTotal}
+          onPlan={(plan) => setDrill(planDrill(plan))}
         />
       </main>
 
-      <AnalyticsModal
-        open={pickerOpen}
-        selected={draftAnalytics}
-        onToggle={(id) => setDraftAnalytics((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))}
-        onToggleAll={(checked) => setDraftAnalytics(checked ? ANALYTICS_CATALOG.map((item) => item.id) : [])}
-        onClear={() => setDraftAnalytics([])}
-        onApply={() => {
-          setSavedAnalytics(draftAnalytics);
-          setPickerOpen(false);
-        }}
-        onClose={() => setPickerOpen(false)}
-      />
       <DrillDrawer drill={drill} onClose={() => setDrill(null)} />
       <ToastHost toasts={toasts} />
     </div>

@@ -1,45 +1,36 @@
 import { useState } from "react";
-import {
-  Checkbox,
-  FormControl,
-  InputLabel,
-  ListItemText,
-  MenuItem,
-  OutlinedInput,
-  Select as MuiSelect,
-  TextField,
-} from "@mui/material";
-import { AUDIT_TYPES, FILTER_CIRCLES, FUNCTIONS, ZONES, type Persona } from "./data";
+import { Checkbox, FormControl, InputLabel, ListItemText, MenuItem, OutlinedInput, Select as MuiSelect, TextField } from "@mui/material";
+import type { Persona } from "./data";
+import type { AuditFilterOptions, FilterOption } from "./viAuditDashboardApi";
 
 interface FilterBarProps {
   persona: Persona;
-  circle: string;
-  zone: string;
-  auditType: string;
+  options: AuditFilterOptions;
+  circles: string[];
+  functions: string[];
+  zones: string[];
+  workLocations: string[];
+  auditTypes: string[];
   dateFrom: string;
   dateTo: string;
-  functions: string[];
-  onCircle: (value: string) => void;
-  onZone: (value: string) => void;
-  onAuditType: (value: string) => void;
+  onCircles: (ids: string[]) => void;
+  onFunctions: (ids: string[]) => void;
+  onZones: (ids: string[]) => void;
+  onWorkLocations: (ids: string[]) => void;
+  onAuditTypes: (ids: string[]) => void;
   onDateFrom: (value: string) => void;
   onDateTo: (value: string) => void;
-  onFunctions: (value: string[]) => void;
   onApply: () => void;
   onReset: () => void;
 }
 
+const ALL_VALUE = "__all__";
 const VI_FOCUS = "#EE2737";
-
 const fieldStyles = {
   height: 40,
   backgroundColor: "#fff",
   fontSize: "13px",
-  "& .MuiInputBase-input, & .MuiSelect-select": {
-    padding: "10px 14px",
-    fontSize: "13px",
-    fontFamily: "'Poppins', sans-serif",
-  },
+  "& .MuiInputBase-input, & .MuiSelect-select": { padding: "10px 14px", fontSize: "13px", fontFamily: "'Poppins', sans-serif" },
   "& .MuiOutlinedInput-root": {
     backgroundColor: "#fff",
     borderRadius: "8px",
@@ -47,13 +38,8 @@ const fieldStyles = {
     "&:hover fieldset": { borderColor: VI_FOCUS },
     "&.Mui-focused fieldset": { borderColor: VI_FOCUS },
   },
-  "& .MuiInputLabel-root": {
-    fontSize: "13px",
-    fontFamily: "'Poppins', sans-serif",
-    "&.Mui-focused": { color: VI_FOCUS },
-  },
+  "& .MuiInputLabel-root": { fontSize: "13px", fontFamily: "'Poppins', sans-serif", "&.Mui-focused": { color: VI_FOCUS } },
 };
-
 const dateFieldStyles = {
   ...fieldStyles,
   "& .MuiInputBase-root": {
@@ -66,33 +52,12 @@ const dateFieldStyles = {
     "&:hover fieldset": { borderColor: VI_FOCUS },
     "&.Mui-focused fieldset": { borderColor: VI_FOCUS },
   },
-  "& .MuiInputBase-input": {
-    padding: "10px 14px",
-    fontSize: "13px",
-    fontFamily: "'Poppins', sans-serif",
-  },
 };
-
-const selectMenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: 320,
-      backgroundColor: "white",
-      border: "1px solid #e2e8f0",
-      borderRadius: "8px",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      zIndex: 9999,
-    },
-  },
+const menuProps = {
+  PaperProps: { style: { maxHeight: 320, backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0,0,0,.1)", zIndex: 9999 } },
   disablePortal: false,
   disableAutoFocus: true,
   disableEnforceFocus: true,
-};
-
-const checkboxSx = {
-  color: "#E6D7BE",
-  "&.Mui-checked": { color: VI_FOCUS },
-  py: 0.25,
 };
 
 function FieldLabel({ text, required }: { text: string; required?: boolean }) {
@@ -104,156 +69,76 @@ function FieldLabel({ text, required }: { text: string; required?: boolean }) {
   );
 }
 
-export function FilterBar({
-  persona,
-  circle,
-  zone,
-  auditType,
-  dateFrom,
-  dateTo,
-  functions,
-  onCircle,
-  onZone,
-  onAuditType,
-  onDateFrom,
-  onDateTo,
-  onFunctions,
-  onApply,
-  onReset,
-}: FilterBarProps) {
-  const [funcOpen, setFuncOpen] = useState(false);
-  const circleRequired = persona === "circle";
-  const circleLabel = circleRequired ? "Circle *" : "Circle";
-  const functionLabel = circleRequired ? "Function *" : "Function";
-  const functionSummary =
-    functions.length === 0 ? "Select Function" : functions.length === 1 ? functions[0] : `${functions.length} Functions Selected`;
+const checkboxSx = { color: "#E6D7BE", "&.Mui-checked": { color: VI_FOCUS }, py: 0.25 };
+const optionTextProps = { fontSize: 13, fontFamily: "'Poppins', sans-serif" };
 
+// Multi-select dropdown (as on the inspection dashboard): an "All" toggle, then one checkbox per
+// API option. Values are option ids; nothing selected means no filter.
+function MultiSelect({ label, plural, required, value, options, loaded, onChange }: { label: string; plural: string; required?: boolean; value: string[]; options: FilterOption[]; loaded?: boolean; onChange: (ids: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const fieldLabel = required ? `${label} *` : label;
+  const allSelected = options.length > 0 && value.length === options.length;
+  const summary =
+    value.length === 0
+      ? `Select ${label}`
+      : allSelected
+        ? `All ${plural}`
+        : value.length === 1
+          ? options.find((item) => item.id === value[0])?.name ?? value[0]
+          : `${value.length} ${plural} Selected`;
+  return (
+    <FormControl variant="outlined" size="small" sx={{ minWidth: 160, flex: "1 1 170px", maxWidth: 230 }}>
+      <FieldLabel text={label} required={required} />
+      <MuiSelect
+        multiple
+        displayEmpty
+        notched
+        label={fieldLabel}
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        value={value}
+        onChange={(event) => {
+          const raw = typeof event.target.value === "string" ? event.target.value.split(",") : event.target.value;
+          onChange(raw.includes(ALL_VALUE) ? (allSelected ? [] : options.map((item) => item.id)) : raw);
+        }}
+        input={<OutlinedInput notched label={fieldLabel} />}
+        renderValue={() => <span style={{ color: value.length ? "#2F3043" : "#8C8D98" }}>{summary}</span>}
+        sx={fieldStyles}
+        MenuProps={menuProps}
+      >
+        {options.length === 0 && <MenuItem disabled dense>{loaded ? "No options available" : "Loading..."}</MenuItem>}
+        {options.length > 0 && (
+          <MenuItem value={ALL_VALUE} dense>
+            <Checkbox checked={allSelected} indeterminate={value.length > 0 && !allSelected} size="small" sx={checkboxSx} />
+            <ListItemText primary="All" primaryTypographyProps={optionTextProps} />
+          </MenuItem>
+        )}
+        {options.map((item) => (
+          <MenuItem key={item.id} value={item.id} dense>
+            <Checkbox checked={value.includes(item.id)} size="small" sx={checkboxSx} />
+            <ListItemText primary={item.name} primaryTypographyProps={optionTextProps} />
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </FormControl>
+  );
+}
+
+export function FilterBar(props: FilterBarProps) {
+  const required = props.persona === "circle";
   return (
     <div className="cm-filter-bar">
-      <FormControl variant="outlined" size="small" sx={{ minWidth: 170, flex: "1 1 170px", maxWidth: 220 }}>
-        <FieldLabel text="Circle" required={circleRequired} />
-        <MuiSelect
-          label={circleLabel}
-          notched
-          value={circle}
-          onChange={(event) => onCircle(String(event.target.value))}
-          input={<OutlinedInput notched label={circleLabel} />}
-          sx={fieldStyles}
-          MenuProps={selectMenuProps}
-        >
-          {FILTER_CIRCLES.map((item) => (
-            <MenuItem key={item} value={item}>
-              {item}
-            </MenuItem>
-          ))}
-        </MuiSelect>
-      </FormControl>
-
-      <FormControl variant="outlined" size="small" sx={{ minWidth: 170, flex: "1 1 170px", maxWidth: 230 }}>
-        <FieldLabel text="Function" required={circleRequired} />
-        <MuiSelect
-          multiple
-          displayEmpty
-          label={functionLabel}
-          notched
-          open={funcOpen}
-          onOpen={() => setFuncOpen(true)}
-          onClose={() => setFuncOpen(false)}
-          value={functions}
-          onChange={(event) => {
-            const value = event.target.value;
-            onFunctions(typeof value === "string" ? value.split(",") : value);
-          }}
-          input={<OutlinedInput notched label={functionLabel} />}
-          renderValue={() => <span style={{ color: functions.length ? "#2F3043" : "#8C8D98" }}>{functionSummary}</span>}
-          sx={fieldStyles}
-          MenuProps={selectMenuProps}
-        >
-          {FUNCTIONS.map((item) => (
-            <MenuItem key={item} value={item} dense>
-              <Checkbox checked={functions.includes(item)} size="small" sx={checkboxSx} />
-              <ListItemText primary={item} primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }} />
-            </MenuItem>
-          ))}
-        </MuiSelect>
-      </FormControl>
-
-      <FormControl variant="outlined" size="small" sx={{ minWidth: 180, flex: "1 1 180px", maxWidth: 230 }}>
-        <FieldLabel text="Personnel Area / Zone" />
-        <MuiSelect
-          label="Personnel Area / Zone"
-          notched
-          value={zone}
-          onChange={(event) => onZone(String(event.target.value))}
-          input={<OutlinedInput notched label="Personnel Area / Zone" />}
-          sx={fieldStyles}
-          MenuProps={selectMenuProps}
-        >
-          {ZONES.map((item) => (
-            <MenuItem key={item} value={item}>
-              {item}
-            </MenuItem>
-          ))}
-        </MuiSelect>
-      </FormControl>
-
-      <FormControl variant="outlined" size="small" sx={{ minWidth: 160, flex: "1 1 160px", maxWidth: 210 }}>
-        <FieldLabel text="Audit Type" />
-        <MuiSelect
-          label="Audit Type"
-          notched
-          value={auditType}
-          onChange={(event) => onAuditType(String(event.target.value))}
-          input={<OutlinedInput notched label="Audit Type" />}
-          sx={fieldStyles}
-          MenuProps={selectMenuProps}
-        >
-          {AUDIT_TYPES.map((item) => (
-            <MenuItem key={item} value={item}>
-              {item}
-            </MenuItem>
-          ))}
-        </MuiSelect>
-      </FormControl>
-
-      <TextField
-        type="date"
-        label={
-          <>
-            Audit Date From <span style={{ color: "#EE2737" }}>*</span>
-          </>
-        }
-        value={dateFrom}
-        onChange={(event) => onDateFrom(event.target.value)}
-        size="small"
-        variant="outlined"
-        InputLabelProps={{ shrink: true }}
-        sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }}
-      />
-
+      <MultiSelect label="Circle" plural="Circles" required={required} value={props.circles} options={props.options.circles} loaded={props.options.loaded.circles} onChange={props.onCircles} />
+      <MultiSelect label="Function" plural="Functions" value={props.functions} options={props.options.functions} loaded={props.options.loaded.functions} onChange={props.onFunctions} />
+      <MultiSelect label="Personnel Area / Zone" plural="Zones" value={props.zones} options={props.options.zones} loaded={props.options.loaded.zones} onChange={props.onZones} />
+      <MultiSelect label="Work Location" plural="Work Locations" value={props.workLocations} options={props.options.workLocations} loaded={props.options.loaded.workLocations} onChange={props.onWorkLocations} />
+      <MultiSelect label="Audit Type" plural="Audit Types" value={props.auditTypes} options={props.options.auditTypes} loaded={props.options.loaded.auditTypes} onChange={props.onAuditTypes} />
+      <TextField type="date" label={<>Audit Date From <span style={{ color: "#EE2737" }}>*</span></>} value={props.dateFrom} onChange={(event) => props.onDateFrom(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
       <span className="cm-filter-to">to</span>
-
-      <TextField
-        type="date"
-        label={
-          <>
-            Audit Date To <span style={{ color: "#EE2737" }}>*</span>
-          </>
-        }
-        value={dateTo}
-        onChange={(event) => onDateTo(event.target.value)}
-        size="small"
-        variant="outlined"
-        InputLabelProps={{ shrink: true }}
-        sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }}
-      />
-
-      <button type="button" className="cm-apply-btn" onClick={onApply}>
-        Apply
-      </button>
-      <button type="button" className="cm-reset-btn" onClick={onReset}>
-        Reset
-      </button>
+      <TextField type="date" label={<>Audit Date To <span style={{ color: "#EE2737" }}>*</span></>} value={props.dateTo} onChange={(event) => props.onDateTo(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
+      <button type="button" className="cm-apply-btn" onClick={props.onApply}>Apply</button>
+      <button type="button" className="cm-reset-btn" onClick={props.onReset}>Reset</button>
     </div>
   );
 }

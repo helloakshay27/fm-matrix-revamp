@@ -1,42 +1,20 @@
 import { useMemo, useState } from "react";
 import { FormControl, MenuItem, Select as MuiSelect } from "@mui/material";
 import { AuditChart, ChartSwitch } from "./AuditChart";
-import {
-  CAPA_CLOSED_RATIO,
-  CAPA_INITIATED_RATIO,
-  OBS_CATEGORY_TREE,
-  OBS_CLASSIFICATIONS,
-  OBS_JOURNEY_COLORS,
-  fmt,
-  type ChartKind,
-  type ChartSpec,
-} from "./data";
+import { OBS_JOURNEY_COLORS, fmt, type ChartKind, type ChartSpec } from "./data";
+import type { JourneyGroup, JourneyNode } from "./viAuditDashboardApi";
 
 interface CategoryJourneyCardProps {
   title: string;
   sub: string;
   dimensionLabel: string;
   allLabel: string;
-  labels: string[];
-  totals: number[];
+  groups: JourneyGroup[] | null;
+  loading: boolean;
   showSubCategory?: boolean;
 }
 
-interface Counts {
-  observations: number;
-  initiated: number;
-  closed: number;
-}
-
-const toCounts = (observations: number): Counts => ({
-  observations: Math.round(observations),
-  initiated: Math.round(observations * CAPA_INITIATED_RATIO),
-  closed: Math.round(observations * CAPA_CLOSED_RATIO),
-});
-
 const ALL = "__all__";
-
-// Mirrors the filter bar's Select styling so the dropdown matches the rest of the dashboard.
 const VI_FOCUS = "#EE2737";
 const selectSx = {
   height: 30,
@@ -65,43 +43,68 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labels, totals, showSubCategory = false }: CategoryJourneyCardProps) {
+const mergeNodes = (nodes: JourneyNode[]): JourneyNode[] => {
+  const byName = new Map<string, JourneyNode>();
+  nodes.forEach((node) => {
+    const current = byName.get(node.name);
+    if (!current) {
+      byName.set(node.name, { ...node, children: mergeNodes(node.children) });
+      return;
+    }
+    current.observations += node.observations;
+    current.initiated += node.initiated;
+    current.closed += node.closed;
+    current.children = mergeNodes([...current.children, ...node.children]);
+  });
+  return [...byName.values()];
+};
+
+interface TableRow {
+  key: string;
+  label: string;
+  level: 0 | 1 | 2;
+  node: JourneyNode;
+}
+
+const flatten = (nodes: JourneyNode[], showSubCategory: boolean, prefix = ""): TableRow[] =>
+  nodes.flatMap((node) => {
+    const key = `${prefix}/${node.name}`;
+    const row: TableRow = { key, label: node.name, level: 0, node };
+    const categories = node.children.flatMap((category) => {
+      const categoryKey = `${key}/${category.name}`;
+      const categoryRow: TableRow = { key: categoryKey, label: category.name, level: 1, node: category };
+      const subs = showSubCategory
+        ? category.children.map((sub) => ({ key: `${categoryKey}/${sub.name}`, label: sub.name, level: 2 as const, node: sub }))
+        : [];
+      return [categoryRow, ...subs];
+    });
+    return [row, ...categories];
+  });
+
+export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, groups, loading, showSubCategory = false }: CategoryJourneyCardProps) {
   const [type, setType] = useState<ChartKind>("bar");
   const [selected, setSelected] = useState(ALL);
+  const list = groups ?? [];
+  const active = selected === ALL ? null : list.find((group) => group.id === selected);
+  const classifications = useMemo(
+    () => (selected === ALL || !active ? mergeNodes(list.flatMap((group) => group.nodes)) : active.nodes),
+    [active, list, selected],
+  );
+  const categories = useMemo(() => mergeNodes(classifications.flatMap((node) => node.children)), [classifications]);
 
-  const total = selected === ALL ? totals.reduce((sum, value) => sum + value, 0) : totals[labels.indexOf(selected)] ?? 0;
+  const spec = useMemo<ChartSpec>(() => ({
+    id: `${title}-${selected}`,
+    labels: categories.map((category) => category.name),
+    datasets: [
+      { label: "Observations", data: categories.map((category) => category.observations), barColor: OBS_JOURNEY_COLORS[0] },
+      { label: "CAPA Plan Initiated", data: categories.map((category) => category.initiated), barColor: OBS_JOURNEY_COLORS[1] },
+      { label: "CAPA Plan Closed", data: categories.map((category) => category.closed), barColor: OBS_JOURNEY_COLORS[2] },
+    ],
+    defaultType: "bar",
+  }), [categories, selected, title]);
 
-  const spec = useMemo<ChartSpec>(() => {
-    const counts = OBS_CATEGORY_TREE.map((category) => toCounts(total * category.share));
-    return {
-      id: `${title}-${selected}`,
-      labels: OBS_CATEGORY_TREE.map((category) => category.label),
-      datasets: [
-        { label: "Observations", data: counts.map((count) => count.observations), barColor: OBS_JOURNEY_COLORS[0] },
-        { label: "CAPA Plan Initiated", data: counts.map((count) => count.initiated), barColor: OBS_JOURNEY_COLORS[1] },
-        { label: "CAPA Plan Closed", data: counts.map((count) => count.closed), barColor: OBS_JOURNEY_COLORS[2] },
-      ],
-      defaultType: "bar",
-    };
-  }, [selected, title, total]);
-
-  const rows = useMemo(() => {
-    const result: { key: string; label: string; level: 0 | 1 | 2; counts: Counts }[] = [];
-    OBS_CLASSIFICATIONS.forEach((classification) => {
-      const classTotal = total * classification.share;
-      result.push({ key: classification.label, label: classification.label, level: 0, counts: toCounts(classTotal) });
-      OBS_CATEGORY_TREE.forEach((category) => {
-        const categoryTotal = classTotal * category.share;
-        result.push({ key: `${classification.label}/${category.label}`, label: category.label, level: 1, counts: toCounts(categoryTotal) });
-        if (showSubCategory) {
-          category.subs.forEach(([subLabel, subShare]) => {
-            result.push({ key: `${classification.label}/${category.label}/${subLabel}`, label: subLabel, level: 2, counts: toCounts(categoryTotal * subShare) });
-          });
-        }
-      });
-    });
-    return result;
-  }, [showSubCategory, total]);
+  const rows = useMemo(() => flatten(classifications, showSubCategory), [classifications, showSubCategory]);
+  const message = loading ? "Loading…" : !groups ? "Couldn’t load data" : rows.length === 0 ? "No data for these filters" : "";
 
   return (
     <div className="card">
@@ -110,29 +113,29 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labe
           <div className="card-title">{title}</div>
           <div className="card-sub">{sub}</div>
         </div>
-        <div className="card-actions-row">
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 130, maxWidth: 170 }}>
-            <MuiSelect
-              value={selected}
-              onChange={(event) => setSelected(String(event.target.value))}
-              inputProps={{ "aria-label": dimensionLabel }}
-              sx={selectSx}
-              MenuProps={selectMenuProps}
-            >
-              <MenuItem value={ALL} sx={menuItemSx}>
-                {allLabel}
-              </MenuItem>
-              {labels.map((label) => (
-                <MenuItem key={label} value={label} sx={menuItemSx}>
-                  {label}
-                </MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
-          <ChartSwitch options={["bar", "table"]} value={type} onChange={setType} />
-        </div>
+        {!message && (
+          <div className="card-actions-row">
+            <FormControl variant="outlined" size="small" sx={{ minWidth: 130, maxWidth: 170 }}>
+              <MuiSelect
+                value={list.some((group) => group.id === selected) ? selected : ALL}
+                onChange={(event) => setSelected(String(event.target.value))}
+                inputProps={{ "aria-label": dimensionLabel }}
+                sx={selectSx}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value={ALL} sx={menuItemSx}>{allLabel}</MenuItem>
+                {list.map((group) => (
+                  <MenuItem key={group.id} value={group.id} sx={menuItemSx}>{group.name}</MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            <ChartSwitch options={["bar", "table"]} value={type} onChange={setType} />
+          </div>
+        )}
       </div>
-      {type === "table" ? (
+      {message ? (
+        <div className="card-sub" style={{ padding: "28px 0", textAlign: "center" }}>{message}</div>
+      ) : type === "table" ? (
         <div className="chart-as-table tall">
           <table>
             <thead>
@@ -147,9 +150,9 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labe
               {rows.map((row) => (
                 <tr key={row.key}>
                   <td style={{ paddingLeft: 10 + row.level * 16, fontWeight: row.level === 0 ? 700 : 400 }}>{row.label}</td>
-                  <td>{fmt(row.counts.observations)}</td>
-                  <td>{fmt(row.counts.initiated)}</td>
-                  <td>{fmt(row.counts.closed)}</td>
+                  <td>{fmt(row.node.observations)}</td>
+                  <td>{fmt(row.node.initiated)}</td>
+                  <td>{fmt(row.node.closed)}</td>
                 </tr>
               ))}
             </tbody>

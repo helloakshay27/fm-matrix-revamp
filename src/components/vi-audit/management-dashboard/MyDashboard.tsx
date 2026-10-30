@@ -1,18 +1,23 @@
 import { useState } from "react";
-import { ANALYTICS_CATALOG, CHARTS, KPI_CONFIG, fmt, SCOPES } from "./data";
+import { ANALYTICS_CATALOG, KPI_CONFIG, fmt, type ChartSpec } from "./data";
 import { AuditChart, ChartSwitch, myDashSwitches } from "./AuditChart";
 import { CloseIcon, GridIcon, PlusIcon } from "./icons";
+import { EMPTY_CHART, KPI_FIELD, type AuditKpi } from "./viAuditDashboardApi";
 
 interface MyDashboardProps {
   selected: string[];
+  kpi: AuditKpi | null;
+  charts: Record<string, ChartSpec | null>;
+  loading: boolean;
   onOpenPicker: () => void;
   onRemove: (id: string) => void;
   onDrill: (key: string) => void;
 }
 
-function DashChartCard({ id, label, onRemove }: { id: string; label: string; onRemove: () => void }) {
-  const spec = CHARTS[id];
-  const [type, setType] = useState(spec.defaultType);
+function DashChartCard({ spec, label, loading, onRemove }: { spec: ChartSpec | null | undefined; label: string; loading: boolean; onRemove: () => void }) {
+  const resolved = spec ?? EMPTY_CHART;
+  const [type, setType] = useState(resolved.defaultType);
+  const message = loading ? "Loading…" : spec === undefined ? "This chart isn’t returned by the dashboard API" : spec === null ? "Couldn’t load data" : spec.labels.length === 0 ? "No data for these filters" : "";
 
   return (
     <div className="card mydash-chart-card">
@@ -24,16 +29,20 @@ function DashChartCard({ id, label, onRemove }: { id: string; label: string; onR
           <span className="mydash-module-tag">Audit</span>
           <div className="card-title">{label}</div>
         </div>
-        <ChartSwitch options={myDashSwitches(spec)} value={type} onChange={setType} />
+        {!message && <ChartSwitch options={myDashSwitches(resolved)} value={type} onChange={setType} />}
       </div>
-      <div className="chart-wrap">
-        <AuditChart spec={spec} type={type} />
-      </div>
+      {message ? (
+        <div className="card-sub" style={{ padding: "28px 0", textAlign: "center" }}>{message}</div>
+      ) : (
+        <div className="chart-wrap">
+          <AuditChart spec={resolved} type={type} />
+        </div>
+      )}
     </div>
   );
 }
 
-export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDashboardProps) {
+export function MyDashboard({ selected, kpi, charts, loading, onOpenPicker, onRemove, onDrill }: MyDashboardProps) {
   return (
     <>
       <div className="page-hd mydash-hd">
@@ -62,14 +71,15 @@ export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDas
             const item = ANALYTICS_CATALOG.find((entry) => entry.id === id);
             if (!item) return null;
             if (item.type === "kpi") {
-              const kpi = KPI_CONFIG.find((entry) => entry.id === id);
-              if (!kpi) return null;
-              const value = SCOPES.admin.k[KPI_CONFIG.indexOf(kpi)];
+              const config = KPI_CONFIG.find((entry) => entry.id === id);
+              if (!config) return null;
+              const field = KPI_FIELD[config.id];
+              const value = loading || !kpi || !field ? null : kpi[field];
               return (
                 <div
                   key={id}
                   className="kpi"
-                  style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint, position: "relative" }}
+                  style={{ ["--kpi-c" as string]: config.color, ["--kpi-tint" as string]: config.tint, position: "relative" }}
                   onClick={() => onDrill(id)}
                 >
                   <button
@@ -85,16 +95,16 @@ export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDas
                   </button>
                   <span className="mydash-module-tag">Audit</span>
                   <div className="kpi-top">
-                    <div className="kpi-lbl">{kpi.label}</div>
+                    <div className="kpi-lbl">{config.label}</div>
                   </div>
-                  <div className="kpi-val">{fmt(value)}</div>
+                  <div className="kpi-val">{value == null ? "—" : fmt(value)}</div>
                   <div className="kpi-sub">
                     <span className="kpi-trend up" />
                   </div>
                 </div>
               );
             }
-            return <DashChartCard key={id} id={id} label={item.label} onRemove={() => onRemove(id)} />;
+            return <DashChartCard key={id} spec={charts[id]} label={item.label} loading={loading} onRemove={() => onRemove(id)} />;
           })}
         </div>
       )}

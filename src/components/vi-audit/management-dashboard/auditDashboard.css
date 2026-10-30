@@ -75,10 +75,10 @@
   color:#fff;
 }
 .vad .vi-shell-brand{display:flex;align-items:center;gap:12px}
-.vad .vi-shell-logo{width:30px;height:30px;flex-shrink:0}
-.vad .vi-shell-logo svg{width:100%;height:100%}
+.vad .vi-shell-logo-chip{display:flex;align-items:center;background:#fff;border-radius:8px;padding:5px 10px;box-shadow:0 1px 3px rgba(0,0,0,.2);flex-shrink:0}
+.vad .vi-shell-logo-img{height:22px;width:auto;display:block}
 .vad .vi-shell-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:.2px}
-.vad .vi-shell-title span{font-weight:400;opacity:.85}
+.vad .vi-shell-title span,.vad .vi-shell-sub{font-weight:400;opacity:.85}
 .vad .vi-shell-right{display:flex;align-items:center;gap:22px}
 .vad .vi-shell-welcome, .vad .vi-shell-date{font-size:11.5px;line-height:1.4;color:#fff;text-align:right}
 .vad .vi-shell-welcome b, .vad .vi-shell-date b{font-weight:700}
@@ -840,7 +840,7 @@
 .vad .hm-wrap{display:flex;flex-direction:column;gap:6px;font-size:11px}
 .vad .hm-hd{
   display:grid;
-  grid-template-columns:120px repeat(6, 1fr);
+  grid-template-columns:120px repeat(5, 1fr);
   gap:4px;
   font-size:9.5px;font-weight:700;color:var(--sage);
   text-transform:uppercase;letter-spacing:.3px;
@@ -850,10 +850,23 @@
 .vad .hm-hd div:first-child{text-align:left}
 .vad .hm-row{
   display:grid;
-  grid-template-columns:120px repeat(6, 1fr);
+  grid-template-columns:120px repeat(5, 1fr);
   gap:4px;
   align-items:center;
 }
+.vad .tbl-pager{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 4px 4px;border-top:1px solid var(--div);margin-top:8px;
+}
+.vad .tbl-pager-meta{font-size:11.5px;color:var(--sage)}
+.vad .tbl-pager-actions{display:flex;align-items:center;gap:10px}
+.vad .tbl-pager-page{font-size:11.5px;color:var(--dark);font-weight:600}
+.vad .tbl-pager-btn{
+  height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--border);
+  background:#fff;color:var(--dark);font-size:12px;font-weight:600;
+}
+.vad .tbl-pager-btn:disabled{opacity:.45;cursor:not-allowed}
+.vad .tbl-pager-btn:not(:disabled):hover{border-color:var(--vi-red);color:var(--vi-red)}
 .vad .hm-label{font-size:11px;font-weight:600;color:var(--dark)}
 .vad .hm-cell{
   height:36px;
