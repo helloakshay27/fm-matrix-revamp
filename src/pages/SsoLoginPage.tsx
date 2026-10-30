@@ -7,6 +7,8 @@ import {
   saveToken,
   saveUser,
 } from "@/utils/auth";
+import { permissionService } from "@/services/permissionService";
+import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
 const DEFAULT_REDIRECT = "/maintenance/asset";
 
@@ -68,8 +70,16 @@ export const SsoLoginPage = () => {
       await fetchLockAccount();
 
       // Only allow same-origin relative paths (no open redirect)
-      const target =
-        redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+      const isSafePath = (path: string | null | undefined): path is string =>
+        !!path && path.startsWith("/") && !path.startsWith("//");
+
+      // Land on the first route the user's role gives access to
+      const userRole = await permissionService.getUserRole();
+      const firstRoute = findFirstAccessibleRoute(userRole);
+
+      const target = isSafePath(firstRoute)
+        ? firstRoute
+        : isSafePath(redirect)
           ? redirect
           : DEFAULT_REDIRECT;
       window.location.replace(target);
