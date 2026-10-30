@@ -1,42 +1,29 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormControl, MenuItem, Select as MuiSelect } from "@mui/material";
 import { AuditChart, ChartSwitch } from "./AuditChart";
-import {
-  CAPA_CLOSED_RATIO,
-  CAPA_INITIATED_RATIO,
-  OBS_CATEGORY_TREE,
-  OBS_CLASSIFICATIONS,
-  OBS_JOURNEY_COLORS,
-  fmt,
-  type ChartKind,
-  type ChartSpec,
-} from "./data";
+import { OBS_JOURNEY_COLORS, fmt, type ChartKind, type ChartSpec } from "./data";
+import type { JourneyGroup, JourneyNode } from "./managementDashboardApi";
 
 interface CategoryJourneyCardProps {
   title: string;
   sub: string;
   dimensionLabel: string;
   allLabel: string;
-  labels: string[];
-  totals: number[];
+  groups: JourneyGroup[];
   showSubCategory?: boolean;
 }
 
-interface Counts {
+interface TableRow {
+  key: string;
+  label: string;
+  level: 0 | 1 | 2;
   observations: number;
   initiated: number;
   closed: number;
 }
 
-const toCounts = (observations: number): Counts => ({
-  observations: Math.round(observations),
-  initiated: Math.round(observations * CAPA_INITIATED_RATIO),
-  closed: Math.round(observations * CAPA_CLOSED_RATIO),
-});
-
 const ALL = "__all__";
 
-// Mirrors the filter bar's Select styling so the dropdown matches the rest of the dashboard.
 const VI_FOCUS = "#EE2737";
 const selectSx = {
   height: 30,
@@ -65,43 +52,69 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labels, totals, showSubCategory = false }: CategoryJourneyCardProps) {
+const mergeNodes = (nodes: JourneyNode[]): JourneyNode[] => {
+  const merged = new Map<string, JourneyNode>();
+  nodes.forEach((node) => {
+    const current = merged.get(node.name);
+    if (!current) {
+      merged.set(node.name, { ...node, children: mergeNodes(node.children) });
+      return;
+    }
+    current.observations += node.observations;
+    current.initiated += node.initiated;
+    current.closed += node.closed;
+    current.children = mergeNodes([...current.children, ...node.children]);
+  });
+  return [...merged.values()];
+};
+
+const flattenTable = (nodes: JourneyNode[], showSubCategory: boolean, prefix = ""): TableRow[] => {
+  const rows: TableRow[] = [];
+  nodes.forEach((classification) => {
+    const classKey = `${prefix}${classification.name}`;
+    rows.push({ key: classKey, label: classification.name, level: 0, observations: classification.observations, initiated: classification.initiated, closed: classification.closed });
+    classification.children.forEach((category) => {
+      const categoryKey = `${classKey}/${category.name}`;
+      rows.push({ key: categoryKey, label: category.name, level: 1, observations: category.observations, initiated: category.initiated, closed: category.closed });
+      if (!showSubCategory) return;
+      category.children.forEach((subCategory) => {
+        rows.push({
+          key: `${categoryKey}/${subCategory.name}`,
+          label: subCategory.name,
+          level: 2,
+          observations: subCategory.observations,
+          initiated: subCategory.initiated,
+          closed: subCategory.closed,
+        });
+      });
+    });
+  });
+  return rows;
+};
+
+export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, groups, showSubCategory = false }: CategoryJourneyCardProps) {
   const [type, setType] = useState<ChartKind>("bar");
   const [selected, setSelected] = useState(ALL);
 
-  const total = selected === ALL ? totals.reduce((sum, value) => sum + value, 0) : totals[labels.indexOf(selected)] ?? 0;
+  useEffect(() => {
+    if (selected !== ALL && !groups.some((group) => group.name === selected)) setSelected(ALL);
+  }, [groups, selected]);
 
-  const spec = useMemo<ChartSpec>(() => {
-    const counts = OBS_CATEGORY_TREE.map((category) => toCounts(total * category.share));
-    return {
-      id: `${title}-${selected}`,
-      labels: OBS_CATEGORY_TREE.map((category) => category.label),
-      datasets: [
-        { label: "Observations", data: counts.map((count) => count.observations), barColor: OBS_JOURNEY_COLORS[0] },
-        { label: "CAPA Plan Initiated", data: counts.map((count) => count.initiated), barColor: OBS_JOURNEY_COLORS[1] },
-        { label: "CAPA Plan Closed", data: counts.map((count) => count.closed), barColor: OBS_JOURNEY_COLORS[2] },
-      ],
-      defaultType: "bar",
-    };
-  }, [selected, title, total]);
+  const active = selected === ALL ? groups : groups.filter((group) => group.name === selected);
+  const classifications = useMemo(() => mergeNodes(active.flatMap((group) => group.classifications)), [active]);
+  const categories = useMemo(() => mergeNodes(classifications.flatMap((classification) => classification.children)), [classifications]);
+  const rows = useMemo(() => flattenTable(classifications, showSubCategory), [classifications, showSubCategory]);
 
-  const rows = useMemo(() => {
-    const result: { key: string; label: string; level: 0 | 1 | 2; counts: Counts }[] = [];
-    OBS_CLASSIFICATIONS.forEach((classification) => {
-      const classTotal = total * classification.share;
-      result.push({ key: classification.label, label: classification.label, level: 0, counts: toCounts(classTotal) });
-      OBS_CATEGORY_TREE.forEach((category) => {
-        const categoryTotal = classTotal * category.share;
-        result.push({ key: `${classification.label}/${category.label}`, label: category.label, level: 1, counts: toCounts(categoryTotal) });
-        if (showSubCategory) {
-          category.subs.forEach(([subLabel, subShare]) => {
-            result.push({ key: `${classification.label}/${category.label}/${subLabel}`, label: subLabel, level: 2, counts: toCounts(categoryTotal * subShare) });
-          });
-        }
-      });
-    });
-    return result;
-  }, [showSubCategory, total]);
+  const spec = useMemo<ChartSpec>(() => ({
+    id: `${title}-${selected}`,
+    labels: categories.map((category) => category.name),
+    datasets: [
+      { label: "Observations", data: categories.map((category) => category.observations), barColor: OBS_JOURNEY_COLORS[0] },
+      { label: "CAPA Plan Initiated", data: categories.map((category) => category.initiated), barColor: OBS_JOURNEY_COLORS[1] },
+      { label: "CAPA Plan Closed", data: categories.map((category) => category.closed), barColor: OBS_JOURNEY_COLORS[2] },
+    ],
+    defaultType: "bar",
+  }), [categories, selected, title]);
 
   return (
     <div className="card">
@@ -122,9 +135,9 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labe
               <MenuItem value={ALL} sx={menuItemSx}>
                 {allLabel}
               </MenuItem>
-              {labels.map((label) => (
-                <MenuItem key={label} value={label} sx={menuItemSx}>
-                  {label}
+              {groups.map((group) => (
+                <MenuItem key={group.name} value={group.name} sx={menuItemSx}>
+                  {group.name}
                 </MenuItem>
               ))}
             </MuiSelect>
@@ -132,7 +145,9 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labe
           <ChartSwitch options={["bar", "table"]} value={type} onChange={setType} />
         </div>
       </div>
-      {type === "table" ? (
+      {groups.length === 0 ? (
+        <div className="card-sub" style={{ padding: "28px 0" }}>No data for this filter.</div>
+      ) : type === "table" ? (
         <div className="chart-as-table tall">
           <table>
             <thead>
@@ -147,9 +162,9 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, labe
               {rows.map((row) => (
                 <tr key={row.key}>
                   <td style={{ paddingLeft: 10 + row.level * 16, fontWeight: row.level === 0 ? 700 : 400 }}>{row.label}</td>
-                  <td>{fmt(row.counts.observations)}</td>
-                  <td>{fmt(row.counts.initiated)}</td>
-                  <td>{fmt(row.counts.closed)}</td>
+                  <td>{fmt(row.observations)}</td>
+                  <td>{fmt(row.initiated)}</td>
+                  <td>{fmt(row.closed)}</td>
                 </tr>
               ))}
             </tbody>

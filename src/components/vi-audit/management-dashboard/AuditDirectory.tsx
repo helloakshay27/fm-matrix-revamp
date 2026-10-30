@@ -1,20 +1,34 @@
-import { AUDITS, DIR_CHIPS, INFO } from "./data";
+import { useMemo } from "react";
+import { fmt } from "./data";
 import { SearchIcon } from "./icons";
 import { InfoButton, StatusBadge } from "./InfoButton";
+import type { RecentAudit } from "./managementDashboardApi";
 
 interface AuditDirectoryProps {
+  audits: RecentAudit[];
+  loading: boolean;
   filter: string;
   query: string;
   onFilter: (value: string) => void;
   onQuery: (value: string) => void;
-  onAudit: (index: number) => void;
+  onAudit: (audit: RecentAudit) => void;
 }
 
-export function AuditDirectory({ filter, query, onFilter, onQuery, onAudit }: AuditDirectoryProps) {
+export function AuditDirectory({ audits, loading, filter, query, onFilter, onQuery, onAudit }: AuditDirectoryProps) {
+  const chips = useMemo(() => {
+    const count = (status: string) => audits.filter((audit) => audit.status === status).length;
+    const pending = audits.filter((audit) => audit.capaPending > 0).length;
+    const items: [string, string][] = [["all", `All (${fmt(audits.length)})`]];
+    if (count("Draft")) items.push(["Draft", `Draft (${fmt(count("Draft"))})`]);
+    items.push(["Open", `Open (${fmt(count("Open"))})`], ["Closed", `Closed (${fmt(count("Closed"))})`]);
+    if (pending) items.push(["pending", `Pending CAPA (${fmt(pending)})`]);
+    return items;
+  }, [audits]);
+
   const needle = query.toLowerCase();
-  const rows = AUDITS.map((audit, index) => ({ audit, index })).filter(({ audit }) => {
-    const statusMatch = filter === "all" || audit.status === filter || (filter === "spoc" && audit.spocP > 0) || (filter === "ao" && audit.status === "Open" && audit.obs > audit.closed);
-    const text = `${audit.id}${audit.loc}${audit.loc2}${audit.auditor}${audit.circle}`.toLowerCase();
+  const rows = audits.filter((audit) => {
+    const statusMatch = filter === "all" || audit.status === filter || (filter === "pending" && audit.capaPending > 0);
+    const text = `${audit.id}${audit.location}${audit.auditor}${audit.circle}${audit.functionName}${audit.type}`.toLowerCase();
     return statusMatch && (!needle || text.includes(needle));
   });
 
@@ -29,7 +43,7 @@ export function AuditDirectory({ filter, query, onFilter, onQuery, onAudit }: Au
           <div>
             <div className="card-title">
               All Audits — with observation and action plan progress at a glance
-              <InfoButton text={INFO.dir} />
+              <InfoButton text="Every audit returned for this filter, with its observation and CAPA progress." />
             </div>
             <div className="card-sub">Search by audit ID, location or auditor · click any audit for full drill-down</div>
           </div>
@@ -39,7 +53,7 @@ export function AuditDirectory({ filter, query, onFilter, onQuery, onAudit }: Au
           </div>
         </div>
         <div className="mini-filter">
-          {DIR_CHIPS.map(([key, label]) => (
+          {chips.map(([key, label]) => (
             <button key={key} type="button" className={`mini-chip${filter === key ? " active" : ""}`} onClick={() => onFilter(key)}>
               {label}
             </button>
@@ -62,19 +76,19 @@ export function AuditDirectory({ filter, query, onFilter, onQuery, onAudit }: Au
             </thead>
             <tbody>
               {rows.length ? (
-                rows.map(({ audit, index }) => (
-                  <tr key={audit.id} onClick={() => onAudit(index)}>
+                rows.map((audit) => (
+                  <tr key={audit.id} onClick={() => onAudit(audit)}>
                     <td>
                       <b>{audit.id}</b>
                     </td>
                     <td>{audit.type}</td>
                     <td>{audit.circle}</td>
-                    <td>{audit.loc}</td>
+                    <td>{audit.location}</td>
                     <td>{audit.auditor}</td>
-                    <td>{audit.date}</td>
-                    <td style={{ textAlign: "center" }}>{audit.obs}</td>
+                    <td>{audit.submittedOn}</td>
+                    <td style={{ textAlign: "center" }}>{audit.observations}</td>
                     <td style={{ textAlign: "center" }}>
-                      {audit.closed} / {audit.obs}
+                      {audit.capaClosed} / {audit.capa}
                     </td>
                     <td>
                       <StatusBadge status={audit.status} />
@@ -84,7 +98,7 @@ export function AuditDirectory({ filter, query, onFilter, onQuery, onAudit }: Au
               ) : (
                 <tr>
                   <td colSpan={9} style={{ textAlign: "center", padding: 24, color: "var(--sage)" }}>
-                    No audits match these filters.
+                    {loading ? "Loading audits…" : "No audits match these filters."}
                   </td>
                 </tr>
               )}

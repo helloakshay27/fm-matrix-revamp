@@ -1,15 +1,21 @@
-import { CHARTS, INFO, OVERDUE_ROWS, OWNER_BOARD, SPOC_BOARD } from "./data";
+import { INFO, fmt } from "./data";
+import { capaStatusSpec, extendedCapaSpec, pastTargetSpec, spocAgingSpec } from "./dashboardCharts";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
-import { InfoButton } from "./InfoButton";
+import { InfoButton, StatusBadge } from "./InfoButton";
+import type { ClosureRow, DashboardSections } from "./managementDashboardApi";
 
 interface CapaPanelProps {
+  sections: DashboardSections;
+  closure: ClosureRow[];
+  loading: boolean;
   highlighted: boolean;
   onDownload: (section: string) => void;
   onDrill: (key: string) => void;
 }
 
-export function CapaPanel({ highlighted, onDownload, onDrill }: CapaPanelProps) {
+export function CapaPanel({ sections, closure, loading, highlighted, onDownload, onDrill }: CapaPanelProps) {
+  const emptyLabel = loading ? "Loading…" : "No data for this filter.";
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-capa">
       <div className="acc-hd">
@@ -25,31 +31,35 @@ export function CapaPanel({ highlighted, onDownload, onDrill }: CapaPanelProps) 
         </div>
       </div>
       <div className="g g2">
-        <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state" spec={CHARTS.capaStatus} options={["bar", "table"]} />
-        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub="Days since the observation was submitted" spec={CHARTS.capaAging} options={["bar", "donut"]} info={INFO.aging} />
+        <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state, across the selected circles" spec={capaStatusSpec(sections.actionPlans)} options={["bar", "table"]} emptyLabel={emptyLabel} />
+        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub={`${fmt(sections.spocWaitingTotal)} observations still waiting for a SPOC plan`} spec={spocAgingSpec(sections.spocAging)} options={["bar", "donut"]} info={INFO.aging} emptyLabel={emptyLabel} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Actions Past Target Date by Circle" sub="Pending plans where today is later than the Target Date" spec={CHARTS.capaOverdue} options={["bar", "table"]} info={INFO.overdue} />
-        <ChartCard title="Target-date Extensions · 12 Months" sub="Plans where an Extend Target Date was entered" spec={CHARTS.capaExt} options={["line", "bar"]} info={INFO.ext} />
+        <ChartCard title="Actions Past Target Date by Action Owner" sub="Open plans whose target date has passed" spec={pastTargetSpec(sections.actionOwners.map((owner) => owner.name), sections.actionOwners.map((owner) => owner.pastTarget))} options={["bar", "table"]} info={INFO.overdue} emptyLabel={emptyLabel} />
+        <ChartCard title="Extended CAPA by Circle" sub="% of CAPA with an extended target date" spec={extendedCapaSpec(closure)} options={["bar", "table"]} info={INFO.ext} emptyLabel={emptyLabel} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <div className="card">
           <div className="card-hd">
             <div>
-              <div className="card-title">SPOCs with Most Pending Plans</div>
-              <div className="card-sub">Observations assigned and still without a plan</div>
+              <div className="card-title">Waiting for SPOC Action Plan</div>
+              <div className="card-sub">{fmt(sections.spocWaitingTotal)} observations, grouped by how long they have been waiting</div>
             </div>
           </div>
-          {SPOC_BOARD.map(([name, count], index) => (
-            <div key={name} className="lb-row" onClick={() => onDrill("alert-spoc")}>
-              <div className="lb-rank">{index + 1}</div>
-              <div className="lb-info">
-                <div className="lb-name">{name}</div>
-                <div className="lb-meta">Observations without a plan</div>
+          {sections.spocAging.length === 0 ? (
+            <div className="card-sub" style={{ padding: "12px 0" }}>{emptyLabel}</div>
+          ) : (
+            sections.spocAging.map((bucket, index) => (
+              <div key={bucket.name} className="lb-row" onClick={() => onDrill("alert-spoc")}>
+                <div className="lb-rank">{index + 1}</div>
+                <div className="lb-info">
+                  <div className="lb-name">{bucket.name}</div>
+                  <div className="lb-meta">Observations waiting for a SPOC plan</div>
+                </div>
+                <div className="lb-val">{bucket.count}</div>
               </div>
-              <div className="lb-val">{count}</div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
         <div className="card">
           <div className="card-hd">
@@ -58,16 +68,20 @@ export function CapaPanel({ highlighted, onDownload, onDrill }: CapaPanelProps) 
               <div className="card-sub">Plans assigned and not yet closed</div>
             </div>
           </div>
-          {OWNER_BOARD.map(([name, count], index) => (
-            <div key={name} className="lb-row" onClick={() => onDrill("alert-overdue")}>
-              <div className="lb-rank">{index + 1}</div>
-              <div className="lb-info">
-                <div className="lb-name">{name}</div>
-                <div className="lb-meta">Plans not yet closed</div>
+          {sections.actionOwners.length === 0 ? (
+            <div className="card-sub" style={{ padding: "12px 0" }}>{emptyLabel}</div>
+          ) : (
+            sections.actionOwners.map((owner, index) => (
+              <div key={owner.name} className="lb-row" onClick={() => onDrill("alert-overdue")}>
+                <div className="lb-rank">{index + 1}</div>
+                <div className="lb-info">
+                  <div className="lb-name">{owner.name}</div>
+                  <div className="lb-meta">{owner.pastTarget} past target date</div>
+                </div>
+                <div className="lb-val">{owner.open}</div>
               </div>
-              <div className="lb-val">{count}</div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
       <div className="card" style={{ marginTop: 16 }}>
@@ -77,7 +91,7 @@ export function CapaPanel({ highlighted, onDownload, onDrill }: CapaPanelProps) 
             <div className="card-sub">Most overdue first</div>
           </div>
           <span className="card-tag" style={{ background: "var(--vi-red-tint)", color: "var(--vi-red)", borderColor: "rgba(238,39,55,.20)" }}>
-            128 overdue
+            {fmt(sections.overdueTotal)} overdue
           </span>
         </div>
         <div className="tbl-scroll" style={{ maxHeight: 260 }}>
@@ -94,21 +108,27 @@ export function CapaPanel({ highlighted, onDownload, onDrill }: CapaPanelProps) 
               </tr>
             </thead>
             <tbody>
-              {OVERDUE_ROWS.map((row) => (
-                <tr key={`${row.plan}-${row.observation}-${row.days}`} onClick={() => onDrill("alert-overdue")}>
-                  <td>
-                    <b>{row.plan}</b>
-                  </td>
-                  <td>{row.audit}</td>
-                  <td>{row.observation}</td>
-                  <td>{row.owner}</td>
-                  <td>{row.target}</td>
-                  <td style={{ color: "var(--vi-red)", fontWeight: 700 }}>{row.days}</td>
-                  <td>
-                    <span className="badge b-warn">Pending By Action Owner</span>
-                  </td>
+              {sections.overduePlans.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--sage)" }}>{emptyLabel}</td>
                 </tr>
-              ))}
+              ) : (
+                sections.overduePlans.map((row) => (
+                  <tr key={`${row.plan}-${row.audit}-${row.observation}-${row.target}`} onClick={() => onDrill("alert-overdue")}>
+                    <td>
+                      <b>{row.plan}</b>
+                    </td>
+                    <td>{row.audit}</td>
+                    <td>{row.observation}</td>
+                    <td>{row.owner}</td>
+                    <td>{row.target}</td>
+                    <td style={{ color: "var(--vi-red)", fontWeight: 700 }}>{row.days}</td>
+                    <td>
+                      <StatusBadge status={row.status} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1,24 +1,19 @@
-import { CHARTS, FUNCTIONS, INFO, OBS_BY_CIRCLE, OBS_BY_FUNCTION, OBS_CIRCLES, fmt } from "./data";
-import { AuditChart } from "./AuditChart";
+import { observationsByCircleSpec, observationsByFunctionSpec } from "./dashboardCharts";
 import { CategoryJourneyCard } from "./CategoryJourneyCard";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
+import type { DashboardSections } from "./managementDashboardApi";
 
 interface ObservationsPanelProps {
-  values: number[];
+  sections: DashboardSections;
+  loading: boolean;
   highlighted: boolean;
   onDownload: (section: string) => void;
   onDrill: (key: string) => void;
 }
 
-const PROGRESS = [
-  ["Raised", "100%", "var(--terracotta)"],
-  ["Plan created", "89.3%", "var(--mustard)"],
-  ["Action taken", "53.9%", "var(--aubergine)"],
-  ["On-time", "41.2%", "var(--slate)"],
-] as const;
-
-export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: ObservationsPanelProps) {
+export function ObservationsPanel({ sections, loading, highlighted, onDownload }: ObservationsPanelProps) {
+  const emptyLabel = loading ? "Loading…" : "No data for this filter.";
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-obs">
       <div className="acc-hd">
@@ -37,8 +32,8 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
         <ChartCard title="Total Observations" sub="Count of total observations in each audit" spec={CHARTS.obsPerAudit} options={["bar", "table"]} info={INFO.obs} />
       </div> */}
       <div className="g g2">
-        <ChartCard title="Observations by Function" sub="Observations, CAPA assigned and CAPA closed per function" spec={CHARTS.obsFunc} options={["bar", "table"]} />
-        <ChartCard title="Observations by Circle" sub="Top 12 circles · observations, CAPA assigned and CAPA closed" spec={CHARTS.obsCircle} options={["bar", "table"]} />
+        <ChartCard title="Observations by Function" sub="Observations, CAPA assigned and CAPA closed per function" spec={observationsByFunctionSpec(sections.observationsByFunction)} options={["bar", "table"]} emptyLabel={emptyLabel} />
+        <ChartCard title="Observations by Circle" sub="Observations, CAPA assigned and CAPA closed" spec={observationsByCircleSpec(sections.observationsByCircle)} options={["bar", "table"]} emptyLabel={emptyLabel} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <CategoryJourneyCard
@@ -46,8 +41,7 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
           sub="Observations, CAPA plan initiated and CAPA plan closed · pick a circle"
           dimensionLabel="Circle"
           allLabel="All circles"
-          labels={OBS_CIRCLES}
-          totals={OBS_BY_CIRCLE}
+          groups={sections.classificationByCircle}
           showSubCategory
         />
         <CategoryJourneyCard
@@ -55,8 +49,7 @@ export function ObservationsPanel({ values, highlighted, onDownload, onDrill }: 
           sub="Observations, CAPA plan initiated and CAPA plan closed · pick a function"
           dimensionLabel="Function"
           allLabel="All functions"
-          labels={FUNCTIONS}
-          totals={OBS_BY_FUNCTION}
+          groups={sections.classificationByFunction}
           showSubCategory
         />
       </div>

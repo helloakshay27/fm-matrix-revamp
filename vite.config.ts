@@ -1,13 +1,47 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import fs from "fs";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+
+/** Dev-only. The FM session token is signed for another host and vi-uat returns 401.
+ *  The Postman collection already has a bearer that host accepts. Read it here so it
+ *  never lands in the client bundle. */
+const readViAuditBearer = () => {
+  try {
+    const file = path.resolve(__dirname, "audit dashboardd.json");
+    const collection = JSON.parse(fs.readFileSync(file, "utf8"));
+    const items = Array.isArray(collection.item) ? collection.item : [];
+    for (const item of items) {
+      const bearer = item?.request?.auth?.bearer;
+      if (!Array.isArray(bearer)) continue;
+      const token = bearer.find((entry) => entry?.key === "token")?.value;
+      if (typeof token === "string" && token) return token;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 5173,
+    proxy: {
+      "/vi-audit-dashboard": {
+        target: "https://vi-uat-api.gophygital.work",
+        changeOrigin: true,
+        rewrite: (requestPath) => requestPath.replace(/^\/vi-audit-dashboard/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            const token = readViAuditBearer();
+            if (token) proxyReq.setHeader("Authorization", `Bearer ${token}`);
+          });
+        },
+      },
+    },
   },
   plugins: [
     react(),

@@ -1,30 +1,20 @@
-import { AUDITS, CHARTS, fmt, type ChartSpec } from "./data";
-import { AuditChart } from "./AuditChart";
+import { auditsByCircleSpec, auditsByFunctionSpec } from "./dashboardCharts";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
 import { RecentAuditsCard } from "./RecentAuditsCard";
-import { StatusBadge } from "./InfoButton";
+import type { DashboardSections, RecentAudit } from "./managementDashboardApi";
 
 interface AuditsPanelProps {
-  values: number[];
+  sections: DashboardSections;
+  loading: boolean;
   highlighted: boolean;
   onDownload: (section: string) => void;
   onDrill: (key: string) => void;
-  onAudit: (index: number) => void;
+  onAudit: (audit: RecentAudit) => void;
 }
 
-// Draft is hidden from the Audit Status chart (donut and bar); the first entry is skipped.
-const AUDIT_STATUS_SPEC: ChartSpec = {
-  ...CHARTS.auditStatus,
-  labels: CHARTS.auditStatus.labels.slice(1),
-  datasets: CHARTS.auditStatus.datasets.map((series) => ({
-    ...series,
-    data: series.data.slice(1),
-    pieColors: series.pieColors?.slice(1),
-  })),
-};
-
-export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit }: AuditsPanelProps) {
+export function AuditsPanel({ sections, loading, highlighted, onDownload, onAudit }: AuditsPanelProps) {
+  const emptyLabel = loading ? "Loading…" : "No data for this filter.";
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-audits">
       <div className="acc-hd">
@@ -66,13 +56,13 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
           )}
         </ChartCard> */}
         {/* <ChartCard title="Audit Type" sub="Corporate vs Circle audits" spec={CHARTS.auditType} options={["donut", "bar"]} /> */}
-        <ChartCard title="Audits by Function" sub="Audits, observations, CAPA assigned and CAPA closed per function" spec={CHARTS.auditFunc} options={["bar", "table"]} />
-        <ChartCard title="Audits per Circle" sub="Top 12 circles · audits, observations, CAPA assigned and CAPA closed" spec={CHARTS.auditCircle} options={["bar", "table"]} />
+        <ChartCard title="Audits by Function" sub="Audits, observations, CAPA assigned and CAPA closed per function" spec={auditsByFunctionSpec(sections.auditsByFunction)} options={["bar", "table"]} emptyLabel={emptyLabel} />
+        <ChartCard title="Audits per Circle" sub="Audits, observations, CAPA assigned and CAPA closed" spec={auditsByCircleSpec(sections.auditsByCircle)} options={["bar", "table"]} emptyLabel={emptyLabel} />
       </div>
       {/* <div className="g g2" style={{ marginTop: 16 }}>
         <ChartCard title="Audits Conducted · Last 12 Months" sub="Audits by date of audit" spec={CHARTS.auditTrend} options={["line", "bar"]} />
       </div> */}
-      <RecentAuditsCard onAudit={onAudit} />
+      <RecentAuditsCard audits={sections.recentAudits} loading={loading} onAudit={onAudit} />
       {/* <div className="card" style={{ marginTop: 16 }}>
         <div className="card-hd">
           <div>

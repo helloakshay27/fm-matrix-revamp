@@ -428,6 +428,45 @@ export const DRILLS: Record<string, DrillModel> = {
   "circle-underperform": { crumb: "Overview › Circle follow-up", title: "Circles needing follow-up", blocks: [{ kind: "note", text: "Circles with the lowest average closure progress across audit closure, plan creation, action taken, on-time and no-extension." }, { kind: "table", headers: ["Circle", "Open audits", "Pending SPOC", "Pending AO"], rows: [["Bihar", 21, 34, 88], ["Assam", 17, 29, 74], ["NESA", 15, 25, 71], ["Kolkata", 19, 22, 66]] }] },
 };
 
+export const recentAuditDrill = (audit: {
+  id: string;
+  type: string;
+  circle: string;
+  functionName: string;
+  location: string;
+  auditor: string;
+  email: string;
+  mobile: string;
+  submittedOn: string;
+  observations: number;
+  capa: number;
+  capaClosed: number;
+  capaPending: number;
+  status: string;
+}): DrillModel => ({
+  crumb: `Audit Directory › ${audit.id}`,
+  title: `${audit.id} · ${audit.type}`,
+  blocks: [
+    { kind: "stats", items: [[String(audit.observations), "Observations"], [String(audit.capaClosed), "CAPA closed"], [audit.status, "Status"]] },
+    { kind: "heading", text: "Audit details" },
+    {
+      kind: "table",
+      headers: ["Field", "Value"],
+      rows: [
+        ["Circle", audit.circle],
+        ["Function", audit.functionName],
+        ["Work Location", audit.location],
+        ["Auditor", audit.auditor],
+        ["Email", audit.email],
+        ["Mobile", audit.mobile],
+        ["Submitted", audit.submittedOn],
+        ["CAPA", String(audit.capa)],
+        ["CAPA pending", String(audit.capaPending)],
+      ],
+    },
+  ],
+});
+
 export const auditDrill = (audit: AuditRow, index: number): DrillModel => {
   const rows = Array.from({ length: Math.min(audit.obs, 6) }, (_, k) => {
     const status = k < audit.closed ? "Closed By Action Owner" : audit.spocP > k ? "Pending By SPOC" : "Pending By Action Owner";
