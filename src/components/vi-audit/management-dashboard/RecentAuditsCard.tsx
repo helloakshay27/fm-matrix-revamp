@@ -51,7 +51,11 @@ export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
   const rows = useMemo(() => {
     const term = query.trim().toLowerCase();
     const matches = term
-      ? RECENT.filter((row) => [row.audit.circle, row.audit.auditor, row.email, row.mobile, row.func].some((field) => field.toLowerCase().includes(term)))
+      ? RECENT.filter((row) =>
+          [row.audit.id, row.audit.circle, row.audit.auditor, row.email, row.mobile, row.func].some((field) =>
+            field.toLowerCase().includes(term),
+          ),
+        )
       : RECENT;
     return matches.slice(0, PAGE_SIZE);
   }, [query]);
@@ -61,7 +65,7 @@ export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
       <div className="card-hd">
         <div>
           <div className="card-title">Recent Audits</div>
-          <div className="card-sub">Recently submitted audits by auditors · search by circle, function, name, email ID or mobile number</div>
+          <div className="card-sub">Recently submitted audits by auditors · search by audit ID, circle, function, name, email ID or mobile number</div>
         </div>
         <div className="card-actions-row">
           <div className="usr-search">
