@@ -1,34 +1,23 @@
-import { FOLLOW_UP, HEATMAP, INFO, KPI_CONFIG, fmt, heatClass } from "./data";
-import { DownloadIcon, PathIcon } from "./icons";
+import { INFO, KPI_CONFIG, fmt, heatClass } from "./data";
+import { PathIcon } from "./icons";
 import { InfoButton } from "./InfoButton";
+import { Skeleton } from "@/components/ui/skeleton";
+import { KPI_FIELD, type AuditKpi, type ClosureRow } from "./viAuditDashboardApi";
 
 interface AuditOverviewProps {
-  values: number[];
+  kpi: AuditKpi | null;
+  closure: ClosureRow[] | null;
+  loading: boolean;
   activeGroup: string | null;
   onJump: (panel: string, group: string) => void;
-  onDownload: (section: string) => void;
-  onDrill: (key: string) => void;
+  onCircle: (row: ClosureRow) => void;
 }
 
-export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill }: AuditOverviewProps) {
+const pct = (value: number) => `${Math.round(value)}%`;
+
+export function AuditOverview({ kpi, closure, loading, activeGroup, onJump, onCircle }: AuditOverviewProps) {
   return (
     <>
-      {/* <div className="alert-strip">
-        <span className="a-lbl">⚡ Priority Actions</span>
-        <button type="button" className="alert-chip" onClick={() => onDrill("alert-spoc")}>
-          155 observations awaiting a SPOC action plan &gt; 7 days
-        </button>
-        <button type="button" className="alert-chip" onClick={() => onDrill("alert-overdue")}>
-          128 action plans past target date
-        </button>
-        <button type="button" className="alert-chip warn" onClick={() => onDrill("alert-ext")}>
-          47 target-date extensions logged
-        </button>
-        <button type="button" className="alert-chip warn" onClick={() => onDrill("alert-draft")}>
-          29 draft audits older than 15 days
-        </button>
-      </div> */}
-
       <div className="sec" id="sec-overview">
         <div className="sec-hd">
           <div className="sec-lbl">Overview — Audit Snapshot</div>
@@ -36,39 +25,28 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
         </div>
         <div className="flow-hint">Click any KPI to jump to its full section below · numbers follow the audit journey: Audit → Observation → Action plan → Action taken</div>
         <div className="kpi-grid flow-kpi-grid">
-          {KPI_CONFIG.map((kpi, index) => {
-            // Draft Audits card is hidden; index is kept so values still line up.
-            if (kpi.id === "kpi-draft") return null;
+          {KPI_CONFIG.map((item) => {
+            if (item.id === "kpi-draft") return null;
+            const field = KPI_FIELD[item.id];
             return (
-            <div
-              key={kpi.id}
-              className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`}
-              style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint }}
-              onClick={() => onJump(kpi.panel, kpi.group)}
-            >
-              <button
-                type="button"
-                className="kpi-dl-btn"
-                title="Download Excel"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onDownload(kpi.section);
-                }}
+              <div
+                key={item.id}
+                className={`kpi flow-kpi${activeGroup === item.group ? " kpi-active" : ""}`}
+                style={{ ["--kpi-c" as string]: item.color, ["--kpi-tint" as string]: item.tint }}
+                onClick={() => onJump(item.panel, item.group)}
               >
-                <DownloadIcon size={12} />
-              </button>
-              <div className="kpi-top">
-                <div className="kpi-lbl">
-                  {kpi.label}
-                  <InfoButton text={kpi.info} />
+                <div className="kpi-top">
+                  <div className="kpi-lbl">
+                    {item.label}
+                    <InfoButton text={item.info} />
+                  </div>
+                  <div className="kpi-ico">
+                    <PathIcon d={item.icon} size={14} />
+                  </div>
                 </div>
-                <div className="kpi-ico">
-                  <PathIcon d={kpi.icon} size={14} />
-                </div>
+                <div className="kpi-val">{loading ? <Skeleton className="h-6 w-16" /> : kpi && field ? fmt(kpi[field]) : "—"}</div>
+                <div className="kpi-flow-arrow">↓ tap to view {item.section}</div>
               </div>
-              <div className="kpi-val">{fmt(values[index])}</div>
-              <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div>
-            </div>
             );
           })}
         </div>
@@ -93,19 +71,29 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
                 <div>Plan Created</div>
                 <div>Action Taken</div>
                 <div>On-time</div>
-                <div>Extended CAPA</div>
                 <div>Delayed CAPA</div>
               </div>
-              {HEATMAP.map((row) => (
-                <div key={row.circle} className="hm-row">
-                  <div className="hm-label">{row.circle}</div>
-                  {row.values.map((value, index) => (
-                    <div key={index} className={`hm-cell ${heatClass(value)}`} onClick={() => onDrill("circle-underperform")}>
-                      {value}%
+              {loading ? (
+                <div className="card-sub" style={{ padding: "20px 0", textAlign: "center" }}>Loading…</div>
+              ) : !closure ? (
+                <div className="card-sub" style={{ padding: "20px 0", textAlign: "center" }}>Couldn’t load closure progress</div>
+              ) : closure.length === 0 ? (
+                <div className="card-sub" style={{ padding: "20px 0", textAlign: "center" }}>No closure data for these filters</div>
+              ) : (
+                closure.map((row) => {
+                  const values = [row.audit_closed, row.action_plan_created, row.action_taken, row.ontime_capa, row.delayed_capa];
+                  return (
+                    <div key={row.circle} className="hm-row">
+                      <div className="hm-label">{row.circle}</div>
+                      {values.map((value, index) => (
+                        <div key={index} className={`hm-cell ${heatClass(value)}`} onClick={() => onCircle(row)}>
+                          {pct(value)}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ))}
+                  );
+                })
+              )}
               <div className="hm-scale">
                 Scale
                 <div className="hm-scale-block">
@@ -118,29 +106,6 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
               </div>
             </div>
           </div>
-          {/* <div className="card">
-            <div className="card-hd">
-              <div>
-                <div className="card-title">
-                  Circles Needing Follow-up
-                  <InfoButton text={INFO.followup} />
-                </div>
-                <div className="card-sub">Lowest overall closure progress</div>
-              </div>
-            </div>
-            <div>
-              {FOLLOW_UP.map((row, index) => (
-                <div key={row.circle} className="lb-row" onClick={() => onDrill("circle-underperform")}>
-                  <div className="lb-rank">{index + 1}</div>
-                  <div className="lb-info">
-                    <div className="lb-name">{row.circle}</div>
-                    <div className="lb-meta">Average across the five stages</div>
-                  </div>
-                  <div className="lb-val">{row.average}%</div>
-                </div>
-              ))}
-            </div>
-          </div> */}
         </div>
       </div>
     </>

@@ -1,71 +1,54 @@
-import { useMemo, useState } from "react";
-import { AUDITS, CAPA_INITIATED_RATIO, FUNCTIONS, type AuditRow } from "./data";
+import { useEffect, useMemo, useState } from "react";
+import { fmt } from "./data";
+import type { RecentAudit } from "./viAuditDashboardApi";
 import { StatusBadge } from "./InfoButton";
 import { SearchIcon } from "./icons";
+import { TablePager } from "./TablePager";
 
 interface RecentAuditsCardProps {
-  onAudit: (index: number) => void;
-}
-
-interface RecentAudit {
-  index: number;
-  audit: AuditRow;
-  func: string;
-  email: string;
-  mobile: string;
-  submittedAt: number;
-  capa: number;
-  capaClosed: number;
-  capaPending: number;
+  audits: RecentAudit[] | null;
+  total: number;
+  loading: boolean;
+  onAudit: (audit: RecentAudit) => void;
 }
 
 const PAGE_SIZE = 10;
 
-const parseDate = (value: string) => {
-  const [day, month, year] = value.split("/").map(Number);
-  return new Date(year, month - 1, day).getTime();
-};
-
-// Contact details and function are not part of the audit mock data, so they are derived per audit.
-const RECENT: RecentAudit[] = AUDITS.map((audit, index) => {
-  const capa = Math.round(audit.obs * CAPA_INITIATED_RATIO);
-  const capaClosed = Math.min(audit.closed, capa);
-  return {
-    index,
-    audit,
-    func: FUNCTIONS[index % FUNCTIONS.length],
-    email: `${audit.auditor.toLowerCase().replace(/[^a-z]+/g, ".")}@vimail.example`,
-    mobile: `98${String(20000000 + index * 7919).slice(-8)}`,
-    submittedAt: parseDate(audit.date),
-    capa,
-    capaClosed,
-    capaPending: capa - capaClosed,
-  };
-})
-  .filter((row) => row.audit.status !== "Draft")
-  .sort((a, b) => b.submittedAt - a.submittedAt);
-
-export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
+export function RecentAuditsCard({ audits, total, loading, onAudit }: RecentAuditsCardProps) {
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
-  const rows = useMemo(() => {
+  const filtered = useMemo(() => {
+    const list = audits ?? [];
     const term = query.trim().toLowerCase();
-    const matches = term
-      ? RECENT.filter((row) =>
-          [row.audit.id, row.audit.circle, row.audit.auditor, row.email, row.mobile, row.func].some((field) =>
-            field.toLowerCase().includes(term),
-          ),
-        )
-      : RECENT;
-    return matches.slice(0, PAGE_SIZE);
-  }, [query]);
+    if (!term) return list;
+    return list.filter((row) =>
+      [row.audit_id, row.circle, row.auditor, row.email, row.mobile, row.function_name, row.audit_location].some((field) =>
+        field.toLowerCase().includes(term),
+      ),
+    );
+  }, [audits, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, audits]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="card" style={{ marginTop: 16 }}>
       <div className="card-hd">
         <div>
           <div className="card-title">Recent Audits</div>
-          <div className="card-sub">Recently submitted audits by auditors · search by audit ID, circle, function, name, email ID or mobile number</div>
+          <div className="card-sub">
+            Recently submitted audits by auditors · search by audit ID, circle, function, name, email ID or mobile number
+            {!loading && total > (audits?.length ?? 0) ? ` · showing ${audits?.length ?? 0} of ${fmt(total)}` : ""}
+          </div>
         </div>
         <div className="card-actions-row">
           <div className="usr-search">
@@ -80,7 +63,7 @@ export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
           </div>
         </div>
       </div>
-      <div className="tbl-scroll" style={{ maxHeight: 320 }}>
+      <div className="tbl-scroll" style={{ maxHeight: 360 }}>
         <table className="tbl">
           <thead>
             <tr>
@@ -97,40 +80,37 @@ export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={10} style={{ textAlign: "center", color: "var(--sage)" }}>
-                  No audits match your search
-                </td>
-              </tr>
+            {loading ? (
+              <tr><td colSpan={10} style={{ textAlign: "center", color: "var(--sage)" }}>Loading…</td></tr>
+            ) : !audits ? (
+              <tr><td colSpan={10} style={{ textAlign: "center", color: "var(--sage)" }}>Couldn’t load recent audits</td></tr>
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={10} style={{ textAlign: "center", color: "var(--sage)" }}>No audits match your search</td></tr>
             ) : (
               rows.map((row) => (
-                <tr key={row.audit.id} onClick={() => onAudit(row.index)}>
+                <tr key={row.audit_id} onClick={() => onAudit(row)}>
+                  <td><b>{row.audit_id}</b></td>
                   <td>
-                    <b>{row.audit.id}</b>
+                    <div>{row.auditor}</div>
+                    <div style={{ fontSize: 10, color: "var(--sage)" }}>{[row.email, row.mobile].filter(Boolean).join(" · ")}</div>
                   </td>
-                  <td>
-                    <div>{row.audit.auditor}</div>
-                    <div style={{ fontSize: 10, color: "var(--sage)" }}>
-                      {row.email} · {row.mobile}
-                    </div>
-                  </td>
-                  <td>{row.audit.circle}</td>
-                  <td>{row.func}</td>
-                  <td>{row.audit.date}</td>
-                  <td style={{ textAlign: "right" }}>{row.audit.obs}</td>
-                  <td style={{ textAlign: "right" }}>{row.capa}</td>
-                  <td style={{ textAlign: "right" }}>{row.capaClosed}</td>
-                  <td style={{ textAlign: "right" }}>{row.capaPending}</td>
-                  <td>
-                    <StatusBadge status={row.audit.status} />
-                  </td>
+                  <td>{row.circle}</td>
+                  <td>{row.function_name}</td>
+                  <td>{row.submitted_on}</td>
+                  <td style={{ textAlign: "right" }}>{fmt(row.observations)}</td>
+                  <td style={{ textAlign: "right" }}>{fmt(row.capa_count)}</td>
+                  <td style={{ textAlign: "right" }}>{fmt(row.capa_closed)}</td>
+                  <td style={{ textAlign: "right" }}>{fmt(row.capa_pending)}</td>
+                  <td><StatusBadge status={row.status} /></td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+      {!loading && audits && (
+        <TablePager page={page} totalPages={totalPages} total={filtered.length} pageSize={PAGE_SIZE} onPage={setPage} />
+      )}
     </div>
   );
 }
