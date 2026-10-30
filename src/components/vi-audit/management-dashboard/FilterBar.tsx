@@ -129,7 +129,10 @@ export function FilterBar(props: FilterBarProps) {
   const required = props.persona === "circle";
   return (
     <div className="cm-filter-bar">
-      <MultiSelect label="Circle" plural="Circles" required={required} value={props.circles} options={props.options.circles} loaded={props.options.loaded.circles} onChange={props.onCircles} />
+      {/* Circle filter only in Circle Manager; Pan India covers every circle. */}
+      {required && (
+        <MultiSelect label="Circle" plural="Circles" required value={props.circles} options={props.options.circles} loaded={props.options.loaded.circles} onChange={props.onCircles} />
+      )}
       <MultiSelect label="Function" plural="Functions" value={props.functions} options={props.options.functions} loaded={props.options.loaded.functions} onChange={props.onFunctions} />
       <MultiSelect label="Personnel Area / Zone" plural="Zones" value={props.zones} options={props.options.zones} loaded={props.options.loaded.zones} onChange={props.onZones} />
       <MultiSelect label="Work Location" plural="Work Locations" value={props.workLocations} options={props.options.workLocations} loaded={props.options.loaded.workLocations} onChange={props.onWorkLocations} />

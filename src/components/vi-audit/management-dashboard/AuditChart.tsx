@@ -36,6 +36,9 @@ export function AuditChart({ spec, type, compactDonut = false }: AuditChartProps
           backgroundColor: series.barColor ?? C.terra,
           borderRadius: 5,
           borderSkipped: false,
+          maxBarThickness: 36,
+          categoryPercentage: 0.65,
+          barPercentage: 0.9,
         };
       }
       return {
@@ -78,7 +81,14 @@ export function AuditChart({ spec, type, compactDonut = false }: AuditChartProps
           : {
               x: {
                 stacked: Boolean(spec.stacked),
-                ticks: { color: C.sage, font: { size: 10 } },
+                ticks: {
+                  color: C.sage,
+                  font: { size: 10 },
+                  // Angle long labels so they stay readable on full-width vertical charts.
+                  maxRotation: 40,
+                  minRotation: spec.labels.some((label) => label.length > 12) ? 25 : 0,
+                  autoSkip: false,
+                },
                 grid: { color: "#EADCC4" },
               },
               y: {

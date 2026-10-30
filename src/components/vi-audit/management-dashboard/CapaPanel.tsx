@@ -9,6 +9,7 @@ interface CapaPanelProps {
   highlighted: boolean;
   loading: boolean;
   capaStatus: ChartSpec | null;
+  capaStatusFunc: ChartSpec | null;
   capaAging: ChartSpec | null;
   capaOverdue: ChartSpec | null;
   ageing: Ageing | null;
@@ -24,6 +25,7 @@ export function CapaPanel({
   highlighted,
   loading,
   capaStatus,
+  capaStatusFunc,
   capaAging,
   capaOverdue,
   ageing,
@@ -54,12 +56,18 @@ export function CapaPanel({
           <div className="acc-sub">Corrective and preventive plans, who owes the next step, and what is past its target date</div>
         </div>
       </div>
-      <div className="g g2">
-        <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state, across the selected circles" spec={capaStatus ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !capaStatus} />
-        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub="Days since the observation was submitted" spec={capaAging ?? EMPTY_CHART} options={["bar", "donut"]} info={INFO.aging} loading={loading} unavailable={!loading && !capaAging} />
+      {/* Full-width — stacked Corrective/Preventive columns need the full row. */}
+      <div className="g">
+        <ChartCard title="Corrective vs Preventive Status" sub="Per circle · Corrective and Preventive plans by current state" spec={capaStatus ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !capaStatus} />
+      </div>
+      <div className="g" style={{ marginTop: 16 }}>
+        <ChartCard title="Corrective vs Preventive Status" sub="Per function · Corrective and Preventive plans by current state" spec={capaStatusFunc ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !capaStatusFunc} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
+        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub="Days since the observation was submitted" spec={capaAging ?? EMPTY_CHART} options={["bar", "donut"]} info={INFO.aging} loading={loading} unavailable={!loading && !capaAging} />
         <ChartCard title="Actions Past Target Date by Action Owner" sub="Open actions where today is later than the Target Date" spec={capaOverdue ?? EMPTY_CHART} options={["bar", "table"]} info={INFO.overdue} loading={loading} unavailable={!loading && !capaOverdue} />
+      </div>
+      <div className="g g2" style={{ marginTop: 16 }}>
         <div className="card">
           <div className="card-hd">
             <div>
@@ -85,8 +93,6 @@ export function CapaPanel({
             </div>
           )}
         </div>
-      </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
         <div className="card">
           <div className="card-hd">
             <div>
@@ -113,6 +119,8 @@ export function CapaPanel({
             ))
           )}
         </div>
+      </div>
+      <div className="g" style={{ marginTop: 16 }}>
         <div className="card">
           <div className="card-hd">
             <div>

@@ -41,7 +41,7 @@ export function ChartCard({ title, sub, spec, options, info, compactDonut = fals
       ) : children ? (
         children(type)
       ) : (
-        <div className="chart-wrap">
+        <div className={`chart-wrap${type === "bar" && spec.labels.length > 4 ? " tall" : ""}`}>
           <AuditChart spec={spec} type={type} compactDonut={compactDonut} />
         </div>
       )}

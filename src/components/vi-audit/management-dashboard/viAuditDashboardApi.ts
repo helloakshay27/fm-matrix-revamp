@@ -356,10 +356,9 @@ export interface AuditDashboardData {
   kpi: AuditKpi | null;
   auditsByFunction: NamedMetrics[] | null;
   auditsByCircle: NamedMetrics[] | null;
-  recent: RecentAudit[] | null;
-  recentTotal: number;
   closure: ClosureRow[] | null;
   actionPlans: PlanStatusRow[] | null;
+  actionPlansByFunction: PlanStatusRow[] | null;
   ageing: Ageing | null;
   owners: OpenActionOwner[] | null;
   pastTarget: PastTargetPlan[] | null;
@@ -374,10 +373,9 @@ const EMPTY_DATA: AuditDashboardData = {
   kpi: null,
   auditsByFunction: null,
   auditsByCircle: null,
-  recent: null,
-  recentTotal: 0,
   closure: null,
   actionPlans: null,
+  actionPlansByFunction: null,
   ageing: null,
   owners: null,
   pastTarget: null,
@@ -389,48 +387,52 @@ const EMPTY_DATA: AuditDashboardData = {
 };
 
 /** KPI, charts, closure progress and lists for the applied filters. */
-export const useAuditDashboardData = (filters: AuditDashboardFilters) => {
+export const useAuditDashboardData = (filters: AuditDashboardFilters, enabled = true) => {
   const [data, setData] = useState<AuditDashboardData>(EMPTY_DATA);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const key = JSON.stringify(filters);
 
   useEffect(() => {
+    if (!enabled) {
+      setData(EMPTY_DATA);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     const params = filterParams(JSON.parse(key) as AuditDashboardFilters);
-    const get = <T,>(endpoint: string) =>
-      fetchDashboard<T>(endpoint, params, controller.signal).catch((error) => {
+    const get = <T,>(endpoint: string, extra: Record<string, string> = {}) =>
+      fetchDashboard<T>(endpoint, { ...params, ...extra }, controller.signal).catch((error) => {
         if (!controller.signal.aborted) console.error(`Failed to load ${endpoint}:`, error);
         return null;
       });
+    const listPage = { page: "1", per_page: "100" };
     setLoading(true);
     Promise.all([
       get<unknown>("kpi"),
       get<unknown>("audit_by_function_type"),
       get<unknown>("audits_per_circle_data"),
-      get<unknown>("recent_audits"),
       get<unknown>("closure_progress_by_circle"),
       get<unknown>("action_plan"),
+      get<unknown>("action_plan_function"),
       get<unknown>("waiting_for_spoc_action_plan_ageing"),
       get<unknown>("action_owners_with_most_open_actions"),
-      get<unknown>("plans_past_target_date"),
+      get<unknown>("plans_past_target_date", listPage),
       get<unknown>("observations_by_function"),
       get<unknown>("observation_by_circle"),
       get<unknown>("observation_by_classification_category_sub_category_by_circle"),
       get<unknown>("observation_by_classification_category_by_function"),
-    ]).then(([kpi, byFunction, byCircle, recent, closure, plans, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction]) => {
+    ]).then(([kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction]) => {
       if (controller.signal.aborted) return;
-      const loaded = [kpi, byFunction, byCircle, recent, closure, plans, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction];
+      const loaded = [kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction];
       if (loaded.every((item) => item == null)) toast.error("Failed to load audit dashboard");
-      const recentRows = recent ? recentOf(recent) : null;
       const pastRows = pastTarget ? pastTargetOf(pastTarget) : null;
       setData({
         kpi: kpi ? kpiOf(kpi) : null,
         auditsByFunction: byFunction ? metrics(asRecord(byFunction).data, "name", true) : null,
         auditsByCircle: byCircle ? metrics(asRecord(byCircle).data, "name", true) : null,
-        recent: recentRows,
-        recentTotal: recent ? totalCount(recent, recentRows?.length ?? 0) : 0,
         closure: closure ? closureOf(closure) : null,
         actionPlans: plans ? planRows(asRecord(plans).data, "circle") : null,
+        actionPlansByFunction: plansByFunction ? planRows(asRecord(plansByFunction).data, "function") : null,
         ageing: ageing ? ageingOf(ageing) : null,
         owners: owners ? ownersOf(owners) : null,
         pastTarget: pastRows,
@@ -443,9 +445,51 @@ export const useAuditDashboardData = (filters: AuditDashboardFilters) => {
       setLoading(false);
     });
     return () => controller.abort();
-  }, [key]);
+  }, [key, enabled]);
 
   return { ...data, loading };
+};
+
+/** Recent audits list — supports `search` (name, email, mobile). Refetches when filters or search change. */
+export const useRecentAudits = (filters: AuditDashboardFilters, search: string, enabled = true) => {
+  const [audits, setAudits] = useState<RecentAudit[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setAudits(null);
+      setTotal(0);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as AuditDashboardFilters);
+    const extra: Record<string, string> = { page: "1", per_page: "100" };
+    if (term) extra.search = term;
+    setLoading(true);
+    fetchDashboard<unknown>("recent_audits", { ...params, ...extra }, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        const rows = recentOf(json);
+        setAudits(rows);
+        setTotal(totalCount(json, rows.length));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load recent_audits:", error);
+        setAudits(null);
+        setTotal(0);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { audits, total, loading };
 };
 
 const AUDIT_COLORS = {
@@ -457,7 +501,13 @@ const AUDIT_COLORS = {
 
 const bar = (label: string, data: number[], color: string) => ({ label, data, barColor: color });
 
-const metricChart = (id: string, rows: NamedMetrics[] | null, includeAudits: boolean): ChartSpec | null => {
+const metricChart = (
+  id: string,
+  rows: NamedMetrics[] | null,
+  includeAudits: boolean,
+  // Long function names read better as horizontal bars in a full-width card.
+  horizontal = false,
+): ChartSpec | null => {
   if (!rows) return null;
   const datasets = [
     ...(includeAudits ? [bar("Audits", rows.map((row) => row.audits), AUDIT_COLORS.audits)] : []),
@@ -465,17 +515,31 @@ const metricChart = (id: string, rows: NamedMetrics[] | null, includeAudits: boo
     bar("CAPA Assigned", rows.map((row) => row.capa_assigned), includeAudits ? AUDIT_COLORS.assigned : OBS_JOURNEY_COLORS[1]),
     bar("CAPA Closed", rows.map((row) => row.capa_closed), includeAudits ? AUDIT_COLORS.closed : OBS_JOURNEY_COLORS[2]),
   ];
-  return { id, labels: rows.map((row) => row.name), datasets, defaultType: "bar" };
+  return { id, labels: rows.map((row) => row.name), datasets, defaultType: "bar", horizontal };
 };
 
-const sumPlans = (rows: PlanStatusRow[], key: keyof PlanCounts) => [
-  rows.reduce((sum, row) => sum + row.corrective[key], 0),
-  rows.reduce((sum, row) => sum + row.preventive[key], 0),
-];
+/** Stacked Corrective + Preventive columns per label (circle or function). */
+const capaStatusChart = (id: string, rows: PlanStatusRow[]): ChartSpec => {
+  const labels = rows.flatMap((row) => [`${row.label} · Corrective`, `${row.label} · Preventive`]);
+  const values = (pick: (counts: PlanCounts) => number) =>
+    rows.flatMap((row) => [pick(row.corrective), pick(row.preventive)]);
+  return {
+    id,
+    labels,
+    datasets: [
+      bar("Not started", values((counts) => counts.not_started), OBS_JOURNEY_COLORS[0]),
+      bar("Pending By Action Owner", values((counts) => counts.pending_by_action_owner), OBS_JOURNEY_COLORS[1]),
+      bar("Closed By Action Owner", values((counts) => counts.closed_by_action_owner), OBS_JOURNEY_COLORS[2]),
+    ],
+    defaultType: "bar",
+    stacked: true,
+  };
+};
 
 /** Chart specs for the panels that share the audit / observation / CAPA charts. Null means that request failed. */
 export const buildCharts = (data: AuditDashboardData): Record<string, ChartSpec | null> => {
   const plans = data.actionPlans;
+  const plansByFunction = data.actionPlansByFunction;
   const ageing = data.ageing;
   const owners = data.owners;
   const closure = data.closure;
@@ -506,19 +570,8 @@ export const buildCharts = (data: AuditDashboardData): Record<string, ChartSpec 
           defaultType: "donut",
         }
       : null,
-    capaStatus: plans
-      ? {
-          id: "capaStatus",
-          labels: ["Corrective", "Preventive"],
-          datasets: [
-            bar("Not started", sumPlans(plans, "not_started"), OBS_JOURNEY_COLORS[0]),
-            bar("Pending By Action Owner", sumPlans(plans, "pending_by_action_owner"), OBS_JOURNEY_COLORS[1]),
-            bar("Closed By Action Owner", sumPlans(plans, "closed_by_action_owner"), OBS_JOURNEY_COLORS[2]),
-          ],
-          defaultType: "bar",
-          stacked: true,
-        }
-      : null,
+    capaStatus: plans ? capaStatusChart("capaStatus", plans) : null,
+    capaStatusFunc: plansByFunction ? capaStatusChart("capaStatusFunc", plansByFunction) : null,
     capaAging: ageing
       ? {
           id: "capaAging",

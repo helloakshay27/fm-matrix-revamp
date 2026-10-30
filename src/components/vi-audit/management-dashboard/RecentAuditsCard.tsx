@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { fmt } from "./data";
 import type { RecentAudit } from "./viAuditDashboardApi";
 import { StatusBadge } from "./InfoButton";
@@ -9,32 +9,22 @@ interface RecentAuditsCardProps {
   audits: RecentAudit[] | null;
   total: number;
   loading: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
   onAudit: (audit: RecentAudit) => void;
 }
 
 const PAGE_SIZE = 10;
 
-export function RecentAuditsCard({ audits, total, loading, onAudit }: RecentAuditsCardProps) {
-  const [query, setQuery] = useState("");
+export function RecentAuditsCard({ audits, total, loading, search, onSearchChange, onAudit }: RecentAuditsCardProps) {
   const [page, setPage] = useState(1);
-
-  const filtered = useMemo(() => {
-    const list = audits ?? [];
-    const term = query.trim().toLowerCase();
-    if (!term) return list;
-    return list.filter((row) =>
-      [row.audit_id, row.circle, row.auditor, row.email, row.mobile, row.function_name, row.audit_location].some((field) =>
-        field.toLowerCase().includes(term),
-      ),
-    );
-  }, [audits, query]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const list = audits ?? [];
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const rows = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
     setPage(1);
-  }, [query, audits]);
+  }, [search, audits]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -46,8 +36,8 @@ export function RecentAuditsCard({ audits, total, loading, onAudit }: RecentAudi
         <div>
           <div className="card-title">Recent Audits</div>
           <div className="card-sub">
-            Recently submitted audits by auditors · search by audit ID, circle, function, name, email ID or mobile number
-            {!loading && total > (audits?.length ?? 0) ? ` · showing ${audits?.length ?? 0} of ${fmt(total)}` : ""}
+            Recently submitted audits by auditors · search by name, email or mobile number
+            {!loading && total > list.length ? ` · showing ${list.length} of ${fmt(total)}` : ""}
           </div>
         </div>
         <div className="card-actions-row">
@@ -55,10 +45,10 @@ export function RecentAuditsCard({ audits, total, loading, onAudit }: RecentAudi
             <SearchIcon />
             <input
               type="text"
-              aria-label="Search recent audits"
-              placeholder="Search audits…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search recent audits by name, email or mobile"
+              placeholder="Search by name, email or mobile no"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
             />
           </div>
         </div>
@@ -109,7 +99,7 @@ export function RecentAuditsCard({ audits, total, loading, onAudit }: RecentAudi
         </table>
       </div>
       {!loading && audits && (
-        <TablePager page={page} totalPages={totalPages} total={filtered.length} pageSize={PAGE_SIZE} onPage={setPage} />
+        <TablePager page={page} totalPages={totalPages} total={list.length} pageSize={PAGE_SIZE} onPage={setPage} />
       )}
     </div>
   );
