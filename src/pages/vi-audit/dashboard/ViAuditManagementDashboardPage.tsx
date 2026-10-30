@@ -146,7 +146,7 @@ export function ViAuditManagementDashboardPage() {
         </div>
         <AuditOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
         <AuditsPanel values={scope.k} highlighted={highlight === "acc-audits"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
-        {/* <ObservationsPanel values={scope.k} highlighted={highlight === "acc-obs"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} /> */}
+        <ObservationsPanel values={scope.k} highlighted={highlight === "acc-obs"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
         <CapaPanel highlighted={highlight === "acc-capa"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
         <AuditDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
         <div className="footer">Audit Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All figures are illustrative dummy data. Priority actions, aging, past-target-date, extension and heatmap measures are proposals derived from the Figma statuses and dates and need confirmation · October 2026</div>

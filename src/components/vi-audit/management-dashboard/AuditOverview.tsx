@@ -110,9 +110,9 @@ export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill
                 Scale
                 <div className="hm-scale-block">
                   <span style={{ background: "rgba(238,39,55,.28)" }} />
-                  <span style={{ background: "rgba(237,196,136,.35)" }} />
-                  <span style={{ background: "rgba(158,200,186,.35)" }} />
-                  <span style={{ background: "rgba(16,140,114,.22)" }} />
+                  <span style={{ background: "rgba(255,196,0,.55)" }} />
+                  <span style={{ background: "rgba(255,143,107,.42)" }} />
+                  <span style={{ background: "#CADEF8" }} />
                 </div>
                 &lt;70% → ≥90%
               </div>

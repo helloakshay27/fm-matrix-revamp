@@ -2,6 +2,7 @@ import { AUDITS, CHARTS, fmt, type ChartSpec } from "./data";
 import { AuditChart } from "./AuditChart";
 import { ChartCard } from "./ChartCard";
 import { DownloadIcon } from "./icons";
+import { RecentAuditsCard } from "./RecentAuditsCard";
 import { StatusBadge } from "./InfoButton";
 
 interface AuditsPanelProps {
@@ -56,7 +57,7 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
                   <span className="dl-val">{fmt(values[2])}</span>
                 </div>
                 <div className="dl-row" onClick={() => onDrill("kpi-closed")}>
-                  <span className="dl-sw" style={{ background: "#0D47A1" }} />
+                  <span className="dl-sw" style={{ background: "var(--aubergine)" }} />
                   <span className="dl-lbl">Closed</span>
                   <span className="dl-val">{fmt(values[3])}</span>
                 </div>
@@ -65,12 +66,13 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
           )}
         </ChartCard> */}
         {/* <ChartCard title="Audit Type" sub="Corporate vs Circle audits" spec={CHARTS.auditType} options={["donut", "bar"]} /> */}
-        <ChartCard title="Audits by Function" sub="Function selected on the audit" spec={CHARTS.auditFunc} options={["donut", "bar"]} />
-        <ChartCard title="Audits per Circle" sub="Top 12 circles · open vs closed" spec={CHARTS.auditCircle} options={["bar", "table"]} />
+        <ChartCard title="Audits by Function" sub="Audits, observations, CAPA assigned and CAPA closed per function" spec={CHARTS.auditFunc} options={["bar", "table"]} />
+        <ChartCard title="Audits per Circle" sub="Top 12 circles · audits, observations, CAPA assigned and CAPA closed" spec={CHARTS.auditCircle} options={["bar", "table"]} />
       </div>
       {/* <div className="g g2" style={{ marginTop: 16 }}>
         <ChartCard title="Audits Conducted · Last 12 Months" sub="Audits by date of audit" spec={CHARTS.auditTrend} options={["line", "bar"]} />
       </div> */}
+      <RecentAuditsCard onAudit={onAudit} />
       {/* <div className="card" style={{ marginTop: 16 }}>
         <div className="card-hd">
           <div>
