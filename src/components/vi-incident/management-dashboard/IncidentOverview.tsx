@@ -1,15 +1,21 @@
-import { FOLLOW_UP, HEATMAP, KPI_INFO, cardInfo, fmt } from "./data";
+import type { HeatmapRow } from "./api";
+import { FOLLOW_UP, KPI_INFO, cardInfo, fmt } from "./data";
 import { PathIcon } from "./icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { InfoButton } from "./InfoButton";
+import { DataState } from "./DataState";
+import { useDashboardLoading } from "./loading";
 
 interface IncidentOverviewProps {
   values: readonly number[];
+  heatmap: HeatmapRow[];
   activeGroup: string | null;
   onJump: (panel: string, group: string) => void;
   onDrill: (key: string) => void;
 }
 
-export function IncidentOverview({ values, activeGroup, onJump, onDrill }: IncidentOverviewProps) {
+export function IncidentOverview({ values, heatmap, activeGroup, onJump, onDrill }: IncidentOverviewProps) {
+  const loading = useDashboardLoading();
   return (
     <>
       {/* <div className="alert-strip">
@@ -32,7 +38,7 @@ export function IncidentOverview({ values, activeGroup, onJump, onDrill }: Incid
                 <div className="kpi-lbl">{kpi.label}<InfoButton text={kpi.info} /></div>
                 <div className="kpi-ico"><PathIcon d={kpi.icon} size={14} /></div>
               </div>
-              <div className="kpi-val">{fmt(values[index])}</div>
+              <div className="kpi-val">{loading ? <Skeleton className="h-6 w-20" /> : fmt(values[index])}</div>
               <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div>
             </div>
             );
@@ -50,7 +56,9 @@ export function IncidentOverview({ values, activeGroup, onJump, onDrill }: Incid
             </div>
             <div className="hm-wrap">
               <div className="hm-hd"><div>Circle</div><div>Reviewed</div><div>Plan Created</div><div>Action Taken</div><div>On-time</div><div>No Extension</div></div>
-              {HEATMAP.map((row) => (
+              {loading ? <DataState /> : null}
+              {!loading && heatmap.length === 0 ? <div className="hm-row"><div className="hm-label">No circles in the selected scope</div></div> : null}
+              {!loading && heatmap.map((row) => (
                 <div key={row.circle} className="hm-row">
                   <div className="hm-label">{row.circle}</div>
                   {row.cells.map((cell, index) => (
@@ -58,7 +66,7 @@ export function IncidentOverview({ values, activeGroup, onJump, onDrill }: Incid
                   ))}
                 </div>
               ))}
-              <div className="hm-scale">Scale <div className="hm-scale-block"><span style={{ background: "rgba(238,39,55,.28)" }} /><span style={{ background: "rgba(237,196,136,.35)" }} /><span style={{ background: "rgba(158,200,186,.35)" }} /><span style={{ background: "rgba(16,140,114,.22)" }} /></div> &lt;70% → ≥90%</div>
+              <div className="hm-scale">Scale <div className="hm-scale-block"><span style={{ background: "rgba(238,39,55,.28)" }} /><span style={{ background: "rgba(255,196,0,.55)" }} /><span style={{ background: "rgba(255,143,107,.42)" }} /><span style={{ background: "var(--sky)" }} /></div> &lt;70% → ≥90%</div>
             </div>
           </div>
           {/* <div className="card">

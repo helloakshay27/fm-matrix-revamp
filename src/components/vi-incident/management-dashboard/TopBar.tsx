@@ -1,5 +1,6 @@
+import { getUser } from "@/utils/auth";
 import type { ModuleKey, Persona } from "./data";
-import { AuditTabIcon, GridIcon } from "./icons";
+import { AuditTabIcon } from "./icons";
 
 interface TopBarProps {
   persona: Persona;
@@ -9,7 +10,14 @@ interface TopBarProps {
   onModule: (module: ModuleKey) => void;
 }
 
-export function TopBar({ persona, module, role, onPersona, onModule }: TopBarProps) {
+// `module` / `onModule` stay in the props for when the My Dashboard button is restored.
+export function TopBar({ persona, role, onPersona }: TopBarProps) {
+  const user = getUser();
+  const firstName = user?.firstname?.trim() || "User";
+  const lastInitial = user?.lastname?.trim()?.[0];
+  const shortName = lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+  const initials = `${firstName[0] || ""}${lastInitial || ""}`.toUpperCase() || "U";
+
   return (
     <header className="topbar">
       <div className="brand">
@@ -23,13 +31,14 @@ export function TopBar({ persona, module, role, onPersona, onModule }: TopBarPro
         <button type="button" className={`persona-pill${persona === "admin" ? " active" : ""}`} onClick={() => onPersona("admin")}>Pan India</button>
         <button type="button" className={`persona-pill${persona === "circle" ? " active" : ""}`} onClick={() => onPersona("circle")}>Circle Manager</button>
       </div>
+      {/* My Dashboard is hidden for now.
       <button type="button" className={`mydash-btn${module === "mydashboard" ? " active" : ""}`} onClick={() => onModule("mydashboard")}>
         <GridIcon /> My Dashboard
-      </button>
+      </button> */}
       <div className="tb-spacer" />
       <div className="tb-avatar">
-        <div className="av">AK</div>
-        <div className="av-txt"><div className="n">Amrita K.</div><div className="r">{role}</div></div>
+        <div className="av">{initials}</div>
+        <div className="av-txt"><div className="n">{shortName}</div><div className="r">{role}</div></div>
       </div>
     </header>
   );

@@ -2,6 +2,8 @@ import { useState, type ReactNode } from "react";
 import { cardInfo, type ChartKind, type ChartSpec } from "./data";
 import { ChartSwitch, IncidentChart } from "./IncidentChart";
 import { InfoButton } from "./InfoButton";
+import { DataState } from "./DataState";
+import { useDashboardLoading } from "./loading";
 
 interface ChartCardProps {
   title: string;
@@ -14,6 +16,7 @@ interface ChartCardProps {
 export function ChartCard({ title, sub, spec, options, children }: ChartCardProps) {
   const [type, setType] = useState<ChartKind>(spec.defaultType);
   const info = cardInfo(title);
+  const loading = useDashboardLoading();
 
   return (
     <div className="card">
@@ -29,7 +32,7 @@ export function ChartCard({ title, sub, spec, options, children }: ChartCardProp
           <ChartSwitch options={options} value={type} onChange={setType} />
         </div>
       </div>
-      {children ? children(type) : (
+      {loading ? <DataState /> : children ? children(type) : (
         <div className="chart-wrap">
           <IncidentChart spec={spec} type={type} />
         </div>
