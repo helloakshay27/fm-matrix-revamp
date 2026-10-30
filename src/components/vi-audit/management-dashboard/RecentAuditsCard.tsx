@@ -1,30 +1,64 @@
 import { useMemo, useState } from "react";
+import { AUDITS, CAPA_INITIATED_RATIO, FUNCTIONS, type AuditRow } from "./data";
 import { StatusBadge } from "./InfoButton";
 import { SearchIcon } from "./icons";
-import type { RecentAudit } from "./managementDashboardApi";
 
 interface RecentAuditsCardProps {
-  audits: RecentAudit[];
-  loading: boolean;
-  onAudit: (audit: RecentAudit) => void;
+  onAudit: (index: number) => void;
+}
+
+interface RecentAudit {
+  index: number;
+  audit: AuditRow;
+  func: string;
+  email: string;
+  mobile: string;
+  submittedAt: number;
+  capa: number;
+  capaClosed: number;
+  capaPending: number;
 }
 
 const PAGE_SIZE = 10;
 
-export function RecentAuditsCard({ audits, loading, onAudit }: RecentAuditsCardProps) {
+const parseDate = (value: string) => {
+  const [day, month, year] = value.split("/").map(Number);
+  return new Date(year, month - 1, day).getTime();
+};
+
+// Contact details and function are not part of the audit mock data, so they are derived per audit.
+const RECENT: RecentAudit[] = AUDITS.map((audit, index) => {
+  const capa = Math.round(audit.obs * CAPA_INITIATED_RATIO);
+  const capaClosed = Math.min(audit.closed, capa);
+  return {
+    index,
+    audit,
+    func: FUNCTIONS[index % FUNCTIONS.length],
+    email: `${audit.auditor.toLowerCase().replace(/[^a-z]+/g, ".")}@vimail.example`,
+    mobile: `98${String(20000000 + index * 7919).slice(-8)}`,
+    submittedAt: parseDate(audit.date),
+    capa,
+    capaClosed,
+    capaPending: capa - capaClosed,
+  };
+})
+  .filter((row) => row.audit.status !== "Draft")
+  .sort((a, b) => b.submittedAt - a.submittedAt);
+
+export function RecentAuditsCard({ onAudit }: RecentAuditsCardProps) {
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {
     const term = query.trim().toLowerCase();
     const matches = term
-      ? audits.filter((audit) =>
-          [audit.id, audit.circle, audit.auditor, audit.email, audit.mobile, audit.functionName, audit.location].some((field) =>
+      ? RECENT.filter((row) =>
+          [row.audit.id, row.audit.circle, row.audit.auditor, row.email, row.mobile, row.func].some((field) =>
             field.toLowerCase().includes(term),
           ),
         )
-      : audits;
+      : RECENT;
     return matches.slice(0, PAGE_SIZE);
-  }, [audits, query]);
+  }, [query]);
 
   return (
     <div className="card" style={{ marginTop: 16 }}>
@@ -66,30 +100,30 @@ export function RecentAuditsCard({ audits, loading, onAudit }: RecentAuditsCardP
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={10} style={{ textAlign: "center", color: "var(--sage)" }}>
-                  {loading ? "Loading recent audits…" : "No audits match your search"}
+                  No audits match your search
                 </td>
               </tr>
             ) : (
-              rows.map((audit) => (
-                <tr key={audit.id} onClick={() => onAudit(audit)}>
+              rows.map((row) => (
+                <tr key={row.audit.id} onClick={() => onAudit(row.index)}>
                   <td>
-                    <b>{audit.id}</b>
+                    <b>{row.audit.id}</b>
                   </td>
                   <td>
-                    <div>{audit.auditor}</div>
+                    <div>{row.audit.auditor}</div>
                     <div style={{ fontSize: 10, color: "var(--sage)" }}>
-                      {audit.email} · {audit.mobile}
+                      {row.email} · {row.mobile}
                     </div>
                   </td>
-                  <td>{audit.circle}</td>
-                  <td>{audit.functionName}</td>
-                  <td>{audit.submittedOn}</td>
-                  <td style={{ textAlign: "right" }}>{audit.observations}</td>
-                  <td style={{ textAlign: "right" }}>{audit.capa}</td>
-                  <td style={{ textAlign: "right" }}>{audit.capaClosed}</td>
-                  <td style={{ textAlign: "right" }}>{audit.capaPending}</td>
+                  <td>{row.audit.circle}</td>
+                  <td>{row.func}</td>
+                  <td>{row.audit.date}</td>
+                  <td style={{ textAlign: "right" }}>{row.audit.obs}</td>
+                  <td style={{ textAlign: "right" }}>{row.capa}</td>
+                  <td style={{ textAlign: "right" }}>{row.capaClosed}</td>
+                  <td style={{ textAlign: "right" }}>{row.capaPending}</td>
                   <td>
-                    <StatusBadge status={audit.status} />
+                    <StatusBadge status={row.audit.status} />
                   </td>
                 </tr>
               ))

@@ -11,19 +11,19 @@ import { MyDashboard } from "../../../components/vi-audit/management-dashboard/M
 import { ObservationsPanel } from "../../../components/vi-audit/management-dashboard/ObservationsPanel";
 import { ShellBanner } from "../../../components/vi-audit/management-dashboard/ShellBanner";
 import { ModuleTabs, TopBar } from "../../../components/vi-audit/management-dashboard/TopBar";
+import { DownloadIcon } from "../../../components/vi-audit/management-dashboard/icons";
 import "../../../components/vi-audit/management-dashboard/auditDashboard.css";
 import {
   ANALYTICS_CATALOG,
+  AUDITS,
   DRILLS,
   SCOPES,
-  fmt,
-  recentAuditDrill,
+  auditDrill,
+  titleForFilters,
   type DrillModel,
   type ModuleKey,
   type Persona,
 } from "../../../components/vi-audit/management-dashboard/data";
-import { useManagementDashboard } from "../../../components/vi-audit/management-dashboard/useManagementDashboard";
-import type { DashboardQuery } from "../../../components/vi-audit/management-dashboard/managementDashboardApi";
 
 interface ToastItem {
   id: number;
@@ -33,25 +33,16 @@ interface ToastItem {
 const DEFAULT_FROM = "2026-10-01";
 const DEFAULT_TO = "2026-10-31";
 
-const EMPTY_QUERY: DashboardQuery = {
-  clusterId: "",
-  zoneId: "",
-  functionIds: [],
-  auditType: "",
-  dateFrom: DEFAULT_FROM,
-  dateTo: DEFAULT_TO,
-};
-
 export function ViAuditManagementDashboardPage() {
   const [persona, setPersona] = useState<Persona>("admin");
   const [module, setModule] = useState<ModuleKey>("audit");
-  const [circle, setCircle] = useState("");
-  const [zone, setZone] = useState("");
-  const [auditType, setAuditType] = useState("");
+  const [title, setTitle] = useState(SCOPES.admin.title);
+  const [circle, setCircle] = useState("All Circles");
+  const [zone, setZone] = useState("All Zones");
+  const [auditType, setAuditType] = useState("Corporate & Circle");
   const [dateFrom, setDateFrom] = useState(DEFAULT_FROM);
   const [dateTo, setDateTo] = useState(DEFAULT_TO);
   const [functions, setFunctions] = useState<string[]>([]);
-  const [applied, setApplied] = useState<DashboardQuery>(EMPTY_QUERY);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [dirFilter, setDirFilter] = useState("all");
@@ -65,14 +56,6 @@ export function ViAuditManagementDashboardPage() {
   const highlightTimer = useRef<number | null>(null);
 
   const scope = SCOPES[persona];
-  const { filters, kpis, closure, sections, loading, error } = useManagementDashboard(applied);
-  const clusterName = filters.clusters.find((item) => item.id === applied.clusterId)?.name;
-  const zoneName = filters.zones.find((item) => item.id === applied.zoneId)?.name;
-  const title = zoneName
-    ? `Audit · ${clusterName || "Pan India"} · ${zoneName}`
-    : clusterName
-      ? `Audit · ${clusterName}`
-      : SCOPES[persona].title;
 
   const notify = (message: string) => {
     const id = ++toastId.current;
@@ -84,6 +67,9 @@ export function ViAuditManagementDashboardPage() {
 
   const switchPersona = (next: Persona) => {
     setPersona(next);
+    setCircle(next === "circle" ? "Maharashtra & Goa" : "All Circles");
+    setZone("All Zones");
+    setTitle(SCOPES[next].title);
   };
 
   const switchModule = (next: ModuleKey) => {
@@ -113,36 +99,31 @@ export function ViAuditManagementDashboardPage() {
         dateFrom={dateFrom}
         dateTo={dateTo}
         functions={functions}
-        clusters={filters.clusters}
-        functionOptions={filters.functions}
-        zones={filters.zones}
-        auditTypes={filters.auditTypes}
-        onCircle={setCircle}
-        onZone={setZone}
+        onCircle={(value) => {
+          setCircle(value);
+          setTitle(titleForFilters(value, zone, persona));
+        }}
+        onZone={(value) => {
+          setZone(value);
+          setTitle(titleForFilters(circle, value, persona));
+        }}
         onAuditType={setAuditType}
         onDateFrom={setDateFrom}
         onDateTo={setDateTo}
         onFunctions={setFunctions}
         onApply={() => {
-          setApplied({
-            clusterId: circle,
-            zoneId: zone,
-            functionIds: functions,
-            auditType,
-            dateFrom,
-            dateTo,
-          });
-          const circleLabel = filters.clusters.find((item) => item.id === circle)?.name;
-          notify(`Filters applied · dashboard refreshed for ${circleLabel || "Pan India"}`);
+          setTitle(titleForFilters(circle, zone, persona));
+          notify(`Filters applied · dashboard refreshed for ${circle === "All Circles" ? "Pan India" : circle}`);
         }}
         onReset={() => {
-          setCircle("");
-          setZone("");
-          setAuditType("");
+          const nextCircle = persona === "circle" ? "Maharashtra & Goa" : "All Circles";
+          setCircle(nextCircle);
+          setZone("All Zones");
+          setAuditType("Corporate & Circle");
           setDateFrom(DEFAULT_FROM);
           setDateTo(DEFAULT_TO);
           setFunctions([]);
-          setApplied(EMPTY_QUERY);
+          setTitle(SCOPES[persona].title);
           notify("Filters reset to default");
         }}
       />
@@ -154,11 +135,7 @@ export function ViAuditManagementDashboardPage() {
             <h2>{title}</h2>
             <div className="sub">
               <span className="live-dot" />
-              {loading
-                ? "Loading live audit figures…"
-                : error
-                  ? error
-                  : `Live · ${fmt(kpis?.total_audits ?? 0)} audits and ${fmt(kpis?.total_observations ?? 0)} observations across ${closure.length} circles`}
+              Live · Last synced 2 min ago · <span>{scope.scope}</span>
             </div>
           </div>
           {/* <div style={{ display: "flex", gap: 8 }}>
@@ -167,12 +144,12 @@ export function ViAuditManagementDashboardPage() {
             </button>
           </div> */}
         </div>
-        <AuditOverview kpis={kpis} loading={loading} closure={closure} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <AuditsPanel sections={sections} loading={loading} highlighted={highlight === "acc-audits"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onAudit={(audit) => setDrill(recentAuditDrill(audit))} />
-        <ObservationsPanel sections={sections} loading={loading} highlighted={highlight === "acc-obs"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <CapaPanel sections={sections} closure={closure} loading={loading} highlighted={highlight === "acc-capa"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
-        <AuditDirectory audits={sections.recentAudits} loading={loading} filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onAudit={(audit) => setDrill(recentAuditDrill(audit))} />
-        <div className="footer">Audit Dashboard · GoPhygital / Lockated for Vodafone Idea · Figures load from the audit dashboard API.</div>
+        <AuditOverview values={scope.k} activeGroup={activeGroup} onJump={jumpTo} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
+        <AuditsPanel values={scope.k} highlighted={highlight === "acc-audits"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
+        <ObservationsPanel values={scope.k} highlighted={highlight === "acc-obs"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
+        <CapaPanel highlighted={highlight === "acc-capa"} onDownload={(section) => notify(`Excel export started — ${section}`)} onDrill={openDrill} />
+        <AuditDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onAudit={(index) => setDrill(auditDrill(AUDITS[index], index))} />
+        <div className="footer">Audit Dashboard v1 · Wireframe · GoPhygital / Lockated for Vodafone Idea · All figures are illustrative dummy data. Priority actions, aging, past-target-date, extension and heatmap measures are proposals derived from the Figma statuses and dates and need confirmation · October 2026</div>
       </main>
 
       <main className={`content module-content${module === "mydashboard" ? " active" : ""}`}>
@@ -183,8 +160,6 @@ export function ViAuditManagementDashboardPage() {
             setPickerOpen(true);
           }}
           onRemove={(id) => setSavedAnalytics((current) => current.filter((item) => item !== id))}
-          kpis={kpis}
-          loading={loading}
           onDrill={openDrill}
         />
       </main>

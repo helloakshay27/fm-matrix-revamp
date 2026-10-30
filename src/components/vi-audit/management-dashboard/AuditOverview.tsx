@@ -1,19 +1,16 @@
-import { INFO, KPI_CONFIG, fmt, heatClass } from "./data";
+import { FOLLOW_UP, HEATMAP, INFO, KPI_CONFIG, fmt, heatClass } from "./data";
 import { DownloadIcon, PathIcon } from "./icons";
 import { InfoButton } from "./InfoButton";
-import { formatClosurePct, KPI_VALUE_KEY, type ClosureRow, type DashboardKpis } from "./managementDashboardApi";
 
 interface AuditOverviewProps {
-  kpis: DashboardKpis | null;
-  loading: boolean;
-  closure: ClosureRow[];
+  values: number[];
   activeGroup: string | null;
   onJump: (panel: string, group: string) => void;
   onDownload: (section: string) => void;
   onDrill: (key: string) => void;
 }
 
-export function AuditOverview({ kpis, loading, closure, activeGroup, onJump, onDownload, onDrill }: AuditOverviewProps) {
+export function AuditOverview({ values, activeGroup, onJump, onDownload, onDrill }: AuditOverviewProps) {
   return (
     <>
       {/* <div className="alert-strip">
@@ -69,9 +66,7 @@ export function AuditOverview({ kpis, loading, closure, activeGroup, onJump, onD
                   <PathIcon d={kpi.icon} size={14} />
                 </div>
               </div>
-              <div className="kpi-val">
-                {loading || !kpis ? "—" : fmt(kpis[KPI_VALUE_KEY[kpi.id]] ?? 0)}
-              </div>
+              <div className="kpi-val">{fmt(values[index])}</div>
               <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div>
             </div>
             );
@@ -101,22 +96,16 @@ export function AuditOverview({ kpis, loading, closure, activeGroup, onJump, onD
                 <div>Extended CAPA</div>
                 <div>Delayed CAPA</div>
               </div>
-              {loading ? (
-                <div className="hm-label" style={{ padding: "12px 0" }}>Loading closure progress…</div>
-              ) : closure.length === 0 ? (
-                <div className="hm-label" style={{ padding: "12px 0" }}>No closure progress for this filter.</div>
-              ) : (
-                closure.map((row) => (
-                  <div key={row.circle} className="hm-row">
-                    <div className="hm-label">{row.circle}</div>
-                    {row.values.map((value, index) => (
-                      <div key={index} className={`hm-cell ${heatClass(value)}`} onClick={() => onDrill("circle-underperform")}>
-                        {formatClosurePct(value)}%
-                      </div>
-                    ))}
-                  </div>
-                ))
-              )}
+              {HEATMAP.map((row) => (
+                <div key={row.circle} className="hm-row">
+                  <div className="hm-label">{row.circle}</div>
+                  {row.values.map((value, index) => (
+                    <div key={index} className={`hm-cell ${heatClass(value)}`} onClick={() => onDrill("circle-underperform")}>
+                      {value}%
+                    </div>
+                  ))}
+                </div>
+              ))}
               <div className="hm-scale">
                 Scale
                 <div className="hm-scale-block">

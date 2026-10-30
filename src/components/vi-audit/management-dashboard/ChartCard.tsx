@@ -10,11 +10,10 @@ interface ChartCardProps {
   options: ChartKind[];
   info?: string;
   compactDonut?: boolean;
-  emptyLabel?: string;
   children?: (type: ChartKind) => ReactNode;
 }
 
-export function ChartCard({ title, sub, spec, options, info, compactDonut = false, emptyLabel = "No data for this filter.", children }: ChartCardProps) {
+export function ChartCard({ title, sub, spec, options, info, compactDonut = false, children }: ChartCardProps) {
   const [type, setType] = useState<ChartKind>(spec.defaultType);
 
   return (
@@ -31,9 +30,7 @@ export function ChartCard({ title, sub, spec, options, info, compactDonut = fals
           <ChartSwitch options={options} value={type} onChange={setType} />
         </div>
       </div>
-      {spec.labels.length === 0 ? (
-        <div className="card-sub" style={{ padding: "28px 0" }}>{emptyLabel}</div>
-      ) : children ? (
+      {children ? (
         children(type)
       ) : (
         <div className="chart-wrap">

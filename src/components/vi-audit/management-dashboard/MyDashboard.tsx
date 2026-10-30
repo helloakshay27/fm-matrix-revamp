@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { ANALYTICS_CATALOG, CHARTS, KPI_CONFIG, fmt } from "./data";
-import { KPI_VALUE_KEY, type DashboardKpis } from "./managementDashboardApi";
+import { ANALYTICS_CATALOG, CHARTS, KPI_CONFIG, fmt, SCOPES } from "./data";
 import { AuditChart, ChartSwitch, myDashSwitches } from "./AuditChart";
 import { CloseIcon, GridIcon, PlusIcon } from "./icons";
 
@@ -34,7 +33,7 @@ function DashChartCard({ id, label, onRemove }: { id: string; label: string; onR
   );
 }
 
-export function MyDashboard({ selected, kpis, loading, onOpenPicker, onRemove, onDrill }: MyDashboardProps & { kpis: DashboardKpis | null; loading: boolean }) {
+export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDashboardProps) {
   return (
     <>
       <div className="page-hd mydash-hd">
@@ -65,8 +64,7 @@ export function MyDashboard({ selected, kpis, loading, onOpenPicker, onRemove, o
             if (item.type === "kpi") {
               const kpi = KPI_CONFIG.find((entry) => entry.id === id);
               if (!kpi) return null;
-              const key = KPI_VALUE_KEY[kpi.id];
-              const value = loading || !kpis || !key ? null : kpis[key];
+              const value = SCOPES.admin.k[KPI_CONFIG.indexOf(kpi)];
               return (
                 <div
                   key={id}
@@ -89,7 +87,7 @@ export function MyDashboard({ selected, kpis, loading, onOpenPicker, onRemove, o
                   <div className="kpi-top">
                     <div className="kpi-lbl">{kpi.label}</div>
                   </div>
-                  <div className="kpi-val">{value == null ? "—" : fmt(value)}</div>
+                  <div className="kpi-val">{fmt(value)}</div>
                   <div className="kpi-sub">
                     <span className="kpi-trend up" />
                   </div>

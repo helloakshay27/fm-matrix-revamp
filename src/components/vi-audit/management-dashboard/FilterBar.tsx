@@ -9,8 +9,7 @@ import {
   Select as MuiSelect,
   TextField,
 } from "@mui/material";
-import type { NamedOption } from "./managementDashboardApi";
-import type { Persona } from "./data";
+import { AUDIT_TYPES, FILTER_CIRCLES, FUNCTIONS, ZONES, type Persona } from "./data";
 
 interface FilterBarProps {
   persona: Persona;
@@ -20,10 +19,6 @@ interface FilterBarProps {
   dateFrom: string;
   dateTo: string;
   functions: string[];
-  clusters: NamedOption[];
-  functionOptions: NamedOption[];
-  zones: NamedOption[];
-  auditTypes: NamedOption[];
   onCircle: (value: string) => void;
   onZone: (value: string) => void;
   onAuditType: (value: string) => void;
@@ -117,10 +112,6 @@ export function FilterBar({
   dateFrom,
   dateTo,
   functions,
-  clusters,
-  functionOptions,
-  zones,
-  auditTypes,
   onCircle,
   onZone,
   onAuditType,
@@ -134,9 +125,8 @@ export function FilterBar({
   const circleRequired = persona === "circle";
   const circleLabel = circleRequired ? "Circle *" : "Circle";
   const functionLabel = circleRequired ? "Function *" : "Function";
-  const functionName = (id: string) => functionOptions.find((item) => item.id === id)?.name ?? id;
   const functionSummary =
-    functions.length === 0 ? "Select Function" : functions.length === 1 ? functionName(functions[0]) : `${functions.length} Functions Selected`;
+    functions.length === 0 ? "Select Function" : functions.length === 1 ? functions[0] : `${functions.length} Functions Selected`;
 
   return (
     <div className="cm-filter-bar">
@@ -151,10 +141,9 @@ export function FilterBar({
           sx={fieldStyles}
           MenuProps={selectMenuProps}
         >
-          <MenuItem value="">All Circles</MenuItem>
-          {clusters.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
+          {FILTER_CIRCLES.map((item) => (
+            <MenuItem key={item} value={item}>
+              {item}
             </MenuItem>
           ))}
         </MuiSelect>
@@ -180,10 +169,10 @@ export function FilterBar({
           sx={fieldStyles}
           MenuProps={selectMenuProps}
         >
-          {functionOptions.map((item) => (
-            <MenuItem key={item.id} value={item.id} dense>
-              <Checkbox checked={functions.includes(item.id)} size="small" sx={checkboxSx} />
-              <ListItemText primary={item.name} primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }} />
+          {FUNCTIONS.map((item) => (
+            <MenuItem key={item} value={item} dense>
+              <Checkbox checked={functions.includes(item)} size="small" sx={checkboxSx} />
+              <ListItemText primary={item} primaryTypographyProps={{ fontSize: 13, fontFamily: "'Poppins', sans-serif" }} />
             </MenuItem>
           ))}
         </MuiSelect>
@@ -200,10 +189,9 @@ export function FilterBar({
           sx={fieldStyles}
           MenuProps={selectMenuProps}
         >
-          <MenuItem value="">All Zones</MenuItem>
-          {zones.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
+          {ZONES.map((item) => (
+            <MenuItem key={item} value={item}>
+              {item}
             </MenuItem>
           ))}
         </MuiSelect>
@@ -220,10 +208,9 @@ export function FilterBar({
           sx={fieldStyles}
           MenuProps={selectMenuProps}
         >
-          <MenuItem value="">Corporate & Circle</MenuItem>
-          {auditTypes.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
+          {AUDIT_TYPES.map((item) => (
+            <MenuItem key={item} value={item}>
+              {item}
             </MenuItem>
           ))}
         </MuiSelect>
