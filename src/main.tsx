@@ -8,10 +8,15 @@ import { store } from "./store/store.ts";
 import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
+import { installNetworkMonitor } from "./utils/networkMonitor.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
 // registerServiceWorker();
+
+// App-wide toasts for slow requests, unreachable server and offline/online —
+// see utils/networkMonitor.ts for why this patches fetch/XHR globally.
+installNetworkMonitor();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
