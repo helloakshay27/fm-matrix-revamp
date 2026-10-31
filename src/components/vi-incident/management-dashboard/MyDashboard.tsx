@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { ANALYTICS_CATALOG, CHARTS, KPI_INFO, SCOPES, fmt, type ChartKind } from "./data";
+import { ANALYTICS_CATALOG, KPI_INFO, fmt, type ChartKind, type ChartSpec } from "./data";
 import { ChartSwitch, IncidentChart, myDashSwitches } from "./IncidentChart";
 import { CloseIcon, GridIcon, PlusIcon } from "./icons";
 
 interface MyDashboardProps {
   selected: string[];
+  values: readonly number[];
+  charts: Record<string, ChartSpec>;
   onOpenPicker: () => void;
   onRemove: (id: string) => void;
   onDrill: (key: string) => void;
 }
 
-function DashChart({ id, label, onRemove }: { id: string; label: string; onRemove: () => void }) {
-  const spec = CHARTS[id];
+function DashChart({ spec, label, onRemove }: { spec: ChartSpec; label: string; onRemove: () => void }) {
   const [type, setType] = useState<ChartKind>(spec.defaultType);
   return (
     <div className="card mydash-chart-card">
@@ -25,7 +26,7 @@ function DashChart({ id, label, onRemove }: { id: string; label: string; onRemov
   );
 }
 
-export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDashboardProps) {
+export function MyDashboard({ selected, values, charts, onOpenPicker, onRemove, onDrill }: MyDashboardProps) {
   return (
     <>
       <div className="page-hd mydash-hd">
@@ -51,11 +52,11 @@ export function MyDashboard({ selected, onOpenPicker, onRemove, onDrill }: MyDas
                   <span className="mydash-card-remove" onClick={(event) => { event.stopPropagation(); onRemove(id); }}><CloseIcon size={12} /></span>
                   <span className="mydash-module-tag">Incident</span>
                   <div className="kpi-lbl">{item.label}</div>
-                  <div className="kpi-val">{fmt(SCOPES.admin.k[index])}</div>
+                  <div className="kpi-val">{fmt(values[index])}</div>
                 </button>
               );
             }
-            return <DashChart key={id} id={id} label={item.label} onRemove={() => onRemove(id)} />;
+            return <DashChart key={id} spec={charts[id]} label={item.label} onRemove={() => onRemove(id)} />;
           })}
         </div>
       )}

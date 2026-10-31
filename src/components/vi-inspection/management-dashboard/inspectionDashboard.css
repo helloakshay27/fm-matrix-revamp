@@ -62,10 +62,10 @@
   color:#fff;
 }
 .vinsp .vi-shell-brand{display:flex;align-items:center;gap:12px}
-.vinsp .vi-shell-logo{width:30px;height:30px;flex-shrink:0}
-.vinsp .vi-shell-logo svg{width:100%;height:100%}
-.vinsp .vi-shell-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:.2px}
-.vinsp .vi-shell-title span{font-weight:400;opacity:.85}
+.vinsp .vi-shell-logo-chip{display:flex;align-items:center;background:#fff;border-radius:8px;padding:5px 10px;box-shadow:0 1px 3px rgba(0,0,0,.2);flex-shrink:0}
+.vinsp .vi-shell-logo-img{height:22px;width:auto;display:block}
+.vinsp .vi-shell-title{display:flex;flex-direction:column;line-height:1.25}
+.vinsp .vi-shell-sub{font-size:11px;font-weight:400;color:#fff;opacity:.85}
 .vinsp .vi-shell-right{display:flex;align-items:center;gap:22px}
 .vinsp .vi-shell-welcome, .vinsp .vi-shell-date{font-size:11.5px;line-height:1.4;color:#fff;text-align:right}
 .vinsp .vi-shell-welcome b, .vinsp .vi-shell-date b{font-weight:700}

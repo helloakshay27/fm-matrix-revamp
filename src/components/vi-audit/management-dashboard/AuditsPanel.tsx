@@ -1,29 +1,33 @@
-import { AUDITS, CHARTS, fmt, type ChartSpec } from "./data";
-import { AuditChart } from "./AuditChart";
 import { ChartCard } from "./ChartCard";
-import { DownloadIcon } from "./icons";
-import { StatusBadge } from "./InfoButton";
+import { RecentAuditsCard } from "./RecentAuditsCard";
+import type { ChartSpec } from "./data";
+import { EMPTY_CHART, type RecentAudit } from "./viAuditDashboardApi";
 
 interface AuditsPanelProps {
-  values: number[];
   highlighted: boolean;
-  onDownload: (section: string) => void;
-  onDrill: (key: string) => void;
-  onAudit: (index: number) => void;
+  loading: boolean;
+  auditFunc: ChartSpec | null;
+  auditCircle: ChartSpec | null;
+  recent: RecentAudit[] | null;
+  recentTotal: number;
+  recentLoading: boolean;
+  recentSearch: string;
+  onRecentSearchChange: (value: string) => void;
+  onAudit: (audit: RecentAudit) => void;
 }
 
-// Draft is hidden from the Audit Status chart (donut and bar); the first entry is skipped.
-const AUDIT_STATUS_SPEC: ChartSpec = {
-  ...CHARTS.auditStatus,
-  labels: CHARTS.auditStatus.labels.slice(1),
-  datasets: CHARTS.auditStatus.datasets.map((series) => ({
-    ...series,
-    data: series.data.slice(1),
-    pieColors: series.pieColors?.slice(1),
-  })),
-};
-
-export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit }: AuditsPanelProps) {
+export function AuditsPanel({
+  highlighted,
+  loading,
+  auditFunc,
+  auditCircle,
+  recent,
+  recentTotal,
+  recentLoading,
+  recentSearch,
+  onRecentSearchChange,
+  onAudit,
+}: AuditsPanelProps) {
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-audits">
       <div className="acc-hd">
@@ -31,87 +35,22 @@ export function AuditsPanel({ values, highlighted, onDownload, onDrill, onAudit 
           <div className="acc-title">Audits</div>
           <div className="acc-sub">Status, volume over time, and where audits are being carried out</div>
         </div>
-        <div className="acc-hd-actions">
-          <button type="button" className="acc-dl-btn" onClick={() => onDownload("Audits")}>
-            <DownloadIcon size={13} />
-            Excel
-          </button>
-        </div>
       </div>
-      <div className="g g2">
-        {/* <ChartCard title="Audit Status" sub="Open · Closed" spec={AUDIT_STATUS_SPEC} options={["donut", "bar"]}>
-          {(type) => (
-            <div className="donut-block">
-              <div className="donut-c">
-                <AuditChart spec={AUDIT_STATUS_SPEC} type={type} compactDonut />
-                <div className="donut-center">
-                  <div className="dh-val">52.2%</div>
-                  <div className="dh-lbl">Closed</div>
-                </div>
-              </div>
-              <div className="donut-legend">
-                <div className="dl-row" onClick={() => onDrill("kpi-open")}>
-                  <span className="dl-sw" style={{ background: "var(--vi-red)" }} />
-                  <span className="dl-lbl">Open</span>
-                  <span className="dl-val">{fmt(values[2])}</span>
-                </div>
-                <div className="dl-row" onClick={() => onDrill("kpi-closed")}>
-                  <span className="dl-sw" style={{ background: "#0D47A1" }} />
-                  <span className="dl-lbl">Closed</span>
-                  <span className="dl-val">{fmt(values[3])}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </ChartCard> */}
-        {/* <ChartCard title="Audit Type" sub="Corporate vs Circle audits" spec={CHARTS.auditType} options={["donut", "bar"]} /> */}
-        <ChartCard title="Audits by Function" sub="Function selected on the audit" spec={CHARTS.auditFunc} options={["donut", "bar"]} />
-        <ChartCard title="Audits per Circle" sub="Top 12 circles · open vs closed" spec={CHARTS.auditCircle} options={["bar", "table"]} />
+      {/* Full-width function chart — long names and many series need the full row. */}
+      <div className="g">
+        <ChartCard title="Audits by Function" sub="Audits, observations, CAPA assigned and CAPA closed per function" spec={auditFunc ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !auditFunc} />
       </div>
-      {/* <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Audits Conducted · Last 12 Months" sub="Audits by date of audit" spec={CHARTS.auditTrend} options={["line", "bar"]} />
-      </div> */}
-      {/* <div className="card" style={{ marginTop: 16 }}>
-        <div className="card-hd">
-          <div>
-            <div className="card-title">Recent Audits</div>
-            <div className="card-sub">Latest audits across the selected scope · click a row for full details</div>
-          </div>
-          <span className="card-tag">Sample data</span>
-        </div>
-        <div className="tbl-scroll" style={{ maxHeight: 260 }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Audit ID</th>
-                <th>Type</th>
-                <th>Location</th>
-                <th>Auditor</th>
-                <th>Date</th>
-                <th>Observations</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {AUDITS.slice(0, 8).map((audit, index) => (
-                <tr key={audit.id} onClick={() => onAudit(index)}>
-                  <td>
-                    <b>{audit.id}</b>
-                  </td>
-                  <td>{audit.type}</td>
-                  <td>{audit.loc2}</td>
-                  <td>{audit.auditor}</td>
-                  <td>{audit.date}</td>
-                  <td>{audit.obs}</td>
-                  <td>
-                    <StatusBadge status={audit.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
+      <div className="g" style={{ marginTop: 16 }}>
+        <ChartCard title="Audits per Circle" sub="Audits, observations, CAPA assigned and CAPA closed" spec={auditCircle ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !auditCircle} />
+      </div>
+      <RecentAuditsCard
+        audits={recent}
+        total={recentTotal}
+        loading={recentLoading}
+        search={recentSearch}
+        onSearchChange={onRecentSearchChange}
+        onAudit={onAudit}
+      />
     </div>
   );
 }

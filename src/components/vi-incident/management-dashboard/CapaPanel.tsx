@@ -1,7 +1,7 @@
-import { BOARDS, CHARTS, OVERDUE_PLANS } from "./data";
+import { BOARDS, OVERDUE_PLANS, type ChartSpec } from "./data";
 import { ChartCard } from "./ChartCard";
 
-export function CapaPanel({ highlighted, onDrill }: { highlighted: boolean; onDrill: (key: string) => void }) {
+export function CapaPanel({ charts, highlighted, onDrill }: { charts: Record<string, ChartSpec>; highlighted: boolean; onDrill: (key: string) => void }) {
   const owners = BOARDS.filter((item) => item.meta.includes("Plans"));
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-capa">
@@ -9,9 +9,9 @@ export function CapaPanel({ highlighted, onDrill }: { highlighted: boolean; onDr
         <div><div className="acc-title">Action Plans (CAPA)</div><div className="acc-sub">Corrective and preventive plans, who owes the next step, and what is past its target date</div></div>
       </div>
       <div className="g g3">
-        <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state" spec={CHARTS.capaStatus} options={["bar", "table"]} />
-        <ChartCard title="Plans Past Target Date by Circle" sub="Pending plans where today is later than the Target Date" spec={CHARTS.capaOverdue} options={["bar", "table"]} />
-        <ChartCard title="Target-date Extensions · 12 Months" sub="Plans where an Extend Target Date was entered" spec={CHARTS.capaExt} options={["line", "bar"]} />
+        <ChartCard title="Corrective vs Preventive Status" sub="Plans by current state" spec={charts.capaStatus} options={["bar", "table"]} />
+        <ChartCard title="Plans Past Target Date by Circle" sub="Pending plans where today is later than the Target Date" spec={charts.capaOverdue} options={["bar", "table"]} />
+        <ChartCard title="Target-date Extensions · 12 Months" sub="Plans where an Extend Target Date was entered" spec={charts.capaExt} options={["line", "bar"]} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <div className="card">

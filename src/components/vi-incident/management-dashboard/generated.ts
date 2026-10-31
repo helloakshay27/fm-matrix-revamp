@@ -932,7 +932,7 @@ export const KPI_INFO = [
     "panel": "acc-inc",
     "section": "Incidents",
     "color": "var(--terra)",
-    "tint": "rgba(218,119,86,.12)",
+    "tint": "rgba(255,143,107,.12)",
     "icon": "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z|M14 2v6h6",
     "info": "Every incident record created, including drafts · Draft + Open + Closed."
   },
@@ -943,7 +943,7 @@ export const KPI_INFO = [
     "panel": "acc-inc",
     "section": "Incidents",
     "color": "var(--warn)",
-    "tint": "rgba(237,196,136,.22)",
+    "tint": "rgba(255,196,0,.22)",
     "icon": "M12 20h9|M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z",
     "info": "Incidents the Reporter saved with Save draft and has not submitted."
   },
@@ -965,7 +965,7 @@ export const KPI_INFO = [
     "panel": "acc-inc",
     "section": "Incidents",
     "color": "var(--blue)",
-    "tint": "rgba(107,155,204,.16)",
+    "tint": "rgba(90,8,75,.16)",
     "icon": "M22 11.08V12a10 10 0 11-5.93-9.14|M22 4L12 14.01l-3-3",
     "info": "Incidents with status Closed. The rule that closes an incident is not defined in the design and needs confirmation."
   },
@@ -976,7 +976,7 @@ export const KPI_INFO = [
     "panel": "acc-inc",
     "section": "Incidents",
     "color": "var(--err)",
-    "tint": "rgba(231,132,142,.18)",
+    "tint": "rgba(238,39,55,.18)",
     "icon": "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z|M12 9v4|M12 17h.01",
     "info": "Submitted incidents where “Any injury happened?” is Yes. Derived from the reporter form."
   },
@@ -986,8 +986,8 @@ export const KPI_INFO = [
     "group": "inv",
     "panel": "acc-inv",
     "section": "Investigation",
-    "color": "var(--lav)",
-    "tint": "rgba(206,203,246,.28)",
+    "color": "var(--aubergine)",
+    "tint": "rgba(243,232,209,.9)",
     "icon": "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2|M9 11a4 4 0 100-8 4 4 0 000 8z",
     "info": "Open incidents with status Pending By SPOC · investigation decision or action plan not yet submitted."
   },
@@ -998,7 +998,7 @@ export const KPI_INFO = [
     "panel": "acc-capa",
     "section": "CAPA",
     "color": "var(--warn)",
-    "tint": "rgba(237,196,136,.22)",
+    "tint": "rgba(255,196,0,.22)",
     "icon": "M12 8v4l3 3|M12 22a10 10 0 100-20 10 10 0 000 20z",
     "info": "Incidents whose action plan is submitted but whose checklist items are not all Closed By Action Owner."
   },
@@ -1008,8 +1008,8 @@ export const KPI_INFO = [
     "group": "capa",
     "panel": "acc-capa",
     "section": "CAPA",
-    "color": "var(--teal)",
-    "tint": "rgba(158,200,186,.26)",
+    "color": "var(--slate)",
+    "tint": "rgba(202,222,248,.8)",
     "icon": "M5 12h14|M12 5l7 7-7 7",
     "info": "Corrective and preventive plans not yet closed by the Action Owner · 250 corrective + 100 preventive in the Figma sample."
   },
@@ -1020,7 +1020,7 @@ export const KPI_INFO = [
     "panel": "acc-capa",
     "section": "CAPA",
     "color": "var(--ok)",
-    "tint": "rgba(16,140,114,.14)",
+    "tint": "rgba(90,8,75,.14)",
     "icon": "M9 12l2 2 4-4|M12 22a10 10 0 100-20 10 10 0 000 20z",
     "info": "Corrective and preventive plans with status Closed By Action Owner."
   }

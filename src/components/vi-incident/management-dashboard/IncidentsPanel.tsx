@@ -1,28 +1,33 @@
-import { CHARTS, RECENT, fmt, type ChartSpec } from "./data";
+import { useMemo } from "react";
+import type { RecentIncident } from "./api";
+import { BRAND, fmt, type ChartSpec } from "./data";
 import { ChartCard } from "./ChartCard";
 import { IncidentChart } from "./IncidentChart";
+import { useDashboardLoading } from "./loading";
 
 interface IncidentsPanelProps {
   values: readonly number[];
+  charts: Record<string, ChartSpec>;
+  recent: RecentIncident[];
   highlighted: boolean;
   onDrill: (key: string) => void;
-  onRow: (index: number) => void;
+  onRecent: (row: RecentIncident) => void;
 }
 
 const badge = (status: string) => (status === "Closed" ? "b-info" : status === "Open" ? "b-err" : "b-warn");
 
-// Draft is hidden from the Incident Status chart (donut and bar); the first entry is skipped.
-const INC_STATUS_SPEC: ChartSpec = {
-  ...CHARTS.incStatus,
-  labels: CHARTS.incStatus.labels.slice(1),
-  datasets: CHARTS.incStatus.datasets.map((series) => ({
-    ...series,
-    data: series.data.slice(1),
-    pieColors: series.pieColors?.slice(1),
-  })),
-};
-
-export function IncidentsPanel({ values, highlighted, onDrill, onRow }: IncidentsPanelProps) {
+export function IncidentsPanel({ values, charts, recent, highlighted, onDrill, onRecent }: IncidentsPanelProps) {
+  const loading = useDashboardLoading();
+  // Draft is hidden from the Incident Status chart (donut and bar); the first entry is skipped.
+  const INC_STATUS_SPEC = useMemo<ChartSpec>(() => ({
+    ...charts.incStatus,
+    labels: charts.incStatus.labels.slice(1),
+    datasets: charts.incStatus.datasets.map((series) => ({
+      ...series,
+      data: series.data.slice(1),
+      pieColors: series.pieColors?.slice(1),
+    })),
+  }), [charts.incStatus]);
   const closedPct = values[0] ? `${((values[3] / values[0]) * 100).toFixed(1)}%` : "0%";
   return (
     <div className={`accordion-panel${highlighted ? " nav-highlight" : ""}`} id="acc-inc">
@@ -40,60 +45,61 @@ export function IncidentsPanel({ values, highlighted, onDrill, onRow }: Incident
               <div className="donut-legend">
                 {/* <Legend swatch="#F4795F" label="Draft" value={fmt(values[1])} onClick={() => onDrill("inc-draft")} /> */}
                 <Legend swatch="var(--vi-red)" label="Open" value={fmt(values[2])} onClick={() => onDrill("inc-open")} />
-                <Legend swatch="#0D47A1" label="Closed" value={fmt(values[3])} onClick={() => onDrill("inc-closed")} />
+                <Legend swatch={BRAND.aubergine} label="Closed" value={fmt(values[3])} onClick={() => onDrill("inc-closed")} />
               </div>
             </div>
           )}
         </ChartCard>
-        <ChartCard title="Open Incident Stage" sub="Who owes the next step" spec={CHARTS.incStage} options={["donut", "bar"]}>
+        <ChartCard title="Open Incident Stage" sub="Who owes the next step" spec={charts.incStage} options={["donut", "bar"]}>
           {(type) => (
             <div className="donut-block">
               <div className="donut-c">
-                <IncidentChart spec={CHARTS.incStage} type={type} compactDonut />
+                <IncidentChart spec={charts.incStage} type={type} compactDonut />
                 <div className="donut-center"><div className="dh-val">{fmt(values[2])}</div><div className="dh-lbl">Open</div></div>
               </div>
               <div className="donut-legend">
-                <Legend swatch="#F9A592" label="Pending By SPOC" value={fmt(values[5])} onClick={() => onDrill("inc-review")} />
-                <Legend swatch="#FDE2C8" label="Pending By Action Owner" value={fmt(values[6])} border onClick={() => onDrill("inc-ao")} />
+                <Legend swatch={BRAND.terracotta} label="Pending By SPOC" value={fmt(values[5])} onClick={() => onDrill("inc-review")} />
+                <Legend swatch={BRAND.sand} label="Pending By Action Owner" value={fmt(values[6])} border onClick={() => onDrill("inc-ao")} />
               </div>
             </div>
           )}
         </ChartCard>
-        <ChartCard title="Incidents with Injury" sub="“Any injury happened?” answered Yes or No" spec={CHARTS.incInjury} options={["donut", "bar"]} />
+        <ChartCard title="Incidents with Injury" sub="“Any injury happened?” answered Yes or No" spec={charts.incInjury} options={["donut", "bar"]} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Incidents Reported vs Closed · 12 Months" sub="Monthly volume" spec={CHARTS.incTrend} options={["line", "bar"]} />
-        <ChartCard title="Incidents per Circle" sub="Top 12 circles · open vs closed" spec={CHARTS.incCircle} options={["bar", "table"]} />
+        <ChartCard title="Incidents Reported vs Closed · 12 Months" sub="Monthly volume" spec={charts.incTrend} options={["line", "bar"]} />
+        <ChartCard title="Incidents per Circle" sub="Top 12 circles · open vs closed" spec={charts.incCircle} options={["bar", "table"]} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Incident Classification" sub="Classification chosen by the Reporter" spec={CHARTS.incClass} options={["donut", "bar"]} />
-        <ChartCard title="Incidents by Category" sub="Category and sub-category roll-up" spec={CHARTS.incCategory} options={["bar", "donut", "table"]} />
+        <ChartCard title="Incident Classification" sub="Classification chosen by the Reporter" spec={charts.incClass} options={["donut", "bar"]} />
+        <ChartCard title="Incidents by Category" sub="Category and sub-category roll-up" spec={charts.incCategory} options={["bar", "donut", "table"]} />
+      </div>
+      <div className="g g3" style={{ marginTop: 16 }}>
+        <ChartCard title="Incidents by Type of Facility" sub="Type of Facility on the report" spec={charts.incFacility} options={["bar", "donut"]} />
+        <ChartCard title="Incidents by Function" sub="Function selected on the report" spec={charts.incFunc} options={["donut", "bar"]} />
+        <ChartCard title="Incidents by Time of Day" sub="Time of Incident, 4-hour bands" spec={charts.incTime} options={["bar", "donut"]} />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
-        {/* <ChartCard title="Incidents by Type of Facility" sub="Type of Facility on the report" spec={CHARTS.incFacility} options={["bar", "donut"]} /> */}
-        <ChartCard title="Incidents by Function" sub="Function selected on the report" spec={CHARTS.incFunc} options={["donut", "bar"]} />
-        <ChartCard title="Incidents by Time of Day" sub="Time of Incident, 4-hour bands" spec={CHARTS.incTime} options={["bar", "donut"]} />
+        <ChartCard title="Nature of Person Impacted" sub="FTE, Non FTE, Vendor partner, Member of the public" spec={charts.incPerson} options={["donut", "bar"]} />
+        <ChartCard title="Nature of Injury" sub="Nature of injury recorded on the report" spec={charts.incInjType} options={["bar", "donut"]} />
       </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Nature of Person Impacted" sub="FTE, Non FTE, Vendor partner, Member of the public" spec={CHARTS.incPerson} options={["donut", "bar"]} />
-        <ChartCard title="Nature of Injury" sub="Nature of injury recorded on the report" spec={CHARTS.incInjType} options={["bar", "donut"]} />
-      </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Body Part Affected" sub="Body part recorded on the report" spec={CHARTS.incBody} options={["bar", "donut"]} />
-        <ChartCard title="Days Away vs Restricted Work Days" sub="Recorded by the SPOC · monthly total" spec={CHARTS.incLost} options={["line", "bar"]} />
+      <div className="g" style={{ marginTop: 16 }}>
+        {/* API pending — restore and switch this row back to "g g2".
+        <ChartCard title="Body Part Affected" sub="Body part recorded on the report" spec={charts.incBody} options={["bar", "donut"]} /> */}
+        <ChartCard title="Days Away vs Restricted Work Days" sub="Recorded by the SPOC · monthly total" spec={charts.incLost} options={["line", "bar"]} />
       </div>
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-hd">
           <div><div className="card-title">Recent Incidents</div><div className="card-sub">Latest incidents across the selected scope · click a row for full details</div></div>
-          <span className="card-tag">Sample data</span>
         </div>
         <div className="tbl-scroll" style={{ maxHeight: 260 }}>
           <table className="tbl">
             <thead><tr><th>Incident ID</th><th>Classification</th><th>Location</th><th>Reporter</th><th>Date</th><th>Injury</th><th>Status</th></tr></thead>
             <tbody>
-              {RECENT.map((row) => (
-                <tr key={row.id} style={{ cursor: "pointer" }} onClick={() => onRow(row.index)}>
-                  <td><b>{row.id}</b></td><td>{row.classification}</td><td>{row.location}</td><td>{row.reporter}</td><td>{row.date}</td><td>{row.injury}</td>
+              {loading || recent.length === 0 ? <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--sage)" }}>{loading ? "Loading…" : "No incidents in the selected scope"}</td></tr> : null}
+              {!loading && recent.map((row) => (
+                <tr key={row.id} style={{ cursor: "pointer" }} onClick={() => onRecent(row)}>
+                  <td><b>{row.incident_id}</b></td><td>{row.classification}</td><td>{row.location}</td><td>{row.reporter}</td><td>{row.incident_date}</td><td>{row.injury}</td>
                   <td><span className={`badge ${badge(row.status)}`}>{row.status}</span></td>
                 </tr>
               ))}
