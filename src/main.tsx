@@ -10,6 +10,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { PostHogProvider } from "@posthog/react";
 import { PostHogPageView } from "./components/PostHogPageView.tsx";
 import posthog from "posthog-js";
+import { installNetworkMonitor } from "./utils/networkMonitor.ts";
 // import { registerServiceWorker } from "./utils/pwa.ts";
 
 // Register service worker for PWA
@@ -37,6 +38,10 @@ window.addEventListener("vite:preloadError", () => {
   window.location.reload();
 });
 setTimeout(() => sessionStorage.removeItem(RELOAD_ONCE_KEY), 10_000);
+
+// App-wide toasts for slow requests, unreachable server and offline/online —
+// see utils/networkMonitor.ts for why this patches fetch/XHR globally.
+installNetworkMonitor();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
