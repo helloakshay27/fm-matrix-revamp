@@ -62,6 +62,13 @@ const dash = (v?: string | number | null) =>
 
 const toApiFilters = (f: PatrollingFilters): PatrollingListParams => ({
   status: f.status,
+  patrolling_route_id: f.patrolId,
+  schedule_date_from: f.scheduleDateFrom,
+  schedule_date_to: f.scheduleDateTo,
+  patrol_date_from: f.patrolDateFrom,
+  patrol_date_to: f.patrolDateTo,
+  submitted_by_id: f.submittedById,
+  approved_by_id: f.approvedById,
   building_id: f.buildingId ?? undefined,
   wing_id: f.wingId ?? undefined,
   area_id: f.areaId ?? undefined,

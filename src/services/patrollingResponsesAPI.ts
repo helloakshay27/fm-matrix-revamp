@@ -151,3 +151,38 @@ export const exportPatrollingResponses = async (
     filename: match ? match[1] : "patrolling_responses.xlsx",
   };
 };
+
+export interface PatrollingFilterOption {
+  value: string | number;
+  label: string;
+}
+
+export interface PatrollingFilterOptions {
+  patrols: PatrollingFilterOption[];
+  statuses: PatrollingFilterOption[];
+  submitted_by: PatrollingFilterOption[];
+  approved_by: PatrollingFilterOption[];
+}
+
+// Option lists arrive as plain strings or as { id, name } style objects — normalise both.
+const toOptions = (list: unknown): PatrollingFilterOption[] =>
+  (Array.isArray(list) ? list : [])
+    .map((item: any): PatrollingFilterOption | null => {
+      if (item === null || item === undefined) return null;
+      if (typeof item !== "object") return { value: item, label: String(item) };
+      const value = item.id ?? item.value ?? item.name ?? item.label;
+      const label = item.name ?? item.label ?? item.full_name ?? item.patrol_name ?? value;
+      return value === undefined ? null : { value, label: String(label) };
+    })
+    .filter((o): o is PatrollingFilterOption => o !== null);
+
+export const fetchPatrollingFilterOptions = async (): Promise<PatrollingFilterOptions> => {
+  const body = await (await request("/filter_options")).json();
+  const options = body?.data ?? body ?? {};
+  return {
+    patrols: toOptions(options.patrols),
+    statuses: toOptions(options.statuses),
+    submitted_by: toOptions(options.submitted_by),
+    approved_by: toOptions(options.approved_by),
+  };
+};
