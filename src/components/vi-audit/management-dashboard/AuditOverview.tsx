@@ -13,8 +13,6 @@ interface AuditOverviewProps {
   onCircle: (row: ClosureRow) => void;
 }
 
-const pct = (value: number) => `${Math.round(value)}%`;
-
 export function AuditOverview({ kpi, closure, loading, activeGroup, onJump, onCircle }: AuditOverviewProps) {
   return (
     <>
@@ -58,10 +56,10 @@ export function AuditOverview({ kpi, closure, loading, activeGroup, onJump, onCi
             <div className="card-hd">
               <div>
                 <div className="card-title">
-                  Closure Progress by Circle × Stage
+                  Closure Progress by Circle
                   <InfoButton text={INFO.heatmap} />
                 </div>
-                <div className="card-sub">% complete per stage · click a cell to drill into that circle</div>
+                <div className="card-sub">Count per stage · click a cell to drill into that circle</div>
               </div>
             </div>
             <div className="hm-wrap">
@@ -87,7 +85,7 @@ export function AuditOverview({ kpi, closure, loading, activeGroup, onJump, onCi
                       <div className="hm-label">{row.circle}</div>
                       {values.map((value, index) => (
                         <div key={index} className={`hm-cell ${heatClass(value)}`} onClick={() => onCircle(row)}>
-                          {pct(value)}
+                          {fmt(Math.round(value))}
                         </div>
                       ))}
                     </div>
@@ -102,7 +100,7 @@ export function AuditOverview({ kpi, closure, loading, activeGroup, onJump, onCi
                   <span style={{ background: "rgba(255,143,107,.42)" }} />
                   <span style={{ background: "#CADEF8" }} />
                 </div>
-                &lt;70% → ≥90%
+                Low → High
               </div>
             </div>
           </div>

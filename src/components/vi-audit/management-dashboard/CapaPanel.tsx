@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { fmt, INFO, type ChartSpec } from "./data";
 import { ChartCard } from "./ChartCard";
 import { StatusBadge } from "./InfoButton";
+import { SearchIcon } from "./icons";
 import { TablePager } from "./TablePager";
-import { EMPTY_CHART, type Ageing, type OpenActionOwner, type PastTargetPlan } from "./viAuditDashboardApi";
+import { EMPTY_CHART, type Ageing, type OpenActionOwner, type PastTargetPlan, type SpocPendingPlans } from "./viAuditDashboardApi";
 
 interface CapaPanelProps {
   highlighted: boolean;
@@ -13,13 +14,23 @@ interface CapaPanelProps {
   capaAging: ChartSpec | null;
   capaOverdue: ChartSpec | null;
   ageing: Ageing | null;
+  spocs: SpocPendingPlans[] | null;
+  spocsLoading: boolean;
+  spocSearch: string;
+  onSpocSearchChange: (value: string) => void;
   owners: OpenActionOwner[] | null;
+  ownersLoading: boolean;
+  ownerSearch: string;
+  onOwnerSearchChange: (value: string) => void;
   pastTarget: PastTargetPlan[] | null;
   pastTargetTotal: number;
+  pastTargetLoading: boolean;
+  pastTargetSearch: string;
+  onPastTargetSearchChange: (value: string) => void;
   onPlan: (plan: PastTargetPlan) => void;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 export function CapaPanel({
   highlighted,
@@ -27,22 +38,43 @@ export function CapaPanel({
   capaStatus,
   capaStatusFunc,
   capaAging,
-  capaOverdue,
   ageing,
+  spocs,
+  spocsLoading,
+  spocSearch,
+  onSpocSearchChange,
   owners,
+  ownersLoading,
+  ownerSearch,
+  onOwnerSearchChange,
   pastTarget,
   pastTargetTotal,
+  pastTargetLoading,
+  pastTargetSearch,
+  onPastTargetSearchChange,
   onPlan,
 }: CapaPanelProps) {
   const [page, setPage] = useState(1);
+  const spocRows = useMemo(
+    () => [...(spocs ?? [])].sort((a, b) => b.pending_plans - a.pending_plans),
+    [spocs],
+  );
+  const waitingTotal = useMemo(
+    () => (spocs ? spocRows.reduce((sum, row) => sum + row.pending_plans, 0) : ageing?.total ?? 0),
+    [spocs, spocRows, ageing],
+  );
   const ownerRows = useMemo(() => [...(owners ?? [])].sort((a, b) => b.open - a.open), [owners]);
-  const plans = useMemo(() => [...(pastTarget ?? [])].sort((a, b) => b.days_over - a.days_over), [pastTarget]);
+  const plans = useMemo(
+    () => [...(pastTarget ?? [])].sort((a, b) => b.days_over - a.days_over),
+    [pastTarget],
+  );
+  const matchedTotal = pastTargetSearch.trim() ? plans.length : (pastTargetTotal || plans.length);
   const totalPages = Math.max(1, Math.ceil(plans.length / PAGE_SIZE));
   const rows = plans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
     setPage(1);
-  }, [pastTarget]);
+  }, [pastTarget, pastTargetSearch]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -56,56 +88,80 @@ export function CapaPanel({
           <div className="acc-sub">Corrective and preventive plans, who owes the next step, and what is past its target date</div>
         </div>
       </div>
-      {/* Full-width — stacked Corrective/Preventive columns need the full row. */}
       <div className="g">
         <ChartCard title="Corrective vs Preventive Status" sub="Per circle · Corrective and Preventive plans by current state" spec={capaStatus ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !capaStatus} />
       </div>
       <div className="g" style={{ marginTop: 16 }}>
         <ChartCard title="Corrective vs Preventive Status" sub="Per function · Corrective and Preventive plans by current state" spec={capaStatusFunc ?? EMPTY_CHART} options={["bar", "table"]} loading={loading} unavailable={!loading && !capaStatusFunc} />
       </div>
-      <div className="g g2" style={{ marginTop: 16 }}>
-        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub="Days since the observation was submitted" spec={capaAging ?? EMPTY_CHART} options={["bar", "donut"]} info={INFO.aging} loading={loading} unavailable={!loading && !capaAging} />
-        <ChartCard title="Actions Past Target Date by Action Owner" sub="Open actions where today is later than the Target Date" spec={capaOverdue ?? EMPTY_CHART} options={["bar", "table"]} info={INFO.overdue} loading={loading} unavailable={!loading && !capaOverdue} />
+      <div className="g" style={{ marginTop: 16 }}>
+        <ChartCard title="Waiting for SPOC Action Plan · Aging" sub="Days since the observation was submitted" spec={capaAging ?? EMPTY_CHART} options={["bar", "donut"]} info={INFO.aging} loading={loading} unavailable={!loading && !capaAging} chartSize="tall" />
       </div>
       <div className="g g2" style={{ marginTop: 16 }}>
         <div className="card">
           <div className="card-hd">
             <div>
               <div className="card-title">Waiting for a SPOC Action Plan</div>
-              <div className="card-sub">Observations still without a plan</div>
+              <div className="card-sub">Observations still without a plan · search by SPOC name</div>
             </div>
-            {!loading && ageing && <span className="card-tag">{fmt(ageing.total)} waiting</span>}
+            {!spocsLoading && spocs && <span className="card-tag">{fmt(waitingTotal)} waiting</span>}
           </div>
-          {loading ? (
+          <div className="usr-search" style={{ width: "100%", maxWidth: 320, marginBottom: 12 }}>
+            <SearchIcon />
+            <input
+              type="text"
+              aria-label="Search SPOCs by name"
+              placeholder="Search by SPOC name"
+              value={spocSearch}
+              onChange={(event) => onSpocSearchChange(event.target.value)}
+            />
+          </div>
+          {spocsLoading ? (
             <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>Loading…</div>
-          ) : !ageing ? (
+          ) : !spocs ? (
             <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>Couldn’t load data</div>
-          ) : ageing.total === 0 ? (
-            <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>No pending plans</div>
-          ) : (
-            <div className="lb-row" style={{ cursor: "default" }}>
-              <div className="lb-rank">1</div>
-              <div className="lb-info">
-                <div className="lb-name">All observations</div>
-                <div className="lb-meta">Waiting for a SPOC to create a plan</div>
-              </div>
-              <div className="lb-val">{fmt(ageing.total)}</div>
+          ) : spocRows.length === 0 ? (
+            <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>
+              {spocSearch.trim() ? "No SPOCs match your search" : "No pending plans"}
             </div>
+          ) : (
+            spocRows.map((row, index) => (
+              <div key={row.spoc} className="lb-row" style={{ cursor: "default" }}>
+                <div className="lb-rank">{index + 1}</div>
+                <div className="lb-info">
+                  <div className="lb-name">{row.spoc}</div>
+                  <div className="lb-meta">Observations without a plan</div>
+                </div>
+                <div className="lb-val">{fmt(row.pending_plans)}</div>
+              </div>
+            ))
           )}
         </div>
         <div className="card">
           <div className="card-hd">
             <div>
               <div className="card-title">Action Owners with Most Open Actions</div>
-              <div className="card-sub">Plans assigned and not yet closed</div>
+              <div className="card-sub">Plans assigned and not yet closed · search by action owner name</div>
             </div>
           </div>
-          {loading ? (
+          <div className="usr-search" style={{ width: "100%", maxWidth: 320, marginBottom: 12 }}>
+            <SearchIcon />
+            <input
+              type="text"
+              aria-label="Search action owners by name"
+              placeholder="Search by action owner name"
+              value={ownerSearch}
+              onChange={(event) => onOwnerSearchChange(event.target.value)}
+            />
+          </div>
+          {ownersLoading ? (
             <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>Loading…</div>
           ) : !owners ? (
             <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>Couldn’t load data</div>
           ) : ownerRows.length === 0 ? (
-            <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>No open actions</div>
+            <div className="card-sub" style={{ padding: "16px 0", textAlign: "center" }}>
+              {ownerSearch.trim() ? "No action owners match your search" : "No open actions"}
+            </div>
           ) : (
             ownerRows.map((owner, index) => (
               <div key={owner.action_owner} className="lb-row" style={{ cursor: "default" }}>
@@ -125,13 +181,27 @@ export function CapaPanel({
           <div className="card-hd">
             <div>
               <div className="card-title">Plans Past Target Date</div>
-              <div className="card-sub">Most overdue first</div>
+              <div className="card-sub">
+                Most overdue first · search by plan, audit, observation, action owner, target date or status
+              </div>
             </div>
-            {!loading && pastTarget && (
-              <span className="card-tag" style={{ background: "var(--vi-red-tint)", color: "var(--vi-red)", borderColor: "rgba(238,39,55,.20)" }}>
-                {fmt(pastTargetTotal || plans.length)} overdue
-              </span>
-            )}
+            <div className="card-actions-row">
+              <div className="usr-search" style={{ width: 360 }}>
+                <SearchIcon />
+                <input
+                  type="text"
+                  aria-label="Search plans by plan, audit, observation, action owner, target date or status"
+                  placeholder="Search by plan, audit, observation, action owner, target date or status"
+                  value={pastTargetSearch}
+                  onChange={(event) => onPastTargetSearchChange(event.target.value)}
+                />
+              </div>
+              {!pastTargetLoading && pastTarget && (
+                <span className="card-tag" style={{ background: "var(--vi-red-tint)", color: "var(--vi-red)", borderColor: "rgba(238,39,55,.20)" }}>
+                  {fmt(matchedTotal)} overdue
+                </span>
+              )}
+            </div>
           </div>
           <div className="tbl-scroll" style={{ maxHeight: 360 }}>
             <table className="tbl">
@@ -147,12 +217,16 @@ export function CapaPanel({
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {pastTargetLoading ? (
                   <tr><td colSpan={7} style={{ textAlign: "center" }}>Loading…</td></tr>
                 ) : !pastTarget ? (
                   <tr><td colSpan={7} style={{ textAlign: "center" }}>Couldn’t load plans past target date</td></tr>
                 ) : rows.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: "center" }}>No plans past their target date</td></tr>
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center" }}>
+                      {pastTargetSearch.trim() ? "No plans match your search" : "No plans past their target date"}
+                    </td>
+                  </tr>
                 ) : (
                   rows.map((row) => (
                     <tr key={`${row.plan}-${row.audit}-${row.observation}-${row.days_over}`} onClick={() => onPlan(row)}>
@@ -169,7 +243,7 @@ export function CapaPanel({
               </tbody>
             </table>
           </div>
-          {!loading && pastTarget && (
+          {!pastTargetLoading && pastTarget && (
             <TablePager page={page} totalPages={totalPages} total={plans.length} pageSize={PAGE_SIZE} onPage={setPage} />
           )}
         </div>

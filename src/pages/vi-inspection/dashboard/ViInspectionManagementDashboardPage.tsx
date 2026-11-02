@@ -46,7 +46,7 @@ export function ViInspectionManagementDashboardPage() {
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
   const options = useInspectionFilterOptions();
-  const { kpi, spoc, owners, closure, loading } = useInspectionDashboardData(applied);
+  const { kpi, closure, loading } = useInspectionDashboardData(applied);
 
   const notify = (message: string) => {
     const id = ++toastId.current;
@@ -142,7 +142,7 @@ export function ViInspectionManagementDashboardPage() {
           </div>
         </div>
         <InspectionOverview kpi={kpi} closure={closure} loading={loading} activeGroup={activeGroup} onJump={jumpTo} />
-        <ActionPlansPanel highlighted={highlight === "acc-act"} loading={loading} spoc={spoc} owners={owners} />
+        <ActionPlansPanel highlighted={highlight === "acc-act"} filters={applied} />
       </main>
       <ToastHost toasts={toasts} />
     </div>

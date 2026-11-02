@@ -12,6 +12,8 @@ interface CategoryJourneyCardProps {
   groups: JourneyGroup[] | null;
   loading: boolean;
   showSubCategory?: boolean;
+  /** When false, hide the circle/function filter dropdown (Bar/Table switch stays). */
+  showDimensionFilter?: boolean;
 }
 
 const ALL = "__all__";
@@ -81,14 +83,23 @@ const flatten = (nodes: JourneyNode[], showSubCategory: boolean, prefix = ""): T
     return [row, ...categories];
   });
 
-export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, groups, loading, showSubCategory = false }: CategoryJourneyCardProps) {
+export function CategoryJourneyCard({
+  title,
+  sub,
+  dimensionLabel,
+  allLabel,
+  groups,
+  loading,
+  showSubCategory = false,
+  showDimensionFilter = true,
+}: CategoryJourneyCardProps) {
   const [type, setType] = useState<ChartKind>("bar");
   const [selected, setSelected] = useState(ALL);
   const list = groups ?? [];
   const active = selected === ALL ? null : list.find((group) => group.id === selected);
   const classifications = useMemo(
-    () => (selected === ALL || !active ? mergeNodes(list.flatMap((group) => group.nodes)) : active.nodes),
-    [active, list, selected],
+    () => (!showDimensionFilter || selected === ALL || !active ? mergeNodes(list.flatMap((group) => group.nodes)) : active.nodes),
+    [active, list, selected, showDimensionFilter],
   );
   const categories = useMemo(() => mergeNodes(classifications.flatMap((node) => node.children)), [classifications]);
 
@@ -115,20 +126,22 @@ export function CategoryJourneyCard({ title, sub, dimensionLabel, allLabel, grou
         </div>
         {!message && (
           <div className="card-actions-row">
-            <FormControl variant="outlined" size="small" sx={{ minWidth: 130, maxWidth: 170 }}>
-              <MuiSelect
-                value={list.some((group) => group.id === selected) ? selected : ALL}
-                onChange={(event) => setSelected(String(event.target.value))}
-                inputProps={{ "aria-label": dimensionLabel }}
-                sx={selectSx}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value={ALL} sx={menuItemSx}>{allLabel}</MenuItem>
-                {list.map((group) => (
-                  <MenuItem key={group.id} value={group.id} sx={menuItemSx}>{group.name}</MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+            {showDimensionFilter && (
+              <FormControl variant="outlined" size="small" sx={{ minWidth: 130, maxWidth: 170 }}>
+                <MuiSelect
+                  value={list.some((group) => group.id === selected) ? selected : ALL}
+                  onChange={(event) => setSelected(String(event.target.value))}
+                  inputProps={{ "aria-label": dimensionLabel }}
+                  sx={selectSx}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value={ALL} sx={menuItemSx}>{allLabel}</MenuItem>
+                  {list.map((group) => (
+                    <MenuItem key={group.id} value={group.id} sx={menuItemSx}>{group.name}</MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            )}
             <ChartSwitch options={["bar", "table"]} value={type} onChange={setType} />
           </div>
         )}

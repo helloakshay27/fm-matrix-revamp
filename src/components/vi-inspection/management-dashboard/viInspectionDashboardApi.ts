@@ -158,14 +158,12 @@ export const useInspectionFilterOptions = () => {
 
 export interface InspectionDashboardData {
   kpi: InspectionKpi | null;
-  spoc: SpocPendingPlans | null;
-  owners: ActionOwnerOpenPlans | null;
   closure: ClosureProgress | null;
 }
 
-/** KPI, leaderboard and closure-progress data for the applied filters. */
+/** KPI and closure-progress for the applied filters (leaderboards load separately with search). */
 export const useInspectionDashboardData = (filters: InspectionDashboardFilters) => {
-  const [data, setData] = useState<InspectionDashboardData>({ kpi: null, spoc: null, owners: null, closure: null });
+  const [data, setData] = useState<InspectionDashboardData>({ kpi: null, closure: null });
   const [loading, setLoading] = useState(true);
   const key = JSON.stringify(filters);
 
@@ -179,17 +177,109 @@ export const useInspectionDashboardData = (filters: InspectionDashboardFilters) 
     setLoading(true);
     Promise.all([
       get<{ kpi: InspectionKpi }>("kpi"),
-      get<SpocPendingPlans>("spoc_pending_plans"),
-      get<ActionOwnerOpenPlans>("action_owner_open_plans"),
       get<ClosureProgress>("closure_progress_by_circle"),
-    ]).then(([kpi, spoc, owners, closure]) => {
+    ]).then(([kpi, closure]) => {
       if (controller.signal.aborted) return;
-      if (!kpi && !spoc && !owners && !closure) toast.error("Failed to load inspection dashboard");
-      setData({ kpi: kpi?.kpi ?? null, spoc, owners, closure });
+      if (!kpi && !closure) toast.error("Failed to load inspection dashboard");
+      setData({ kpi: kpi?.kpi ?? null, closure });
       setLoading(false);
     });
     return () => controller.abort();
   }, [key]);
 
   return { ...data, loading };
+};
+
+const filterSpocsByName = (data: SpocPendingPlans, search: string): SpocPendingPlans => {
+  const q = search.trim().toLowerCase();
+  if (!q) return data;
+  const spocs = (data.spocs ?? []).filter((row) => row.spoc_name.toLowerCase().includes(q));
+  return {
+    ...data,
+    spocs,
+    total_pending: spocs.reduce((sum, row) => sum + row.pending_plan_count, 0),
+  };
+};
+
+const filterOwnersByName = (data: ActionOwnerOpenPlans, search: string): ActionOwnerOpenPlans => {
+  const q = search.trim().toLowerCase();
+  if (!q) return data;
+  const action_owners = (data.action_owners ?? []).filter((row) => row.action_owner_name.toLowerCase().includes(q));
+  return {
+    ...data,
+    action_owners,
+    total_open: action_owners.reduce((sum, row) => sum + row.open_action_count, 0),
+  };
+};
+
+/** SPOCs with pending plans — `search` sent to API; also filtered locally by name. */
+export const useSpocPendingPlans = (filters: InspectionDashboardFilters, search: string, enabled = true) => {
+  const [data, setData] = useState<SpocPendingPlans | null>(null);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as InspectionDashboardFilters);
+    if (term) params.search = term;
+    setLoading(true);
+    fetchDashboard<SpocPendingPlans>("spoc_pending_plans", params, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        setData(filterSpocsByName(json, term));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load spoc_pending_plans:", error);
+        setData(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { data, loading };
+};
+
+/** Action owners with open plans — `search` sent to API; also filtered locally by name. */
+export const useActionOwnerOpenPlans = (filters: InspectionDashboardFilters, search: string, enabled = true) => {
+  const [data, setData] = useState<ActionOwnerOpenPlans | null>(null);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as InspectionDashboardFilters);
+    if (term) params.search = term;
+    setLoading(true);
+    fetchDashboard<ActionOwnerOpenPlans>("action_owner_open_plans", params, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        setData(filterOwnersByName(json, term));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load action_owner_open_plans:", error);
+        setData(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { data, loading };
 };
