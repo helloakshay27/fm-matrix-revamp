@@ -1,10 +1,10 @@
-import { PulseFormSection as FormSection } from "@/pages/pulse/components/PulseFormSection";
 import { useState } from "react";
 import {
+  ArrowLeft,
   Bell,
-  ChevronDown,
   Share2,
   X,
+  Send,
   Building2,
   Users,
   User,
@@ -17,12 +17,13 @@ import {
   Select as MuiSelect,
   TextField,
   SelectChangeEvent,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { FormActionBar, assetFieldStyles } from "@/components/common/FormSection";
 import { NotificationSiteInlineList } from "./NotificationSiteInlineList";
 import { NotificationCommunityInlineList } from "./NotificationCommunityInlineList";
 import { NotificationUserInlineList } from "./NotificationUserInlineList";
@@ -34,6 +35,28 @@ import type {
   NotificationTargetSelection,
 } from "../types/customNotification";
 
+const fieldStyles = {
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": { borderColor: "#ddd" },
+    "&:hover fieldset": { borderColor: "var(--color-primary)" },
+    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
+  },
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": { color: "var(--color-primary)" },
+  },
+};
+
+const singleLineFieldStyles = {
+  ...fieldStyles,
+  height: "45px",
+  "& .MuiOutlinedInput-root": {
+    ...fieldStyles["& .MuiOutlinedInput-root"],
+    height: "45px",
+  },
+};
+
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },
@@ -44,6 +67,11 @@ const TITLE_MAX = 120;
 const MESSAGE_MAX = 500;
 
 const Required = () => <span className="text-brand-error">*</span>;
+
+const radioSx = {
+  color: "var(--color-primary)",
+  "&.Mui-checked": { color: "var(--color-primary)" },
+};
 
 // Builds custom_notification_targets_attributes for one targetable type.
 // The backend can have more than one target row for the same targetable_id
@@ -116,6 +144,8 @@ export interface CustomNotificationFormInitialValues {
 }
 
 interface CustomNotificationFormProps {
+  headerTitle: string;
+  headerSubtitle: string;
   submitLabel: string;
   submittingLabel: string;
   isSubmitting: boolean;
@@ -125,7 +155,10 @@ interface CustomNotificationFormProps {
 }
 
 export function CustomNotificationForm({
+  headerTitle,
+  headerSubtitle,
   submitLabel,
+  submittingLabel,
   isSubmitting,
   initialValues,
   onSubmit,
@@ -139,15 +172,15 @@ export function CustomNotificationForm({
     initialValues?.audienceScope ?? "all"
   );
 
-  const [selectedSites, setSelectedSites] = useState<NotificationTargetSelection[]>(
-    initialValues?.selectedSites ?? []
-  );
-  const [selectedCommunities, setSelectedCommunities] = useState<NotificationTargetSelection[]>(
-    initialValues?.selectedCommunities ?? []
-  );
-  const [selectedUsers, setSelectedUsers] = useState<NotificationTargetSelection[]>(
-    initialValues?.selectedUsers ?? []
-  );
+  const [selectedSites, setSelectedSites] = useState<
+    NotificationTargetSelection[]
+  >(initialValues?.selectedSites ?? []);
+  const [selectedCommunities, setSelectedCommunities] = useState<
+    NotificationTargetSelection[]
+  >(initialValues?.selectedCommunities ?? []);
+  const [selectedUsers, setSelectedUsers] = useState<
+    NotificationTargetSelection[]
+  >(initialValues?.selectedUsers ?? []);
 
   const [expandedPanel, setExpandedPanel] = useState<AudienceKey | null>(null);
 
@@ -155,7 +188,8 @@ export function CustomNotificationForm({
     useNotificationTypesQuery();
   const notificationTypeOptions = notificationTypesData?.module_types ?? [];
   const hasUnknownNtype =
-    ntype !== "" && !notificationTypeOptions.some((option) => option.value === ntype);
+    ntype !== "" &&
+    !notificationTypeOptions.some((option) => option.value === ntype);
 
   const toggleInSelection = (
     setter: React.Dispatch<React.SetStateAction<NotificationTargetSelection[]>>,
@@ -204,18 +238,34 @@ export function CustomNotificationForm({
     const companyIdRaw = localStorage.getItem("selectedCompanyId");
     const companyId = companyIdRaw ? parseInt(companyIdRaw, 10) : NaN;
     if (!companyId || Number.isNaN(companyId)) {
-      toast.error("No company selected — please re-select your company and try again");
+      toast.error(
+        "No company selected — please re-select your company and try again"
+      );
       return;
     }
 
     const targets: CustomNotificationTargetAttribute[] = [
-      ...buildTargetAttributes("PmsSite", selectedSites, initialValues?.selectedSites ?? []),
-      ...buildTargetAttributes("Community", selectedCommunities, initialValues?.selectedCommunities ?? []),
-      ...buildTargetAttributes("User", selectedUsers, initialValues?.selectedUsers ?? []),
+      ...buildTargetAttributes(
+        "PmsSite",
+        selectedSites,
+        initialValues?.selectedSites ?? []
+      ),
+      ...buildTargetAttributes(
+        "Community",
+        selectedCommunities,
+        initialValues?.selectedCommunities ?? []
+      ),
+      ...buildTargetAttributes(
+        "User",
+        selectedUsers,
+        initialValues?.selectedUsers ?? []
+      ),
     ];
 
     if (audienceScope === "custom" && totalCustomTargets === 0) {
-      toast.error("Select at least one site, community, or user for a custom audience");
+      toast.error(
+        "Select at least one site, community, or user for a custom audience"
+      );
       return;
     }
 
@@ -234,20 +284,54 @@ export function CustomNotificationForm({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-6">
-      <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="px-6 py-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onCancel}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
+            <p className="text-sm text-gray-500">{headerSubtitle}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full mx-auto px-6 pb-6 space-y-6">
         {/* Details */}
-        <FormSection title="Details" icon={Bell}>
-          <div className="space-y-2">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-brand-bg p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
+                <Bell className="w-5 h-5 text-brand" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Details</h2>
+                <p className="text-xs text-gray-500">
+                  Basic information shown to the recipient
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-2">
             <div>
               <TextField
-                label={<>Title <Required /></>}
+                label={
+                  <>
+                    Title <Required />
+                  </>
+                }
                 placeholder="Enter Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: assetFieldStyles }}
+                sx={singleLineFieldStyles}
               />
               <p className="mt-1 text-right text-xs text-gray-400">
                 {title.length}/{TITLE_MAX}
@@ -256,10 +340,16 @@ export function CustomNotificationForm({
 
             <div>
               <TextField
-                label={<>Message <Required /></>}
+                label={
+                  <>
+                    Message <Required />
+                  </>
+                }
                 placeholder="Enter Message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value.slice(0, MESSAGE_MAX))}
+                onChange={(e) =>
+                  setMessage(e.target.value.slice(0, MESSAGE_MAX))
+                }
                 fullWidth
                 multiline
                 minRows={3}
@@ -290,7 +380,7 @@ export function CustomNotificationForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormControl fullWidth sx={{ "& .MuiInputBase-root": assetFieldStyles }}>
+              <FormControl fullWidth>
                 <InputLabel id="notification-type-label" shrink>
                   Notification Type <Required />
                 </InputLabel>
@@ -300,9 +390,12 @@ export function CustomNotificationForm({
                   onChange={(e: SelectChangeEvent) => setNtype(e.target.value)}
                   displayEmpty
                   disabled={isNotificationTypesLoading}
+                  sx={singleLineFieldStyles}
                 >
                   <MenuItem value="" disabled>
-                    {isNotificationTypesLoading ? "Loading..." : "Select notification type"}
+                    {isNotificationTypesLoading
+                      ? "Loading..."
+                      : "Select notification type"}
                   </MenuItem>
                   {notificationTypeOptions.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
@@ -312,15 +405,18 @@ export function CustomNotificationForm({
                 </MuiSelect>
               </FormControl>
 
-              <FormControl fullWidth sx={{ "& .MuiInputBase-root": assetFieldStyles }}>
+              <FormControl fullWidth>
                 <InputLabel id="notification-priority-label" shrink>
                   Priority <Required />
                 </InputLabel>
                 <MuiSelect
                   labelId="notification-priority-label"
                   value={priority}
-                  onChange={(e: SelectChangeEvent) => setPriority(e.target.value)}
+                  onChange={(e: SelectChangeEvent) =>
+                    setPriority(e.target.value)
+                  }
                   displayEmpty
+                  sx={singleLineFieldStyles}
                 >
                   {PRIORITY_OPTIONS.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
@@ -331,33 +427,50 @@ export function CustomNotificationForm({
               </FormControl>
             </div>
           </div>
-        </FormSection>
+        </div>
 
         {/* Audience */}
-        <FormSection title="Audience" icon={Share2}>
-          <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-brand-bg p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-brand" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Audience
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Choose who should receive this notification
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
             <RadioGroup
+              row
               name="audienceScope"
               value={audienceScope}
-              onValueChange={(raw) => {
-                const value = raw as AudienceScope;
+              onChange={(e) => {
+                const value = e.target.value as AudienceScope;
                 setAudienceScope(value);
                 if (value === "all") setExpandedPanel(null);
               }}
-              className="flex flex-row flex-wrap gap-6"
+              className="gap-2"
             >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="all" id="audience-scope-all" />
-                <Label htmlFor="audience-scope-all" className="text-sm font-normal text-gray-700 cursor-pointer">
-                  All Users
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="custom" id="audience-scope-custom" />
-                <Label htmlFor="audience-scope-custom" className="text-sm font-normal text-gray-700 cursor-pointer">
-                  Custom Audience
-                </Label>
-              </div>
+              <FormControlLabel
+                value="all"
+                control={<Radio sx={radioSx} />}
+                label={<span className="text-sm text-gray-700">All Users</span>}
+              />
+              <FormControlLabel
+                value="custom"
+                control={<Radio sx={radioSx} />}
+                label={
+                  <span className="text-sm text-gray-700">Custom Audience</span>
+                }
+              />
             </RadioGroup>
 
             {audienceScope === "custom" && (
@@ -368,16 +481,17 @@ export function CustomNotificationForm({
                     return (
                       <button
                         key={option.key}
-                        aria-expanded={isExpanded}
-                        aria-controls={`pulse-audience-${option.key}`}
                         type="button"
                         onClick={() =>
-                          setExpandedPanel((prev) => (prev === option.key ? null : option.key))
+                          setExpandedPanel((prev) =>
+                            prev === option.key ? null : option.key
+                          )
                         }
-                        className={`pulse-audience-disclosure flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${isExpanded
-                          ? "border-brand bg-brand-selected"
-                          : "border-gray-200 hover:border-brand hover:bg-brand-selected"
-                          }`}
+                        className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors ${
+                          isExpanded
+                            ? "border-brand bg-brand-selected"
+                            : "border-gray-200 hover:border-brand hover:bg-brand-selected"
+                        }`}
                       >
                         <div className="w-9 h-9 flex-shrink-0 rounded-full bg-brand-light flex items-center justify-center">
                           <option.icon className="w-4 h-4 text-brand" />
@@ -387,7 +501,6 @@ export function CustomNotificationForm({
                             <span className="text-sm font-medium text-gray-900">
                               {option.label}
                             </span>
-                            <ChevronDown size={18} aria-hidden="true" className="pulse-section-chevron" data-open={isExpanded} />
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {option.count > 0 && (
                                 <span className="bg-brand text-white px-2 py-0.5 rounded-full text-xs font-semibold">
@@ -396,7 +509,9 @@ export function CustomNotificationForm({
                               )}
                             </div>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {option.description}
+                          </p>
                         </div>
                       </button>
                     );
@@ -404,11 +519,13 @@ export function CustomNotificationForm({
                 </div>
 
                 {expandedPanel && (
-                  <div id={`pulse-audience-${expandedPanel}`} className="rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
                     {expandedPanel === "sites" && (
                       <NotificationSiteInlineList
                         selectedIds={selectedSites.map((s) => s.id)}
-                        onToggle={(site) => toggleInSelection(setSelectedSites, site)}
+                        onToggle={(site) =>
+                          toggleInSelection(setSelectedSites, site)
+                        }
                       />
                     )}
                     {expandedPanel === "communities" && (
@@ -422,7 +539,9 @@ export function CustomNotificationForm({
                     {expandedPanel === "users" && (
                       <NotificationUserInlineList
                         selectedIds={selectedUsers.map((u) => u.id)}
-                        onToggle={(user) => toggleInSelection(setSelectedUsers, user)}
+                        onToggle={(user) =>
+                          toggleInSelection(setSelectedUsers, user)
+                        }
                       />
                     )}
                   </div>
@@ -443,7 +562,9 @@ export function CustomNotificationForm({
                         <button
                           type="button"
                           onClick={() =>
-                            setSelectedSites((prev) => prev.filter((s) => s.id !== site.id))
+                            setSelectedSites((prev) =>
+                              prev.filter((s) => s.id !== site.id)
+                            )
                           }
                           className="ml-1 hover:opacity-70"
                         >
@@ -497,7 +618,9 @@ export function CustomNotificationForm({
                         <button
                           type="button"
                           onClick={() =>
-                            setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id))
+                            setSelectedUsers((prev) =>
+                              prev.filter((u) => u.id !== user.id)
+                            )
                           }
                           className="ml-1 hover:opacity-70"
                         >
@@ -511,20 +634,35 @@ export function CustomNotificationForm({
                 {totalCustomTargets === 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-brand-warning/10 px-3 py-2 text-sm text-brand-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    Select at least one site, community, or user before submitting.
+                    Select at least one site, community, or user before
+                    submitting.
                   </div>
                 )}
               </div>
             )}
           </div>
-        </FormSection>
+        </div>
+      </div>
 
-        <FormActionBar
-          onCancel={onCancel}
-          onSubmit={handleSubmit}
-          submitLabel={submitLabel}
-          isSubmitting={isSubmitting}
-        />
+      {/* Submit / Cancel */}
+      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="w-full sm:w-40 h-11 !border-brand !text-brand hover:!bg-brand-selected hover:!text-brand"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full sm:w-40 h-11 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand gap-2"
+        >
+          <Send className="w-4 h-4" />
+          {isSubmitting ? submittingLabel : submitLabel}
+        </Button>
       </div>
     </div>
   );
