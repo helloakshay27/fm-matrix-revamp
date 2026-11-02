@@ -378,10 +378,6 @@ const AddWasteGenerationPage = () => {
         toast.error("Validation Error: Bag Count must be at least 1 for every waste entry.");
         return;
       }
-      if (!entry.overallWeight || parseFloat(entry.overallWeight) <= 0) {
-        toast.error("Validation Error: Overall Weight must be greater than 0 for every waste entry.");
-        return;
-      }
     }
 
     // if (formData.recycledUnit && parseFloat(formData.recycledUnit) < 0) {
@@ -413,7 +409,7 @@ const AddWasteGenerationPage = () => {
           category_id: parseInt(entry.category),
           commodity_id: parseInt(entry.commodity),
           uom: entry.uom,
-          values: distributeWeight(parseFloat(entry.overallWeight), parseInt(entry.bagCount, 10)),
+          values: distributeWeight(parseFloat(entry.overallWeight) || 0,parseInt(entry.bagCount, 10)),
           attachments: entry.attachments,
           signature: null,
         })),
