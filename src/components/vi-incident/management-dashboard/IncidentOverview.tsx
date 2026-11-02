@@ -30,8 +30,8 @@ export function IncidentOverview({ values, heatmap, activeGroup, onJump, onDrill
         <div className="flow-hint">Click any KPI to jump to its full section below · numbers follow the incident journey: Report → SPOC review → Action plan → Action taken</div>
         <div className="kpi-grid flow-kpi-grid">
           {KPI_INFO.map((kpi, index) => {
-            // Draft Incidents card is hidden; index is kept so values still line up.
-            if (kpi.id === "inc-draft") return null;
+            // Draft Incidents and Pending by Action Owner cards are hidden for now; index is kept so values still line up.
+            if (kpi.id === "inc-draft" || kpi.id === "inc-ao") return null;
             return (
             <div key={kpi.id} className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`} style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint }} onClick={() => onJump(kpi.panel, kpi.group)}>
               <div className="kpi-top">
@@ -50,7 +50,7 @@ export function IncidentOverview({ values, heatmap, activeGroup, onJump, onDrill
           <div className="card">
             <div className="card-hd">
               <div>
-                <div className="card-title">Closure Progress by Circle × Stage<InfoButton text={cardInfo("Closure Progress by Circle × Stage")} /></div>
+                <div className="card-title">Closure Progress by Circle<InfoButton text={cardInfo("Closure Progress by Circle × Stage")} /></div>
                 <div className="card-sub">% complete per stage · click a cell to drill into that circle</div>
               </div>
             </div>

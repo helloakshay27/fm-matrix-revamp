@@ -10,8 +10,9 @@ export function InvestigationPanel({ charts, highlighted }: { charts: Record<str
       <div className="acc-hd">
         <div><div className="acc-title">Investigation (SPOC)</div><div className="acc-sub">SPOC review, whether an investigation is needed, and what caused the incident</div></div>
       </div>
-      <div className="g g3">
-        <ChartCard title="Investigation Required?" sub="SPOC decision per incident" spec={charts.invReq} options={["donut", "bar"]} />
+      {/* "Investigation Required?" hidden for now — restore it and switch this row back to "g g3".
+      <ChartCard title="Investigation Required?" sub="SPOC decision per incident" spec={charts.invReq} options={["donut", "bar"]} /> */}
+      <div className="g g2">
         <ChartCard title="Contributing Factor Groups" sub="Substandard Act, Substandard Condition, Personal Factor, Job Factor, Breach of absolute safety rules" spec={charts.invFactors} options={["bar", "donut"]} />
         <ChartCard title="Investigation Conclusion" sub="Conclusion selected by the SPOC" spec={charts.invConc} options={["donut", "bar"]} />
       </div>
