@@ -1,4 +1,3 @@
-import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useCreateCustomNotificationMutation } from "../hooks/useCreateCustomNotificationMutation";
@@ -21,16 +20,15 @@ const AddCustomNotificationPage = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="px-6 pt-6"><PulsePageHeader title="New Notification" parent={{ label: "Notifications", to: "/pulse/notifications" }} /></div>
-      <CustomNotificationForm
-        submitLabel="Submit"
-        submittingLabel="Submitting..."
-        isSubmitting={createNotification.isPending}
-        onSubmit={handleSubmit}
-        onCancel={() => navigate("/pulse/notifications")}
-      />
-    </div>
+    <CustomNotificationForm
+      headerTitle="Add Notification"
+      headerSubtitle="Compose a push notification and choose who should receive it."
+      submitLabel="Submit"
+      submittingLabel="Submitting..."
+      isSubmitting={createNotification.isPending}
+      onSubmit={handleSubmit}
+      onCancel={() => navigate("/pulse/notifications")}
+    />
   );
 };
 

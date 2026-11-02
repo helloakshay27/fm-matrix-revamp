@@ -1,4 +1,3 @@
-import { PulsePageHeader } from "@/pages/pulse/components/PulsePageHeader";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -29,7 +28,10 @@ const EditCustomNotificationPage = () => {
   } = useCustomNotificationDetailQuery(hasValidId ? notificationId : null);
 
   if (detailError) {
-    console.error("[EditCustomNotificationPage] fetchCustomNotificationDetail failed:", detailError);
+    console.error(
+      "[EditCustomNotificationPage] fetchCustomNotificationDetail failed:",
+      detailError
+    );
   }
 
   // Fetched here (not just inside the inline lists) so target ids from the
@@ -41,11 +43,14 @@ const EditCustomNotificationPage = () => {
   const { data: sites, isLoading: isSitesLoading } = useAudienceSitesQuery(
     Number.isNaN(userId) ? null : userId
   );
-  const { data: communities, isLoading: isCommunitiesLoading } = useAudienceCommunitiesQuery();
+  const { data: communities, isLoading: isCommunitiesLoading } =
+    useAudienceCommunitiesQuery();
   const { data: users, isLoading: isUsersLoading } = useAudienceUsersQuery();
-  const isAudienceLoading = isSitesLoading || isCommunitiesLoading || isUsersLoading;
+  const isAudienceLoading =
+    isSitesLoading || isCommunitiesLoading || isUsersLoading;
 
-  const updateNotification = useUpdateCustomNotificationMutation(notificationId);
+  const updateNotification =
+    useUpdateCustomNotificationMutation(notificationId);
 
   const initialValues = useMemo(() => {
     const notification = detailData;
@@ -53,7 +58,9 @@ const EditCustomNotificationPage = () => {
 
     const targets = notification.targets ?? [];
     const siteNames = new Map((sites ?? []).map((s) => [s.id, s.name]));
-    const communityNames = new Map((communities ?? []).map((c) => [c.id, c.name]));
+    const communityNames = new Map(
+      (communities ?? []).map((c) => [c.id, c.name])
+    );
     const userNames = new Map((users ?? []).map((u) => [u.id, u.full_name]));
 
     return {
@@ -62,9 +69,24 @@ const EditCustomNotificationPage = () => {
       ntype: notification.ntype,
       priority: notification.priority,
       audienceScope: notification.audience_scope,
-      selectedSites: resolveNotificationTargets(targets, "PmsSite", siteNames, "Site"),
-      selectedCommunities: resolveNotificationTargets(targets, "Community", communityNames, "Community"),
-      selectedUsers: resolveNotificationTargets(targets, "User", userNames, "User"),
+      selectedSites: resolveNotificationTargets(
+        targets,
+        "PmsSite",
+        siteNames,
+        "Site"
+      ),
+      selectedCommunities: resolveNotificationTargets(
+        targets,
+        "Community",
+        communityNames,
+        "Community"
+      ),
+      selectedUsers: resolveNotificationTargets(
+        targets,
+        "User",
+        userNames,
+        "User"
+      ),
     };
   }, [detailData, sites, communities, users]);
 
@@ -102,7 +124,9 @@ const EditCustomNotificationPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-brand-error">Failed to load notification.</p>
+          <p className="text-sm text-brand-error">
+            Failed to load notification.
+          </p>
           {detail && <p className="mt-1 text-xs text-gray-500">{detail}</p>}
         </div>
       </div>
@@ -110,17 +134,16 @@ const EditCustomNotificationPage = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="px-6 pt-6"><PulsePageHeader title="Edit Notification" parent={{ label: "Notifications", to: "/pulse/notifications" }} /></div>
-      <CustomNotificationForm
-        submitLabel="Save Changes"
-        submittingLabel="Saving..."
-        isSubmitting={updateNotification.isPending}
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-        onCancel={() => navigate("/pulse/notifications")}
-      />
-    </div>
+    <CustomNotificationForm
+      headerTitle="Edit Notification"
+      headerSubtitle="Update this notification's content and audience."
+      submitLabel="Save Changes"
+      submittingLabel="Saving..."
+      isSubmitting={updateNotification.isPending}
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      onCancel={() => navigate("/pulse/notifications")}
+    />
   );
 };
 
