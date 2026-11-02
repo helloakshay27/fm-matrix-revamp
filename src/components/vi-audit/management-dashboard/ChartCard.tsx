@@ -13,12 +13,21 @@ interface ChartCardProps {
   loading?: boolean;
   /** The request failed, as opposed to returning an empty series. */
   unavailable?: boolean;
+  /** Override chart area height. Default: tall for bar charts with 4+ labels. */
+  chartSize?: "small" | "default" | "tall" | "x-tall";
   children?: (type: ChartKind) => ReactNode;
 }
 
-export function ChartCard({ title, sub, spec, options, info, compactDonut = false, loading = false, unavailable = false, children }: ChartCardProps) {
+export function ChartCard({ title, sub, spec, options, info, compactDonut = false, loading = false, unavailable = false, chartSize, children }: ChartCardProps) {
   const [type, setType] = useState<ChartKind>(spec.defaultType);
   const message = loading ? "Loading…" : unavailable ? "Couldn’t load data" : spec.labels.length === 0 ? "No data for these filters" : "";
+  const sizeClass =
+    chartSize === "small" ? " small"
+    : chartSize === "tall" ? " tall"
+    : chartSize === "x-tall" ? " x-tall"
+    : chartSize === "default" ? ""
+    : type === "bar" && spec.labels.length >= 4 ? " tall"
+    : "";
 
   return (
     <div className="card">
@@ -41,7 +50,7 @@ export function ChartCard({ title, sub, spec, options, info, compactDonut = fals
       ) : children ? (
         children(type)
       ) : (
-        <div className={`chart-wrap${type === "bar" && spec.labels.length > 4 ? " tall" : ""}`}>
+        <div className={`chart-wrap${sizeClass}`}>
           <AuditChart spec={spec} type={type} compactDonut={compactDonut} />
         </div>
       )}

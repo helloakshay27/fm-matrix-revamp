@@ -15,7 +15,10 @@ import {
   buildCharts,
   useAuditDashboardData,
   useAuditFilterOptions,
+  useOpenActionOwners,
+  usePastTargetPlans,
   useRecentAudits,
+  useSpocPendingPlans,
   type AuditDashboardFilters,
   type ClosureRow,
   type PastTargetPlan,
@@ -72,13 +75,13 @@ const closureDrill = (row: ClosureRow): DrillModel => ({
   title: `${row.circle} · closure by stage`,
   blocks: [{
     kind: "table",
-    headers: ["Stage", "% complete"],
+    headers: ["Stage", "Count"],
     rows: [
-      ["Audit Closed", `${Math.round(row.audit_closed)}%`],
-      ["Plan Created", `${Math.round(row.action_plan_created)}%`],
-      ["Action Taken", `${Math.round(row.action_taken)}%`],
-      ["On-time", `${Math.round(row.ontime_capa)}%`],
-      ["Delayed CAPA", `${Math.round(row.delayed_capa)}%`],
+      ["Audit Closed", Math.round(row.audit_closed)],
+      ["Plan Created", Math.round(row.action_plan_created)],
+      ["Action Taken", Math.round(row.action_taken)],
+      ["On-time", Math.round(row.ontime_capa)],
+      ["Delayed CAPA", Math.round(row.delayed_capa)],
     ],
   }],
 });
@@ -109,7 +112,13 @@ export function ViAuditManagementDashboardPage() {
   const [drill, setDrill] = useState<DrillModel | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [recentSearch, setRecentSearch] = useState("");
+  const [pastTargetSearch, setPastTargetSearch] = useState("");
+  const [spocSearch, setSpocSearch] = useState("");
+  const [ownerSearch, setOwnerSearch] = useState("");
   const debouncedRecentSearch = useDebounce(recentSearch, 400);
+  const debouncedPastTargetSearch = useDebounce(pastTargetSearch, 400);
+  const debouncedSpocSearch = useDebounce(spocSearch, 400);
+  const debouncedOwnerSearch = useDebounce(ownerSearch, 400);
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
   const options = useAuditFilterOptions();
@@ -117,6 +126,9 @@ export function ViAuditManagementDashboardPage() {
   const sectionReady = persona === "admin" || applied.clusterIds.length > 0;
   const dashboard = useAuditDashboardData(applied, sectionReady);
   const recentAudits = useRecentAudits(applied, debouncedRecentSearch, sectionReady);
+  const pastTargetPlans = usePastTargetPlans(applied, debouncedPastTargetSearch, sectionReady);
+  const spocPlans = useSpocPendingPlans(applied, debouncedSpocSearch, sectionReady);
+  const openOwners = useOpenActionOwners(applied, debouncedOwnerSearch, sectionReady);
   const charts = buildCharts(dashboard);
 
   const scope = SCOPES[persona];
@@ -252,7 +264,6 @@ export function ViAuditManagementDashboardPage() {
               loading={loading}
               obsFunc={charts.obsFunc}
               obsCircle={charts.obsCircle}
-              journeyByCircle={dashboard.journeyByCircle}
               journeyByFunction={dashboard.journeyByFunction}
             />
             <CapaPanel
@@ -263,9 +274,19 @@ export function ViAuditManagementDashboardPage() {
               capaAging={charts.capaAging}
               capaOverdue={charts.capaOverdue}
               ageing={dashboard.ageing}
-              owners={dashboard.owners}
-              pastTarget={dashboard.pastTarget}
-              pastTargetTotal={dashboard.pastTargetTotal}
+              spocs={spocPlans.spocs}
+              spocsLoading={spocPlans.loading}
+              spocSearch={spocSearch}
+              onSpocSearchChange={setSpocSearch}
+              owners={openOwners.owners}
+              ownersLoading={openOwners.loading}
+              ownerSearch={ownerSearch}
+              onOwnerSearchChange={setOwnerSearch}
+              pastTarget={pastTargetPlans.plans}
+              pastTargetTotal={pastTargetPlans.total}
+              pastTargetLoading={pastTargetPlans.loading}
+              pastTargetSearch={pastTargetSearch}
+              onPastTargetSearchChange={setPastTargetSearch}
               onPlan={(plan) => setDrill(planDrill(plan))}
             />
           </>

@@ -106,6 +106,12 @@ export interface Ageing {
   buckets: AgeBucket[];
 }
 
+/** SPOC with observations still waiting for an action plan. */
+export interface SpocPendingPlans {
+  spoc: string;
+  pending_plans: number;
+}
+
 export interface OpenActionOwner {
   action_owner: string;
   open: number;
@@ -324,13 +330,44 @@ const closureOf = (json: unknown): ClosureRow[] =>
     extended_capa: num(row.extended_capa),
   })).filter((row) => row.circle);
 
+/** Canonical ageing labels from waiting_for_spoc_action_plan_ageing — keep chart order stable. */
+const AGEING_BUCKET_ORDER = ["0-3 days", "4-7 days", "8-14 days", "Greater than 15 days"] as const;
+
+const ageingLabel = (raw: string) => {
+  const key = raw.trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
+  if (key.includes("0") && key.includes("3")) return "0-3 days";
+  if (key.includes("4") && key.includes("7")) return "4-7 days";
+  if (key.includes("8") && key.includes("14")) return "8-14 days";
+  if (key.includes("15") || key.includes("30") || key.includes("+")) return "Greater than 15 days";
+  return raw.trim();
+};
+
 const ageingOf = (json: unknown): Ageing => {
   const body = asRecord(json);
-  return {
-    total: num(body.total_waiting_observations),
-    buckets: asList(body.data).map((row) => ({ name: String(row.name ?? ""), count: num(row.count) })).filter((row) => row.name),
-  };
+  const nested = asRecord(body.data);
+  const rows = asList(body.data).length
+    ? asList(body.data)
+    : asList(nested.buckets ?? nested.items ?? nested.ageing);
+  const counts = new Map<string, number>();
+  rows.forEach((row) => {
+    const name = ageingLabel(String(row.name ?? row.label ?? row.bucket ?? row.ageing ?? ""));
+    if (!name) return;
+    counts.set(name, num(row.count ?? row.value ?? row.total ?? row.observations));
+  });
+  // Prefer API order when it already matches; otherwise fill the known buckets so bars always render.
+  const ordered = AGEING_BUCKET_ORDER.some((name) => counts.has(name))
+    ? AGEING_BUCKET_ORDER.map((name) => ({ name, count: counts.get(name) ?? 0 }))
+    : [...counts.entries()].map(([name, count]) => ({ name, count }));
+  const total = num(body.total_waiting_observations ?? body.total ?? nested.total_waiting_observations)
+    || ordered.reduce((sum, row) => sum + row.count, 0);
+  return { total, buckets: ordered };
 };
+
+const spocsOf = (json: unknown): SpocPendingPlans[] =>
+  asList(asRecord(json).data).map((row) => ({
+    spoc: String(row.spoc ?? row.spoc_name ?? ""),
+    pending_plans: num(row.pending_plans ?? row.pending ?? row.count),
+  })).filter((row) => row.spoc);
 
 const ownersOf = (json: unknown): OpenActionOwner[] =>
   asList(asRecord(json).data).map((row) => ({
@@ -350,6 +387,16 @@ const pastTargetOf = (json: unknown): PastTargetPlan[] =>
     status: String(row.status ?? ""),
   }));
 
+/** Match plan / audit / observation / action owner / target date / status / days over. */
+export const filterPastTargetPlans = (rows: PastTargetPlan[], search: string): PastTargetPlan[] => {
+  const q = search.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((row) =>
+    [row.plan, row.audit, row.observation, row.action_owner, row.target_date, row.status, String(row.days_over)]
+      .some((value) => String(value).toLowerCase().includes(q)),
+  );
+};
+
 const totalCount = (json: unknown, fallback: number) => num(asRecord(asRecord(json).pagination).total_count) || fallback;
 
 export interface AuditDashboardData {
@@ -360,9 +407,6 @@ export interface AuditDashboardData {
   actionPlans: PlanStatusRow[] | null;
   actionPlansByFunction: PlanStatusRow[] | null;
   ageing: Ageing | null;
-  owners: OpenActionOwner[] | null;
-  pastTarget: PastTargetPlan[] | null;
-  pastTargetTotal: number;
   observationsByFunction: NamedMetrics[] | null;
   observationsByCircle: NamedMetrics[] | null;
   journeyByCircle: JourneyGroup[] | null;
@@ -377,9 +421,6 @@ const EMPTY_DATA: AuditDashboardData = {
   actionPlans: null,
   actionPlansByFunction: null,
   ageing: null,
-  owners: null,
-  pastTarget: null,
-  pastTargetTotal: 0,
   observationsByFunction: null,
   observationsByCircle: null,
   journeyByCircle: null,
@@ -405,7 +446,6 @@ export const useAuditDashboardData = (filters: AuditDashboardFilters, enabled = 
         if (!controller.signal.aborted) console.error(`Failed to load ${endpoint}:`, error);
         return null;
       });
-    const listPage = { page: "1", per_page: "100" };
     setLoading(true);
     Promise.all([
       get<unknown>("kpi"),
@@ -415,17 +455,14 @@ export const useAuditDashboardData = (filters: AuditDashboardFilters, enabled = 
       get<unknown>("action_plan"),
       get<unknown>("action_plan_function"),
       get<unknown>("waiting_for_spoc_action_plan_ageing"),
-      get<unknown>("action_owners_with_most_open_actions"),
-      get<unknown>("plans_past_target_date", listPage),
       get<unknown>("observations_by_function"),
       get<unknown>("observation_by_circle"),
       get<unknown>("observation_by_classification_category_sub_category_by_circle"),
       get<unknown>("observation_by_classification_category_by_function"),
-    ]).then(([kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction]) => {
+    ]).then(([kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, obsFunction, obsCircle, journeyCircle, journeyFunction]) => {
       if (controller.signal.aborted) return;
-      const loaded = [kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, owners, pastTarget, obsFunction, obsCircle, journeyCircle, journeyFunction];
+      const loaded = [kpi, byFunction, byCircle, closure, plans, plansByFunction, ageing, obsFunction, obsCircle, journeyCircle, journeyFunction];
       if (loaded.every((item) => item == null)) toast.error("Failed to load audit dashboard");
-      const pastRows = pastTarget ? pastTargetOf(pastTarget) : null;
       setData({
         kpi: kpi ? kpiOf(kpi) : null,
         auditsByFunction: byFunction ? metrics(asRecord(byFunction).data, "name", true) : null,
@@ -434,9 +471,6 @@ export const useAuditDashboardData = (filters: AuditDashboardFilters, enabled = 
         actionPlans: plans ? planRows(asRecord(plans).data, "circle") : null,
         actionPlansByFunction: plansByFunction ? planRows(asRecord(plansByFunction).data, "function") : null,
         ageing: ageing ? ageingOf(ageing) : null,
-        owners: owners ? ownersOf(owners) : null,
-        pastTarget: pastRows,
-        pastTargetTotal: pastTarget ? totalCount(pastTarget, pastRows?.length ?? 0) : 0,
         observationsByFunction: obsFunction ? metrics(asRecord(obsFunction).data, "function", false) : null,
         observationsByCircle: obsCircle ? metrics(asRecord(obsCircle).data, "circle", false) : null,
         journeyByCircle: journeyCircle ? journeyGroups(asRecord(journeyCircle).data, "cluster_id", "circle") : null,
@@ -492,6 +526,137 @@ export const useRecentAudits = (filters: AuditDashboardFilters, search: string, 
   return { audits, total, loading };
 };
 
+const filterSpocs = (rows: SpocPendingPlans[], search: string) => {
+  const q = search.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((row) => row.spoc.toLowerCase().includes(q));
+};
+
+const filterOwners = (rows: OpenActionOwner[], search: string) => {
+  const q = search.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((row) => row.action_owner.toLowerCase().includes(q));
+};
+
+/** SPOCs waiting for action plan — API `search` + local name filter. */
+export const useSpocPendingPlans = (filters: AuditDashboardFilters, search: string, enabled = true) => {
+  const [spocs, setSpocs] = useState<SpocPendingPlans[] | null>(null);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setSpocs(null);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as AuditDashboardFilters);
+    if (term) params.search = term;
+    setLoading(true);
+    fetchDashboard<unknown>("spocs_with_most_pending_plans", params, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        setSpocs(filterSpocs(spocsOf(json), term));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load spocs_with_most_pending_plans:", error);
+        setSpocs(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { spocs, loading };
+};
+
+/** Action owners with open actions — API `search` + local name filter. */
+export const useOpenActionOwners = (filters: AuditDashboardFilters, search: string, enabled = true) => {
+  const [owners, setOwners] = useState<OpenActionOwner[] | null>(null);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setOwners(null);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as AuditDashboardFilters);
+    if (term) params.search = term;
+    setLoading(true);
+    fetchDashboard<unknown>("action_owners_with_most_open_actions", params, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        setOwners(filterOwners(ownersOf(json), term));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load action_owners_with_most_open_actions:", error);
+        setOwners(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { owners, loading };
+};
+
+/**
+ * Plans past target date.
+ * Calls the API with `search` (like Recent Audits). Also filters locally because the endpoint
+ * often returns the full overdue list even when `search` is sent — so action owner / date / plan
+ * matches always match what the user typed.
+ */
+export const usePastTargetPlans = (filters: AuditDashboardFilters, search: string, enabled = true) => {
+  const [plans, setPlans] = useState<PastTargetPlan[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(enabled);
+  const key = JSON.stringify(filters);
+  const term = search.trim();
+
+  useEffect(() => {
+    if (!enabled) {
+      setPlans(null);
+      setTotal(0);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const params = filterParams(JSON.parse(key) as AuditDashboardFilters);
+    const extra: Record<string, string> = { page: "1", per_page: "100" };
+    if (term) extra.search = term;
+    setLoading(true);
+    fetchDashboard<unknown>("plans_past_target_date", { ...params, ...extra }, controller.signal)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        const rows = filterPastTargetPlans(pastTargetOf(json), term);
+        setPlans(rows);
+        setTotal(rows.length);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load plans_past_target_date:", error);
+        setPlans(null);
+        setTotal(0);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key, term, enabled]);
+
+  return { plans, total, loading };
+};
+
 const AUDIT_COLORS = {
   audits: "rgb(255, 143, 107)",
   observations: "rgb(47, 48, 67)",
@@ -541,7 +706,6 @@ export const buildCharts = (data: AuditDashboardData): Record<string, ChartSpec 
   const plans = data.actionPlans;
   const plansByFunction = data.actionPlansByFunction;
   const ageing = data.ageing;
-  const owners = data.owners;
   const closure = data.closure;
   const kpi = data.kpi;
   return {
@@ -575,9 +739,12 @@ export const buildCharts = (data: AuditDashboardData): Record<string, ChartSpec 
     capaAging: ageing
       ? {
           id: "capaAging",
-          labels: ageing.buckets.map((bucket) => bucket.name),
+          // Shorter axis labels so bars stay readable; full names stay in tooltips via dataset label context.
+          labels: ageing.buckets.map((bucket) =>
+            bucket.name === "Greater than 15 days" ? "15+ days" : bucket.name.replace(/-/g, "–"),
+          ),
           datasets: [{
-            label: "Observations",
+            label: "Observations waiting for SPOC plan",
             data: ageing.buckets.map((bucket) => bucket.count),
             pieColors: ["#5A084B", "#2F3043", "#FFC400", "#FF8F6B", "#EE2737"],
             barColor: "#FF8F6B",
@@ -585,14 +752,8 @@ export const buildCharts = (data: AuditDashboardData): Record<string, ChartSpec 
           defaultType: "bar",
         }
       : null,
-    capaOverdue: owners
-      ? {
-          id: "capaOverdue",
-          labels: owners.map((owner) => owner.action_owner),
-          datasets: [bar("Past target date", owners.map((owner) => owner.past_target), "#EE2737")],
-          defaultType: "bar",
-        }
-      : null,
+    // Overdue-by-owner chart is hidden; owners load separately for the searchable list.
+    capaOverdue: null,
     capaExt: closure
       ? {
           id: "capaExt",
