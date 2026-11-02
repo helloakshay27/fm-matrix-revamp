@@ -9,6 +9,7 @@ import {
   Users,
   User,
   AlertCircle,
+  Paperclip,
 } from "lucide-react";
 import {
   FormControl,
@@ -27,11 +28,18 @@ import { Badge } from "@/components/ui/badge";
 import { NotificationSiteInlineList } from "./NotificationSiteInlineList";
 import { NotificationCommunityInlineList } from "./NotificationCommunityInlineList";
 import { NotificationUserInlineList } from "./NotificationUserInlineList";
+import {
+  NotificationMediaFields,
+  type AttachmentItem,
+  type BannerImageState,
+} from "./NotificationMediaFields";
 import { useNotificationTypesQuery } from "../hooks/useNotificationTypesQuery";
 import type {
   AudienceScope,
   CustomNotificationFormPayload,
   CustomNotificationTargetAttribute,
+  NotificationAttachment,
+  NotificationFiles,
   NotificationTargetSelection,
 } from "../types/customNotification";
 
@@ -141,6 +149,10 @@ export interface CustomNotificationFormInitialValues {
   selectedSites?: NotificationTargetSelection[];
   selectedCommunities?: NotificationTargetSelection[];
   selectedUsers?: NotificationTargetSelection[];
+  // Edit only. When `attachments` is set, the complete attachment_ids list is
+  // always sent on submit so removed files are actually removed.
+  bannerImageUrl?: string | null;
+  attachments?: NotificationAttachment[];
 }
 
 interface CustomNotificationFormProps {
@@ -150,7 +162,10 @@ interface CustomNotificationFormProps {
   submittingLabel: string;
   isSubmitting: boolean;
   initialValues?: CustomNotificationFormInitialValues;
-  onSubmit: (payload: CustomNotificationFormPayload) => void | Promise<void>;
+  onSubmit: (
+    payload: CustomNotificationFormPayload,
+    files: NotificationFiles
+  ) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -183,6 +198,26 @@ export function CustomNotificationForm({
   >(initialValues?.selectedUsers ?? []);
 
   const [expandedPanel, setExpandedPanel] = useState<AudienceKey | null>(null);
+
+  const [banner, setBanner] = useState<BannerImageState>({
+    file: null,
+    previewUrl: null,
+    savedUrl: initialValues?.bannerImageUrl || null,
+  });
+  const [attachments, setAttachments] = useState<AttachmentItem[]>(() =>
+    (initialValues?.attachments ?? []).map((attachment) => ({
+      kind: "saved",
+      key: `saved-${attachment.id}`,
+      id: attachment.id,
+      name: attachment.name,
+      url: attachment.url,
+      contentType: attachment.content_type,
+      size: attachment.size,
+    }))
+  );
+  const isUploadingDocuments = attachments.some(
+    (item) => item.kind === "document" && item.id == null
+  );
 
   const { data: notificationTypesData, isLoading: isNotificationTypesLoading } =
     useNotificationTypesQuery();
@@ -269,17 +304,41 @@ export function CustomNotificationForm({
       return;
     }
 
-    await onSubmit({
-      title: title.trim(),
-      message: message.trim(),
-      ntype: ntype.trim(),
-      priority,
-      company_id: companyId,
-      audience_scope: audienceScope,
-      ...(audienceScope === "custom"
-        ? { custom_notification_targets_attributes: targets }
-        : {}),
-    });
+    if (isUploadingDocuments) {
+      toast.error("Please wait for the file uploads to finish");
+      return;
+    }
+
+    const attachmentIds = attachments.flatMap((item) =>
+      item.kind === "saved" || (item.kind === "document" && item.id != null)
+        ? [item.id as number]
+        : []
+    );
+    const images = attachments.flatMap((item) =>
+      item.kind === "image" ? [item.file] : []
+    );
+    const isEditingFiles = initialValues?.attachments !== undefined;
+    const isBannerRemoved =
+      !!initialValues?.bannerImageUrl && !banner.savedUrl && !banner.file;
+
+    await onSubmit(
+      {
+        title: title.trim(),
+        message: message.trim(),
+        ntype: ntype.trim(),
+        priority,
+        company_id: companyId,
+        audience_scope: audienceScope,
+        ...(audienceScope === "custom"
+          ? { custom_notification_targets_attributes: targets }
+          : {}),
+        ...(isBannerRemoved ? { banner_image_url: null } : {}),
+        ...(isEditingFiles || attachmentIds.length > 0
+          ? { attachment_ids: attachmentIds }
+          : {}),
+      },
+      { bannerImage: banner.file, images }
+    );
   };
 
   return (
@@ -642,6 +701,34 @@ export function CustomNotificationForm({
             )}
           </div>
         </div>
+
+        {/* Image & Attachments */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-brand-bg p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center">
+                <Paperclip className="w-5 h-5 text-brand" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Image & Attachments
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Optional image and files sent with this notification
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <NotificationMediaFields
+              banner={banner}
+              onBannerChange={setBanner}
+              attachments={attachments}
+              onAttachmentsChange={setAttachments}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Submit / Cancel */}
@@ -657,7 +744,7 @@ export function CustomNotificationForm({
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploadingDocuments}
           className="w-full sm:w-40 h-11 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand gap-2"
         >
           <Send className="w-4 h-4" />

@@ -3,15 +3,24 @@ import { toast } from "sonner";
 import { useCreateCustomNotificationMutation } from "../hooks/useCreateCustomNotificationMutation";
 import { CustomNotificationForm } from "../components/CustomNotificationForm";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
-import type { CustomNotificationFormPayload } from "../types/customNotification";
+import type {
+  CustomNotificationFormPayload,
+  NotificationFiles,
+} from "../types/customNotification";
 
 const AddCustomNotificationPage = () => {
   const navigate = useNavigate();
   const createNotification = useCreateCustomNotificationMutation();
 
-  const handleSubmit = async (payload: CustomNotificationFormPayload) => {
+  const handleSubmit = async (
+    payload: CustomNotificationFormPayload,
+    files: NotificationFiles
+  ) => {
     try {
-      await createNotification.mutateAsync({ custom_notification: payload });
+      await createNotification.mutateAsync({
+        payload: { custom_notification: payload },
+        files,
+      });
       toast.success("Notification created successfully!");
       navigate("/pulse/notifications");
     } catch (error: unknown) {

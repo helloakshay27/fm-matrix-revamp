@@ -50,14 +50,51 @@ export interface CreateCustomNotificationPayload {
     company_id: number;
     audience_scope: AudienceScope;
     custom_notification_targets_attributes?: CustomNotificationTargetAttribute[];
+    // null / "" removes the image; leave out on update to keep it. Never sent
+    // together with a new banner_image file.
+    banner_image_url?: string | null;
+    // The complete list of files that should stay attached. Leave out to keep
+    // the current files; [] removes all.
+    attachment_ids?: number[];
   };
 }
 
-export interface CreateCustomNotificationResponse {
-  custom_notification: CustomNotification & { message?: string };
+// Image files sent with create/update as multipart form data.
+export interface NotificationFiles {
+  bannerImage?: File | null; // custom_notification[banner_image]
+  images?: File[]; // custom_notification[images][]
 }
 
+export interface SaveCustomNotificationVariables {
+  payload: CreateCustomNotificationPayload;
+  files?: NotificationFiles;
+}
+
+// Create and update return the detail object itself, not wrapped in
+// `custom_notification`.
+export type CreateCustomNotificationResponse = CustomNotificationDetail;
+
 export type CustomNotificationFormPayload = CreateCustomNotificationPayload["custom_notification"];
+
+export interface NotificationAttachment {
+  id: number;
+  name: string;
+  url: string;
+  content_type: string | null;
+  size: number | null;
+}
+
+export type NotificationUploadKind = "image" | "attachment";
+
+// POST /custom_notifications/upload.json
+export interface UploadNotificationFileResponse {
+  id: number;
+  url: string;
+  file_name: string;
+  content_type: string;
+  size: number;
+  kind: NotificationUploadKind;
+}
 
 // GET /custom_notifications/:id.json — confirmed response shape (2026-08-24).
 // The update endpoint (PUT) is still unconfirmed; assumed to accept the same
@@ -86,6 +123,8 @@ export interface CustomNotificationDetail extends CustomNotification {
   cancelled_at: string | null;
   cancelled_by_id: number | null;
   targets: CustomNotificationTargetDetail[];
+  // Always an array on the detail endpoint; optional until the backend is live.
+  attachments?: NotificationAttachment[];
 }
 
 export interface CustomNotification {
