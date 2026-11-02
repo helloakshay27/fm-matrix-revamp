@@ -766,7 +766,7 @@ const AddWasteGenerationPage = () => {
                               value={entry.overallWeight}
                               onChange={(e) => updateWasteEntry(entry.key, 'overallWeight', e.target.value)}
                               variant="outlined"
-                              inputProps={{ min: '0' }}
+                              inputProps={{ min: '0', step: 'any' }}
                               sx={{ width: 120, ...tableFieldStyles }}
                               InputLabelProps={{ shrink: true }}
                             />
