@@ -14,8 +14,9 @@ const ERROR_TOAST_ID = "network-error";
 
 const SLOW_MESSAGE =
   "Your network seems slow. This is taking longer than usual, please wait...";
+const OFFLINE_TITLE = "You're Offline";
 const OFFLINE_MESSAGE =
-  "You are offline. Please check your internet connection.";
+  "It looks like your computer isn't connected to the internet. Please check your Wi-Fi, Ethernet, or network settings and try again.";
 const BACK_ONLINE_MESSAGE = "You are back online.";
 const NETWORK_ERROR_MESSAGE =
   "Unable to reach the server. Please check your internet connection and try again.";
@@ -66,7 +67,11 @@ const trackRequest = (): (() => void) => {
 };
 
 const showOfflineToast = () => {
-  toast.error(OFFLINE_MESSAGE, { id: OFFLINE_TOAST_ID, duration: Infinity });
+  toast.error(OFFLINE_TITLE, {
+    id: OFFLINE_TOAST_ID,
+    description: OFFLINE_MESSAGE,
+    duration: Infinity,
+  });
 };
 
 const reportNetworkFailure = () => {
@@ -139,6 +144,8 @@ const watchConnection = () => {
     // Same id, so the offline toast turns into the "back online" one
     toast.success(BACK_ONLINE_MESSAGE, {
       id: OFFLINE_TOAST_ID,
+      // Clear the offline body copy, which sonner keeps when updating by id
+      description: undefined,
       duration: 3000,
     });
   });
