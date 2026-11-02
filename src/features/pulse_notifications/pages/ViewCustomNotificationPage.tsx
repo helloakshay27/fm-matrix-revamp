@@ -12,6 +12,8 @@ import {
   CalendarClock,
   Users,
   RotateCcw,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +46,7 @@ import {
   formatNotificationStatusLabel,
   formatNotificationTypeLabel,
 } from "../utils/notificationFormatters";
+import { formatFileSize, isImageContentType } from "../utils/notificationFiles";
 
 function SectionCard({
   icon: Icon,
@@ -259,6 +262,8 @@ const ViewCustomNotificationPage = () => {
     audience.communities.length > 0 ||
     audience.users.length > 0;
 
+  const attachments = notification.attachments ?? [];
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-6">
       {/* Header */}
@@ -427,6 +432,77 @@ const ViewCustomNotificationPage = () => {
                 />
               </div>
             </SectionCard>
+
+            {/* Image & Attachments */}
+            {(notification.banner_image_url || attachments.length > 0) && (
+              <SectionCard
+                icon={Paperclip}
+                title="Image & Attachments"
+                subtitle="Image and files sent with this notification"
+              >
+                <div className="space-y-6">
+                  {notification.banner_image_url && (
+                    <Field
+                      label="Image"
+                      value={
+                        <a
+                          href={notification.banner_image_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full max-w-sm"
+                        >
+                          <img
+                            src={notification.banner_image_url}
+                            alt="Notification image"
+                            className="w-full max-h-48 rounded-lg border border-gray-200 object-cover bg-gray-100 hover:opacity-90"
+                          />
+                        </a>
+                      }
+                    />
+                  )}
+
+                  {attachments.length > 0 && (
+                    <Field
+                      label="Attachments"
+                      value={
+                        <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+                          {attachments.map((attachment) => (
+                            <li key={attachment.id}>
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 px-3 py-2 hover:bg-brand-selected"
+                              >
+                                {isImageContentType(attachment.content_type) ? (
+                                  <img
+                                    src={attachment.url}
+                                    alt=""
+                                    className="w-10 h-10 flex-shrink-0 rounded object-cover bg-gray-100"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 flex-shrink-0 rounded bg-brand-light flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-brand" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm text-gray-900">
+                                    {attachment.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {formatFileSize(attachment.size)}
+                                  </p>
+                                </div>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      }
+                    />
+                  )}
+                </div>
+              </SectionCard>
+            )}
 
             {/* Redirection */}
             {(notification.deep_link_type || notification.deep_link_value) && (
