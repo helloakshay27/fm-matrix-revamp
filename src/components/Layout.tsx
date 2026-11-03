@@ -226,7 +226,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
   // branches strip the header and the main-content margin the Vi sidebar needs.
-  const isEmployeeLayout = isEmployeeUser && !isViLayout;
+  // Club pages likewise always keep the regular Header + ClubSidebar shell, never the Company Hub one.
+  const isEmployeeLayout = isEmployeeUser && !isViLayout && !isClubManagementRoute;
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
