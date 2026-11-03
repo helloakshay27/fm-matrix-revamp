@@ -27,6 +27,7 @@ import {
   UserPlus,
   AlertTriangle,
   ClipboardList,
+  GraduationCap,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -359,6 +360,20 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         {
           name: "Inspection Checklist",
           href: "/settings/inspection-master/inspection-checklist",
+        },
+      ],
+    },
+    {
+      name: "Training",
+      icon: GraduationCap,
+      subItems: [
+        {
+          name: "Training Category",
+          href: "/settings/training/category",
+        },
+        {
+          name: "Training Checklist",
+          href: "/settings/training/checklist",
         },
       ],
     },

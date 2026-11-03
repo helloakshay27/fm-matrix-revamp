@@ -814,6 +814,12 @@ const ViInspectionTypeMasterPage = lazy(
 const ViInspectionChecklistMasterPage = lazy(
   () => import("./features/vi-inspection/master/InspectionChecklistPage")
 );
+const ViTrainingCategoryMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingCategoryPage")
+);
+const ViTrainingChecklistMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingChecklistPage")
+);
 const InspectionActionOwnerListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionActionOwnerListPage,
@@ -6154,6 +6160,14 @@ function App() {
                             <Route
                               path="/settings/inspection-master/inspection-checklist"
                               element={<ViInspectionChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/category"
+                              element={<ViTrainingCategoryMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/checklist"
+                              element={<ViTrainingChecklistMasterPage />}
                             />
                             <Route
                               path="/safety/audit-list"
