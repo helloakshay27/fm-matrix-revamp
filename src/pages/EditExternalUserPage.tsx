@@ -322,9 +322,9 @@ export const EditExternalUserPage = () => {
       const cleanBaseUrl = baseUrl.startsWith("http")
         ? baseUrl
         : `https://${baseUrl}`;
-      const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`;
+      const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user.json`;
       await axios.put(
-        `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`,
+        `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user.json`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
