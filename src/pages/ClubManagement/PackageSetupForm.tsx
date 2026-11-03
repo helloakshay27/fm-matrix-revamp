@@ -76,6 +76,19 @@ const draftToTier = (d: TierDraft): PricingTier => {
   };
 };
 
+const PACKAGE_TYPE_CREDIT_COUNTS: Record<string, number> = {
+  single_session: 1,
+  bundle_4: 4,
+  bundle_8: 8,
+  bundle_12: 12,
+  bundle_16: 16,
+  "1_class_bundle": 1,
+  "4_class_bundle": 4,
+  "8_class_bundle": 8,
+  "12_class_bundle": 12,
+  "16_class_bundle": 16,
+};
+
 export interface PackageSetupFormState {
   // The selected club_class_id, as a string.
   classActivity: string;
@@ -136,7 +149,22 @@ export const PackageSetupForm = ({
       });
   }, []);
 
+  // Keep Edit forms in sync too: package type owns the class count for existing packages.
+  useEffect(() => {
+    const expectedCredits = PACKAGE_TYPE_CREDIT_COUNTS[tier.packageType];
+    if (expectedCredits !== undefined && Number(tier.credits) !== expectedCredits) {
+      setTier((prev) => ({ ...prev, credits: expectedCredits }));
+    }
+  }, [tier.packageType, tier.credits]);
+
   const patchTier = (patch: Partial<TierDraft>) => setTier((prev) => ({ ...prev, ...patch }));
+
+  const handlePackageTypeChange = (packageType: string) => {
+    patchTier({
+      packageType,
+      credits: PACKAGE_TYPE_CREDIT_COUNTS[packageType] ?? "",
+    });
+  };
 
   // A taxable package (any CGST/SGST) must carry an HSN code.
   const hsnRequired = Number(tier.cgstRate) > 0 || Number(tier.sgstRate) > 0;
@@ -255,7 +283,7 @@ export const PackageSetupForm = ({
             </InputLabel>
             <MuiSelect
               value={tier.packageType}
-              onChange={(e) => patchTier({ packageType: e.target.value as string })}
+              onChange={(e) => handlePackageTypeChange(e.target.value as string)}
               label="Package Type"
               notched
               displayEmpty
@@ -282,6 +310,7 @@ export const PackageSetupForm = ({
             placeholder="Enter number of classes"
             value={tier.credits}
             onChange={handleNumberChange("credits")}
+            disabled={!!tier.packageType}
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}

@@ -283,7 +283,7 @@ export const ClassPurchaseAdd = () => {
             label={<RequiredLabel>End date</RequiredLabel>}
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            disabled
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}

@@ -17,6 +17,8 @@ const blankDuration = (): DurationValue => ({ day: "", hour: "", minute: "" });
 
 const blankAvailabilitySlot = (): TrainerAvailabilitySlot => ({
   startTime: { hour: "00", minute: "00" },
+  breakTimeStart: { hour: "00", minute: "00" },
+  breakTimeEnd: { hour: "00", minute: "00" },
   endTime: { hour: "00", minute: "00" },
   concurrentSlots: "",
   slotBy: 15,
@@ -597,9 +599,11 @@ export const TrainerSetupForm = ({
             <div className="overflow-x-auto">
               <div
                 className="grid gap-2 mb-2 text-sm font-medium text-gray-600 min-w-max"
-                style={{ gridTemplateColumns: "200px 200px 140px 180px 90px" }}
+                style={{ gridTemplateColumns: "200px 200px 200px 200px 140px 180px 90px" }}
               >
                 <div>Start Time</div>
+                <div>Break Time Start</div>
+                <div>Break Time End</div>
                 <div>End Time</div>
                 <div>Concurrent Slots</div>
                 <div>Slot by</div>
@@ -611,7 +615,7 @@ export const TrainerSetupForm = ({
                 <div
                   key={index}
                   className="grid gap-2 mb-2 min-w-max"
-                  style={{ gridTemplateColumns: "200px 200px 140px 180px 90px" }}
+                  style={{ gridTemplateColumns: "200px 200px 200px 200px 140px 180px 90px" }}
                 >
                   <div className="flex gap-1">
                     <FormControl size="small" sx={{ minWidth: 88 }}>
@@ -636,6 +640,76 @@ export const TrainerSetupForm = ({
                         onChange={(e) =>
                           patchAvailabilitySlot(index, {
                             startTime: { ...slot.startTime, minute: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.breakTimeStart?.hour ?? "00"}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            breakTimeStart: { ...(slot.breakTimeStart ?? { hour: "00", minute: "00" }), hour: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.breakTimeStart?.minute ?? "00"}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            breakTimeStart: { ...(slot.breakTimeStart ?? { hour: "00", minute: "00" }), minute: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.breakTimeEnd?.hour ?? "00"}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            breakTimeEnd: { ...(slot.breakTimeEnd ?? { hour: "00", minute: "00" }), hour: e.target.value as string },
+                          })
+                        }
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 88 }}>
+                      <MuiSelect
+                        value={slot.breakTimeEnd?.minute ?? "00"}
+                        onChange={(e) =>
+                          patchAvailabilitySlot(index, {
+                            breakTimeEnd: { ...(slot.breakTimeEnd ?? { hour: "00", minute: "00" }), minute: e.target.value as string },
                           })
                         }
                       >
