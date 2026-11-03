@@ -251,7 +251,7 @@ export const WODetailsPage = () => {
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const [workOrder, setWorkOrder] = useState({
+  const [workOrder, setWorkOrder] = useState<any>({
     letter_of_indent: false,
     plant_detail_id: null,
     external_id: null,
@@ -482,8 +482,9 @@ export const WODetailsPage = () => {
   const handlePrint = async () => {
     setPrinting(true);
     try {
+      const qs = "?static=false";
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/po_signed_pdfs/work_order/${id}${qs}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -501,9 +502,9 @@ export const WODetailsPage = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.message || "Failed to download PDF");
     } finally {
       setPrinting(false);
     }
@@ -557,6 +558,8 @@ const renderBoqCell = (item: any, columnKey: string) => {
   }
   return content;
 };
+
+  const preparedBy = (workOrder?.work_order as any)?.created_by ?? "—";
 
   if (loading) {
     return (
@@ -951,7 +954,7 @@ const renderBoqCell = (item: any, columnKey: string) => {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <p className="font-medium text-gray-900">
-              PREPARED BY: {workOrder.work_order?.created_by || "—"}
+              PREPARED BY: {preparedBy}
             </p>
           </div>
           <div>

@@ -220,8 +220,7 @@ export const IncidentListView = ({
         loading={loading}
         loadingMessage="Loading incidents..."
         searchPlaceholder="Search by incident ID..."
-        enableExport
-        exportFileName={storageKey}
+        enableExport={false}
         emptyMessage="No incidents found"
         pagination
         currentPage={pagination.currentPage}

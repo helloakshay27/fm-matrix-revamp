@@ -5,7 +5,7 @@ import { CalendarClock } from "lucide-react";
 import { TextField } from "@mui/material";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { requiredLabel } from "@/components/vi-audit/AuditFormFields";
-import { IncidentDetailView, IncidentInvestigationCard } from "@/components/vi-incident/IncidentDetailView";
+import { IncidentDetailView } from "@/components/vi-incident/IncidentDetailView";
 import { IncidentActionPlanCards, planTargetLabel } from "@/components/vi-incident/IncidentActionPlanCards";
 import {
   errorToast,
@@ -147,7 +147,6 @@ const IncidentSpocDetailPage = () => {
       >
         {incident?.investigation.submitted && (
           <>
-            <IncidentInvestigationCard incident={incident} />
             <IncidentActionPlanCards
               incident={incident}
               renderPlanActions={(plan) =>

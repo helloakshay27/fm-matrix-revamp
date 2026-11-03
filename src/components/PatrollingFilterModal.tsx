@@ -14,6 +14,10 @@ import {
   CircularProgress
 } from '@mui/material';
 import { toast } from 'sonner';
+import {
+  fetchPatrollingFilterOptions,
+  type PatrollingFilterOptions,
+} from '@/services/patrollingResponsesAPI';
 import { 
   fetchAllBuildings, 
   fetchWings, 
@@ -37,7 +41,33 @@ export interface PatrollingFilters {
   floorId?: number | null;
   roomId?: number | null;
   status?: string;
+  patrolId?: string | number | null;
+  scheduleDateFrom?: string;
+  scheduleDateTo?: string;
+  patrolDateFrom?: string;
+  patrolDateTo?: string;
+  submittedById?: string | number | null;
+  approvedById?: string | number | null;
 }
+
+const EMPTY_FILTERS: PatrollingFilters = {
+  searchTerm: '',
+  buildingId: null,
+  wingId: null,
+  areaId: null,
+  floorId: null,
+  roomId: null,
+  status: '',
+  patrolId: null,
+  scheduleDateFrom: '',
+  scheduleDateTo: '',
+  patrolDateFrom: '',
+  patrolDateTo: '',
+  submittedById: null,
+  approvedById: null,
+};
+
+const EMPTY_OPTIONS: PatrollingFilterOptions = { patrols: [], statuses: [], submitted_by: [], approved_by: [] };
 
 export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFilterModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,15 +80,9 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
     loading
   } = useSelector((state: RootState) => state.serviceLocation);
 
-  const [filters, setFilters] = useState<PatrollingFilters>({
-    searchTerm: '',
-    buildingId: null,
-    wingId: null,
-    areaId: null,
-    floorId: null,
-    roomId: null,
-    status: ''
-  });
+  const [filters, setFilters] = useState<PatrollingFilters>(EMPTY_FILTERS);
+  const [options, setOptions] = useState<PatrollingFilterOptions>(EMPTY_OPTIONS);
+  const [optionsLoading, setOptionsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -68,6 +92,19 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
       }
     }
   }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setOptionsLoading(true);
+    fetchPatrollingFilterOptions()
+      .then((res) => !cancelled && setOptions(res))
+      .catch(() => !cancelled && toast.error('Could not load filter options'))
+      .finally(() => !cancelled && setOptionsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const handleInputChange = (field: keyof PatrollingFilters, value: string | number | null) => {
     setFilters(prev => {
@@ -131,15 +168,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
   };
 
   const handleReset = () => {
-    const resetFilters: PatrollingFilters = {
-      searchTerm: '',
-      buildingId: null,
-      wingId: null,
-      areaId: null,
-      floorId: null,
-      roomId: null,
-      status: ''
-    };
+    const resetFilters: PatrollingFilters = { ...EMPTY_FILTERS };
     
     setFilters(resetFilters);
     onApply({});
@@ -177,7 +206,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }} modal={false}>
-      <DialogContent className="max-w-2xl bg-white [&>button]:hidden" aria-describedby="filter-dialog-description">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white [&>button]:hidden" aria-describedby="filter-dialog-description">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
           <Button
@@ -193,6 +222,137 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
         <div className="space-y-6 py-4">
           {/* Search Section */}
       
+
+          {/* Patrol Details */}
+          <div>
+            <h3 className="text-[14px] text-[#C72030] font-medium mb-4">Patrol Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Patrol Name</InputLabel>
+                <MuiSelect
+                  value={filters.patrolId ?? ''}
+                  onChange={(e) => handleInputChange('patrolId', e.target.value === '' ? null : (e.target.value as string | number))}
+                  label="Patrol Name"
+                  notched
+                  displayEmpty
+                  disabled={optionsLoading}
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Patrol Name</em>
+                  </MenuItem>
+                  {options.patrols.map((o) => (
+                    <MenuItem key={String(o.value)} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Status</InputLabel>
+                <MuiSelect
+                  value={filters.status ?? ''}
+                  onChange={(e) => handleInputChange('status', e.target.value === '' ? null : (e.target.value as string | number))}
+                  label="Status"
+                  notched
+                  displayEmpty
+                  disabled={optionsLoading}
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Status</em>
+                  </MenuItem>
+                  {options.statuses.map((o) => (
+                    <MenuItem key={String(o.value)} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                fullWidth
+                type="date"
+                label="Schedule Date From"
+                variant="outlined"
+                value={filters.scheduleDateFrom || ''}
+                onChange={(e) => handleInputChange('scheduleDateFrom', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              />
+              <TextField
+                fullWidth
+                type="date"
+                label="Schedule Date To"
+                variant="outlined"
+                value={filters.scheduleDateTo || ''}
+                onChange={(e) => handleInputChange('scheduleDateTo', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              />
+              <TextField
+                fullWidth
+                type="date"
+                label="Patrol Date From"
+                variant="outlined"
+                value={filters.patrolDateFrom || ''}
+                onChange={(e) => handleInputChange('patrolDateFrom', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              />
+              <TextField
+                fullWidth
+                type="date"
+                label="Patrol Date To"
+                variant="outlined"
+                value={filters.patrolDateTo || ''}
+                onChange={(e) => handleInputChange('patrolDateTo', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              />
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Submitted by</InputLabel>
+                <MuiSelect
+                  value={filters.submittedById ?? ''}
+                  onChange={(e) => handleInputChange('submittedById', e.target.value === '' ? null : (e.target.value as string | number))}
+                  label="Submitted by"
+                  notched
+                  displayEmpty
+                  disabled={optionsLoading}
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Submitted by</em>
+                  </MenuItem>
+                  {options.submitted_by.map((o) => (
+                    <MenuItem key={String(o.value)} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Approved by</InputLabel>
+                <MuiSelect
+                  value={filters.approvedById ?? ''}
+                  onChange={(e) => handleInputChange('approvedById', e.target.value === '' ? null : (e.target.value as string | number))}
+                  label="Approved by"
+                  notched
+                  displayEmpty
+                  disabled={optionsLoading}
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Approved by</em>
+                  </MenuItem>
+                  {options.approved_by.map((o) => (
+                    <MenuItem key={String(o.value)} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
 
           {/* Location Details */}
           <div>

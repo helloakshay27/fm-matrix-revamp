@@ -110,11 +110,8 @@ const IncidentSpocActionPlanPage = () => {
     setPlans(saved);
   }, [incident]);
 
-  // The catch-all safety rule ("Violation -Any other HSW Rule", or a plain "Others") needs the
-  // rule described in words; every other rule hides the text box.
-  const breachRuleLabel = masters.breachSafetyRules.find((rule) => rule.value === breachRuleId)?.label ?? "";
-  const breachRuleIsOther =
-    isOthersOption(masters.breachSafetyRules, breachRuleId) || /\bany\s+other\b/i.test(breachRuleLabel);
+  // Only the standalone "Others" option needs a description, not named HSW rules.
+  const breachRuleIsOther = isOthersOption(masters.breachSafetyRules, breachRuleId);
 
   // Every selectable root cause, with its "Category / Sub Category" path.
   const itemLookup = useMemo(() => {

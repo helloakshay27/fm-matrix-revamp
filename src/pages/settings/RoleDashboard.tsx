@@ -85,7 +85,9 @@ export const RoleDashboard = () => {
       setModulesLoading(true);
       try {
         console.log("RoleDashboard: Fetching all modules...");
-        const modules = await roleService.fetchModules();
+        const modules = await roleService.fetchModules({
+          "q[lock_phase_show_name_eq]": "FM",
+        });
         console.log("RoleDashboard: Fetched modules:", modules);
         setAllModules(modules);
         await permissionService.getUserRole();
@@ -581,15 +583,15 @@ export const RoleDashboard = () => {
             Manage user roles and their access permissions across modules
           </p>
         </div>
-        {shouldShow("Role","create")&&(
-        <Button
-          size="sm"
-          onClick={handleAddRole}
-          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Role
-        </Button>
+        {shouldShow("Role", "create") && (
+          <Button
+            size="sm"
+            onClick={handleAddRole}
+            className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Role
+          </Button>
         )}
       </div>
 
@@ -659,7 +661,7 @@ export const RoleDashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                {!isEditMode && shouldShow("Role","update")? (
+                {!isEditMode && shouldShow("Role", "update") ? (
                   <Button
                     onClick={() => setIsEditMode(true)}
                     className="gap-2"

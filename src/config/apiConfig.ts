@@ -76,6 +76,10 @@ export const API_CONFIG = {
     CREATE_SUB_FUNCTION: "/lock_sub_functions.json",
     UPDATE_SUB_FUNCTION: "/lock_sub_functions", // Base path, will append /:id.json
     DELETE_SUB_FUNCTION: "/lock_sub_functions", // Base path, will append /:id.json
+    PHASES: "/admin/lock_phases.json",
+    CREATE_PHASE: "/admin/lock_phases.json",
+    UPDATE_PHASE: "/admin/lock_phases", // Base path, will append /:id.json
+    DELETE_PHASE: "/admin/lock_phases", // Base path, will append /:id.json
     // Role Config endpoints
     ROLE_CONFIGS: "/lock_roles.json",
     ROLE_CONFIG_DETAILS: "/lock_roles", // Base path, will append /:id.json

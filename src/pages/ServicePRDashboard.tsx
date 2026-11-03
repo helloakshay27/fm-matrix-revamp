@@ -385,33 +385,78 @@ export const ServicePRDashboard = () => {
     }
   };
 
-  const renderActions = (item: any) => (
-    <div className="flex gap-2">
-      {
-        shouldShow("Service PR", "show") && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/finance/service-pr/details/${item.id}`, {
-                state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-              });
-            }}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-        )
-      }
+  // const renderActions = (item: any) => (
+  //   <div className="flex gap-2">
+  //     {
+  //       shouldShow("Service PR", "show") && (
+  //         <Button
+  //           size="sm"
+  //           variant="ghost"
+  //           className="p-1"
+  //           onClick={(e) => {
+  //             e.stopPropagation();
+  //             navigate(`/finance/service-pr/details/${item.id}`, {
+  //               state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //             });
+  //           }}
+  //         >
+  //           <Eye className="w-4 h-4" />
+  //         </Button>
+  //       )
+  //     }
+
+  //     {shouldShow("Service PR", "update") && item.can_edit && (
+  //       <Button
+  //         size="sm"
+  //         variant="ghost"
+  //         className="p-1"
+  //         onClick={(e) => {
+  //           e.stopPropagation();
+  //           navigate(`/finance/service-pr/edit/${item.id}`, {
+  //             state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+  //           });
+  //         }}
+  //       >
+  //         <Edit className="w-4 h-4" />
+  //       </Button>
+  //     )}
+  //   </div>
+  // );
+
+
+  const renderActions = (item: any) => {
+  const disabled = item.active === false;
+  return (
+    <div className="flex gap-2" data-actions>
+      {shouldShow("Service PR", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "PR inactive" : "View"}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (disabled) return;
+            navigate(`/finance/service-pr/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
 
       {shouldShow("Service PR", "update") && item.can_edit && (
         <Button
           size="sm"
           variant="ghost"
-          className="p-1"
+          className={`p-1 ${disabled ? "opacity-50" : ""}`}
+          disabled={disabled}
+          title={disabled ? "PR inactive" : "Edit"}
           onClick={(e) => {
             e.stopPropagation();
+            if (disabled) return;
             navigate(`/finance/service-pr/edit/${item.id}`, {
               state: { returnTo: buildReturnToPath(location.pathname, location.search) },
             });
@@ -422,7 +467,7 @@ export const ServicePRDashboard = () => {
       )}
     </div>
   );
-
+};
   const handleRefresh = () => {
     cache.invalidatePattern(`${CACHE_PREFIX}*`);
     fetchData();
@@ -615,6 +660,10 @@ export const ServicePRDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
+        isRowDisabled={(item: any) => item.active === false || item.all_level_approved === false}
+        rowClassName={(item: any) =>
+          item.active === false || item.all_level_approved === false ? "opacity-60 pointer-events-none" : ""
+        }
         storageKey="service-pr-dashboard-columns-v2"
         className="min-w-[1000px]"
         emptyMessage="No service PR data available"

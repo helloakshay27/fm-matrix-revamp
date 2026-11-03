@@ -331,10 +331,14 @@ export const roleService = {
   },
 
   // Fetch all modules with functions and sub-functions
-  async fetchModules(): Promise<LockModule[]> {
+   async fetchModules(
+    params?: Record<string, string>
+  ): Promise<LockModule[]> {
     try {
       console.log("Fetching modules from:", ENDPOINTS.MODULES);
-      const response = await apiClient.get<ApiModule[]>(ENDPOINTS.MODULES);
+      const response = await apiClient.get<ApiModule[]>(ENDPOINTS.MODULES, {
+        params,
+      });
       console.log("Raw modules response:", response.data);
 
       // Transform API response to frontend structure

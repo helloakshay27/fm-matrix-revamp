@@ -427,8 +427,10 @@ export const PODetailsPage = () => {
     }
     setPrinting(true)
     try {
+      const qs  = '?static=false';
       const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        // `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/po_signed_pdfs/purchase_order/${id}${qs}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",

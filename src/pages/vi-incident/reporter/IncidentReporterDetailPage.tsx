@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { IncidentDetailView, IncidentInvestigationCard } from "@/components/vi-incident/IncidentDetailView";
+import { IncidentDetailView } from "@/components/vi-incident/IncidentDetailView";
 import { IncidentActionPlanCards } from "@/components/vi-incident/IncidentActionPlanCards";
 import { errorToast, submitViIncident, useViIncidentDetail } from "@/components/vi-incident/viIncidentApi";
 import { INCIDENT_REPORTER_PATH } from "./IncidentReporterListPage";
@@ -60,7 +60,6 @@ const IncidentReporterDetailPage = () => {
     >
       {incident && (
         <>
-          <IncidentInvestigationCard incident={incident} />
           <IncidentActionPlanCards incident={incident} />
         </>
       )}

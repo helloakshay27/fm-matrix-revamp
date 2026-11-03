@@ -20,6 +20,11 @@ import {
 } from "./classPurchaseApi";
 import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
 
+const addDays = (dateStr: string, days: number) => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 
 export const ClassPurchaseEdit = () => {
   const navigate = useNavigate();
@@ -110,6 +115,12 @@ export const ClassPurchaseEdit = () => {
   }, [classId]);
 
   const selectedPackage = packageOptions.find((p) => p.id === packageId);
+
+  useEffect(() => {
+    if (selectedPackage && startDate) {
+      setEndDate(addDays(startDate, selectedPackage.validityDays));
+    }
+  }, [selectedPackage, startDate]);
 
   const { subtotal, cgstAmount, sgstAmount, total } = useMemo(() => {
     const base = userType === "guest" ? selectedPackage?.priceNonMember ?? 0 : selectedPackage?.priceMember ?? 0;
@@ -311,7 +322,7 @@ export const ClassPurchaseEdit = () => {
             label={<RequiredLabel>End date</RequiredLabel>}
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            disabled
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}

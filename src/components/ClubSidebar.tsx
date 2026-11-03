@@ -928,17 +928,7 @@ const modulesByPackage = {
       name: "Class Setup",
       icon: Wrench,
       subItems: [
-        {
-          name: "Class ",
-          href: "/club-management/class-setup",
-          color: "text-[#1a1a1a]",
-          additionalRoutes: [
-            "/club-management/class-setup/add",
-            "/club-management/class-setup/edit",
-            "/club-management/class-setup/details",
-          ],
-        },
-        {
+          {
           name: "Shift",
           href: "/settings/account/shift",
           color: "text-[#1a1a1a]",
@@ -959,7 +949,18 @@ const modulesByPackage = {
           ],
         },
         {
-          name: "Package",
+          name: "Class ",
+          href: "/club-management/class-setup",
+          color: "text-[#1a1a1a]",
+          additionalRoutes: [
+            "/club-management/class-setup/add",
+            "/club-management/class-setup/edit",
+            "/club-management/class-setup/details",
+          ],
+        },
+      
+        {
+          name: "Class Packages",
           href: "/club-management/package-setup",
           color: "text-[#1a1a1a]",
           additionalRoutes: [

@@ -8,6 +8,7 @@ import {
   AuditFilterDialog,
   EMPTY_AUDIT_FILTERS,
   auditFiltersToParams,
+  auditSearchToParams,
   type AuditStatusOption,
   type ViAuditFilters,
 } from "@/components/vi-audit/AuditFilterDialog";
@@ -22,11 +23,12 @@ const FunctionalHeadAuditListPage = () => {
   // GET /vi_audits/functional_head_audits.json?page=&per_page=20 (server-side pagination) + the filter dialog's q[...] params
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<ViAuditFilters>(EMPTY_AUDIT_FILTERS);
+  const [search, setSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { audits, pagination, loading } = useViAuditList(
     page,
     VI_AUDIT_LIST_ENDPOINTS.functionalHead,
-    auditFiltersToParams(filters),
+    { ...auditFiltersToParams(filters), ...auditSearchToParams(search) },
   );
   // Overall totals for the stats cards — GET /vi_audits/dashboard.json?role=functional_head
   const { counts } = useViAuditDashboard("functional_head");
@@ -56,6 +58,10 @@ const FunctionalHeadAuditListPage = () => {
         onPageChange: setPage,
       }}
       onFilterClick={() => setIsFilterOpen(true)}
+      onSearch={(term) => {
+        setSearch(term);
+        setPage(1);
+      }}
     >
       <AuditFilterDialog
         open={isFilterOpen}

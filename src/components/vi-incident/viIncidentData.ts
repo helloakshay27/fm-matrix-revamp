@@ -83,7 +83,7 @@ export interface ViIncidentRecord {
   /** Stored status: draft / open / closed. */
   storedStatus: string;
   canEdit: boolean;
-  reporter: { name: string; mailId: string; employer: string };
+  reporter: { name: string; mailId: string; designation: string };
   dateOfReport: string;
   timeOfReport: string;
   dateOfIncident: string;
@@ -191,9 +191,13 @@ export const formatIncidentDate = (iso: string) => {
 /** The deadline in force: the extended date when set, else the target date. */
 export const planDeadline = (plan: ViIncidentActionPlan) => plan.extendTargetDate || plan.targetDate;
 
-export const isPlanClosed = (plan: ViIncidentActionPlan) =>
-  plan.status.toLowerCase() === "closed" ||
-  (plan.assignments.length > 0 && plan.assignments.every((a) => a.status === "closed"));
+export const isPlanClosed = (plan: ViIncidentActionPlan) => {
+  // Action-owner responses may contain only the caller's assignment.
+  // An explicit plan status describes all owners, including those omitted by the API.
+  const status = plan.status.trim().toLowerCase();
+  if (status) return status === "closed";
+  return plan.assignments.length > 0 && plan.assignments.every((a) => a.status === "closed");
+};
 
 /** The SPOC may extend a deadline only once it has passed and the plan is still open. */
 export const isPlanExpired = (plan: ViIncidentActionPlan) =>

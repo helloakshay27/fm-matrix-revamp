@@ -2,24 +2,29 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, FileText, Layers, ClipboardList, User, HeartPulse, Search } from "lucide-react";
 import { DetailCard } from "@/components/ui/detail-card";
-import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuditLoadingState, sectionIcon, auditTabsListClass, auditTabTriggerClass } from "@/components/vi-audit/ViAuditUi";
 import { IncidentFieldGrid as FieldGrid } from "./IncidentFieldGrid";
 import { AttachmentLinks } from "./IncidentFormFields";
 import { IncidentStatusPill } from "./IncidentListView";
 import { incidentPendingWith, type ViIncidentRecord } from "./viIncidentData";
 
-/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
-export const IncidentInfoCards = ({ incident }: { incident: ViIncidentRecord }) => (
-  <>
+export const IncidentReporterCard = ({ incident }: { incident: ViIncidentRecord }) => (
     <DetailCard icon={sectionIcon(User)} title="Reporter Details" className="mb-5">
       <FieldGrid
         fields={[
           { label: "Name", value: incident.reporter.name },
           { label: "Mail ID", value: incident.reporter.mailId },
-          { label: "Employer", value: incident.reporter.employer },
+          { label: "Designation", value: incident.reporter.designation },
         ]}
       />
     </DetailCard>
+);
+
+/** Reporter / Basic / Classification / Incident Details / Injury cards for one incident (read-only). */
+export const IncidentInfoCards = ({ incident, showReporter = true }: { incident: ViIncidentRecord; showReporter?: boolean }) => (
+  <>
+    {showReporter && <IncidentReporterCard incident={incident} />}
 
     <DetailCard icon={sectionIcon(FileText)} title="Basic Details" className="mb-5">
       <FieldGrid
@@ -219,7 +224,7 @@ export const IncidentDetailView = ({
   draft?: boolean;
   /** Sticky action bar content, e.g. the SPOC's "Create Action Plan" button. */
   footer?: ReactNode;
-  /** Extra content after the incident cards (e.g. the investigation and action plans). */
+  /** Role-specific action plan cards. */
   children?: ReactNode;
 }) => {
   const navigate = useNavigate();
@@ -231,9 +236,29 @@ export const IncidentDetailView = ({
     <div className="p-6 min-h-screen">
       <IncidentHeader incident={incident} onBack={() => navigate(listPath)} draft={draft} />
 
-      <IncidentInfoCards incident={incident} />
-
-      {children}
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className={`${auditTabsListClass} mb-5`}>
+          <TabsTrigger value="details" className={auditTabTriggerClass}>
+            Incident Details
+          </TabsTrigger>
+          <TabsTrigger value="plans" className={auditTabTriggerClass}>
+            Action Plans ({incident.investigation.submitted ? incident.actionPlans.length : 0})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="details" className="mt-0">
+          <IncidentInfoCards incident={incident} />
+          <IncidentInvestigationCard incident={incident} />
+        </TabsContent>
+        <TabsContent value="plans" className="mt-0">
+          {incident.investigation.submitted && incident.actionPlans.length ? children : (
+            <p className="py-8 text-center text-sm text-[rgba(26,26,24,0.48)]">
+              {incident.investigation.submitted
+                ? "No action plans were created for this incident."
+                : "The SPOC has not submitted the action plan yet."}
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {footer && (
         <div className="fm-action-bar sticky bottom-0 -mx-6 mt-6 border-t border-[rgba(26,26,24,0.09)] bg-white px-6 py-4">

@@ -226,7 +226,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Vi keeps its own shell even when userType is pms_occupant, otherwise the employee
   // branches strip the header and the main-content margin the Vi sidebar needs.
-  const isEmployeeLayout = isEmployeeUser && isLocalhost && !isViLayout;
+  const isEmployeeLayout = isEmployeeUser && !isViLayout;
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -328,7 +328,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     if (
       (hostname !== "pulse.lockated.com" &&
-        hostname !== "localhost" &&
         (selectedCompany?.id === 300 ||
           selectedCompany?.id === 295 ||
           selectedCompany?.id === 298 ||
@@ -339,6 +338,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "84" ||
           org_id === "1" ||
           org_id === "10" ||
+          org_id === "109" ||
+          org_id === "9" ||
+          org_id === "5" ||
+          org_id === "21" ||
+          org_id === "71" ||
           org_id === "3" ||
           org_id === "67" ||
           org_id === "63" ||
@@ -463,6 +467,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "84" ||
           org_id === "1" ||
           org_id === "10" ||
+          org_id === "109" ||
+          org_id === "9" ||
+          org_id === "5" ||
+          org_id === "21" ||
+          org_id === "71" ||
           org_id === "3" ||
           org_id === "67" ||
           org_id === "63" ||

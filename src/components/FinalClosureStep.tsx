@@ -608,6 +608,7 @@ import type { Investigator, CorrectiveAction, PreventiveAction } from '../pages/
 
 /* ----------------------------- TYPES ----------------------------- */
 interface FinalClosureStepProps {
+  actionValidationErrors: { corrective: boolean; preventive: boolean };
   incident: Incident | null;
   investigators: Investigator[];
   incidentOverTime: string;
@@ -630,6 +631,7 @@ interface FinalClosureStepProps {
 
 /* ----------------------------- COMPONENT ----------------------------- */
 const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
+  actionValidationErrors,
   incident,
   investigators,
   incidentOverTime,
@@ -904,10 +906,11 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       {/* Corrective Actions Card */}
       <div className="bg-white border border-[#E7E1D4] rounded-xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EAE2] bg-[#FAF9F7]">
-          <h3 className="font-bold text-gray-900 text-base">Corrective Actions</h3>
+          <h3 className="font-bold text-gray-900 text-base">Corrective Actions <span className="text-red-600">*</span></h3>
         </div>
 
         <div className="p-4 space-y-4">
+          {actionValidationErrors.corrective && <p className="text-sm text-red-600">Corrective Action is required.</p>}
           {correctiveActions.length > 0 && (
             <div className="space-y-4">
               {correctiveActions.map((action, index) => (
@@ -997,10 +1000,11 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       {/* Preventive Actions Card */}
       <div className="bg-white border border-[#E7E1D4] rounded-xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0EAE2] bg-[#FAF9F7]">
-          <h3 className="font-bold text-gray-900 text-base">Preventive Actions</h3>
+          <h3 className="font-bold text-gray-900 text-base">Preventive Actions <span className="text-red-600">*</span></h3>
         </div>
 
         <div className="p-4 space-y-4">
+          {actionValidationErrors.preventive && <p className="text-sm text-red-600">Preventive Action is required.</p>}
           {preventiveActions.length > 0 && (
             <div className="space-y-4">
               {preventiveActions.map((action, index) => (
