@@ -33,6 +33,10 @@ export const buildTrainerRequest = (payload: TrainerFormPayload): TrainerRequest
     facility_slot_attributes: {
       start_hour: numericValue(slot?.startTime.hour),
       start_min: numericValue(slot?.startTime.minute),
+      break_start_hour: numericValue(slot?.breakTimeStart?.hour),
+      break_start_min: numericValue(slot?.breakTimeStart?.minute),
+      break_end_hour: numericValue(slot?.breakTimeEnd?.hour),
+      break_end_min: numericValue(slot?.breakTimeEnd?.minute),
       end_hour: numericValue(slot?.endTime.hour),
       end_min: numericValue(slot?.endTime.minute),
       concurrent_slots: numericValue(slot?.concurrentSlots),
