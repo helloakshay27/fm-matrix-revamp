@@ -90,6 +90,9 @@ export interface PieChartCardProps {
    * fixed status meaning (e.g. In Use/Breakdown/Allocated) rather than an arbitrary category. */
   colors?: string[];
   showInfoIcon?: boolean;
+  /** Donut ring radii (recharts values). Defaults keep the original thick ring. */
+  innerRadius?: string | number;
+  outerRadius?: string | number;
   height?: number;
   className?: string;
 }
@@ -110,6 +113,8 @@ export function PieChartCard({
   legendPosition = "bottom",
   colors,
   showInfoIcon = false,
+  innerRadius = "58%",
+  outerRadius = "85%",
   height = 240,
   className,
 }: PieChartCardProps) {
@@ -132,8 +137,8 @@ export function PieChartCard({
             data={coloredData}
             dataKey="value"
             nameKey="name"
-            innerRadius="58%"
-            outerRadius="85%"
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
             paddingAngle={0}
             stroke="none"
             label={({ percent }) => (percent && percent >= 0.08 ? `${Math.round(percent * 100)}%` : "")}
