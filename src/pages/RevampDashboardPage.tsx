@@ -26,7 +26,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PeriodCalendarPopover, type PeriodMode } from "@/components/dashboard/PeriodCalendarPopover";
 import "@/styles/veda-dashboard.css";
 import {
   PieChartCard,
@@ -58,7 +57,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
+import { VEDA_PALETTE, VEDA_COLORS, VEDA_CSS_VARS, VEDA_PIE_PROPS, getVedaColor } from "@/styles/vedaTheme";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 import { FinancePanel } from "@/components/dashboard/FinancePanel";
 import { CrmPanel } from "@/components/dashboard/CrmPanel";
@@ -554,11 +553,11 @@ interface CategoryRow {
 }
 
 const AGE_TIER_COLORS = [
-  ANALYTICS_PALETTE[3],
-  ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[0],
-  ANALYTICS_PALETTE[3],
+  VEDA_PALETTE[3],
+  VEDA_PALETTE[2],
+  VEDA_PALETTE[2],
+  VEDA_PALETTE[0],
+  VEDA_PALETTE[3],
 ];
 
 // Axis labels only — the heatmap's cell values always come from the API.
@@ -591,11 +590,11 @@ function vsLastMonthDisplay(percent: number | null): { display: string; tone: "r
 // Fixed, known source set the API always returns — colors keyed by name so
 // they stay correct regardless of the order the backend returns them in.
 const SOURCE_COLOR_MAP: Record<string, string> = {
-  "Manual/Direct": "#8E7BE0",
-  Asset: "#8E7BE0",
-  Checklist: "#6B9BCC",
-  Survey: "#9EC8BA",
-  Patrolling: "#8E7BE0",
+  "Manual/Direct": VEDA_COLORS.purple,
+  Asset: VEDA_COLORS.purple,
+  Checklist: VEDA_COLORS.blue,
+  Survey: VEDA_COLORS.mint,
+  Patrolling: VEDA_COLORS.purple,
 };
 
 /** Small placeholder for a widget whose backing field the ticket dashboard API doesn't provide (yet) or returned empty. */
@@ -976,14 +975,14 @@ const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
 // (Asset Management Dashboard through Asset Ownership Cost Analysis) in
 // fm_matrix_phase10 (29).html.
 const BRAND_HEX = {
-  green: "#798C5E",
-  ok: "#108C72",
-  warn: "#EDC488",
-  err: "#DA7756",
-  blue: "#6B9BCC",
-  orange: "#DA7756",
-  teal: "#9EC8BA",
-  dark: "#2C2C2C",
+  green: VEDA_COLORS.olive,
+  ok: VEDA_COLORS.growth,
+  warn: VEDA_COLORS.warning,
+  err: VEDA_COLORS.danger,
+  blue: VEDA_COLORS.blue,
+  orange: VEDA_COLORS.purple,
+  teal: VEDA_COLORS.mint,
+  dark: VEDA_COLORS.ink,
 };
 
 // Maintenance › Assets and Audit analytics — wired to the live
@@ -1087,19 +1086,19 @@ const VENDOR_CONTRACT_TABLE_COLUMNS: DataTableColumn<VendorContractTableRow>[] =
 ];
 
 const INSIGHT_ITEM_TONE_STYLES = {
-  err: { bg: "rgba(218,119,86,0.16)", color: "#DA7756" },
+  err: { bg: "rgba(218,119,86,0.16)", color: "#5A4BE0" },
   warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
-  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#12A150" },
 } as const;
 
 const INSIGHT_CATEGORY_TONE_STYLES = {
-  err: { bg: "rgba(218,119,86,0.16)", color: "#DA7756" },
+  err: { bg: "rgba(218,119,86,0.16)", color: "#5A4BE0" },
   warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
   terra: { bg: "rgba(218,119,86,0.16)", color: "#A34A30" },
   purple: { bg: "rgba(206,203,246,0.3)", color: "#4B4780" },
   info: { bg: "rgba(107,155,204,0.18)", color: "#3A6A9A" },
   sage: { bg: "rgba(121,140,94,0.16)", color: "#798C5E" },
-  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#12A150" },
 } as const;
 
 type InsightTone = keyof typeof INSIGHT_CATEGORY_TONE_STYLES;
@@ -1456,12 +1455,12 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
       >
         <span
           className="flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ background: "rgba(218,119,86,0.15)", color: "#DA7756" }}
+          style={{ background: "rgba(218,119,86,0.15)", color: "#5A4BE0" }}
         >
           <Lightbulb className="h-4 w-4" />
         </span>
         <span className="text-brand-body-5 font-semibold text-brand-text">Insights</span>
-        <span className="animate-pulse rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: "#DA7756" }}>
+        <span className="animate-pulse rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: "#5A4BE0" }}>
           {INSIGHT_GLOW_TOTAL}
         </span>
       </button>
@@ -1588,7 +1587,7 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
                           </span>
                           <span className="flex flex-shrink-0 items-center gap-1.5">
                             {item.isNew && (
-                              <span className="rounded px-1 py-px text-[8px] font-bold" style={{ background: "rgba(16,140,114,0.12)", color: "#108C72" }}>
+                              <span className="rounded px-1 py-px text-[8px] font-bold" style={{ background: "rgba(16,140,114,0.12)", color: "#12A150" }}>
                                 <span className="mr-0.5 inline-block h-1 w-1 animate-pulse rounded-full bg-current" />
                                 NEW
                               </span>
@@ -2131,7 +2130,7 @@ export default function RevampDashboardPage() {
     [ticketsBreakdown]
   );
   const sourceOriginColors = useMemo(
-    () => sourceOriginData.map((s, i) => SOURCE_COLOR_MAP[s.source] ?? getPaletteColor(i)),
+    () => sourceOriginData.map((s, i) => SOURCE_COLOR_MAP[s.source] ?? getVedaColor(i)),
     [sourceOriginData]
   );
 
@@ -2677,7 +2676,7 @@ export default function RevampDashboardPage() {
         label: r.category,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown, appliedCategory]);
 
@@ -2691,7 +2690,7 @@ export default function RevampDashboardPage() {
         label: r.commodity,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown]);
 
@@ -2705,7 +2704,7 @@ export default function RevampDashboardPage() {
         label: r.name,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown, appliedBuilding]);
 
@@ -2834,7 +2833,7 @@ export default function RevampDashboardPage() {
         label: r.category as string,
         value: typeof r.percent === "number" ? `${r.percent}% (${r.count})` : `${r.count}`,
         percent: Math.round(((r.count as number) / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [surveyBreakdown]);
 
@@ -2932,7 +2931,7 @@ export default function RevampDashboardPage() {
       label: r.vendor_name as string,
       value: typeof r.sla_compliance_percent === "number" ? `${r.sla_compliance_percent}%` : "–",
       percent: typeof r.total_requests === "number" ? Math.round((r.total_requests / max) * 100) : 0,
-      color: getPaletteColor(i),
+      color: getVedaColor(i),
     }));
   }, [vendorPerformance]);
 
@@ -2979,11 +2978,12 @@ export default function RevampDashboardPage() {
   return (
     <div className="veda-theme bg-brand-bg h-screen flex flex-col overflow-hidden" style={VEDA_CSS_VARS}>
       <div ref={navRef} className="veda-nav flex-shrink-0 z-30 bg-brand-bg">
-      {/* Top bar: logo · site · search · period · filters */}
-      <div className="veda-topbar vt-bar flex flex-wrap items-center gap-x-3 gap-y-2 bg-white border-b border-brand-border px-6 py-3">
-        <div className="vt-brand flex flex-shrink-0 items-center gap-2.5">
-          <span className="vt-logo" aria-hidden="true">
-            <Building2 className="h-5 w-5" strokeWidth={2} />
+      {/* Title bar */}
+      <div className="veda-topbar flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
+        <h1 className="text-brand-h2 font-bold text-brand-text">Dashboard View</h1>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-brand-body-4 text-brand-text-light md:inline">
+            {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
           <span className="vt-brand-name hidden md:inline">{BRAND_NAME}</span>
         </div>
@@ -3029,73 +3029,12 @@ export default function RevampDashboardPage() {
                 setHeaderSearchQuery(e.target.value);
                 setSearchPopupOpen(true);
               }}
-              onFocus={() => {
-                setSearchPopupOpen(true);
-                setPeriodPopupOpen(false);
-                setFiltersPopupOpen(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setHeaderSearchQuery("");
-                  setSearchPopupOpen(false);
-                  (e.target as HTMLInputElement).blur();
-                } else if (e.key === "Enter" && headerSearchResults[0]) {
-                  navigateTo(headerSearchResults[0].moduleKey, headerSearchResults[0].subTab);
-                  setSearchPopupOpen(false);
-                  setHeaderSearchQuery("");
-                }
-              }}
-              placeholder="Search modules, tabs, vendor, AMC…"
-              aria-label="Search dashboard"
-              className="vt-search-input"
-            />
-            {searchPopupOpen && headerSearchQuery.trim() && (
-              <div
-                className="vt-search-results"
-                onMouseDown={(e) => e.preventDefault()}
-              >
-                {headerSearchResults.length ? (
-                  headerSearchResults.map((r) => (
-                    <button
-                      key={`${r.moduleKey}-${r.subTab}`}
-                      type="button"
-                      onClick={() => {
-                        navigateTo(r.moduleKey, r.subTab);
-                        setSearchPopupOpen(false);
-                        setHeaderSearchQuery("");
-                      }}
-                      className="vt-search-result"
-                    >
-                      <span className="text-brand-text-light">{r.moduleLabel}</span> {" › "}
-                      <span className="font-semibold">{r.subTab}</span>
-                    </button>
-                  ))
-                ) : (
-                  <p className="px-3 py-2 text-brand-body-5 text-brand-text-light">No matching module or tab.</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div ref={periodWrapRef} className="vt-period-wrap relative flex items-center gap-2">
-            <span className="vt-period-label hidden 2xl:inline">{periodButtonLabel(dashboardDateRange)}</span>
-            <div className="vt-seg" role="group" aria-label="Period" title={periodButtonLabel(dashboardDateRange)}>
-              {(["day", "month", "range"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => {
-                    setPeriodPopupMode(m);
-                    setPeriodPopupOpen(true);
-                    setFiltersPopupOpen(false);
-                    setSearchPopupOpen(false);
-                  }}
-                  className={cn("vt-seg-btn", periodModeOf(dashboardDateRange) === m && "on")}
-                >
-                  {m === "day" ? "Day" : m === "month" ? "Month" : "Range"}
-                </button>
-              ))}
-            </div>
+              className="veda-period flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
+            >
+              <CalendarDays className="w-4 h-4" />
+              {periodButtonLabel(dashboardDateRange)}
+              <ChevronDown className="w-4 h-4" />
+            </button>
             {periodPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <PeriodCalendarPopover
@@ -3144,17 +3083,17 @@ export default function RevampDashboardPage() {
             )}
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button type="button" className="vt-avatar" aria-label={`Account menu for ${headerUser.name}`} title={headerUser.name}>
-                {headerUser.initials}
-              </button>
-            </DropdownMenuTrigger>
-            {/* Portalled to <body>, so styled with literal values rather than theme variables. */}
-            <DropdownMenuContent
-              align="end"
-              sideOffset={10}
-              className="w-56 rounded-2xl border border-black/10 bg-white p-2 shadow-[0_18px_40px_rgba(26,26,24,0.16)]"
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchPopupOpen((v) => !v);
+                setPeriodPopupOpen(false);
+                setFiltersPopupOpen(false);
+              }}
+              aria-label="Search"
+              title="Search"
+              className="veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border border-brand-border text-brand-text hover:bg-brand-light"
             >
               <div className="truncate px-3 py-2 text-[14px] font-bold text-[#1a1a18]">{headerUser.name}</div>
               <DropdownMenuSeparator className="bg-black/10" />
@@ -3184,6 +3123,14 @@ export default function RevampDashboardPage() {
 
       {/* Underline tab nav */}
       <div className="veda-modtabs flex items-center bg-white border-b border-brand-border px-2">
+        <button
+          type="button"
+          onClick={() => scrollTabs(-1)}
+          className="flex-shrink-0 p-2 text-brand-text-light hover:text-brand-text"
+          aria-label="Scroll tabs left"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
         <div ref={tabsRef} className="veda-seg flex overflow-x-auto scrollbar-hide">
           {MODULES.map((module) => {
             const isActive = module.key === activeModule;
@@ -3193,7 +3140,8 @@ export default function RevampDashboardPage() {
                 type="button"
                 onClick={() => handleModuleChange(module.key)}
                 className={cn(
-                  "flex-shrink-0 whitespace-nowrap px-4 py-3 text-brand-body-4 font-medium border-b-2 transition-colors",
+                  "veda-seg-btn flex-shrink-0 whitespace-nowrap px-4 py-3 text-brand-body-4 font-medium border-b-2 transition-colors",
+                  isActive ? "on" : "",
                   isActive
                     ? "text-brand border-brand"
                     : "text-brand-text border-transparent hover:text-brand"
@@ -3219,9 +3167,9 @@ export default function RevampDashboardPage() {
           onNavigate={navigateTo}
         />
         <div className="min-w-0 flex-1">
-        <div className="sticky top-0 z-20 bg-brand-bg">
+        <div className="veda-sticky sticky top-0 z-20 bg-brand-bg">
         {/* Pill sub-navbar for the active module */}
-        <div className="flex flex-wrap gap-1.5 pt-3 pb-3">
+        <div className="veda-chips flex flex-wrap gap-1.5 pt-3 pb-3">
           {current.subTabs.map((subTab) => {
             const isActive = subTab === activeSubTab;
             return (
@@ -3230,7 +3178,8 @@ export default function RevampDashboardPage() {
                 type="button"
                 onClick={() => setActiveSubTab(subTab)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+                  "veda-chip rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+                  isActive ? "on" : "",
                   isActive
                     ? "bg-brand text-white border-brand"
                     : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
@@ -3253,14 +3202,43 @@ export default function RevampDashboardPage() {
           </div>
         )}
         </div>
-        {isTicketsView ? (
+
+        {isMyDashboardModule && myDashboardCards.length > 0 && (
+          <div className="flex items-center justify-end gap-3 pb-4">
+            {myDashboardLastSavedAt && (
+              <span className="text-brand-body-5 text-brand-text-light">
+                Last saved {new Date(myDashboardLastSavedAt).toLocaleString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveDashboard}
+              disabled={isSavingDashboard}
+              className="veda-save flex items-center gap-2 rounded-lg bg-[#C72030] hover:bg-[#A01020] disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 text-white text-brand-body-5 font-semibold transition-colors"
+            >
+              {isSavingDashboard ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSavingDashboard ? "Saving…" : "Save Dashboard"}
+            </button>
+          </div>
+        )}
+
+        {isMyDashboardModule && savedMaintenanceKeys.size === 0 ? null : isTicketsView ? (
           <>
-          {/* veda-loading: while any Maintenance data is loading, every card shows as a soft shimmering
-              placeholder (see veda-dashboard.css) instead of "—" / "Loading…" / "No data" text. */}
-          <div
-            className={cn(
-              "veda-grid relative w-full",
-              (sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && "veda-loading"
+          <div className="veda-grid relative w-full">
+            {(sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && (
+              <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
+                <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+                {sitesLoading ? "Resolving your allowed sites…" : "Loading ticket, asset, audit, AMC, checklist, inventory, waste, attendance, survey and vendor analytics for the selected sites and date range…"}
+              </div>
             )}
           >
             {!isMyDashboardModule && (
@@ -3331,6 +3309,7 @@ export default function RevampDashboardPage() {
 
               <div key="ticket-pool" chart_id="ticket-pool" className="h-full">
                 <PieChartCard
+                  {...VEDA_PIE_PROPS}
                   title="Ticket pool composition"
                   subtitle={`${poolTotal} total · Pending / In Progress / On Hold / Closed`}
                   data={poolCompositionData}
@@ -3363,7 +3342,7 @@ export default function RevampDashboardPage() {
                       ? "Categories stacked mostly with Pending + In Progress and little Closed haven't been picked up yet; categories that are mostly Closed are in healthier shape."
                       : "No category breakdown available for this period."
                   }
-                  seriesColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#9EC8BA"]}
+                  seriesColors={["#7FD6AE", "#2F6FE0", "#5A4BE0", "#7FD6AE"]}
                   series={[
                     { dataKey: "pending", name: "Pending" },
                     { dataKey: "inProgress", name: "In Progress" },
@@ -3724,7 +3703,7 @@ export default function RevampDashboardPage() {
                     subtitle="Same tenant, same issue, raised more than once — a fix that isn't holding"
                     data={repeatComplaintsData}
                     categoryKey="issue"
-                    categoryColors={repeatComplaintsData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={repeatComplaintsData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "count", name: "Occurrences" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -3752,7 +3731,7 @@ export default function RevampDashboardPage() {
                     }
                     data={assetLinkedData}
                     categoryKey="asset"
-                    categoryColors={assetLinkedData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={assetLinkedData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "count", name: "Tickets" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -3925,9 +3904,9 @@ export default function RevampDashboardPage() {
                       : `acceptable: ${breakdownRangeLabel ?? "range unavailable"}`
                   }
                   segments={[
-                    { value: 70, color: "#E39090" },
-                    { value: 15, color: "#CDCAF5" },
-                    { value: 15, color: "#76CDC1" },
+                    { value: 70, color: "#E5484D" },
+                    { value: 15, color: "#4839C4" },
+                    { value: 15, color: "#12A150" },
                   ]}
                   centerValue={breakdownRate != null ? `${breakdownRate}%` : "—"}
                   centerLabel="Breakdown Rate"
@@ -3962,7 +3941,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="%"
-                  categoryColors={["#DA7756", "#9EC8BA"]}
+                  categoryColors={["#5A4BE0", "#7FD6AE"]}
                   series={[{ dataKey: "rate", name: "Breakdown rate" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -4039,6 +4018,7 @@ export default function RevampDashboardPage() {
 
               <div key="asset-lifecycle" chart_id="asset-lifecycle" className="h-full">
                 <PieChartCard
+                  {...VEDA_PIE_PROPS}
                   title="Asset Lifecycle Status"
                   subtitle="In Use · Breakdown · Allocated · In Store · Disposed"
                   data={assetLifecycleData}
@@ -4275,6 +4255,7 @@ export default function RevampDashboardPage() {
               <div key="audit-status-overview" chart_id="audit-status-overview" className="h-full">
                 {auditStatusOverviewData.length ? (
                   <PieChartCard
+                  {...VEDA_PIE_PROPS}
                     title="Audit Status Overview"
                     subtitle="Scheduled · In Progress · Paused · Completed · Overdue · Closed · Cancelled"
                     data={auditStatusOverviewData}
@@ -4397,7 +4378,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={auditCompletionBarData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={auditCompletionBarData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Completion" }]}
                     labelFormatter={(_value, index) => auditCompletionBarData[index]?.fraction ?? ""}
                     showInfoIcon
@@ -4528,7 +4509,7 @@ export default function RevampDashboardPage() {
                     data={amcExpiryTimelineData}
                     categoryKey="bucket"
                     orientation="horizontal"
-                    categoryColors={["#DA7756", "#EDC488", "#9EC8BA", "#108C72"]}
+                    categoryColors={["#5A4BE0", "#F2A312", "#7FD6AE", "#12A150"]}
                     series={[{ dataKey: "count", name: "Contracts" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -4559,7 +4540,7 @@ export default function RevampDashboardPage() {
                     data={amcUrgencyCriticalityData}
                     categoryKey="bucket"
                     orientation="horizontal"
-                    seriesColors={["#DA7756", "#9EC8BA"]}
+                    seriesColors={["#5A4BE0", "#7FD6AE"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
@@ -4589,7 +4570,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={amcVendorConcentrationData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={amcVendorConcentrationData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Missed/expired" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -4683,7 +4664,7 @@ export default function RevampDashboardPage() {
                     showAllCategoryLabels
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={amcCoverageByCategoryData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={amcCoverageByCategoryData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Coverage" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -4783,7 +4764,7 @@ export default function RevampDashboardPage() {
                     categoryKey="type"
                     orientation="horizontal"
                     stacked
-                    seriesColors={[BRAND_HEX.dark, BRAND_HEX.warn, BRAND_HEX.orange, BRAND_HEX.err, BRAND_HEX.ok]}
+                    seriesColors={["#7FD6AE", "#5A4BE0", "#2F6FE0"]}
                     series={[
                       { dataKey: "scheduled", name: "Scheduled" },
                       { dataKey: "open", name: "Open" },
@@ -4854,7 +4835,7 @@ export default function RevampDashboardPage() {
                     data={checklistTop10CompletedData}
                     categoryKey="checklist"
                     orientation="horizontal"
-                    categoryColors={checklistTop10CompletedData.map(() => "#9EC8BA")}
+                    categoryColors={checklistTop10CompletedData.map(() => "#7FD6AE")}
                     series={[{ dataKey: "completions", name: "Completions" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -4879,7 +4860,6 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    height={Math.max(220, checklistSitewiseComplianceData.length * 30)}
                     categoryColors={checklistSitewiseComplianceData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "compliance", name: "Compliance" }]}
                     showInfoIcon
@@ -5040,7 +5020,7 @@ export default function RevampDashboardPage() {
                     subtitle="Critical vs Non-Critical, per inventory type"
                     data={inventoryTypeBreakdownData}
                     categoryKey="type"
-                    seriesColors={["#8E7BE0", "#DA7756"]}
+                    seriesColors={["#2F6FE0", "#5A4BE0"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
@@ -5114,6 +5094,53 @@ export default function RevampDashboardPage() {
                     className="h-full overflow-auto"
                   />
                 )}
+              </div>
+
+              <div key="inventory-deadstock-value" chart_code="fm-inventory-deadstock-value" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-deadstock-value" moduleKey="maintenance" subTab="Inventory" height="6" width="12" position="0,380" />
+                {inventoryDeadstockData.length ? (
+                  <BarChartCard
+                    title="Dead Stock & Overstock Value"
+                    subtitle={
+                      inventoryStockHealth
+                        ? `${inventoryStockHealth.dead_stock.item_count} items with zero movement in 90+ days — value at risk, by category`
+                        : undefined
+                    }
+                    data={inventoryDeadstockData}
+                    categoryKey="category"
+                    orientation="horizontal"
+                    categoryColors={inventoryDeadstockData.map(() => "#7FD6AE")}
+                    series={[{ dataKey: "value", name: "Value at risk" }]}
+                    showInfoIcon
+                    insightVariant="plain"
+                    insight="This is blocked capital sitting on shelves — worth a write-off or liquidation review, not just a count of inactive line items."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Dead Stock & Overstock Value"
+                    subtitle="Value at risk, by category"
+                    message="No dead-stock items for this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
+              </div>
+
+              <div key="inventory-kpi-table" chart_code="fm-inventory-kpi-table" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-kpi-table" moduleKey="maintenance" subTab="Inventory" height="7" width="12" position="0,386" />
+                <DataTableCard
+                  title="Inventory KPIs"
+                  subtitle="Computed live from the selected sites and date range"
+                  columns={INVENTORY_KPI_COLUMNS}
+                  data={inventoryKpiRows}
+                  getRowKey={(row) => row.kpi}
+                  insight={
+                    inventoryOverview
+                      ? `Current Inventory Value is based on the ${inventoryOverview.current_inventory_value.costed_items_count} items with confirmed unit cost — the remaining items need cost data added before the true portfolio total is complete.`
+                      : undefined
+                  }
+                  className="h-full overflow-auto"
+                />
               </div>
 
               <div key="waste-section-label" chart_code="fm-waste-section-label" className="h-full flex items-center gap-2 relative">

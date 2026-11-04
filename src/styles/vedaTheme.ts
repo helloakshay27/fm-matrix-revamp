@@ -19,36 +19,6 @@ export const VEDA_PALETTE = [
 
 export const getVedaColor = (index: number): string => VEDA_PALETTE[index % VEDA_PALETTE.length];
 
-/**
- * Vertical bar charts (columns) cycle through exactly these four colours by index: primary,
- * secondary, third, fourth. Horizontal bars use VEDA_BAR_COLOR. Lines/areas keep VEDA_PALETTE;
- * donuts use VEDA_PIE_PALETTE.
- */
-export const VEDA_BAR_PALETTE = [
-  "#5A4BE0", // primary
-  "#2F6FE0", // secondary
-  "#12A150", // third
-  "#798C5E", // fourth
-] as const;
-
-export const getVedaBarColor = (index: number): string => VEDA_BAR_PALETTE[index % VEDA_BAR_PALETTE.length];
-
-/** Horizontal bar charts and progress bars: every bar of a single-series chart uses this colour. */
-export const VEDA_BAR_COLOR = "#F2A312";
-
-/**
- * Donut slices only — the "Cases by tower" combination: purple, blue, green.
- * Extra slices repeat that trio. Columns keep the full VEDA_PALETTE.
- */
-export const VEDA_PIE_PALETTE = [
-  "#5A4BE0", // purple
-  "#2F6FE0", // blue
-  "#12A150", // green
-] as const;
-
-export const getVedaPieColor = (index: number): string =>
-  VEDA_PIE_PALETTE[index % VEDA_PIE_PALETTE.length];
-
 /** Semantic colours (replaces the old BRAND_HEX map on the page). */
 export const VEDA_COLORS = {
   ink: "#1A1A18",
@@ -80,18 +50,6 @@ export const VEDA_CSS_VARS = {
   "--v-c5": VEDA_PALETTE[5],
   "--v-c6": VEDA_PALETTE[6],
   "--v-c7": VEDA_PALETTE[7],
-  "--v-b0": VEDA_BAR_PALETTE[0],
-  "--v-b1": VEDA_BAR_PALETTE[1],
-  "--v-b2": VEDA_BAR_PALETTE[2],
-  "--v-b3": VEDA_BAR_PALETTE[3],
-  "--v-pie0": getVedaPieColor(0),
-  "--v-pie1": getVedaPieColor(1),
-  "--v-pie2": getVedaPieColor(2),
-  "--v-pie3": getVedaPieColor(3),
-  "--v-pie4": getVedaPieColor(4),
-  "--v-pie5": getVedaPieColor(5),
-  "--v-pie6": getVedaPieColor(6),
-  "--v-pie7": getVedaPieColor(7),
   "--v-grid": VEDA_NEUTRAL.grid,
   "--v-axis": VEDA_NEUTRAL.axis,
 } as React.CSSProperties;
