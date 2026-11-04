@@ -507,12 +507,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
   const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
 
-  // External-role users (lock_role_name from Pulse login) only get My Profile: show just the
-  // profile page under the top header — no module sidebar or dynamic header.
-  const isExternalRole =
-    localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
-  const isProfileOnlyView =
-    isExternalRole && location.pathname === "/business-compass/profile";
+  // My Profile page: show just the profile under the top header — no module sidebar or
+  // dynamic header — for every user.
+  const isProfileOnlyView = location.pathname === "/business-compass/profile";
 
   return (
     <div
