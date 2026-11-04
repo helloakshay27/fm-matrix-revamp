@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   ClipboardList,
   GraduationCap,
+  Map as MapIcon,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -376,6 +377,11 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
           href: "/settings/training/checklist",
         },
       ],
+    },
+    {
+      icon: MapIcon,
+      name: "Zone",
+      href: "/settings/zone",
     },
     {
       icon: Circle,

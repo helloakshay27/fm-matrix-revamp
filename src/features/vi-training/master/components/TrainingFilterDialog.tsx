@@ -10,7 +10,12 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { muiFieldStyles as fieldStyles } from "@/features/vi-inspection/master/utils";
-import type { TrainingCategory } from "../api/trainingCategoryApi";
+
+/** Anything with an id and a name (training categories, circles). */
+export interface FilterOptionItem {
+  id: number | string;
+  name: string;
+}
 
 export interface TrainingFilterValues {
   categoryId: string;
@@ -25,8 +30,12 @@ interface TrainingFilterDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Currently applied filters (from the URL). */
   filters: TrainingFilterValues;
-  /** Shows the Training Category filter when given (checklist page). */
-  categories?: TrainingCategory[];
+  /** Shows the category filter when given (checklist page, zone circles). */
+  categories?: FilterOptionItem[];
+  /** Label of the category filter. Defaults to "Training Category". */
+  categoryLabel?: string;
+  /** Text of its "all" option. Defaults to "All categories". */
+  allCategoriesLabel?: string;
   onApplyFilters: (filters: TrainingFilterValues) => void;
 }
 
@@ -35,6 +44,8 @@ export const TrainingFilterDialog = ({
   onOpenChange,
   filters,
   categories,
+  categoryLabel = "Training Category",
+  allCategoriesLabel = "All categories",
   onApplyFilters,
 }: TrainingFilterDialogProps) => {
   // Draft values — only written to the URL on Apply / Reset.
@@ -85,9 +96,9 @@ export const TrainingFilterDialog = ({
         <div className="space-y-4">
           {categories && (
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Training Category</InputLabel>
+              <InputLabel shrink>{categoryLabel}</InputLabel>
               <MuiSelect
-                label="Training Category"
+                label={categoryLabel}
                 value={draft.categoryId}
                 onChange={(e) => handleChange("categoryId", String(e.target.value))}
                 displayEmpty
@@ -96,7 +107,7 @@ export const TrainingFilterDialog = ({
                 MenuProps={{ PaperProps: { sx: { maxHeight: 320 } } }}
               >
                 <MenuItem value="">
-                  <em>All categories</em>
+                  <em>{allCategoriesLabel}</em>
                 </MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={String(category.id)}>
