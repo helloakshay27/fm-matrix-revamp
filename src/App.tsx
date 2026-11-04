@@ -2068,6 +2068,7 @@ const ViTrainingCategoryMasterPage = lazy(
 const ViTrainingChecklistMasterPage = lazy(
   () => import("./features/vi-training/master/TrainingChecklistPage")
 );
+const ViZoneMasterPage = lazy(() => import("./features/vi-zone/master/ZonePage"));
 const InspectionSpocListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionSpocListPage,
@@ -9487,6 +9488,10 @@ function App() {
                             <Route
                               path="/settings/training/checklist"
                               element={<ViTrainingChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/zone"
+                              element={<ViZoneMasterPage />}
                             />
                             <Route
                               path="/safety/audit-list"
