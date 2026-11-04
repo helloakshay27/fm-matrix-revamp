@@ -14,7 +14,7 @@ interface EBOMItem {
   criticality: string;
   quantity: number;
   unit: string;
-  cost: number;
+  cost: number | string | null;
   hsn: string;
   min_stock_level: string;
   min_order_level: string;
@@ -112,7 +112,11 @@ export const EBOMTab: React.FC<EBOMTabProps> = ({ asset, isMobile = false }) => 
                   <td className="px-4 py-3 text-sm text-gray-800">{item.criticality}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.quantity}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.unit}</td>
-                  <td className="px-4 py-3 text-sm text-gray-800">{localStorage.getItem('currency')}{item.cost.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{/* cost can be null (or a numeric string) on some EBOM rows */}
+                    {item.cost != null && item.cost !== "" && !Number.isNaN(Number(item.cost))
+                      ? `${localStorage.getItem('currency') ?? ''}${Number(item.cost).toFixed(2)}`
+                      : '-'}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.hsn || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.min_stock_level}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.min_order_level || '-'}</td>
