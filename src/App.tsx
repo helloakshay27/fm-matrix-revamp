@@ -331,6 +331,9 @@ const InventoryConsumptionDashboard = lazy(
 const InventoryConsumptionViewPage = lazy(
   () => import("./pages/InventoryConsumptionViewPage")
 );
+const InventoryConsumptionAddPage = lazy(
+  () => import("./pages/InventoryConsumptionAddPage")
+);
 const EcoFriendlyListPage = lazy(() => import("./pages/EcoFriendlyListPage"));
 const NewInboundPage = lazy(() =>
   import("./pages/NewInboundPage").then((m) => ({ default: m.NewInboundPage }))
@@ -8540,6 +8543,10 @@ function App() {
                             <Route
                               path="/maintenance/inventory-consumption/view/:id"
                               element={<InventoryConsumptionViewPage />}
+                            />
+                            <Route
+                              path="/maintenance/inventory-consumption/view/:id/add"
+                              element={<InventoryConsumptionAddPage />}
                             />
                             <Route
                               path="/maintenance/eco-friendly-list"
