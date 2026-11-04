@@ -225,6 +225,15 @@ interface Asset {
   vendor_name: string;
 }
 
+// First four columns (Particulars, UOM, MF, Balance) stay fixed while the date
+// columns scroll horizontally. Each `left` offset = sum of the widths before it.
+const FROZEN_COLS = [
+  'sticky left-0 w-[192px] min-w-[192px] max-w-[192px]',
+  'sticky left-[192px] w-[80px] min-w-[80px] max-w-[80px]',
+  'sticky left-[272px] w-[64px] min-w-[64px] max-w-[64px]',
+  'sticky left-[336px] w-[96px] min-w-[96px] max-w-[96px] shadow-[2px_0_0_0_#e5e7eb]',
+];
+
 interface ReadingRow {
   type: string;
   label: string;
@@ -412,16 +421,16 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
           <table className="w-full min-w-max table-fixed">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="w-48 px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200">
+                <th className={`${FROZEN_COLS[0]} top-0 z-20 bg-gray-50px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200`}>
                   Particulars
                 </th>
-                <th className="w-20 px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200">
+                <th className={`${FROZEN_COLS[1]} top-0 z-20 bg-gray-50px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200`}>
                   UOM
                 </th>
-                <th className="w-16 px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200">
+                <th className={`${FROZEN_COLS[2]} top-0 z-20 bg-gray-50px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200`}>
                   MF
                 </th>
-                <th className="w-24 px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200">
+                <th className={`${FROZEN_COLS[3]} top-0 z-20 bg-gray-50px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-200`}>
                   Balance
                 </th>
                 {apiData?.date_headers?.map((header, index) => (
@@ -446,16 +455,16 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
                   <React.Fragment key={itemIndex}>
                     {/* Header row for the item */}
                     <tr className="bg-gray-100">
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-900 border-r border-gray-200 truncate" title={item.name || '-'}>
+                      <td className={`${FROZEN_COLS[0]} z-[5] bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-900 border-r border-gray-200 truncate`} title={item.name || '-'}>
                         {item.name || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200">
+                      <td className={`${FROZEN_COLS[1]} z-[5] bg-gray-100 px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200`}>
                         {item.uom || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200">
+                      <td className={`${FROZEN_COLS[2]} z-[5] bg-gray-100 px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200`}>
                         {item.mf ?? '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900 border-r border-gray-200">
+                      <td className={`${FROZEN_COLS[3]} z-[5] bg-gray-100 px-4 py-3 text-sm text-center text-gray-900 border-r border-gray-200`}>
                         -
                       </td>
                       {apiData?.date_headers?.map((header, idx) => {
@@ -475,12 +484,12 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
                     {/* Sub-rows: opening, closing, consumption */}
                     {(item.rows || []).map((row, rowIndex) => (
                       <tr key={rowIndex} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-4 py-3 text-sm text-gray-600 border-r border-gray-200 pl-8">
+                        <td className={`${FROZEN_COLS[0]} z-[5] bg-white px-4 py-3 text-sm text-gray-600 border-r border-gray-200 pl-8`}>
                           {row.label}
                         </td>
-                        <td className="px-4 py-3 border-r border-gray-200" />
-                        <td className="px-4 py-3 border-r border-gray-200" />
-                        <td className="px-4 py-3 border-r border-gray-200" />
+                        <td className={`${FROZEN_COLS[1]} z-[5] bg-white px-4 py-3 border-r border-gray-200`} />
+                        <td className={`${FROZEN_COLS[2]} z-[5] bg-white px-4 py-3 border-r border-gray-200`} />
+                        <td className={`${FROZEN_COLS[3]} z-[5] bg-white px-4 py-3 border-r border-gray-200`} />
                         {apiData?.date_headers?.map((header, idx) => {
                           const val = row.data?.[header.date];
                           return (

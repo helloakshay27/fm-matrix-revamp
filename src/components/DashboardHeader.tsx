@@ -59,6 +59,9 @@ export const DashboardHeader = () => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Treat vi-web prod and localhost as VI for dev account fetch
   const isViSite = hostname.includes("vi-web.gophygital.work");
+  // Org-specific logos (kept in sync with Header.tsx)
+  const orgId = localStorage.getItem("org_id");
+  const logoClassName = "max-h-12 w-auto max-w-[176px] object-contain";
 
   // Redux state
   const {
@@ -83,7 +86,7 @@ export const DashboardHeader = () => {
     email: "",
   };
   const userId = user.id;
-  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+  const isRestrictedUser = user?.email === "karan.balsara@zycus.com";
 
   const assetSuggestions = [
     "sdcdsc",
@@ -226,6 +229,18 @@ export const DashboardHeader = () => {
                 />
               </defs>
             </svg>
+          ) : orgId === "124" ? (
+            <img
+              className={logoClassName}
+              src="/servu_logo.jpeg"
+              alt="ServU Logo"
+            />
+          ) : orgId === "116" ? (
+            <img
+              className={logoClassName}
+              src="/Rising_Radiance.jpeg"
+              alt="Rising Radiance Logo"
+            />
           ) : (
             <svg
               width="173"
@@ -274,8 +289,9 @@ export const DashboardHeader = () => {
             )}
 
             {/* Dashboard/Executive Buttons */}
-            {!isRestrictedUser && location.pathname !== "/pulse/analytics" && (
-              location.pathname === "/dashboard-executive" ? (
+            {!isRestrictedUser &&
+              location.pathname !== "/pulse/analytics" &&
+              (location.pathname === "/dashboard-executive" ? (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -286,15 +302,16 @@ export const DashboardHeader = () => {
               ) : (
                 <>
                   <button
-                    onClick={() => (window.location.href = "/dashboard-executive")}
+                    onClick={() =>
+                      (window.location.href = "/dashboard-executive")
+                    }
                     className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                   >
                     <ChartAreaIcon className="w-4 h-4" />
                     Dashboard Executive
                   </button>
                 </>
-              )
-            )}
+              ))}
 
             {/* Project Dropdown */}
           </div>
@@ -335,7 +352,8 @@ export const DashboardHeader = () => {
 
             {/* Site Dropdown */}
 
-            {(location.pathname === "/dashboard" || location.pathname === "/pulse/analytics") && (
+            {(location.pathname === "/dashboard" ||
+              location.pathname === "/pulse/analytics") && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#C72030] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
                   <MapPin className="w-4 h-4" />

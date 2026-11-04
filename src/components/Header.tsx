@@ -550,6 +550,12 @@ export const Header = () => {
                 src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/12954122/original/zycus.jpeg"
                 alt=""
               />
+            ) : org_id === "124" ? (
+              <img
+                className={logoClassName}
+                src="/servu_logo.jpeg"
+                alt="ServU Logo"
+              />
             ) : org_id === "116" ? (
               <img
                 className={logoClassName}
