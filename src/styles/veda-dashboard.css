@@ -1,0 +1,585 @@
+/* ───────────────────────────────────────────────────────────────
+   Veda Gardens look for RevampDashboardPage (scoped to .veda-theme).
+   Reference: veda-gardens-vertical-bars.html
+   Greyscale surfaces, ink as the only strong colour, tints only in pills.
+   Selectors are prefixed with `html body` to beat the global
+   !important legacy-colour overrides in theme.css.
+   Drag / resize (react-grid-layout) is untouched: only visuals change.
+   ─────────────────────────────────────────────────────────────── */
+
+html body .veda-theme {
+  --ink: #1a1a18;
+  --ink-soft: rgba(26, 26, 24, 0.68);
+  --ink-muted: rgba(26, 26, 24, 0.48);
+  --ink-faint: rgba(26, 26, 24, 0.28);
+  --v-page: #fdfdfb;
+  --v-card: #f5f4f0;
+  --v-card-hover: #efede6;
+  --v-white: #ffffff;
+  --v-line: rgba(26, 26, 24, 0.07);
+  --v-control-border: rgba(26, 26, 24, 0.1);
+  --v-tab-shadow: 0 1px 2px rgba(26, 26, 24, 0.1), 0 0 0 1px rgba(26, 26, 24, 0.05);
+
+  background: var(--v-page) !important;
+  color: var(--ink);
+  font-family: "Poppins", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Poppins is already loaded app-wide; make sure it is inherited. */
+html body .veda-theme *:not(svg):not(path) {
+  font-family: inherit;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+html body .veda-theme .veda-nav,
+html body .veda-theme .veda-sticky {
+  background: var(--v-page) !important;
+}
+
+html body .veda-theme .veda-topbar {
+  background: rgba(253, 253, 251, 0.94) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--v-line) !important;
+  min-height: 60px;
+  padding: 10px 32px !important;
+}
+html body .veda-theme .veda-topbar h1 {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  color: var(--ink) !important;
+}
+html body .veda-theme .veda-topbar > div > span {
+  color: var(--ink-muted) !important;
+}
+
+/* Period selector → soft segmented-style pill */
+html body .veda-theme .veda-period {
+  background: var(--v-card) !important;
+  color: var(--ink) !important;
+  border-radius: 10px !important;
+  height: 38px;
+  padding: 0 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .veda-period:hover {
+  background: var(--v-card-hover) !important;
+}
+html body .veda-theme .veda-period svg {
+  color: var(--ink-muted) !important;
+}
+
+/* Icon buttons */
+html body .veda-theme .veda-icon-btn {
+  width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  background: var(--v-white) !important;
+  border: 1px solid var(--v-control-border) !important;
+  border-radius: 10px !important;
+  color: var(--ink) !important;
+}
+html body .veda-theme .veda-icon-btn:hover {
+  background: var(--v-card) !important;
+}
+html body .veda-theme .veda-icon-btn svg {
+  color: var(--ink) !important;
+}
+
+/* ── Module tabs → segmented control ─────────────────────── */
+html body .veda-theme .veda-modtabs {
+  background: var(--v-page) !important;
+  border-bottom: 0 !important;
+  padding: 16px 32px 0 !important;
+}
+html body .veda-theme .veda-modtabs > button {
+  color: var(--ink-muted);
+}
+html body .veda-theme .veda-seg {
+  gap: 3px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--v-card);
+  width: fit-content;
+  max-width: 100%;
+}
+html body .veda-theme .veda-seg-btn {
+  padding: 8px 14px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--ink-muted) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  transition: all 0.16s;
+}
+html body .veda-theme .veda-seg-btn:hover {
+  color: var(--ink) !important;
+}
+html body .veda-theme .veda-seg-btn.on {
+  background: var(--v-white) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--v-tab-shadow);
+}
+
+/* ── Sub-tab chips ───────────────────────────────────────── */
+html body .veda-theme .veda-chip {
+  padding: 6px 13px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--v-card) !important;
+  color: var(--ink-soft) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  transition: all 0.16s;
+}
+html body .veda-theme .veda-chip:hover {
+  color: var(--ink) !important;
+  background: var(--v-card-hover) !important;
+}
+html body .veda-theme .veda-chip.on {
+  background: var(--ink) !important;
+  color: #fff !important;
+}
+
+/* Save dashboard button → ink */
+html body .veda-theme .veda-save {
+  background: var(--ink) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .veda-save:hover:not(:disabled) {
+  background: #000 !important;
+}
+html body .veda-theme .veda-save svg {
+  color: #fff !important;
+}
+
+/* ── Cards (grid items) ──────────────────────────────────── */
+/* shadcn Card used by every chart / table / list card */
+html body .veda-theme .react-grid-item > .rounded-2xl,
+html body .veda-theme .react-grid-item > [class*="border-brand-border"] {
+  background: var(--v-card) !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .react-grid-item .rounded-2xl > .p-6,
+html body .veda-theme .react-grid-item [class*="border-brand-border"] > .p-6 {
+  padding: 22px 24px 8px !important;
+}
+html body .veda-theme .react-grid-item [class*="border-brand-border"] > .pt-0,
+html body .veda-theme .react-grid-item [class*="border-brand-border"] > .p-6.pt-0 {
+  padding: 0 24px 22px !important;
+}
+
+/* Card titles / subtitles */
+html body .veda-theme .react-grid-item [class*="border-brand-border"] [class*="text-brand-body-3"] {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4;
+  color: var(--ink) !important;
+}
+html body .veda-theme .react-grid-item [class*="border-brand-border"] [class*="text-brand-body-5"][class*="text-brand-text-light"] {
+  color: var(--ink-muted) !important;
+}
+
+/* Insight text → Business Genie wash */
+html body .veda-theme .react-grid-item p[class*="text-brand-green"] {
+  background: linear-gradient(135deg, #f4f1fe 0%, #eeebff 46%, #f6f4ff 100%);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-soft) !important;
+}
+
+/* Info (i) buttons */
+html body .veda-theme .react-grid-item button[aria-label="How this is calculated"],
+html body .veda-theme .react-grid-item [class*="border-brand-green/60"] {
+  background: var(--v-white) !important;
+  border: 0 !important;
+  color: var(--ink-soft) !important;
+}
+
+/* ── KPI hero tiles (StatHeroCard) → grey stat card ──────── */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] {
+  background: var(--v-card) !important;
+  border-radius: 16px !important;
+  padding: 18px 18px 16px !important;
+  box-shadow: none !important;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div:first-of-type + div {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] [class*="uppercase"] {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: var(--ink-soft) !important;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] [class*="text-black"] {
+  color: var(--ink-soft);
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] [class*="bg-white/60"] {
+  background: var(--v-white) !important;
+}
+
+/* ── Data tables ─────────────────────────────────────────── */
+html body .veda-theme .react-grid-item div.rounded-xl.overflow-hidden {
+  background: var(--v-white);
+  border: 0 !important;
+  border-radius: 12px !important;
+}
+html body .veda-theme .react-grid-item th.analytics-header {
+  background: var(--v-card-hover) !important;
+  color: var(--ink-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 12px 20px !important;
+}
+html body .veda-theme .react-grid-item tbody tr {
+  background: transparent !important;
+  border-bottom: 1px solid var(--v-line);
+  transition: background 0.16s;
+}
+html body .veda-theme .react-grid-item tbody tr:last-child {
+  border-bottom: 0;
+}
+html body .veda-theme .react-grid-item tbody tr:hover {
+  background: #faf9f5 !important;
+}
+html body .veda-theme .react-grid-item tbody td {
+  padding: 14px 20px !important;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  border-color: var(--v-line) !important;
+}
+
+/* ── Loading banner / reset link ─────────────────────────── */
+html body .veda-theme > div:first-child[class*="border-brand-border"] {
+  background: var(--v-card) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+}
+html body .veda-theme button[class*="text-brand-text-light"] {
+  color: var(--ink-muted) !important;
+}
+html body .veda-theme button[class*="text-brand-text-light"]:hover {
+  color: var(--ink) !important;
+}
+
+/* ── Global colour remap (generated from vedaTheme.ts palette) ─────────
+   Shared cards hard-code the legacy brand palette. Inside .veda-theme every
+   legacy colour is re-pointed at the Veda palette, so palette changes only
+   need to be made in vedaTheme.ts. ───────────────────────────────────── */
+html body .veda-theme [fill="#DA7756" i],
+html body .veda-theme [fill="rgb(218, 119, 86)"] { fill: var(--v-c0) !important; }
+html body .veda-theme [stroke="#DA7756" i],
+html body .veda-theme [stroke="rgb(218, 119, 86)"] { stroke: var(--v-c0) !important; }
+html body .veda-theme [stop-color="#DA7756" i] { stop-color: var(--v-c0) !important; }
+html body .veda-theme [style*="background: rgb(218, 119, 86)"],
+html body .veda-theme [style*="background-color: rgb(218, 119, 86)"] { background-color: var(--v-c0) !important; }
+html body .veda-theme [style*=" color: rgb(218, 119, 86)"],
+html body .veda-theme [style^="color: rgb(218, 119, 86)"] { color: var(--v-c0) !important; }
+html body .veda-theme [fill="#798C5E" i],
+html body .veda-theme [fill="rgb(121, 140, 94)"] { fill: var(--v-c3) !important; }
+html body .veda-theme [stroke="#798C5E" i],
+html body .veda-theme [stroke="rgb(121, 140, 94)"] { stroke: var(--v-c3) !important; }
+html body .veda-theme [stop-color="#798C5E" i] { stop-color: var(--v-c3) !important; }
+html body .veda-theme [style*="background: rgb(121, 140, 94)"],
+html body .veda-theme [style*="background-color: rgb(121, 140, 94)"] { background-color: var(--v-c3) !important; }
+html body .veda-theme [style*=" color: rgb(121, 140, 94)"],
+html body .veda-theme [style^="color: rgb(121, 140, 94)"] { color: var(--v-c3) !important; }
+html body .veda-theme [fill="#9EC8BA" i],
+html body .veda-theme [fill="rgb(158, 200, 186)"] { fill: var(--v-c4) !important; }
+html body .veda-theme [stroke="#9EC8BA" i],
+html body .veda-theme [stroke="rgb(158, 200, 186)"] { stroke: var(--v-c4) !important; }
+html body .veda-theme [stop-color="#9EC8BA" i] { stop-color: var(--v-c4) !important; }
+html body .veda-theme [style*="background: rgb(158, 200, 186)"],
+html body .veda-theme [style*="background-color: rgb(158, 200, 186)"] { background-color: var(--v-c4) !important; }
+html body .veda-theme [style*=" color: rgb(158, 200, 186)"],
+html body .veda-theme [style^="color: rgb(158, 200, 186)"] { color: var(--v-c4) !important; }
+html body .veda-theme [fill="#8E7BE0" i],
+html body .veda-theme [fill="rgb(142, 123, 224)"] { fill: var(--v-c1) !important; }
+html body .veda-theme [stroke="#8E7BE0" i],
+html body .veda-theme [stroke="rgb(142, 123, 224)"] { stroke: var(--v-c1) !important; }
+html body .veda-theme [stop-color="#8E7BE0" i] { stop-color: var(--v-c1) !important; }
+html body .veda-theme [style*="background: rgb(142, 123, 224)"],
+html body .veda-theme [style*="background-color: rgb(142, 123, 224)"] { background-color: var(--v-c1) !important; }
+html body .veda-theme [style*=" color: rgb(142, 123, 224)"],
+html body .veda-theme [style^="color: rgb(142, 123, 224)"] { color: var(--v-c1) !important; }
+html body .veda-theme [fill="#EDC488" i],
+html body .veda-theme [fill="rgb(237, 196, 136)"] { fill: var(--v-c6) !important; }
+html body .veda-theme [stroke="#EDC488" i],
+html body .veda-theme [stroke="rgb(237, 196, 136)"] { stroke: var(--v-c6) !important; }
+html body .veda-theme [stop-color="#EDC488" i] { stop-color: var(--v-c6) !important; }
+html body .veda-theme [style*="background: rgb(237, 196, 136)"],
+html body .veda-theme [style*="background-color: rgb(237, 196, 136)"] { background-color: var(--v-c6) !important; }
+html body .veda-theme [style*=" color: rgb(237, 196, 136)"],
+html body .veda-theme [style^="color: rgb(237, 196, 136)"] { color: var(--v-c6) !important; }
+html body .veda-theme [fill="#CECBF6" i],
+html body .veda-theme [fill="rgb(206, 203, 246)"] { fill: var(--v-c5) !important; }
+html body .veda-theme [stroke="#CECBF6" i],
+html body .veda-theme [stroke="rgb(206, 203, 246)"] { stroke: var(--v-c5) !important; }
+html body .veda-theme [stop-color="#CECBF6" i] { stop-color: var(--v-c5) !important; }
+html body .veda-theme [style*="background: rgb(206, 203, 246)"],
+html body .veda-theme [style*="background-color: rgb(206, 203, 246)"] { background-color: var(--v-c5) !important; }
+html body .veda-theme [style*=" color: rgb(206, 203, 246)"],
+html body .veda-theme [style^="color: rgb(206, 203, 246)"] { color: var(--v-c5) !important; }
+html body .veda-theme [fill="#CDCAF5" i],
+html body .veda-theme [fill="rgb(205, 202, 245)"] { fill: var(--v-c5) !important; }
+html body .veda-theme [stroke="#CDCAF5" i],
+html body .veda-theme [stroke="rgb(205, 202, 245)"] { stroke: var(--v-c5) !important; }
+html body .veda-theme [stop-color="#CDCAF5" i] { stop-color: var(--v-c5) !important; }
+html body .veda-theme [style*="background: rgb(205, 202, 245)"],
+html body .veda-theme [style*="background-color: rgb(205, 202, 245)"] { background-color: var(--v-c5) !important; }
+html body .veda-theme [style*=" color: rgb(205, 202, 245)"],
+html body .veda-theme [style^="color: rgb(205, 202, 245)"] { color: var(--v-c5) !important; }
+html body .veda-theme [fill="#E7848E" i],
+html body .veda-theme [fill="rgb(231, 132, 142)"] { fill: var(--v-c7) !important; }
+html body .veda-theme [stroke="#E7848E" i],
+html body .veda-theme [stroke="rgb(231, 132, 142)"] { stroke: var(--v-c7) !important; }
+html body .veda-theme [stop-color="#E7848E" i] { stop-color: var(--v-c7) !important; }
+html body .veda-theme [style*="background: rgb(231, 132, 142)"],
+html body .veda-theme [style*="background-color: rgb(231, 132, 142)"] { background-color: var(--v-c7) !important; }
+html body .veda-theme [style*=" color: rgb(231, 132, 142)"],
+html body .veda-theme [style^="color: rgb(231, 132, 142)"] { color: var(--v-c7) !important; }
+html body .veda-theme [fill="#E39090" i],
+html body .veda-theme [fill="rgb(227, 144, 144)"] { fill: var(--v-c7) !important; }
+html body .veda-theme [stroke="#E39090" i],
+html body .veda-theme [stroke="rgb(227, 144, 144)"] { stroke: var(--v-c7) !important; }
+html body .veda-theme [stop-color="#E39090" i] { stop-color: var(--v-c7) !important; }
+html body .veda-theme [style*="background: rgb(227, 144, 144)"],
+html body .veda-theme [style*="background-color: rgb(227, 144, 144)"] { background-color: var(--v-c7) !important; }
+html body .veda-theme [style*=" color: rgb(227, 144, 144)"],
+html body .veda-theme [style^="color: rgb(227, 144, 144)"] { color: var(--v-c7) !important; }
+html body .veda-theme [fill="#E49191" i],
+html body .veda-theme [fill="rgb(228, 145, 145)"] { fill: var(--v-c7) !important; }
+html body .veda-theme [stroke="#E49191" i],
+html body .veda-theme [stroke="rgb(228, 145, 145)"] { stroke: var(--v-c7) !important; }
+html body .veda-theme [stop-color="#E49191" i] { stop-color: var(--v-c7) !important; }
+html body .veda-theme [style*="background: rgb(228, 145, 145)"],
+html body .veda-theme [style*="background-color: rgb(228, 145, 145)"] { background-color: var(--v-c7) !important; }
+html body .veda-theme [style*=" color: rgb(228, 145, 145)"],
+html body .veda-theme [style^="color: rgb(228, 145, 145)"] { color: var(--v-c7) !important; }
+html body .veda-theme [fill="#76CDC1" i],
+html body .veda-theme [fill="rgb(118, 205, 193)"] { fill: var(--v-c2) !important; }
+html body .veda-theme [stroke="#76CDC1" i],
+html body .veda-theme [stroke="rgb(118, 205, 193)"] { stroke: var(--v-c2) !important; }
+html body .veda-theme [stop-color="#76CDC1" i] { stop-color: var(--v-c2) !important; }
+html body .veda-theme [style*="background: rgb(118, 205, 193)"],
+html body .veda-theme [style*="background-color: rgb(118, 205, 193)"] { background-color: var(--v-c2) !important; }
+html body .veda-theme [style*=" color: rgb(118, 205, 193)"],
+html body .veda-theme [style^="color: rgb(118, 205, 193)"] { color: var(--v-c2) !important; }
+html body .veda-theme [fill="#6B9BCC" i],
+html body .veda-theme [fill="rgb(107, 155, 204)"] { fill: var(--v-c1) !important; }
+html body .veda-theme [stroke="#6B9BCC" i],
+html body .veda-theme [stroke="rgb(107, 155, 204)"] { stroke: var(--v-c1) !important; }
+html body .veda-theme [stop-color="#6B9BCC" i] { stop-color: var(--v-c1) !important; }
+html body .veda-theme [style*="background: rgb(107, 155, 204)"],
+html body .veda-theme [style*="background-color: rgb(107, 155, 204)"] { background-color: var(--v-c1) !important; }
+html body .veda-theme [style*=" color: rgb(107, 155, 204)"],
+html body .veda-theme [style^="color: rgb(107, 155, 204)"] { color: var(--v-c1) !important; }
+html body .veda-theme [fill="#108C72" i],
+html body .veda-theme [fill="rgb(16, 140, 114)"] { fill: var(--v-c2) !important; }
+html body .veda-theme [stroke="#108C72" i],
+html body .veda-theme [stroke="rgb(16, 140, 114)"] { stroke: var(--v-c2) !important; }
+html body .veda-theme [stop-color="#108C72" i] { stop-color: var(--v-c2) !important; }
+html body .veda-theme [style*="background: rgb(16, 140, 114)"],
+html body .veda-theme [style*="background-color: rgb(16, 140, 114)"] { background-color: var(--v-c2) !important; }
+html body .veda-theme [style*=" color: rgb(16, 140, 114)"],
+html body .veda-theme [style^="color: rgb(16, 140, 114)"] { color: var(--v-c2) !important; }
+html body .veda-theme [fill="#2A5F8F" i],
+html body .veda-theme [fill="rgb(42, 95, 143)"] { fill: var(--v-c1) !important; }
+html body .veda-theme [stroke="#2A5F8F" i],
+html body .veda-theme [stroke="rgb(42, 95, 143)"] { stroke: var(--v-c1) !important; }
+html body .veda-theme [stop-color="#2A5F8F" i] { stop-color: var(--v-c1) !important; }
+html body .veda-theme [style*="background: rgb(42, 95, 143)"],
+html body .veda-theme [style*="background-color: rgb(42, 95, 143)"] { background-color: var(--v-c1) !important; }
+html body .veda-theme [style*=" color: rgb(42, 95, 143)"],
+html body .veda-theme [style^="color: rgb(42, 95, 143)"] { color: var(--v-c1) !important; }
+html body .veda-theme [fill="#85BDF6" i],
+html body .veda-theme [fill="rgb(133, 189, 246)"] { fill: var(--v-c1) !important; }
+html body .veda-theme [stroke="#85BDF6" i],
+html body .veda-theme [stroke="rgb(133, 189, 246)"] { stroke: var(--v-c1) !important; }
+html body .veda-theme [stop-color="#85BDF6" i] { stop-color: var(--v-c1) !important; }
+html body .veda-theme [style*="background: rgb(133, 189, 246)"],
+html body .veda-theme [style*="background-color: rgb(133, 189, 246)"] { background-color: var(--v-c1) !important; }
+html body .veda-theme [style*=" color: rgb(133, 189, 246)"],
+html body .veda-theme [style^="color: rgb(133, 189, 246)"] { color: var(--v-c1) !important; }
+html body .veda-theme [fill="#B7DCD4" i],
+html body .veda-theme [fill="rgb(183, 220, 212)"] { fill: var(--v-c4) !important; }
+html body .veda-theme [stroke="#B7DCD4" i],
+html body .veda-theme [stroke="rgb(183, 220, 212)"] { stroke: var(--v-c4) !important; }
+html body .veda-theme [stop-color="#B7DCD4" i] { stop-color: var(--v-c4) !important; }
+html body .veda-theme [style*="background: rgb(183, 220, 212)"],
+html body .veda-theme [style*="background-color: rgb(183, 220, 212)"] { background-color: var(--v-c4) !important; }
+html body .veda-theme [style*=" color: rgb(183, 220, 212)"],
+html body .veda-theme [style^="color: rgb(183, 220, 212)"] { color: var(--v-c4) !important; }
+
+/* Axes, grid, tooltip, legend (Recharts) */
+html body .veda-theme .recharts-cartesian-grid line,
+html body .veda-theme .recharts-polar-grid-concentric-polygon { stroke: var(--v-grid) !important; }
+html body .veda-theme .recharts-cartesian-axis-line,
+html body .veda-theme .recharts-cartesian-axis-tick-line { stroke: rgba(26, 26, 24, 0.12) !important; }
+html body .veda-theme .recharts-cartesian-axis-tick-value,
+html body .veda-theme .recharts-text { fill: var(--v-axis) !important; font-size: 11px; }
+html body .veda-theme .recharts-legend-item-text { color: var(--ink-soft) !important; font-size: 11.5px; }
+html body .veda-theme .recharts-tooltip-cursor { fill: rgba(26, 26, 24, 0.04) !important; }
+html body .veda-theme .recharts-bar-rectangle path { transition: opacity 0.16s; }
+html body .veda-theme .recharts-bar-rectangle:hover path { opacity: 0.85; }
+
+
+/* ═══ Pie / donut cards (wireframe .donut-wrap + .dl) ═══════════════════ */
+/* Slice colours by index from the Veda palette, whatever colour the card passed */
+html body .veda-theme .recharts-pie-sector:nth-child(8n+1) path { fill: var(--v-c0) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+2) path { fill: var(--v-c1) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+3) path { fill: var(--v-c2) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+4) path { fill: var(--v-c3) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+5) path { fill: var(--v-c4) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+6) path { fill: var(--v-c5) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+7) path { fill: var(--v-c6) !important; }
+html body .veda-theme .recharts-pie-sector:nth-child(8n+8) path { fill: var(--v-c7) !important; }
+html body .veda-theme .recharts-pie-sector path { stroke: none !important; }
+/* slice % labels are not part of the wireframe ring */
+html body .veda-theme .recharts-pie-labels { display: none; }
+
+/* Centre total */
+html body .veda-theme [class*="text-brand-h2"][class*="font-bold"] {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: var(--ink) !important;
+}
+html body .veda-theme [class*="text-brand-caption"][class*="text-brand-text-light"] {
+  font-size: 11px !important;
+  color: var(--ink-muted) !important;
+}
+
+/* Legend list beside the donut: dot · name ........ value · % */
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] { gap: 28px !important; }
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child > div {
+  padding: 7px 0 !important;
+  font-size: 12.5px !important;
+  color: var(--ink-soft) !important;
+  border-color: rgba(26, 26, 24, 0.06) !important;
+}
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child > div:last-child { border-bottom: 0 !important; }
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child span.text-brand-text { color: var(--ink-soft) !important; }
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child span.font-bold {
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+  font-variant-numeric: tabular-nums;
+}
+html body .veda-theme .grid.grid-cols-\[auto_1fr\] .w-2.h-2 { width: 8px; height: 8px; border-radius: 2px; }
+/* Bottom legend variant */
+html body .veda-theme .flex.flex-wrap.justify-center span { color: var(--ink-soft) !important; font-size: 11.5px; }
+
+/* ═══ KPI / stat cards (wireframe .stat) ═════════════════════════════════ */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div { margin: 0 !important; }
+/* label */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="uppercase"] {
+  padding-right: 44px;
+  line-height: 1.4;
+}
+/* value */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="text-[22px]"] {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.015em;
+  color: var(--ink) !important;
+}
+/* sub text */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="text-brand-caption"]:not([class*="uppercase"]) {
+  font-size: 11.5px !important;
+  color: var(--ink-soft) !important;
+}
+/* progress track + fill */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="h-[3px]"] {
+  height: 6px !important;
+  background: var(--v-white) !important;
+  margin: 4px 0 !important;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="h-[3px]"] > div {
+  background-color: var(--v-c0) !important;
+}
+/* info button becomes the white icon tile */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > button[aria-label="How this is calculated"] {
+  top: 14px !important;
+  right: 14px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  background: var(--v-white) !important;
+  border: 0 !important;
+  color: var(--ink) !important;
+}
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > button[aria-label="How this is calculated"] svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--ink) !important;
+}
+
+/* Status summary + highlight cards: white tiles on the grey card */
+html body .veda-theme .react-grid-item [class*="grid-cols-2"] > div.rounded-lg[style*="background"] {
+  background: var(--v-white) !important;
+  border-radius: 12px !important;
+}
+html body .veda-theme .react-grid-item [class*="text-brand-h1"][class*="font-bold"] {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+}
+html body .veda-theme .react-grid-item .h-1\.5.bg-brand-bg { background: var(--v-white) !important; height: 6px; }
+
+/* "Add to My Dashboard" button → white icon tile (same slot as the wireframe .stat .ic) */
+html body .veda-theme .react-grid-item > button[aria-label$="My Dashboard"] {
+  top: 14px !important;
+  right: 14px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: var(--v-white) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .react-grid-item > button[aria-label$="My Dashboard"]:hover {
+  background: var(--v-card-hover) !important;
+  color: var(--ink) !important;
+}
+html body .veda-theme .react-grid-item > button[aria-label="Remove from My Dashboard"] {
+  background: var(--v-white) !important;
+  color: var(--v-c2) !important;
+}
+/* the hero card's decorative (i) would sit under the + tile */
+html body .veda-theme div.rounded-xl.p-4[style*="background"] > button[aria-label="How this is calculated"] {
+  display: none !important;
+}
+
+/* Card titles that fall back to the shadcn default (text-2xl) */
+html body .veda-theme .react-grid-item > [class*="rounded-2xl"] [class*="text-2xl"] {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  color: var(--ink) !important;
+}

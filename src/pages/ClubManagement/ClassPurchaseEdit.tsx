@@ -386,7 +386,7 @@ export const ClassPurchaseEdit = () => {
           Cancel
         </button>
         <button type="button" onClick={() => submit()} disabled={isSubmitting} className="fm-action-primary">
-          {isSubmitting ? "Saving..." : "Update Purchase"}
+          {isSubmitting ? "Saving..." : "Update Class Sale"}
         </button>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ArrowLeft, Plus, FileText, Star, Flag, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, File, FileSpreadsheet, X, Edit, FileIcon, Check, Minus, MessageSquare, Ticket } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import { Select as MuiSelect, Tooltip, Radio, RadioGroup, FormControlLabel, FormLabel } from '@mui/material';
@@ -592,6 +593,144 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 // (same rule as EditStatusDialog), e.g. for the org 63 RCA / corrective / preventive fields.
 const CLOSURE_MANDATORY_SUFFIX = 'when ticket is closed';
 const isClosingFixedState = (state?: string | null) => state === 'closed' || state === 'complete';
+
+// ── Ticket attachment tile ────────────────────────────────────────────────
+// Attachment URLs often have no file extension (e.g. /attachfiles/<token>/download),
+// so the type is taken from the extension first and the doctype (MIME) second.
+// Every file can be viewed (preview modal) and downloaded.
+const attachmentUrlOf = (a: any): string =>
+  a?.document || a?.document_url || a?.url || a?.attachment_url || a?.file_url || '';
+
+const attachmentNameOf = (a: any, index: number): string =>
+  a?.document_name || a?.document_file_name || a?.name || `Document_${a?.id || index + 1}`;
+
+const downloadTicketAttachment = async (a: any, index: number) => {
+  const url = attachmentUrlOf(a);
+  const name = attachmentNameOf(a, index);
+  const saveBlob = (blob: Blob) => {
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = window.document.createElement('a');
+    link.href = objectUrl;
+    link.download = name;
+    link.style.display = 'none';
+    window.document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      window.document.body.removeChild(link);
+      window.URL.revokeObjectURL(objectUrl);
+    }, 100);
+  };
+
+  const token = localStorage.getItem('token');
+  try {
+    if (a?.id) {
+      const { API_CONFIG } = await import('@/config/apiConfig');
+      const base = String(API_CONFIG.BASE_URL).replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const res = await fetch(`https://${base}/attachfiles/${a.id}?show_file=true`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: '*/*' },
+      });
+      if (res.ok) {
+        saveBlob(await res.blob());
+        toast.success('File downloaded successfully');
+        return;
+      }
+    }
+    if (url) {
+      const res = await fetch(url);
+      if (res.ok) {
+        saveBlob(await res.blob());
+        toast.success('File downloaded successfully');
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('Attachment download failed, falling back to direct link:', error);
+  }
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    toast.error('No download URL available');
+  }
+};
+
+const TicketAttachmentTile = ({
+  attachment,
+  index,
+  onPreview,
+}: {
+  attachment: any;
+  index: number;
+  onPreview: (doc: any) => void;
+}) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const url = attachmentUrlOf(attachment);
+  const name = attachmentNameOf(attachment, index);
+  const doctype: string = attachment?.doctype || attachment?.content_type || '';
+
+  const isPdf = /\.pdf($|\?)/i.test(url) || doctype === 'application/pdf';
+  const isExcel = /\.(xls|xlsx|csv)($|\?)/i.test(url) || /spreadsheet|excel|csv/.test(doctype);
+  const isWord = /\.(doc|docx)($|\?)/i.test(url) || /msword|wordprocessingml/.test(doctype);
+  const knownNonImage = isPdf || isExcel || isWord;
+  const isImage =
+    !knownNonImage && !imageFailed && (/\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url) || doctype.startsWith('image/') || !doctype);
+
+  const openPreview = () =>
+    onPreview({
+      id: attachment?.id || 0,
+      document_name: name,
+      url,
+      document_url: url,
+      document: url,
+      doctype: attachment?.doctype || attachment?.content_type,
+    });
+
+  return (
+    <div className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-3 w-full max-w-[150px] bg-[#F6F4EE] shadow-md">
+      <button
+        type="button"
+        title="View"
+        onClick={openPreview}
+        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+
+      {isImage ? (
+        <img
+          src={url}
+          alt={name}
+          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer bg-white"
+          onClick={openPreview}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <div
+          onClick={openPreview}
+          className={cn(
+            'w-14 h-14 flex items-center justify-center border rounded-md bg-white mb-2 cursor-pointer',
+            isPdf ? 'text-red-600' : isExcel ? 'text-green-600' : isWord ? 'text-blue-600' : 'text-gray-600'
+          )}
+        >
+          {isExcel ? <FileSpreadsheet className="w-6 h-6" /> : isPdf || isWord ? <FileText className="w-6 h-6" /> : <File className="w-6 h-6" />}
+        </div>
+      )}
+
+      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium" title={name}>
+        {name}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-xs gap-1"
+        onClick={() => downloadTicketAttachment(attachment, index)}
+      >
+        <Download className="w-3.5 h-3.5" />
+        Download
+      </Button>
+    </div>
+  );
+};
 
 export const TicketDetailsPage = () => {
   const { id } = useParams();
@@ -7900,109 +8039,17 @@ export const TicketDetailsPage = () => {
                     <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
                       {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
                         <div className="flex items-center flex-wrap gap-4">
-                          {ticketData.documents.map((attachment: any, idx: number) => {
-                            const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
-                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                            const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
-                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
-                              attachment.doctype?.includes('spreadsheet') ||
-                              attachment.doctype?.includes('excel');
-                            const isWord = /\.(doc|docx)$/i.test(url) ||
-                              attachment.doctype?.includes('document') ||
-                              attachment.doctype?.includes('word');
-                            const isDownloadable = isPdf || isExcel || isWord;
-
-                            return (
-                              <div
-                                key={attachment.id || idx}
-                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                              >
-                                {isImage ? (
-                                  <>
-                                    <button
-                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                      title="View"
-                                      onClick={() => {
-                                        setSelectedDoc({
-                                          id: attachment.id || 0,
-                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                          url: url,
-                                          document_url: url,
-                                          document: url,
-                                          doctype: attachment.doctype,
-                                        });
-                                        setShowImagePreview(true);
-                                      }}
-                                      type="button"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    <img
-                                      src={url}
-                                      alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedDoc({
-                                          id: attachment.id || 0,
-                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                          url: url,
-                                          document_url: url,
-                                          document: url,
-                                          doctype: attachment.doctype,
-                                        });
-                                        setShowImagePreview(true);
-                                      }}
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                  </>
-                                ) : isPdf ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : isExcel ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                    <FileSpreadsheet className="w-6 h-6" />
-                                  </div>
-                                ) : isWord ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                    <File className="w-6 h-6" />
-                                  </div>
-                                )}
-                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                  {attachment.document_name ||
-                                    attachment.document_file_name ||
-                                    url.split('/').pop() ||
-                                    `Document_${attachment.id || idx + 1}`}
-                                </span>
-                                {isDownloadable && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                    onClick={() => {
-                                      setSelectedDoc({
-                                        id: attachment.id || 0,
-                                        document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                        url: url,
-                                        document_url: url,
-                                        document: url,
-                                        doctype: attachment.doctype,
-                                      });
-                                      setShowImagePreview(true);
-                                    }}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
+                          {ticketData.documents.map((attachment: any, idx: number) => (
+                            <TicketAttachmentTile
+                              key={attachment.id || idx}
+                              attachment={attachment}
+                              index={idx}
+                              onPreview={(doc) => {
+                                setSelectedDoc(doc);
+                                setShowImagePreview(true);
+                              }}
+                            />
+                          ))}
                         </div>
                       ) : (
                         <p className="text-xs text-gray-400">No attachments</p>
@@ -11411,112 +11458,17 @@ export const TicketDetailsPage = () => {
                 <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
                   {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
                     <div className="flex items-center flex-wrap gap-4">
-                      {ticketData.documents.map((attachment: any, idx: number) => {
-                        const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
-                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                        const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
-                        const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
-                          attachment.doctype?.includes('spreadsheet') ||
-                          attachment.doctype?.includes('excel');
-                        const isWord = /\.(doc|docx)$/i.test(url) ||
-                          attachment.doctype?.includes('document') ||
-                          attachment.doctype?.includes('word');
-                        const isDownloadable = isPdf || isExcel || isWord;
-
-                        return (
-                          <div
-                            key={attachment.id || idx}
-                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                          >
-                            {isImage ? (
-                              <>
-                                <button
-                                  className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                  title="View"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      id: attachment.id || 0,
-                                      document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                      url: url,
-                                      document_url: url,
-                                      document: url,
-                                      doctype: attachment.doctype,
-                                      type: 'image'
-                                    });
-                                    setShowImagePreview(true);
-                                  }}
-                                  type="button"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <img
-                                  src={url}
-                                  alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                  className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      id: attachment.id || 0,
-                                      document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                      url: url,
-                                      document_url: url,
-                                      document: url,
-                                      doctype: attachment.doctype,
-                                      type: 'image'
-                                    });
-                                    setShowImagePreview(true);
-                                  }}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              </>
-                            ) : isPdf ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
-                              </div>
-                            ) : isExcel ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                <FileSpreadsheet className="w-6 h-6" />
-                              </div>
-                            ) : isWord ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
-                              </div>
-                            ) : (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                <File className="w-6 h-6" />
-                              </div>
-                            )}
-                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                              {attachment.document_name ||
-                                attachment.document_file_name ||
-                                url.split('/').pop() ||
-                                `Document_${attachment.id || idx + 1}`}
-                            </span>
-                            {isDownloadable && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                onClick={() => {
-                                  setSelectedDoc({
-                                    id: attachment.id || 0,
-                                    document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                    url: url,
-                                    document_url: url,
-                                    document: url,
-                                    doctype: attachment.doctype,
-                                    type: 'document'
-                                  });
-                                  setShowImagePreview(true);
-                                }}
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {ticketData.documents.map((attachment: any, idx: number) => (
+                        <TicketAttachmentTile
+                          key={attachment.id || idx}
+                          attachment={attachment}
+                          index={idx}
+                          onPreview={(doc) => {
+                            setSelectedDoc(doc);
+                            setShowImagePreview(true);
+                          }}
+                        />
+                      ))}
                     </div>
                   ) : (
                     <p className="text-xs text-gray-400">No attachments</p>
