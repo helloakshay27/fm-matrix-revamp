@@ -286,7 +286,7 @@ export const ClassPurchaseList = () => {
             className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
             onClick={() => navigate("/club-management/class-purchase/add")}
           >
-            <Plus className="w-4 h-4 mr-2" /> New Purchase
+            <Plus className="w-4 h-4 mr-2" /> New Class Sale
           </Button>
         }
       />
