@@ -23,6 +23,9 @@ import {
   Loader2,
   AlertTriangle,
   Search,
+  LayoutDashboard,
+  Building2,
+  Save,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -257,6 +260,34 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "vendor-workflow-bottlenecks", x: 0, y: 512, w: 12, h: 7, minW: 6, minH: 5 },
 ];
 
+const MAINTENANCE_LAYOUT_BY_KEY = new Map(DEFAULT_TICKETS_LAYOUT.map((l) => [l.i, l]));
+// Safety's card keys aren't module-prefixed like Finance's ("fin-") and CRM's ("crm-") are —
+// these are every prefix used across sohiItems/incidentsItems/permitsItems/emergencyItems in
+// SafetyPanel.tsx. Kept in sync manually since that item list isn't reachable from this file.
+const SAFETY_KEY_PREFIXES = ["sohi-", "inc-", "permit-", "emergency-"];
+
+/**
+ * Classifies a persisted `chart_code` (e.g. "fm-sla-breach", or a legacy unprefixed
+ * "category-table") back into which module/panel it belongs to and its default layout, purely
+ * from the key itself — used to rebuild My Dashboard cards fetched from /dashboard_layouts that
+ * were never added locally in this browser (e.g. saved from another device/session). Returns
+ * null for a key that doesn't match any known module, rather than guessing.
+ */
+function classifyChartCode(
+  chartCode: string
+): { moduleKey: string; key: string; defaultLayout?: GridLayout.Layout } | null {
+  const key = chartCode.replace(/^fm-/, "");
+  const maintenanceLayout = MAINTENANCE_LAYOUT_BY_KEY.get(key);
+  if (maintenanceLayout) return { moduleKey: "maintenance", key, defaultLayout: maintenanceLayout };
+  if (key.startsWith("fin-")) return { moduleKey: "finance", key };
+  if (key.startsWith("crm-")) return { moduleKey: "crm", key };
+  if (key.startsWith("tr-")) return { moduleKey: "transitioning", key };
+  if (key.startsWith("ut-")) return { moduleKey: "utility", key };
+  if (key.startsWith("sec-")) return { moduleKey: "security", key };
+  if (key.startsWith("vas-")) return { moduleKey: "vas", key };
+  if (SAFETY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) return { moduleKey: "safety", key };
+  return null;
+}
 
 function loadStoredLayout(): GridLayout.Layout[] | null {
   try {
@@ -326,6 +357,24 @@ const STAT_TONE_CLASSES: Record<ChipTone, string> = {
 };
 
 const MODULES: ModuleDefinition[] = [
+  {
+    key: MY_DASHBOARD_MODULE_KEY,
+    label: "My Dashboard",
+    icon: LayoutDashboard,
+    summary: "Cards you've added from Maintenance, Safety, Finance and CRM, in one place.",
+    subTabs: [],
+    stats: [],
+    chips: [],
+  },
+  {
+    key: "overview",
+    label: "Overview",
+    icon: Building2,
+    summary: "Portfolio command center — module snapshot, attention queue and site health trend.",
+    subTabs: ["Overview", "Modules", "Health"],
+    stats: [],
+    chips: [],
+  },
   {
     key: "transitioning",
     label: "Transitioning",
@@ -1625,6 +1674,116 @@ export default function RevampDashboardPage() {
     setActiveInsightCategory(insightRailData.categories[0]?.key ?? "");
   }, [insightRailData]);
   const tabsRef = useRef<HTMLDivElement>(null);
+  const isMyDashboardModule = activeModule === MY_DASHBOARD_MODULE_KEY;
+  const myDashboardCards = useMyDashboardStore((s) => s.cards);
+  const myDashboardLastSavedAt = useMyDashboardStore((s) => s.lastSavedAt);
+  const markMyDashboardSaved = useMyDashboardStore((s) => s.markSaved);
+  const setMyDashboardServerId = useMyDashboardStore((s) => s.setServerId);
+  const addMyDashboardCard = useMyDashboardStore((s) => s.addCard);
+  const updateMyDashboardCardLayout = useMyDashboardStore((s) => s.updateCardLayout);
+  const [isSavingDashboard, setIsSavingDashboard] = useState(false);
+  const savedMaintenanceKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "maintenance").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedSafetyKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "safety").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedFinanceKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "finance").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedCrmKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "crm").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedTransitioningKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "transitioning").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedOverviewKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "overview").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedUtilityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "utility").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedSecurityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "security").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedVasKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "vas").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+
+  // Fetch this user's persisted /dashboard_layouts as soon as My Dashboard opens — not just
+  // after "Save Dashboard" — and rebuild any card that was saved from another browser/session
+  // (so it isn't just sitting server-side invisibly), classifying its module from the chart_code
+  // itself since the backend row doesn't store moduleKey/subTab. Cards that already exist locally
+  // just get their serverId attached, so a later Save PATCHes instead of duplicating them.
+  useEffect(() => {
+    if (!isMyDashboardModule) return;
+    const userId = getRevampUserId();
+    if (!userId) return;
+    let cancelled = false;
+    fetchDashboardLayouts(userId)
+      .then((rows) => {
+        if (cancelled) return;
+        const localChartIds = new Set(myDashboardCards.map((c) => c.chartId));
+        // API returns newest-first, so the first row seen for a given chart_code is the one to
+        // keep — a legacy duplicate row (e.g. an old un-prefixed "category-table" alongside the
+        // current "fm-category-table") should be skipped entirely, not overwrite its serverId.
+        const seenThisRun = new Set<string>();
+        rows.forEach((row) => {
+          if (!row.chart_code) return;
+          const canonicalChartId = row.chart_code.startsWith("fm-") ? row.chart_code : `fm-${row.chart_code}`;
+          if (seenThisRun.has(canonicalChartId)) return;
+          seenThisRun.add(canonicalChartId);
+
+          if (localChartIds.has(canonicalChartId)) {
+            setMyDashboardServerId(canonicalChartId, row.id);
+            return;
+          }
+          if (localChartIds.has(row.chart_code)) {
+            setMyDashboardServerId(row.chart_code, row.id);
+            return;
+          }
+
+          const classified = classifyChartCode(row.chart_code);
+          if (!classified) {
+            console.warn(`My Dashboard: chart_code "${row.chart_code}" doesn't match any known module — skipping.`);
+            return;
+          }
+          addMyDashboardCard({
+            chartId: canonicalChartId,
+            label: formatChartLabel(classified.key),
+            moduleKey: classified.moduleKey,
+            subTab: "",
+            height: row.height ?? (classified.defaultLayout ? String(classified.defaultLayout.h) : ""),
+            width: row.width ?? (classified.defaultLayout ? String(classified.defaultLayout.w) : ""),
+            position:
+              row.position ??
+              (classified.defaultLayout ? `${classified.defaultLayout.x},${classified.defaultLayout.y}` : ""),
+          });
+          setMyDashboardServerId(canonicalChartId, row.id);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching dashboard layouts:", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMyDashboardModule]);
+
+  // My Dashboard has no sub-tabs of its own — it's a single composite view stacking whichever
+  // of Maintenance/Safety/Finance/CRM the user has actually saved cards from (see the block
+  // right after this ternary chain), so it piggybacks on isTicketsView to reuse the Maintenance
+  // grid JSX below without duplicating it, and is handled separately for Safety/Finance/CRM.
   const isTicketsView =
     activeModule === "maintenance" &&
     (activeSubTab === "Tickets" ||
@@ -1640,6 +1799,11 @@ export default function RevampDashboardPage() {
   const isSafetyView = activeModule === "safety";
   const isFinanceView = activeModule === "finance";
   const isCrmView = activeModule === "crm";
+  const isTransitioningView = activeModule === "transitioning";
+  const isOverviewView = activeModule === "overview";
+  const isUtilityView = activeModule === "utility";
+  const isSecurityView = activeModule === "security";
+  const isVasView = activeModule === "vas";
 
   const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -5920,7 +6084,27 @@ export default function RevampDashboardPage() {
             loading={financeLoading || sitesLoading}
           />
         ) : isCrmView ? (
-          <CrmPanel activeSection={activeSubTab} />
+          <CrmPanel activeSection={activeSubTab} data={crmApiData} loading={crmLoading || sitesLoading} />
+        ) : isOverviewView ? (
+          <OverviewPanel
+            activeSection={activeSubTab}
+            onNavigate={(moduleKey, subTab) => {
+              if (moduleKey === "overview" && subTab) {
+                setActiveSubTab(subTab);
+                return;
+              }
+              if (subTab) navigateTo(moduleKey, subTab);
+              else handleModuleChange(moduleKey);
+            }}
+          />
+        ) : isTransitioningView ? (
+          <TransitioningPanel activeSection={activeSubTab} />
+        ) : isUtilityView ? (
+          <UtilityPanel activeSection={activeSubTab} />
+        ) : isSecurityView ? (
+          <SecurityPanel activeSection={activeSubTab} />
+        ) : isVasView ? (
+          <VasPanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
