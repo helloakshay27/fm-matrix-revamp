@@ -1,7 +1,7 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, type TooltipProps } from "recharts";
 import { Info, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+import { VEDA_PALETTE } from "@/styles/vedaTheme";
 import { cn } from "@/lib/utils";
 import type { ChartInsightTone } from "./PieChartCard";
 
@@ -57,7 +57,7 @@ export function AreaTrendChartCard({
   categoryKey,
   valueKey,
   unit,
-  color = ANALYTICS_PALETTE[0],
+  color = VEDA_PALETTE[0],
   insight,
   insightTone = "info",
   insightVariant = "banner",

@@ -4,7 +4,6 @@ import {
   Area,
   BarChart,
   Bar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,9 +13,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
-
-const BAR_SERIES_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
+import { VEDA_PALETTE } from "@/styles/vedaTheme";
 
 export interface IncidentTrendDatum {
   month: string;
@@ -102,8 +99,8 @@ export function IncidentTrendChartCard({
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="incidentTrendFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={ANALYTICS_PALETTE[0]} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={ANALYTICS_PALETTE[0]} stopOpacity={0.02} />
+                  <stop offset="0%" stopColor={VEDA_PALETTE[0]} stopOpacity={0.25} />
+                  <stop offset="100%" stopColor={VEDA_PALETTE[0]} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-subtle)" />
@@ -118,10 +115,10 @@ export function IncidentTrendChartCard({
               <Area
                 type="monotone"
                 dataKey="incidents"
-                stroke={ANALYTICS_PALETTE[0]}
+                stroke={VEDA_PALETTE[0]}
                 strokeWidth={2.5}
                 fill="url(#incidentTrendFill)"
-                dot={{ r: 4, fill: ANALYTICS_PALETTE[0], stroke: "#fff", strokeWidth: 2 }}
+                dot={{ r: 4, fill: VEDA_PALETTE[0], stroke: "#fff", strokeWidth: 2 }}
                 activeDot={{ r: 5 }}
               />
             </AreaChart>
@@ -135,19 +132,16 @@ export function IncidentTrendChartCard({
                 tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
               />
               <YAxis axisLine={false} tickLine={false} width={28} tick={{ fontSize: 11, fill: "var(--color-text-light)" }} />
-              <Tooltip cursor={{ fill: ANALYTICS_PALETTE[0], opacity: 0.08 }} content={<TrendTooltip />} />
+              <Tooltip cursor={{ fill: VEDA_PALETTE[0], opacity: 0.08 }} content={<TrendTooltip />} />
               <Bar
                 dataKey="incidents"
                 name="Incidents"
+                fill={VEDA_PALETTE[0]}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={40}
                 cursor={onBarClick ? "pointer" : undefined}
                 onClick={(barData) => onBarClick?.(barData as unknown as IncidentTrendDatum)}
-              >
-                {data.map((_, index) => (
-                  <Cell key={index} fill={BAR_SERIES_COLORS[index % BAR_SERIES_COLORS.length]} />
-                ))}
-              </Bar>
+              />
             </BarChart>
           )}
         </ResponsiveContainer>

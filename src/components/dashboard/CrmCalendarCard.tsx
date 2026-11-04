@@ -1,6 +1,7 @@
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_COLORS } from "@/styles/vedaTheme";
 
 export type CrmCalendarEventType = "meeting" | "call";
 
@@ -24,8 +25,8 @@ export interface CrmCalendarCardProps {
 const DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 const EVENT_DOT_COLOR: Record<CrmCalendarEventType, string> = {
-  meeting: "#DA7756",
-  call: "#6B9BCC",
+  meeting: VEDA_COLORS.purple,
+  call: VEDA_COLORS.blue,
 };
 
 /**
@@ -51,7 +52,7 @@ export function CrmCalendarCard({
       <CardContent className="pt-5">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-2 text-brand-body-3 font-semibold text-brand-text">
-            <CalendarIcon className="w-4 h-4 text-brand" />
+            <CalendarIcon className="w-4 h-4 text-[#1A1A18]" />
             {monthLabel}
           </div>
           <div className="flex items-center gap-3 text-brand-body-5 text-brand-text-light">
@@ -83,9 +84,9 @@ export function CrmCalendarCard({
                 className={cn(
                   "aspect-square rounded-md flex flex-col items-center justify-center gap-0.5 text-xs relative",
                   !cell.inMonth && "opacity-40 cursor-default",
-                  cell.inMonth && !cell.isToday && "bg-brand-bg hover:bg-brand-light",
-                  cell.isToday && "bg-brand text-white font-bold",
-                  isSelected && !cell.isToday && "border-2 border-brand"
+                  cell.inMonth && !cell.isToday && "bg-[#F5F4F0] hover:bg-[#EFEDE6]",
+                  cell.isToday && "bg-[#1A1A18] text-white font-semibold",
+                  isSelected && !cell.isToday && "border-2 border-[#1A1A18]"
                 )}
               >
                 <span>{cell.day}</span>
