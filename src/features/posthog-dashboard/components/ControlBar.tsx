@@ -149,7 +149,7 @@ function SiteMultiSelect({
 }
 
 export function ControlBar() {
-  const { vm, setScope, setDate, setCustomDateRange, setToken, setDev, togglePrev, refreshAll, isRefreshing } = useDashboard();
+  const { vm, setScope, setDate, setCustomDateRange, setToken, setDev, refreshAll, isRefreshing } = useDashboard();
   const { state, sites, groups, sitesLoading, traffic } = vm;
   const [dateOpen, setDateOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState(vm.range.from);
@@ -296,10 +296,6 @@ export function ControlBar() {
           </button>
         ))}
       </div>
-
-      <label className={`ctrl ${state.prev ? 'toggle-on' : ''}`} onClick={togglePrev}>
-        <span className="ic">↺</span> Previous period {state.prev ? '✓' : ''}
-      </label>
 
       <button
         className={`ctrl ${isRefreshing ? 'is-refreshing' : ''}`}
