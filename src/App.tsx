@@ -5335,6 +5335,16 @@ function App() {
                             }
                           />
 
+                          {/* CEO dashboard renders outside the main Layout (full width, no header/sidebar) */}
+                          <Route
+                            path="/vas/ceo-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <PATMCeoDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
                           <Route
                             path="/pulse"
                             element={
@@ -8626,10 +8636,6 @@ function App() {
                             <Route
                               path="/accounting/vendor/template"
                               element={<VendorStatementTemplateEditPage />}
-                            />
-                            <Route
-                              path="/vas/ceo-dashboard"
-                              element={<PATMCeoDashboard />}
                             />
                             <Route
                               path="/vas/projects"
