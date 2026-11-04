@@ -507,6 +507,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
   const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
 
+  // External-role users (lock_role_name from Pulse login) only get My Profile: show just the
+  // profile page under the top header — no module sidebar or dynamic header.
+  const isExternalRole =
+    localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
+  const isProfileOnlyView =
+    isExternalRole && location.pathname === "/business-compass/profile";
+
   return (
     <div
       className="min-h-screen bg-[#fafafa]"
@@ -558,14 +565,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
 
-      {renderSidebar()}
-      {renderDynamicHeader()}
+      {!isProfileOnlyView && renderSidebar()}
+      {!isProfileOnlyView && renderDynamicHeader()}
 
       {/* Action-based navigation - only shown when action context is active */}
 
       <main
         className={`${
-          // No margins in embedded mode
+          // Profile-only view: full width, just below the 64px top header
+          isProfileOnlyView
+            ? "ml-0 pt-16"
+            : // No margins in embedded mode
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
@@ -587,7 +597,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
+          } ${isProfileOnlyView || isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

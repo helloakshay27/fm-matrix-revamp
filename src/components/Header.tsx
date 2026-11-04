@@ -1047,29 +1047,18 @@ export const Header = () => {
                 </div>
               )}
 
-              {/* Menu Items — hidden for External-role users, who only get Logout */}
-              {!isExternalRole && (
-                <>
-                  <div className="py-1">
-                    <DropdownMenuItem
-                      onClick={() => navigate("/business-compass/profile")}
-                      className="mx-2 my-1 rounded-md"
-                    >
-                      <User className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="font-medium">My Profile</span>
-                    </DropdownMenuItem>
+              {/* Menu Items — External-role users get only My Profile and Logout */}
+              <div className="py-1">
+                <DropdownMenuItem
+                  onClick={() => navigate("/business-compass/profile")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
 
-                    {/* {showExistingPostHogUsageAnalytics && (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          (window.location.href = "/posthog-dashboard")
-                        }
-                        className="mx-2 my-1 rounded-md"
-                      >
-                        <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Usage Analytics</span>
-                      </DropdownMenuItem>
-                    )} */}
+                {!isExternalRole && (
+                  <>
                     {showPulseUsageAnalytics && (
                       <DropdownMenuItem
                         onClick={() => navigate("/pulse")}
@@ -1087,11 +1076,11 @@ export const Header = () => {
                       <Settings className="w-4 h-4 mr-2 text-gray-500" />
                       <span className="font-medium">Settings</span>
                     </DropdownMenuItem>
-                  </div>
+                  </>
+                )}
+              </div>
 
-                  <DropdownMenuSeparator className="my-1" />
-                </>
-              )}
+              <DropdownMenuSeparator className="my-1" />
 
               {/* Logout Button */}
               <div className="p-2">
