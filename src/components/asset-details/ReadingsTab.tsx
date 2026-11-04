@@ -234,8 +234,10 @@ interface ReadingRow {
 interface ConsumptionItem {
   name: string;
   uom: string;
-  mf: number;
-  rows: ReadingRow[];
+  mf?: number;
+  rows?: ReadingRow[];
+  // Non-consumption items carry their per-date values directly (no rows)
+  data?: { [key: string]: number };
 }
 
 interface ApiResponse {
@@ -458,9 +460,19 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
                       <td className="px-4 py-3 text-sm text-center text-gray-900 border-r border-gray-200">
                         -
                       </td>
-                      {apiData?.date_headers?.map((_, idx) => (
-                        <td key={idx} className="px-3 py-3 border-r border-gray-200 last:border-r-0" />
-                      ))}
+                      {apiData?.date_headers?.map((header, idx) => {
+                        if (!item.data) {
+                          return <td key={idx} className="px-3 py-3 border-r border-gray-200 last:border-r-0" />;
+                        }
+                        const val = item.data[header.date];
+                        return (
+                          <td key={idx} className="px-3 py-3 text-sm text-center border-r border-gray-200 last:border-r-0">
+                            <span className={val != null && val > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                              {val ?? '-'}
+                            </span>
+                          </td>
+                        );
+                      })}
                     </tr>
                     {/* Sub-rows: opening, closing, consumption */}
                     {(item.rows || []).map((row, rowIndex) => (
