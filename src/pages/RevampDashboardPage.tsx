@@ -234,7 +234,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
 
   // Maintenance › Vendor
   { i: "vendor-section-label", x: 0, y: 485, w: 12, h: 1, minW: 6, minH: 1 },
-  { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 8, minW: 6, minH: 6 },
+  { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 11, minW: 6, minH: 6 },
   { i: "vendor-repeat-requests", x: 0, y: 494, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-response-time", x: 0, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
   { i: "vendor-amc-status-table", x: 6, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
@@ -242,6 +242,9 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "vendor-response-trend", x: 0, y: 512, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "vendor-expired-kyc", x: 0, y: 518, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-data-hygiene-banner", x: 0, y: 523, w: 12, h: 2, minW: 6, minH: 2 },
+  { i: "vendor-missed-visits", x: 0, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  { i: "vendor-workflow-bottlenecks", x: 6, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  { i: "vendor-contract-performance", x: 0, y: 532, w: 12, h: 8, minW: 6, minH: 5 },
 ];
 
 const MAINTENANCE_LAYOUT_BY_KEY = new Map(DEFAULT_TICKETS_LAYOUT.map((l) => [l.i, l]));
@@ -548,8 +551,9 @@ const HEATMAP_HOURS_FALLBACK = Array.from({ length: 24 }, (_, i) => i);
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "2025-10" -> "Oct '25" */
-function formatMonthLabel(month: string): string {
-  const [year, mon] = month.split("-");
+function formatMonthLabel(month?: string | null): string {
+  if (!month) return "";
+  const [year, mon] = String(month).split("-");
   const idx = Number(mon) - 1;
   const name = MONTH_NAMES[idx] ?? mon;
   return `${name} '${(year ?? "").slice(2)}`;
@@ -807,16 +811,25 @@ function SelectPeriodPopover({ initialRange, onApply, onReset, onClose }: Select
   );
 }
 
+interface SiteOption {
+  id: number;
+  name: string;
+}
+
 interface FiltersPopoverProps {
+  siteOptions: SiteOption[];
+  initialSite: string;
   buildingOptions: string[];
   categoryOptions: string[];
   initialBuilding: string;
   initialCategory: string;
-  onApply: (building: string, category: string) => void;
+  onApply: (building: string, category: string, site: string) => void;
   onClose: () => void;
 }
 
 function FiltersPopover({
+  siteOptions,
+  initialSite,
   buildingOptions,
   categoryOptions,
   initialBuilding,
@@ -824,12 +837,28 @@ function FiltersPopover({
   onApply,
   onClose,
 }: FiltersPopoverProps) {
+  const [site, setSite] = useState(initialSite);
   const [building, setBuilding] = useState(initialBuilding);
   const [category, setCategory] = useState(initialCategory);
 
   return (
     <div className="w-72 rounded-lg border border-brand-border bg-white p-4 shadow-lg">
       <div className="text-brand-caption font-bold text-brand-green uppercase tracking-wide mb-3">Filters</div>
+      <div className="mb-3">
+        <label className="block text-brand-body-5 text-brand-text-light mb-1">Site</label>
+        <select
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+          className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
+        >
+          <option value="all">All Sites</option>
+          {siteOptions.map((st) => (
+            <option key={st.id} value={String(st.id)}>
+              {st.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="mb-3">
         <label className="block text-brand-body-5 text-brand-text-light mb-1">Building / Wing</label>
         <select
@@ -866,7 +895,7 @@ function FiltersPopover({
       <button
         type="button"
         onClick={() => {
-          onApply(building, category);
+          onApply(building, category, site);
           onClose();
         }}
         className="w-full rounded-full bg-brand py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
@@ -1069,6 +1098,29 @@ interface VendorPerformanceTableRow {
   breached: number | null;
   slaCompliancePercent: number | null;
 }
+
+interface VendorContractTableRow {
+  vendorName: string;
+  totalContracts: number;
+  liveContracts: number;
+  completedVisits: number;
+  missedVisits: number;
+}
+
+const VENDOR_CONTRACT_TABLE_COLUMNS: DataTableColumn<VendorContractTableRow>[] = [
+  { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
+  { key: "contracts", header: "Contracts", align: "center", render: (row) => <span className="text-brand-text">{row.totalContracts}</span> },
+  { key: "live", header: "Live", align: "center", render: (row) => <span className="text-brand-text">{row.liveContracts}</span> },
+  { key: "completed", header: "Visits Done", align: "center", render: (row) => <span className="text-brand-text">{row.completedVisits}</span> },
+  {
+    key: "missed",
+    header: "Missed Visits",
+    align: "center",
+    render: (row) => (
+      <TableBadge tone={row.missedVisits === 0 ? "green" : row.missedVisits >= 20 ? "red" : "amber"}>{row.missedVisits}</TableBadge>
+    ),
+  },
+];
 
 const VENDOR_PERFORMANCE_TABLE_COLUMNS: DataTableColumn<VendorPerformanceTableRow>[] = [
   { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
@@ -1553,7 +1605,7 @@ export default function RevampDashboardPage() {
   };
 
   // --- Tickets section: dynamic site scope, date range, and live API data ---
-  const [dashboardSiteIds, setDashboardSiteIds] = useState<number[]>([]);
+  const [allowedSites, setAllowedSites] = useState<SiteOption[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [sitesError, setSitesError] = useState<string | null>(null);
 
@@ -1569,11 +1621,11 @@ export default function RevampDashboardPage() {
     fetchAllowedSites(userId)
       .then((res) => {
         if (cancelled) return;
-        const ids = (res.sites ?? [])
-          .map((s) => s.id)
-          .filter((id): id is number => typeof id === "number");
-        setDashboardSiteIds(ids);
-        if (ids.length === 0) setSitesError("No sites are allowed for this user.");
+        const sites = (res.sites ?? [])
+          .filter((s) => typeof s.id === "number")
+          .map((s) => ({ id: s.id as number, name: s.name ?? `Site ${s.id}` }));
+        setAllowedSites(sites);
+        if (sites.length === 0) setSitesError("No sites are allowed for this user.");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1593,7 +1645,15 @@ export default function RevampDashboardPage() {
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const [appliedBuilding, setAppliedBuilding] = useState("all");
   const [appliedCategory, setAppliedCategory] = useState("all");
+  const [appliedSite, setAppliedSite] = useState("all");
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+
+  // The Site filter narrows the `site_id` query sent to every /fm_dashboard endpoint (server-side),
+  // so each module re-fetches for just that site instead of filtering rows client-side.
+  const dashboardSiteIds = useMemo(
+    () => (appliedSite === "all" ? allowedSites.map((st) => st.id) : allowedSites.filter((st) => String(st.id) === appliedSite).map((st) => st.id)),
+    [allowedSites, appliedSite]
+  );
 
   const dashboardFromDate = useMemo(() => formatApiDate(dashboardDateRange.from), [dashboardDateRange.from]);
   const dashboardToDate = useMemo(() => formatApiDate(dashboardDateRange.to), [dashboardDateRange.to]);
@@ -1837,25 +1897,39 @@ export default function RevampDashboardPage() {
   }, [ticketsOverview]);
   const poolTotal = ticketsOverview?.pool_composition.total ?? 0;
 
-  const categoryStackData = useMemo(
-    () =>
-      (ticketsBreakdown?.by_category ?? []).map((c) => ({
-        category: c.name,
-        pending: c.status_breakdown.pending,
-        inProgress: c.status_breakdown.in_progress,
-        onHold: c.status_breakdown.on_hold,
-        closed: c.status_breakdown.closed,
-      })),
-    [ticketsBreakdown]
-  );
+  // Tickets category names come back padded ("ELECTRICAL SYSTEM "), so compare trimmed.
+  const matchesCategoryFilter = (name: string) => appliedCategory === "all" || name.trim() === appliedCategory.trim();
+
+  // tickets_category_comparison is the dedicated per-category status source; the older
+  // tickets_breakdown.by_category stays as a fallback if that endpoint returned nothing.
+  const categoryStackData = useMemo(() => {
+    const comparison = ticketsApiData.categoryComparison;
+    const rows = comparison.length
+      ? comparison.map((c) => ({
+          category: c.name.trim(),
+          pending: c.status_count.pending,
+          inProgress: c.status_count.in_progress,
+          onHold: c.status_count.on_hold,
+          closed: c.status_count.closed,
+        }))
+      : (ticketsBreakdown?.by_category ?? []).map((c) => ({
+          category: c.name.trim(),
+          pending: c.status_breakdown.pending,
+          inProgress: c.status_breakdown.in_progress,
+          onHold: c.status_breakdown.on_hold,
+          closed: c.status_breakdown.closed,
+        }));
+    return rows.filter((r) => matchesCategoryFilter(r.category));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketsApiData.categoryComparison, ticketsBreakdown, appliedCategory]);
 
   const categoryTableData: CategoryRow[] = useMemo(
     () =>
-      (ticketsBreakdown?.by_category ?? []).map((c) => {
+      (ticketsBreakdown?.by_category ?? []).filter((c) => matchesCategoryFilter(c.name)).map((c) => {
         const trend = vsLastMonthDisplay(c.vs_last_month_percent);
         const ageingDays = Math.round(parseFloat(c.avg_ageing_days) || 0);
         return {
-          category: c.name,
+          category: c.name.trim(),
           total: c.total,
           tatBreach: c.tat_breach_percent,
           tatTone: tatBreachTone(c.tat_breach_percent),
@@ -1865,8 +1939,21 @@ export default function RevampDashboardPage() {
           ageingHighlight: ageingDays >= 60,
         };
       }),
-    [ticketsBreakdown]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ticketsBreakdown, appliedCategory]
   );
+
+  const ticketsByTenantData = useMemo(
+    () =>
+      ticketsApiData.byTenant
+        .slice()
+        .sort((a, b) => b.ticket_count - a.ticket_count)
+        .slice(0, 10)
+        .map((t) => ({ tenant: t.name, tickets: t.ticket_count })),
+    [ticketsApiData.byTenant]
+  );
+  const ticketsCsat = ticketsApiData.csat;
+  const ticketsApproachingEscalation = ticketsApiData.approachingEscalation;
 
   const replyResolutionData = useMemo(
     () =>
@@ -2119,6 +2206,23 @@ export default function RevampDashboardPage() {
     [assetsMaintenance]
   );
 
+  const assetOwnershipCostRows = useMemo(
+    () =>
+      (assetsMaintenance?.asset_ownership_cost ?? [])
+        .filter((a) => a.total_cost > 0)
+        .slice()
+        .sort((a, b) => b.total_cost - a.total_cost)
+        .slice(0, 8)
+        .map((a) => ({
+          label: a.name,
+          badge: {
+            tone: "amber" as TableBadgeTone,
+            label: `₹${a.total_cost.toLocaleString()} · repair ₹${a.repair_cost.toLocaleString()} + AMC ₹${a.amc_cost.toLocaleString()}`,
+          },
+        })),
+    [assetsMaintenance]
+  );
+
   const repairCostRatioData = useMemo(
     () =>
       (assetsMaintenance?.high_maintenance_cost_assets ?? [])
@@ -2305,17 +2409,54 @@ export default function RevampDashboardPage() {
     ];
   }, [amcExpiry]);
 
+  // amc_expiry.urgency_vs_criticality is one row per contract (days_to_expiry + criticality),
+  // so the expiry buckets are computed here, in the same order as the timeline above.
   const amcUrgencyCriticalityData = useMemo(() => {
     const rows = amcExpiry?.urgency_vs_criticality ?? [];
-    const buckets = new Map<string, { bucket: string; critical: number; nonCritical: number }>();
+    const bucketFor = (days: number | null) => {
+      if (days === null || days === undefined) return null;
+      if (days < 0) return "Expired";
+      if (days <= 30) return "Expiring 0-30d";
+      if (days <= 90) return "Expiring 31-90d";
+      return "Active 90+ d";
+    };
+    const order = ["Expired", "Expiring 0-30d", "Expiring 31-90d", "Active 90+ d"];
+    const buckets = new Map(order.map((b) => [b, { bucket: b, critical: 0, nonCritical: 0 }]));
     rows.forEach((r) => {
-      const entry = buckets.get(r.expiry_bucket) ?? { bucket: r.expiry_bucket, critical: 0, nonCritical: 0 };
-      if (r.criticality === "Critical") entry.critical += r.count;
-      else entry.nonCritical += r.count;
-      buckets.set(r.expiry_bucket, entry);
+      // Older API: already aggregated as { expiry_bucket, count }; newer API: one row per contract.
+      const key = r.expiry_bucket ?? bucketFor(r.days_to_expiry ?? null);
+      if (!key) return;
+      const entry = buckets.get(key) ?? { bucket: key, critical: 0, nonCritical: 0 };
+      const amount = typeof r.count === "number" ? r.count : 1;
+      if (r.criticality === "Critical") entry.critical += amount;
+      else entry.nonCritical += amount;
+      buckets.set(key, entry);
     });
-    return Array.from(buckets.values());
+    return Array.from(buckets.values())
+      .sort((a, b) => {
+        const ia = order.indexOf(a.bucket);
+        const ib = order.indexOf(b.bucket);
+        return (ia === -1 ? order.length : ia) - (ib === -1 ? order.length : ib);
+      })
+      .filter((b) => b.critical + b.nonCritical > 0);
   }, [amcExpiry]);
+
+  // amc_overview.contract_split is either a list of { amc_type, count } (newer API) or the older
+  // { asset_contracts, service_contracts } object — normalise both to chart rows.
+  const amcContractSplitData = useMemo(() => {
+    const split = amcOverview?.contract_split;
+    if (!split) return [];
+    if (Array.isArray(split)) {
+      return split.map((c) => ({
+        type: /contract/i.test(c.amc_type) ? c.amc_type : `${c.amc_type} Contracts`,
+        total: c.count,
+      }));
+    }
+    return [
+      { type: "Asset Contracts", total: split.asset_contracts ?? 0 },
+      { type: "Service Contracts", total: split.service_contracts ?? 0 },
+    ];
+  }, [amcOverview]);
 
   const amcVendorConcentrationData = useMemo(
     () =>
@@ -2852,6 +2993,58 @@ export default function RevampDashboardPage() {
   const vendorPerformance = vendorApiData.performance;
   const vendorRepeatIssuesData = vendorApiData.repeatIssues;
   const vendorKycRisk = vendorApiData.kycRisk;
+  const vendorPerformanceScore = vendorApiData.performanceScore;
+  const vendorOnTime = vendorApiData.onTimeCompletion;
+  const vendorHealth = vendorApiData.health;
+  const vendorRenewals = vendorApiData.contractRenewals;
+  const vendorResponseTrend = vendorApiData.responseTrend;
+  const vendorBottlenecks = vendorApiData.workflowBottlenecks;
+  const vendorKycStatus = vendorApiData.kycStatus;
+
+  const vendorMissedVisitData = useMemo(
+    () =>
+      (vendorHealth?.by_vendor ?? [])
+        .slice()
+        .sort((a, b) => b.missed_visits - a.missed_visits)
+        .slice(0, 10)
+        .map((v) => ({ vendor: v.vendor_name.trim(), missed: v.missed_visits })),
+    [vendorHealth]
+  );
+
+  const vendorResponseTrendData = useMemo(
+    () =>
+      (vendorResponseTrend?.by_month ?? []).map((m) => ({
+        month: formatMonthLabel(m.month),
+        avgResponse: Number(m.avg_response_hours) || 0,
+        target: Number(m.sla_target_hours) || 0,
+      })),
+    [vendorResponseTrend]
+  );
+
+  const vendorBottleneckData = useMemo(
+    () =>
+      (vendorBottlenecks?.stages ?? [])
+        .filter((st) => st.avg_hours !== null)
+        .map((st) => ({ stage: st.stage, hours: Number(st.avg_hours) })),
+    [vendorBottlenecks]
+  );
+
+  // Per-vendor contract table from vendor_performance_table (contracts + visits), kept separate
+  // from the request/SLA table above, which comes from vendor_performance.
+  const vendorContractTableRows: VendorContractTableRow[] = useMemo(
+    () =>
+      vendorApiData.performanceTable
+        .slice()
+        .sort((a, b) => b.missed_visits - a.missed_visits)
+        .map((r) => ({
+          vendorName: r.vendor_name.trim(),
+          totalContracts: r.total_contracts,
+          liveContracts: r.live_contracts,
+          completedVisits: r.completed_visits,
+          missedVisits: r.missed_visits,
+        })),
+    [vendorApiData.performanceTable]
+  );
 
   const vendorPerformanceRows = useMemo(() => {
     const rows = (vendorPerformance?.by_vendor ?? []).filter((r) => typeof r.vendor_name === "string");
@@ -2917,8 +3110,9 @@ export default function RevampDashboardPage() {
     (assetsCategory?.category_wise_breakdown ?? []).forEach((c) => names.add(c.name));
     (wasteBreakdown?.by_category ?? []).forEach((c) => names.add(c.category));
     (amcCoverage?.coverage_by_category ?? []).forEach((c) => names.add(c.name));
+    (ticketsApiData.categoryComparison ?? []).forEach((c) => names.add(c.name.trim()));
     return Array.from(names).sort();
-  }, [assetsCategory, wasteBreakdown, amcCoverage]);
+  }, [assetsCategory, wasteBreakdown, amcCoverage, ticketsApiData.categoryComparison]);
 
   const headerSearchResults: HeaderSearchResult[] = useMemo(() => {
     const q = headerSearchQuery.trim().toLowerCase();
@@ -3058,7 +3252,7 @@ export default function RevampDashboardPage() {
               title="Filters"
               className={cn(
                 "veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
-                appliedBuilding !== "all" || appliedCategory !== "all" ? "border-brand text-brand" : "border-brand-border"
+                appliedBuilding !== "all" || appliedCategory !== "all" || appliedSite !== "all" ? "border-brand text-brand" : "border-brand-border"
               )}
             >
               <SettingsIcon className="w-4 h-4" />
@@ -3066,13 +3260,16 @@ export default function RevampDashboardPage() {
             {filtersPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <FiltersPopover
+                  siteOptions={allowedSites}
+                  initialSite={appliedSite}
                   buildingOptions={wasteBuildingOptions}
                   categoryOptions={categoryFilterOptions}
                   initialBuilding={appliedBuilding}
                   initialCategory={appliedCategory}
-                  onApply={(building, category) => {
+                  onApply={(building, category, site) => {
                     setAppliedBuilding(building);
                     setAppliedCategory(category);
+                    setAppliedSite(site);
                   }}
                   onClose={() => setFiltersPopupOpen(false)}
                 />
@@ -3624,12 +3821,25 @@ export default function RevampDashboardPage() {
               </div>
               <div key="by-tenant" chart_code="fm-by-tenant" className="h-full relative">
                 <AddToDashboardButton chartId="fm-by-tenant" moduleKey="maintenance" subTab="Tickets" height="5" width="4" position="8,69" />
-                <EmptyStateCard
-                  title="By Tenant"
-                  subtitle="Which tenant raises the most"
-                  message="Not available from the ticket dashboard API — tenant/account grouping isn't part of these 5 endpoints."
-                  className="h-full overflow-auto"
-                />
+                {ticketsByTenantData.length ? (
+                  <BarChartCard
+                    title="By Tenant"
+                    subtitle="Which tenant raises the most"
+                    data={ticketsByTenantData}
+                    categoryKey="tenant"
+                    orientation="horizontal"
+                    categoryColors={ticketsByTenantData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "tickets", name: "Tickets" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="By Tenant"
+                    subtitle="Which tenant raises the most"
+                    message="No tenant-wise tickets for the selected sites and date range."
+                    className="h-full overflow-auto"
+                  />
+                )}
               </div>
 
               <div key="location-volume" chart_code="fm-location-volume" className="h-full relative">
@@ -3662,9 +3872,20 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="purple"
                   label="Customer Satisfaction Score"
-                  value="0"
-                  accent="warning"
-                  subtitle="Not returned by the ticket dashboard API"
+                  value={ticketsCsat?.score != null ? `${ticketsCsat.score}/${ticketsCsat.scale_max}` : "—"}
+                  accent={ticketsCsat?.score != null && ticketsCsat.score >= 4 ? "success" : "warning"}
+                  subtitle={
+                    ticketsCsat
+                      ? `${ticketsCsat.rated_tickets} rated ticket${ticketsCsat.rated_tickets === 1 ? "" : "s"}` +
+                        (ticketsCsat.distribution.length
+                          ? ` · ${ticketsCsat.distribution
+                              .filter((d) => d.count > 0)
+                              .map((d) => `${d.rating}★ ${d.count}`)
+                              .join(" · ")}`
+                          : "")
+                      : "Loading…"
+                  }
+                  progress={ticketsCsat?.score != null ? (ticketsCsat.score / (ticketsCsat.scale_max || 5)) * 100 : undefined}
                   className="h-full"
                 />
               </div>
@@ -3673,9 +3894,13 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Approaching Escalation"
-                  value="0"
-                  accent="error"
-                  subtitle="Not returned by the ticket dashboard API"
+                  value={ticketsApproachingEscalation ? String(ticketsApproachingEscalation.count) : "—"}
+                  accent={ticketsApproachingEscalation && ticketsApproachingEscalation.count > 0 ? "error" : "success"}
+                  subtitle={
+                    ticketsApproachingEscalation
+                      ? `Within ${ticketsApproachingEscalation.threshold_hours}h · ${ticketsApproachingEscalation.response_due} response due · ${ticketsApproachingEscalation.resolution_due} resolution due`
+                      : "Loading…"
+                  }
                   className="h-full"
                 />
               </div>
@@ -4174,12 +4399,23 @@ export default function RevampDashboardPage() {
 
               <div key="asset-ownership-cost" chart_code="fm-asset-ownership-cost" className="h-full relative">
                 <AddToDashboardButton chartId="fm-asset-ownership-cost" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="6,160" />
-                <EmptyStateCard
-                  title="Asset Ownership Cost Analysis"
-                  subtitle="Repair spend + AMC contract cost, per asset"
-                  message="Not available from the assets dashboard API — per-asset AMC contract cost isn't returned by these 4 endpoints, only aggregate AMC coverage counts."
-                  className="h-full overflow-auto"
-                />
+                {assetOwnershipCostRows.length ? (
+                  <StatListCard
+                    title="Asset Ownership Cost Analysis"
+                    subtitle="Repair spend + AMC contract cost, per asset"
+                    borderTone="error"
+                    rows={assetOwnershipCostRows}
+                    note="Top assets by total cost of ownership (repair + AMC) for the selected sites."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Asset Ownership Cost Analysis"
+                    subtitle="Repair spend + AMC contract cost, per asset"
+                    message="No repair or AMC cost recorded against assets for this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
               </div>
 
               <div key="audit-section-label" chart_code="fm-audit-section-label" className="h-full flex items-center relative">
@@ -4639,10 +4875,7 @@ export default function RevampDashboardPage() {
                   <BarChartCard
                     title="Service vs Asset Contract Split"
                     subtitle={`${amcOverview.total_contracts.toLocaleString()} total contracts`}
-                    data={[
-                      { type: "Asset Contracts", total: amcOverview.contract_split.asset_contracts },
-                      { type: "Service Contracts", total: amcOverview.contract_split.service_contracts },
-                    ]}
+                    data={amcContractSplitData}
                     categoryKey="type"
                     series={[{ dataKey: "total", name: "Total Contracts" }]}
                     showInfoIcon
@@ -5734,9 +5967,46 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Vendors At KYC Risk"
-                  value={vendorKycRisk ? `${vendorKycRisk.total_at_risk_count}` : "…"}
-                  accent={vendorKycRisk && vendorKycRisk.total_at_risk_count > 0 ? "error" : "success"}
-                  subtitle={vendorKycRisk ? `of ${vendorKycRisk.total_active_count} active vendors` : undefined}
+                  value={vendorKycStatus ? `${vendorKycStatus.total_at_risk_count}` : vendorKycRisk ? `${vendorKycRisk.total_at_risk_count}` : "…"}
+                  accent={(vendorKycStatus ?? vendorKycRisk)?.total_at_risk_count ? "error" : "success"}
+                  subtitle={
+                    vendorKycStatus
+                      ? `${vendorKycStatus.expired_count} expired · ${vendorKycStatus.missing_count} missing · of ${vendorKycStatus.total_active_count} active`
+                      : vendorKycRisk
+                        ? `of ${vendorKycRisk.total_active_count} active vendors`
+                        : undefined
+                  }
+                />
+                <StatHeroCard
+                  tone="blue"
+                  label="Vendor Performance Score"
+                  value={vendorPerformanceScore?.score != null ? `${vendorPerformanceScore.score}` : "…"}
+                  accent={vendorPerformanceScore?.score != null && vendorPerformanceScore.score >= 70 ? "success" : "warning"}
+                  subtitle={
+                    vendorPerformanceScore
+                      ? `Grade ${vendorPerformanceScore.grade ?? "–"} · SLA ${vendorPerformanceScore.sla_compliance_percent ?? "–"}% · Contract fulfilment ${vendorPerformanceScore.contract_fulfilment_percent ?? "–"}%`
+                      : undefined
+                  }
+                  progress={vendorPerformanceScore?.score ?? undefined}
+                />
+                <StatHeroCard
+                  tone="peach"
+                  label="On-time Visit Completion"
+                  value={vendorOnTime?.on_time_percent != null ? `${vendorOnTime.on_time_percent}%` : "…"}
+                  accent={vendorOnTime?.on_time_percent != null && vendorOnTime.on_time_percent >= 80 ? "success" : "warning"}
+                  subtitle={
+                    vendorOnTime
+                      ? `${vendorOnTime.on_time_visits} on time · ${vendorOnTime.completed_visits} completed · ${vendorOnTime.missed_visits} missed of ${vendorOnTime.scheduled_visits}`
+                      : undefined
+                  }
+                  progress={vendorOnTime?.on_time_percent ?? undefined}
+                />
+                <StatHeroCard
+                  tone="purple"
+                  label="Contract Renewals Due"
+                  value={vendorRenewals ? `${vendorRenewals.total_renewals_due.toLocaleString()}` : "…"}
+                  accent={vendorRenewals && vendorRenewals.total_renewals_due > 0 ? "warning" : "success"}
+                  subtitle={vendorRenewals ? `${vendorRenewals.amc_renewals_due.toLocaleString()} AMC · ${vendorRenewals.kyc_renewals_due} KYC` : undefined}
                 />
               </div>
 
@@ -5816,8 +6086,27 @@ export default function RevampDashboardPage() {
                             badge: { tone: (vendorOverview.onboarding_pending_count > 0 ? "amber" : "green") as TableBadgeTone, label: `${vendorOverview.onboarding_pending_count}` },
                           },
                           { label: "Inactive Vendors", badge: { tone: "grey" as TableBadgeTone, label: `${vendorOverview.inactive_count}` } },
-                          { label: "Expiring Documents", badge: { tone: "grey" as TableBadgeTone, label: "Not returned by API" } },
-                          { label: "Performance Flags", badge: { tone: "grey" as TableBadgeTone, label: "Not returned by API" } },
+                          {
+                            label: "Contract Renewals Due",
+                            badge: {
+                              tone: (vendorRenewals && vendorRenewals.total_renewals_due > 0 ? "amber" : "green") as TableBadgeTone,
+                              label: vendorRenewals ? `${vendorRenewals.total_renewals_due.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "Missed Visits (all vendors)",
+                            badge: {
+                              tone: (vendorHealth && vendorHealth.total_missed_visits > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "KYC Expired / Missing",
+                            badge: {
+                              tone: (vendorKycStatus && vendorKycStatus.total_at_risk_count > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorKycStatus ? `${vendorKycStatus.expired_count} / ${vendorKycStatus.missing_count}` : "–",
+                            },
+                          },
                         ]
                       : []
                   }
@@ -5827,12 +6116,27 @@ export default function RevampDashboardPage() {
 
               <div key="vendor-response-trend" chart_code="fm-vendor-response-trend" className="h-full relative">
                 <AddToDashboardButton chartId="fm-vendor-response-trend" moduleKey="maintenance" subTab="Vendor" height="6" width="12" position="0,512" />
-                <EmptyStateCard
-                  title="Vendor response time trend"
-                  subtitle="Monthly · per-vendor SLA trend"
-                  message="None of the 4 vendor endpoints return a per-vendor monthly response-time trend — only a point-in-time overall/by-vendor snapshot is available."
-                  className="h-full"
-                />
+                {vendorResponseTrendData.length ? (
+                  <ComboBarLineChartCard
+                    title="Vendor response time trend"
+                    subtitle="Monthly · bars = average response (hrs), line = SLA target (hrs)"
+                    data={vendorResponseTrendData}
+                    categoryKey="month"
+                    bar={{ dataKey: "avgResponse", name: "Avg Response (hrs)" }}
+                    line={{ dataKey: "target", name: "SLA Target (hrs)" }}
+                    showInfoIcon
+                    insightVariant="plain"
+                    insight="Months where the bar sits above the line are months vendors missed their response-time target."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Vendor response time trend"
+                    subtitle="Monthly · average response vs SLA target"
+                    message="No vendor response-time data for the selected sites and date range."
+                    className="h-full"
+                  />
+                )}
               </div>
 
               <div key="vendor-expired-kyc" chart_code="fm-vendor-expired-kyc" className="h-full relative">
@@ -5866,6 +6170,58 @@ export default function RevampDashboardPage() {
                     ? `⚠ Only ${vendorOverview.kyc.tracked_count} of ${vendorOverview.total_vendors} vendors have KYC tracking data at all — the "at-risk" and "expiring" figures above only reflect vendors with tracked KYC, so the true risk may be larger than shown.`
                     : "Loading vendor data quality signal…"}
                 </p>
+              </div>
+
+              <div key="vendor-missed-visits" chart_code="fm-vendor-missed-visits" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-missed-visits" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="0,525" />
+                {vendorMissedVisitData.length ? (
+                  <BarChartCard
+                    title="Missed visits by vendor"
+                    subtitle={vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()} missed visits in total` : undefined}
+                    data={vendorMissedVisitData}
+                    categoryKey="vendor"
+                    orientation="horizontal"
+                    categoryColors={vendorMissedVisitData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "missed", name: "Missed visits" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard title="Missed visits by vendor" message="No missed vendor visits for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+
+              <div key="vendor-workflow-bottlenecks" chart_code="fm-vendor-workflow-bottlenecks" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-workflow-bottlenecks" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="6,525" />
+                {vendorBottleneckData.length ? (
+                  <BarChartCard
+                    title="Vendor workflow bottlenecks"
+                    subtitle={vendorBottlenecks?.slowest_stage ? `Slowest stage: ${vendorBottlenecks.slowest_stage} · average hours per stage` : "Average hours per stage"}
+                    data={vendorBottleneckData}
+                    categoryKey="stage"
+                    orientation="horizontal"
+                    categoryColors={vendorBottleneckData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "hours", name: "Avg hours" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard title="Vendor workflow bottlenecks" message="No stage timing data for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+
+              <div key="vendor-contract-performance" chart_code="fm-vendor-contract-performance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-contract-performance" moduleKey="maintenance" subTab="Vendor" height="8" width="12" position="0,532" />
+                {vendorContractTableRows.length ? (
+                  <DataTableCard
+                    title="Vendor contract & visit performance"
+                    subtitle="Contracts held and visits completed or missed, per vendor"
+                    columns={VENDOR_CONTRACT_TABLE_COLUMNS}
+                    data={vendorContractTableRows}
+                    getRowKey={(row) => row.vendorName}
+                    className="h-full overflow-auto no-drag"
+                  />
+                ) : (
+                  <EmptyStateCard title="Vendor contract & visit performance" message="No vendor contract data for the selected sites and date range." className="h-full" />
+                )}
               </div>
                 </>,
                 isMyDashboardModule,
