@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, AlertTriangle, Download, FileText, Package, Paperclip, Receipt, FileMinus, CreditCard } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Download, FileText, Package, Paperclip, Receipt, FileMinus, CreditCard, Pencil } from "lucide-react";
 import { useBackWithFallback } from "@/hooks/useBackWithFallback";
 import { LockAccountBillMarkPaymentDialog } from "./LockAccountBillMarkPaymentDialog";
+import { LockAccountBillEditInvoiceDialog } from "./LockAccountBillEditInvoiceDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,8 @@ interface LockAccountBillDetail extends LockAccountBillRecord {
   charge_amount?: number;
   order_number?: string;
   subject?: string;
+  // "bill_booking" for a manually-created Invoice, which has its own full edit page
+  invoice_format?: string | null;
   vendor_name?: string;
   billed_to?: number | null;
   billed_to_type?: string | null;
@@ -112,6 +115,8 @@ export const LockAccountBillDetails: React.FC = () => {
   const [creditSubmitting, setCreditSubmitting] = useState(false);
 
   const [markPaymentOpen, setMarkPaymentOpen] = useState(false);
+
+  const [editInvoiceOpen, setEditInvoiceOpen] = useState(false);
 
   const fetchBill = async () => {
     setLoading(true);
@@ -165,6 +170,18 @@ export const LockAccountBillDetails: React.FC = () => {
     !!bill.resource_id &&
     (bill.total_amount ?? 0) > 0 &&
     !["paid", "part payment"].includes(String(bill.status).toLowerCase());
+
+  // A manually-created Invoice (bill_bookings) is edited on its full Invoice edit page; bills raised
+  // off a Facility Booking / Club Member Allocation take their line items from that resource, so only
+  // the invoice header (number, dates, order number, subject) is editable here.
+  const handleEditInvoice = () => {
+    if (!bill) return;
+    if (bill.invoice_format === "bill_booking") {
+      navigate(`/club-management/invoice/edit/${bill.id}`);
+      return;
+    }
+    setEditInvoiceOpen(true);
+  };
 
   const openCreditNoteDialog = () => {
     if (!bill) return;
@@ -290,6 +307,10 @@ export const LockAccountBillDetails: React.FC = () => {
                 {String(bill.status).replace(/_/g, " ").toUpperCase()}
               </Badge>
             )}
+            <Button size="sm" variant="outline" onClick={handleEditInvoice} className="gap-2">
+              <Pencil className="h-4 w-4" />
+              Edit Invoice
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -525,6 +546,13 @@ export const LockAccountBillDetails: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LockAccountBillEditInvoiceDialog
+        bill={bill}
+        open={editInvoiceOpen}
+        onOpenChange={setEditInvoiceOpen}
+        onSuccess={fetchBill}
+      />
 
       <LockAccountBillMarkPaymentDialog
         bill={bill}

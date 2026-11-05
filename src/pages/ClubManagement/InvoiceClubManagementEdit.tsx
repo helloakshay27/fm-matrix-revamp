@@ -331,6 +331,9 @@ export const InvoiceClubManagementEdit: React.FC = () => {
     // Sales Order Details
     const [salesOrderNumber, setSalesOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
+    // Invoice number (bill_number) — blank until payment mints one, unless entered by hand
+    const [invoiceNumber, setInvoiceNumber] = useState('');
+    const [savedInvoiceNumber, setSavedInvoiceNumber] = useState('');
     const [salesOrderDate, setSalesOrderDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [expectedShipmentDate, setExpectedShipmentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [paymentTerms, setPaymentTerms] = useState('');
@@ -1070,6 +1073,9 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 const fetchedLineItems = res.data?.line_items || data.line_items || [];
 
                 setReferenceNumber(data.order_number || '');
+                const fetchedInvoiceNumber = data.bill_number || data.invoice_number || '';
+                setInvoiceNumber(fetchedInvoiceNumber);
+                setSavedInvoiceNumber(fetchedInvoiceNumber);
                 setSalesOrderDate(data.bill_date || data.date || format(new Date(), 'yyyy-MM-dd'));
                 setExpectedShipmentDate(data.due_date || format(new Date(), 'yyyy-MM-dd'));
                 setSubject(data.subject || '');
@@ -1607,6 +1613,13 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             return false;
         }
 
+        if (savedInvoiceNumber && !invoiceNumber.trim()) {
+            newErrors.invoiceNumber = 'Invoice number is required';
+            setErrors(newErrors);
+            toast.error('Invoice number cannot be removed once assigned');
+            return false;
+        }
+
         if (!salesOrderDate) {
             // newErrors.salesOrderDate = 'Sales order date is required';
             setErrors(newErrors);
@@ -1667,6 +1680,10 @@ export const InvoiceClubManagementEdit: React.FC = () => {
             formData.append('bill_booking[bill_date]', salesOrderDate);
             formData.append('bill_booking[due_date]', expectedShipmentDate);
             formData.append('bill_booking[order_number]', referenceNumber || '');
+            // Sent only when filled in — a blank invoice number is minted automatically once the invoice is paid
+            if (invoiceNumber.trim()) {
+                formData.append('bill_booking[bill_number]', invoiceNumber.trim());
+            }
             formData.append('bill_booking[subject]', subject || '');
             formData.append('bill_booking[note]', customerNotes || '');
             formData.append('bill_booking[terms_and_conditions]', termsAndConditions || '');
@@ -1740,7 +1757,7 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 attachmentIdx += 1;
             });
 
-            await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}.json`, {
+            const response = await fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/bill_bookings/${id}.json`, {
                 method: 'PATCH',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -1748,6 +1765,13 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 },
                 body: formData
             });
+
+            if (!response.ok) {
+                const body = await response.json().catch(() => null);
+                const messages: string[] = Array.isArray(body?.errors) ? body.errors : [];
+                toast.error(messages.length ? messages.join(', ') : 'Failed to update invoice');
+                return;
+            }
 
             toast.success('Invoice updated successfully!');
             cmEvents.updated('Invoice', id, 'invoice_edit');
@@ -2163,6 +2187,21 @@ export const InvoiceClubManagementEdit: React.FC = () => {
                 {/* Sales Order Details */}
                 <Section title="Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Invoice Number
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={invoiceNumber}
+                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                                placeholder="Assigned automatically on payment"
+                                error={!!errors.invoiceNumber}
+                                helperText={errors.invoiceNumber}
+                                sx={fieldStyles}
+                            />
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">

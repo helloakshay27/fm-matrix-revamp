@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Download, Loader2, AlertTriangle, CreditCard } from "lucide-react";
+import { Eye, Download, Loader2, AlertTriangle, CreditCard, Pencil } from "lucide-react";
 import { LockAccountBillMarkPaymentDialog } from "./LockAccountBillMarkPaymentDialog";
+import { LockAccountBillEditInvoiceDialog } from "./LockAccountBillEditInvoiceDialog";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -96,6 +97,7 @@ export const LockAccountBillsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [markPaymentBill, setMarkPaymentBill] = useState<LockAccountBillRecord | null>(null);
+  const [editInvoiceBill, setEditInvoiceBill] = useState<LockAccountBillRecord | null>(null);
 
   const [currentPage, setCurrentPage] = useState(restored.page);
   const [perPage, setPerPage] = useState(restored.perPage);
@@ -369,6 +371,13 @@ export const LockAccountBillsDashboard: React.FC = () => {
           <Eye className="w-4 h-4" />
         </button>
         <button
+          onClick={() => setEditInvoiceBill(bill)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit Invoice"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => handleDownload(bill)}
           disabled={downloadingId === bill.id || bill.resource_exists === false}
           className="p-1 text-black hover:bg-gray-100 rounded disabled:opacity-50"
@@ -592,6 +601,13 @@ export const LockAccountBillsDashboard: React.FC = () => {
           />
         </div>
       )}
+
+      <LockAccountBillEditInvoiceDialog
+        bill={editInvoiceBill}
+        open={!!editInvoiceBill}
+        onOpenChange={(open) => { if (!open) setEditInvoiceBill(null); }}
+        onSuccess={() => fetchBills(currentPage, perPage)}
+      />
 
       <LockAccountBillMarkPaymentDialog
         bill={markPaymentBill}
