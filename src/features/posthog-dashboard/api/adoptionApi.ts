@@ -136,12 +136,20 @@ export interface RangeFilters {
 
 export interface RecentActiveUser {
   user_id: string;
-  display_name: string;
+  /** "First Last" as the API sends it (the person's name). */
+  user_name?: string | null;
+  email?: string | null;
+  /** Older API field; the API now sends user_name. */
+  display_name?: string | null;
   path: string | null;
   last_event: string | null;
   minutes_ago: number | null;
   site_name: string | null;
 }
+
+/** What to call a user in Recent Activity: their name, else their email's local part, else their id. */
+export const activityUserLabel = (u: Pick<RecentActiveUser, 'user_name' | 'display_name' | 'email' | 'user_id'>): string =>
+  u.user_name?.trim() || u.display_name?.trim() || u.email?.split('@')[0] || (u.user_id ? `User ${u.user_id}` : 'Unknown user');
 
 export interface RecentActiveUsersResponse {
   users: RecentActiveUser[];
