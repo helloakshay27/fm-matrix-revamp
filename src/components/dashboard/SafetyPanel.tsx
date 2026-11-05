@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   StatHeroCard,
@@ -425,14 +425,14 @@ export function SafetyPanel({
 
   const incidentStatusTiles = useMemo(() => {
     if (!incidentStatus) return [];
-    const entries: { label: string; value: number; color: string }[] = [
-      { label: "Open", value: openIncidents ?? NaN, color: "text-brand-error" },
-      { label: "Under Invest.", value: underInvestigationIncidents ?? NaN, color: "text-[#8A5A00]" },
-      { label: "Pending", value: pendingIncidents ?? NaN, color: "text-[#8A5A00]" },
-      { label: "Closed", value: closedIncidents ?? NaN, color: "text-brand-success" },
-      { label: "Final Closure", value: finalClosureIncidents ?? NaN, color: "text-brand-success" },
-      { label: "Prov. Closure", value: provisionalClosureIncidents ?? NaN, color: "text-brand-green" },
-      { label: "Other", value: incidentStatus.other ?? NaN, color: "text-brand-text-light" },
+    const entries: { label: string; value: number; accent: StatHeroAccent }[] = [
+      { label: "Open", value: openIncidents ?? NaN, accent: "error" },
+      { label: "Under Invest.", value: underInvestigationIncidents ?? NaN, accent: "warning" },
+      { label: "Pending", value: pendingIncidents ?? NaN, accent: "warning" },
+      { label: "Closed", value: closedIncidents ?? NaN, accent: "success" },
+      { label: "Final Closure", value: finalClosureIncidents ?? NaN, accent: "success" },
+      { label: "Prov. Closure", value: provisionalClosureIncidents ?? NaN, accent: "green" },
+      { label: "Other", value: incidentStatus.other ?? NaN, accent: "neutral" },
     ].filter((entry) => typeof entry.value === "number" && !Number.isNaN(entry.value));
     if (typeof totalIncidents === "number") entries.push({ label: "Total", value: totalIncidents, accent: "neutral" });
     return entries;
@@ -528,14 +528,16 @@ export function SafetyPanel({
     },
     {
       key: "sohi-contradiction",
-      layout: { x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 8, y: 0, w: 4, h: 3, minW: 2, minH: 3 },
       content: (
-        <div className="rounded-xl bg-[var(--color-bg)] p-4 h-full">
-          <div className="text-brand-body-4 font-bold text-brand-text-light">
-            Safety compliance snapshot
-          </div>
-          <div className="text-brand-body-5 text-brand-text-light mt-0.5">
-            Composite incident score for the selected scope
+        <div className="rounded-xl bg-white border border-brand-border p-4 h-full overflow-auto">
+          <div className="pr-10">
+            <div className="text-brand-body-4 font-bold text-brand-text">
+              Safety compliance snapshot
+            </div>
+            <div className="text-brand-body-5 text-brand-text-light mt-0.5">
+              Composite incident score for the selected scope
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 mt-4">
@@ -666,7 +668,7 @@ export function SafetyPanel({
     */
     {
       key: "inc-action-count",
-      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="blue"
@@ -866,7 +868,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-table",
-      layout: { x: 0, y: 37, w: 12, h: 8, minW: 6, minH: 5 },
+      layout: { x: 0, y: 31, w: 12, h: 8, minW: 6, minH: 5 },
       content: incidentRows.length ? (
         <DataTableCard
           title="Incidents Requiring Action"
@@ -887,7 +889,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-bodypart",
-      layout: { x: 0, y: 45, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 39, w: 12, h: 6, minW: 6, minH: 4 },
       content: bodyPartChartData.length && bodyPartChartKeys.length ? (
         <BarChartCard
           title="Which category hurts which body part"
@@ -916,14 +918,18 @@ export function SafetyPanel({
     },
     {
       key: "inc-bodyinjury",
-      layout: { x: 0, y: 51, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 45, w: 12, h: 9, minW: 6, minH: 6 },
       content: (
-        <BodyInjuryChartCard
-          startDate={fromDate}
-          endDate={toDate}
-          siteIds={selectedSiteIds}
-          apiState={bodyInjuryApiState}
-        />
+        // The card is shared with other pages and styled for them; veda-injury-card re-skins it to match
+        // the dashboard's cards (see veda-dashboard.css).
+        <div className="veda-injury-card h-full">
+          <BodyInjuryChartCard
+            startDate={fromDate}
+            endDate={toDate}
+            siteIds={selectedSiteIds}
+            apiState={bodyInjuryApiState}
+          />
+        </div>
       ),
     },
   ];
@@ -1359,7 +1365,6 @@ export function SafetyPanel({
         <SafetyGridSection
           storageKey="safetySohiGridLayout-v2"
           items={sohiItems}
-          layoutOverrides={{ "sohi-contradiction": { x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 3 } }}
           responsive
           moduleKey="safety"
           subTab="SOHI"

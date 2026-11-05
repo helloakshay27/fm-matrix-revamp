@@ -209,7 +209,8 @@ const EMPTY_TICKETS_DATA: TicketsDashboardData = {
 // Secondary endpoints must never take the whole module down if one of them errors.
 const optional = <T,>(request: Promise<T>): Promise<T | null> => request.catch(() => null);
 
-export function useTicketsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useTicketsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<TicketsDashboardData>(EMPTY_TICKETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
