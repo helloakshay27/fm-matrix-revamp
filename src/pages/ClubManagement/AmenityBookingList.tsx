@@ -1,13 +1,30 @@
 import { useEffect, useRef } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 // import BookingListDashboard from "./BookingListDashboard"
 // import BookingCalenderView from "./BookingCalenderView"
 import AmenityBookingClubCalenderView from "./AmenityBookingCalenderView"
 import AmenityBookingListClubDashboard from "./AmenityBookingDashboard"
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents"
+import { useBackWithFallback } from "@/hooks/useBackWithFallback"
 
 const AmenityBookingListClub = () => {
+    // Browser Back goes to the Club Management dashboard when this page was
+    // opened directly and there is no earlier entry in the history.
+    useBackWithFallback("/club-management/dashboard");
     const cmEvents = useClubManagementEvents();
+
+    // The open tab is kept in the URL (?view=list) so Back from a booking returns to it.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const view = searchParams.get("view") === "list" ? "list" : "calender";
+    const handleViewChange = (next: string) => {
+        setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            if (next === "list") params.set("view", "list");
+            else params.delete("view");
+            return params;
+        }, { replace: true });
+    };
     const listViewedFired = useRef(false);
 
     useEffect(() => {
@@ -20,7 +37,8 @@ const AmenityBookingListClub = () => {
     return (
         <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <Tabs
-                defaultValue="calender"
+                value={view}
+                onValueChange={handleViewChange}
                 className="w-full"
             >
                 <TabsList className="w-full bg-white border border-gray-200">

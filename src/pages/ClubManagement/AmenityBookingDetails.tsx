@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import { useBackWithFallback } from "@/hooks/useBackWithFallback";
 import {
   CloudUpload,
   PictureAsPdf,
@@ -33,6 +34,9 @@ export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  // Back (button and browser) returns to the booking list when this page was
+  // opened directly and there is no earlier entry in the history.
+  const goBack = useBackWithFallback("/club-management/amenities-booking-club");
   const cmEvents = useClubManagementEvents();
   const detailViewedFired = useRef(false);
   const baseUrl = localStorage.getItem("baseUrl");
@@ -834,7 +838,7 @@ export const AmenityBookingDetailsClubPage = () => {
       <>
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
           <button
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center gap-1 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

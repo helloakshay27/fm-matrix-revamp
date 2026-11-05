@@ -88,6 +88,9 @@ export interface MarkPaymentInput {
   // "YYYY-MM" (HTML <input type="month"> value) — backdates the minted bill number to that
   // month instead of whenever the payment happens to be recorded. Omit to use the current month.
   billingMonth?: string;
+  // Invoice number to put on the bill instead of the next generated one. Must not be used by
+  // another bill (the server refuses a duplicate). Omit to have one generated.
+  invoiceNumber?: string;
   sendMail: boolean;
 }
 
@@ -127,6 +130,7 @@ export const markLockAccountBillPayment = async (
           pg_transaction_id: input.pgTransactionId || "",
         },
         billing_month: input.billingMonth || undefined,
+        invoice_number: input.invoiceNumber?.trim() || undefined,
         send_mail: input.sendMail,
       },
       { headers }
@@ -144,6 +148,7 @@ export const markLockAccountBillPayment = async (
         pg_transaction_id: input.pgTransactionId || "",
       },
       billing_month: input.billingMonth || undefined,
+      invoice_number: input.invoiceNumber?.trim() || undefined,
       send_mail: input.sendMail,
     },
     { headers }

@@ -27,6 +27,9 @@ export const LockAccountBillMarkPaymentDialog: React.FC<LockAccountBillMarkPayme
   const [paymentMethod, setPaymentMethod] = useState("");
   const [pgTransactionId, setPgTransactionId] = useState("");
   const [billingMonth, setBillingMonth] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  // Set when the server refuses the invoice number (already used by another bill), shown under the field.
+  const [invoiceNumberError, setInvoiceNumberError] = useState("");
   const [sendMail, setSendMail] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,8 +39,14 @@ export const LockAccountBillMarkPaymentDialog: React.FC<LockAccountBillMarkPayme
       setPaymentMethod("");
       setPgTransactionId("");
       setBillingMonth("");
+      // A bill that already carries a number keeps it unless the operator changes it.
+      setInvoiceNumber(bill?.bill_number ?? "");
+      setInvoiceNumberError("");
       setSendMail(true);
     }
+    // Reset only when the dialog opens or switches bill — not when the same bill is refreshed
+    // underneath, which would wipe what the operator has typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, bill?.id]);
 
   const handleSubmit = async () => {
@@ -46,9 +55,17 @@ export const LockAccountBillMarkPaymentDialog: React.FC<LockAccountBillMarkPayme
       toast.error("Please select a payment method");
       return;
     }
+    setInvoiceNumberError("");
     setSubmitting(true);
     try {
-      await markLockAccountBillPayment(bill, { paymentMode, paymentMethod, pgTransactionId, billingMonth, sendMail });
+      await markLockAccountBillPayment(bill, {
+        paymentMode,
+        paymentMethod,
+        pgTransactionId,
+        billingMonth,
+        invoiceNumber,
+        sendMail,
+      });
       toast.success("Payment recorded successfully");
       onOpenChange(false);
       onSuccess();
@@ -56,6 +73,7 @@ export const LockAccountBillMarkPaymentDialog: React.FC<LockAccountBillMarkPayme
       console.error("Error marking payment:", error);
       const apiError = (error as { response?: { data?: { error?: string | string[] } } })?.response?.data?.error;
       const apiMessage = Array.isArray(apiError) ? apiError.join(", ") : apiError;
+      if (apiMessage && /invoice number/i.test(apiMessage)) setInvoiceNumberError(apiMessage);
       toast.error(apiMessage || (error instanceof Error ? error.message : "Failed to record payment"));
     } finally {
       setSubmitting(false);
@@ -125,6 +143,29 @@ export const LockAccountBillMarkPaymentDialog: React.FC<LockAccountBillMarkPayme
                 Defaults to the current month — pick an earlier month if this payment is being recorded late, so
                 the invoice number reflects the month the service was actually billed for.
               </p>
+            </div>
+            <div>
+              <Label htmlFor="mp-invoice-number">Invoice Number (optional)</Label>
+              <Input
+                id="mp-invoice-number"
+                value={invoiceNumber}
+                maxLength={255}
+                onChange={(e) => {
+                  setInvoiceNumber(e.target.value);
+                  setInvoiceNumberError("");
+                }}
+                placeholder="Leave blank to generate automatically"
+                aria-invalid={!!invoiceNumberError}
+                className={`mt-1 ${invoiceNumberError ? "border-brand-error focus-visible:ring-brand-error" : ""}`}
+              />
+              {invoiceNumberError ? (
+                <p className="text-xs text-brand-error mt-1">{invoiceNumberError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your own invoice number to use it instead of the next generated one. It must not be used by
+                  another bill. The Billing Month above only applies to generated numbers.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Checkbox

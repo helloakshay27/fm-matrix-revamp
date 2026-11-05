@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { ArrowLeft, AlertTriangle, Download, FileText, Package, Paperclip, Receipt, FileMinus, CreditCard } from "lucide-react";
+import { useBackWithFallback } from "@/hooks/useBackWithFallback";
 import { LockAccountBillMarkPaymentDialog } from "./LockAccountBillMarkPaymentDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,6 +98,9 @@ const formatCurrency = (value?: number | null) => {
 export const LockAccountBillDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  // Back returns to the list exactly as it was left (page, filters); to the list's plain URL if this
+  // page was opened directly and there is no earlier entry in the history.
+  const goBack = useBackWithFallback("/club-management/lock-account-bills");
 
   const [bill, setBill] = useState<LockAccountBillDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -242,7 +246,7 @@ export const LockAccountBillDetails: React.FC = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <p className="text-lg text-muted-foreground">Lock account bill not found</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate("/club-management/lock-account-bills")}>
+          <Button variant="ghost" className="mt-4" onClick={goBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Lock Account Bills
           </Button>
@@ -259,7 +263,7 @@ export const LockAccountBillDetails: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/club-management/lock-account-bills")}>
+            <Button variant="ghost" size="icon" onClick={goBack}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

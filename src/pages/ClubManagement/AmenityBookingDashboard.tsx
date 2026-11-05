@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { readListUrlState, writeListUrlState, type AmenityBookingListUrlState } from './amenityBookingListUrlState';
 import { Eye, Plus, Download, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,8 +106,17 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
+// "dd/MM/yyyy - dd/MM/yyyy" label for a from/to pair (yyyy-MM-dd), or '' unless both are set.
+const toDateRangeLabel = (from: string, to: string) =>
+  from && to
+    ? `${format(parse(from, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')} - ${format(parse(to, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')}`
+    : '';
+
 const AmenityBookingListClubDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Page and filters come back from the URL when returning to this list (e.g. Back from a booking).
+  const [restored] = useState(() => readListUrlState(searchParams));
   const dispatch = useAppDispatch();
   const cmEvents = useClubManagementEvents();
   const baseUrl = localStorage.getItem('baseUrl');
@@ -123,21 +133,27 @@ const AmenityBookingListClubDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [filters, setFilters] = useState({
-    facilityName: '',
-    status: '',
-    scheduledDateRange: '',
-    createdOnDateRange: '',
+    facilityName: restored.facilityName,
+    status: restored.status,
+    scheduledDateRange: toDateRangeLabel(restored.scheduledFrom, restored.scheduledTo),
+    createdOnDateRange: toDateRangeLabel(restored.createdFrom, restored.createdTo),
   });
-  const [scheduledDateFrom, setScheduledDateFrom] = useState<string>('');
-  const [scheduledDateTo, setScheduledDateTo] = useState<string>('');
-  const [createdOnDateFrom, setCreatedOnDateFrom] = useState<string>('');
-  const [createdOnDateTo, setCreatedOnDateTo] = useState<string>('');
+  const [scheduledDateFrom, setScheduledDateFrom] = useState<string>(restored.scheduledFrom);
+  const [scheduledDateTo, setScheduledDateTo] = useState<string>(restored.scheduledTo);
+  const [createdOnDateFrom, setCreatedOnDateFrom] = useState<string>(restored.createdFrom);
+  const [createdOnDateTo, setCreatedOnDateTo] = useState<string>(restored.createdTo);
   const [isFiltering, setIsFiltering] = useState(false)
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: restored.page,
     total_count: 0,
     total_pages: 0,
   });
+
+  // Mirrors the list position into the URL (replacing the current history entry, so
+  // paging does not add Back steps) for the Back button to return to.
+  const syncListUrl = (state: AmenityBookingListUrlState) => {
+    setSearchParams((prev) => writeListUrlState(prev, state), { replace: true });
+  };
 
   useEffect(() => {
     const fetchFacilities = async () => {
@@ -176,13 +192,9 @@ const AmenityBookingListClubDashboard = () => {
   }, [bookings, error]);
 
   useEffect(() => {
-    setIsPageLoading(true);
-    dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: pagination.current_page }))
-      .then(() => setIsPageLoading(false))
-      .catch(() => {
-        setIsPageLoading(false);
-        toast.error('Failed to fetch bookings');
-      });
+    // Initial load: the page (and filters) restored from the URL, page 1 on a fresh visit.
+    // The URL already holds this state, so it is not rewritten here.
+    handlePageChange(restored.page, false);
   }, [dispatch, baseUrl, token]);
 
   const handleStatusChange = async (bookingId: number, newStatus: string) => {
@@ -316,6 +328,15 @@ const AmenityBookingListClubDashboard = () => {
         total_count: response.pagination.total_count || 0,
         total_pages: response.pagination.total_pages || 0,
       });
+      syncListUrl({
+        page: response.pagination.current_page || 1,
+        facilityName: filters.facilityName,
+        status: filters.status,
+        scheduledFrom: scheduledDateFrom,
+        scheduledTo: scheduledDateTo,
+        createdFrom: createdOnDateFrom,
+        createdTo: createdOnDateTo,
+      });
       setIsFilterModalOpen(false);
       toast.success('Filters applied successfully');
       cmEvents.filtered("Amenity Booking", "amenity_booking_list", {
@@ -359,12 +380,23 @@ const AmenityBookingListClubDashboard = () => {
     }
   };
 
-  const handlePageChange = async (page: number) => {
+  const handlePageChange = async (page: number, updateUrl = true) => {
     setIsPageLoading(true);
     setPagination((prev) => ({
       ...prev,
       current_page: page,
     }));
+    if (updateUrl) {
+      syncListUrl({
+        page,
+        facilityName: filters.facilityName,
+        status: filters.status,
+        scheduledFrom: scheduledDateFrom,
+        scheduledTo: scheduledDateTo,
+        createdFrom: createdOnDateFrom,
+        createdTo: createdOnDateTo,
+      });
+    }
 
     try {
       // Check if any filters are applied

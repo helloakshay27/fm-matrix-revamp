@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Eye, Download, Loader2, AlertTriangle, CreditCard } from "lucide-react";
@@ -9,6 +9,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useBackWithFallback } from "@/hooks/useBackWithFallback";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import {
   RESOURCE_TYPE_LABELS,
   downloadLockAccountBillInvoice,
 } from "./lockAccountBillInvoiceUtils";
+import { readLockBillsUrlState, writeLockBillsUrlState } from "./lockAccountBillsListUrlState";
 
 const STATUS_OPTIONS = [
   "draft",
@@ -40,6 +42,17 @@ const STATUS_OPTIONS = [
 // see FacilityBooking#current_status. MySQL's default collation here is case-insensitive,
 // so sending "Cancelled" still matches the stored "cancelled".
 const FACILITY_BOOKING_STATUS_OPTIONS = ["Confirmed", "Cancelled", "Pending"];
+
+// What the list's controls can hold; the page, filters and search are kept in the URL (see
+// lockAccountBillsListUrlState.ts) so Back from a bill returns to the same place in the list.
+const RESOURCE_TYPE_OPTIONS = ["FacilityBooking", "ClubMemberAllocation", "Other"];
+const PER_PAGE_OPTIONS = [10, 20, 50, 100];
+const URL_STATE_OPTIONS = {
+  resourceTypes: RESOURCE_TYPE_OPTIONS,
+  statuses: STATUS_OPTIONS,
+  facilityBookingStatuses: FACILITY_BOOKING_STATUS_OPTIONS,
+  perPageOptions: PER_PAGE_OPTIONS,
+};
 
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Action", sortable: false, hideable: false, draggable: false },
@@ -69,23 +82,52 @@ const formatCurrency = (value?: number | null) => {
 
 export const LockAccountBillsDashboard: React.FC = () => {
   const navigate = useNavigate();
+  // Browser Back goes to the Club Management dashboard when this page was opened directly
+  // and there is no earlier entry in the history.
+  useBackWithFallback("/club-management/dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [restored] = useState(() => {
+    const state = readLockBillsUrlState(searchParams, URL_STATE_OPTIONS);
+    // A Facility Booking status only applies to Facility Booking bills (see the effect below).
+    if (state.facilityBookingStatus !== "all") state.resourceType = "FacilityBooking";
+    return state;
+  });
   const [bills, setBills] = useState<LockAccountBillRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [markPaymentBill, setMarkPaymentBill] = useState<LockAccountBillRecord | null>(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(restored.page);
+  const [perPage, setPerPage] = useState(restored.perPage);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(restored.search);
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
-  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [facilityBookingStatusFilter, setFacilityBookingStatusFilter] = useState<string>("all");
-  const [nonZeroOnly, setNonZeroOnly] = useState(false);
+  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>(restored.resourceType);
+  const [statusFilter, setStatusFilter] = useState<string>(restored.status);
+  const [fromDate, setFromDate] = useState(restored.fromDate);
+  const [toDate, setToDate] = useState(restored.toDate);
+  const [facilityBookingStatusFilter, setFacilityBookingStatusFilter] = useState<string>(restored.facilityBookingStatus);
+  const [nonZeroOnly, setNonZeroOnly] = useState(restored.nonZeroOnly);
+
+  // Mirror the list position into the URL, replacing the current history entry so paging and
+  // filtering do not add Back steps. The URL always matches what is loaded: the search term is
+  // the debounced one, as that is what the request uses.
+  useEffect(() => {
+    const next = writeLockBillsUrlState(searchParams, {
+      page: currentPage,
+      perPage,
+      search: debouncedSearchTerm,
+      resourceType: resourceTypeFilter,
+      status: statusFilter,
+      fromDate,
+      toDate,
+      facilityBookingStatus: facilityBookingStatusFilter,
+      nonZeroOnly,
+    });
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, perPage, debouncedSearchTerm, resourceTypeFilter, statusFilter, fromDate, toDate, facilityBookingStatusFilter, nonZeroOnly]);
 
   // A Facility Booking status filter only makes sense against Facility Booking bills — force
   // the resource type in step with it rather than let the two silently contradict each other
