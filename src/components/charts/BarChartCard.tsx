@@ -15,6 +15,7 @@ import {
 import { BarChart3, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_BAR_PALETTE, VEDA_BAR_COLOR, getVedaBarColor } from "@/styles/vedaTheme";
 import type { ChartInsightTone } from "./PieChartCard";
 
 export interface BarSeriesConfig {
@@ -22,7 +23,12 @@ export interface BarSeriesConfig {
   name: string;
 }
 
-const BAR_SERIES_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
+/**
+ * Vertical columns: category i (single series) or series i (multi series) → VEDA_BAR_PALETTE[i % 4].
+ * Horizontal bars: every bar of a single-series chart is VEDA_BAR_COLOR; multi-series horizontal
+ * charts take VEDA_BAR_PALETTE[i % 4] per series so the legend stays readable.
+ */
+const SERIES_COLORS = [...VEDA_BAR_PALETTE];
 
 const INSIGHT_TONE_CLASSES: Record<ChartInsightTone, string> = {
   info: "text-[#2a5f8f]",
@@ -88,9 +94,9 @@ export interface BarChartCardProps {
   orientation?: "vertical" | "horizontal";
   /** Stack all series into one bar per category instead of grouping them side by side. */
   stacked?: boolean;
-  /** Override per-bar color by category index instead of by series (only for a single series). */
+  /** Accepted for callers. Single-series vertical bars take VEDA_BAR_PALETTE by category index; horizontal ones are VEDA_BAR_COLOR. */
   categoryColors?: string[];
-  /** Override the default per-series color order (only meaningful when series.length > 1). */
+  /** Accepted for callers. Multi-series charts take VEDA_BAR_PALETTE by series index. */
   seriesColors?: string[];
   valueDomain?: [number, number];
   valueTicks?: number[];
@@ -131,8 +137,7 @@ export function BarChartCard({
   const showDirectLabels = data.length <= 6 && !stacked;
   const isHorizontal = orientation === "horizontal";
   const isSingleSeries = series.length === 1 && !stacked;
-  const resolvedCategoryColors = isSingleSeries ? categoryColors ?? BAR_SERIES_COLORS : categoryColors;
-  const resolvedSeriesColors = seriesColors ?? BAR_SERIES_COLORS;
+  const resolvedSeriesColors = SERIES_COLORS;
 
   const valueAxis = (
     <XAxis
@@ -221,14 +226,13 @@ export function BarChartCard({
                   maxBarSize={isHorizontal ? 22 : 40}
                   stackId={stacked ? "stack" : undefined}
                 >
-                  {isSingleSeries
-                    ? data.map((_, categoryIndex) => (
-                        <Cell
-                          key={categoryIndex}
-                          fill={resolvedCategoryColors![categoryIndex % resolvedCategoryColors!.length]}
-                        />
-                      ))
-                    : null}
+                  {isSingleSeries &&
+                    data.map((_, index) => (
+                      <Cell
+                        key={index}
+                        fill={isHorizontal ? VEDA_BAR_COLOR : getVedaBarColor(index)}
+                      />
+                    ))}
                   {showDirectLabels && labelFormatter && (
                     <LabelList
                       dataKey={s.dataKey}

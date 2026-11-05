@@ -11,11 +11,12 @@ import {
   Star,
   Store,
   Database,
-  Settings as SettingsIcon,
+  SlidersHorizontal,
+  Home,
+  LogOut,
   Calculator,
-  ChevronLeft,
-  CalendarDays,
   ChevronDown,
+  ChevronsUpDown,
   RotateCcw,
   Lightbulb,
   X,
@@ -25,6 +26,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PeriodCalendarPopover, type PeriodMode } from "@/components/dashboard/PeriodCalendarPopover";
+import "@/styles/veda-dashboard.css";
 import {
   PieChartCard,
   BarChartCard,
@@ -59,6 +62,30 @@ import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 import { FinancePanel } from "@/components/dashboard/FinancePanel";
 import { CrmPanel } from "@/components/dashboard/CrmPanel";
+import { TransitioningPanel } from "@/components/dashboard/TransitioningPanel";
+import { OverviewPanel } from "@/components/dashboard/OverviewPanel";
+import { UtilityPanel } from "@/components/dashboard/UtilityPanel";
+import { SecurityPanel } from "@/components/dashboard/SecurityPanel";
+import { VasPanel } from "@/components/dashboard/VasPanel";
+import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
+import { useMyDashboardStore } from "@/stores/myDashboardStore";
+import { formatChartLabel } from "@/utils/formatChartLabel";
+import { getUser, clearAuth, logoutUser } from "@/utils/auth";
+import { permissionService } from "@/services/permissionService";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  fetchDashboardLayouts,
+  createDashboardLayout,
+  updateDashboardLayout,
+  deleteDashboardLayout,
+} from "@/services/dashboardLayoutAPI";
 import { fetchAllowedSites } from "@/services/sitesAPI";
 import {
   useTicketsDashboardData,
@@ -720,136 +747,81 @@ function periodButtonLabel({ from, to }: { from: Date; to: Date }): string {
   if (isFirstOfMonth && isLastOfMonth && sameMonth) {
     return from.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   }
-  return `${String(from.getDate()).padStart(2, "0")}/${String(from.getMonth() + 1).padStart(2, "0")} - ${formatDisplayDate(to)}`;
+  return `${formatDisplayDate(from)} - ${formatDisplayDate(to)}`;
 }
 
-type PeriodMode = "day" | "month" | "range";
-
-interface SelectPeriodPopoverProps {
-  initialRange: { from: Date; to: Date };
-  onApply: (range: { from: Date; to: Date }) => void;
-  onReset: () => void;
-  onClose: () => void;
+/**
+ * Closes a header popover when the user clicks anywhere outside it (or presses Escape).
+ * `ref` should wrap both the trigger button and the popover, so clicking the trigger still toggles.
+ * Option lists from Radix selects are portalled to <body>, so clicks inside those count as "inside".
+ */
+function useDismissOnOutsideClick(ref: React.RefObject<HTMLElement>, active: boolean, onDismiss: () => void) {
+  useEffect(() => {
+    if (!active) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (!target || ref.current?.contains(target)) return;
+      if (target.closest?.('[data-radix-popper-content-wrapper], [role="listbox"]')) return;
+      onDismiss();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Escape closes an open dropdown list first; only dismiss the popover when none is open.
+      if (e.key === "Escape" && !document.querySelector('[role="listbox"]')) onDismiss();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [ref, active, onDismiss]);
 }
 
-function SelectPeriodPopover({ initialRange, onApply, onReset, onClose }: SelectPeriodPopoverProps) {
-  const today = new Date();
-  const todayStr = formatApiDate(today);
-  const [mode, setMode] = useState<PeriodMode>("range");
-  const [dayValue, setDayValue] = useState(formatApiDate(initialRange.to));
-  const [monthValue, setMonthValue] = useState(
-    `${initialRange.to.getFullYear()}-${String(initialRange.to.getMonth() + 1).padStart(2, "0")}`
-  );
-  const [fromValue, setFromValue] = useState(formatApiDate(initialRange.from));
-  const [toValue, setToValue] = useState(formatApiDate(initialRange.to));
-
-  const handleApply = () => {
-    if (mode === "day") {
-      const d = new Date(`${dayValue}T00:00:00`);
-      onApply({ from: d, to: d });
-    } else if (mode === "month") {
-      const [y, m] = monthValue.split("-").map(Number);
-      const from = new Date(y, m - 1, 1);
-      const lastDay = new Date(y, m, 0);
-      const to = lastDay > today ? today : lastDay;
-      onApply({ from, to });
-    } else {
-      onApply({ from: new Date(`${fromValue}T00:00:00`), to: new Date(`${toValue}T00:00:00`) });
-    }
-    onClose();
-  };
-
-  return (
-    <div className="w-72 rounded-lg border border-brand-border bg-white p-4 shadow-lg">
-      <div className="text-brand-caption font-bold text-brand-green uppercase tracking-wide mb-3">Select Period</div>
-      <div className="flex rounded-full border border-brand-sidebar overflow-hidden mb-4">
-        {(["day", "month", "range"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={cn(
-              "flex-1 py-1.5 text-brand-body-5 font-semibold capitalize transition-colors",
-              mode === m ? "bg-brand text-white" : "text-brand-green hover:bg-brand-light"
-            )}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
-
-      {mode === "day" && (
-        <div className="mb-4">
-          <label className="block text-brand-body-5 text-brand-text-light mb-1">Date:</label>
-          <input
-            type="date"
-            value={dayValue}
-            max={todayStr}
-            onChange={(e) => setDayValue(e.target.value)}
-            className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-          />
-        </div>
-      )}
-      {mode === "month" && (
-        <div className="mb-4">
-          <label className="block text-brand-body-5 text-brand-text-light mb-1">Month:</label>
-          <input
-            type="month"
-            value={monthValue}
-            max={todayStr.slice(0, 7)}
-            onChange={(e) => setMonthValue(e.target.value)}
-            className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-          />
-        </div>
-      )}
-      {mode === "range" && (
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex-1">
-            <label className="block text-brand-body-5 text-brand-text-light mb-1">From:</label>
-            <input
-              type="date"
-              value={fromValue}
-              max={toValue}
-              onChange={(e) => setFromValue(e.target.value)}
-              className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-brand-body-5 text-brand-text-light mb-1">To:</label>
-            <input
-              type="date"
-              value={toValue}
-              min={fromValue}
-              max={todayStr}
-              onChange={(e) => setToValue(e.target.value)}
-              className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleApply}
-          className="flex-1 rounded-full bg-brand py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
-        >
-          Apply
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onReset();
-            onClose();
-          }}
-          className="rounded-full border border-brand-sidebar px-4 py-2 text-brand-body-4 font-semibold text-brand-green hover:bg-brand-light"
-        >
-          Reset
-        </button>
-      </div>
-    </div>
-  );
+/**
+ * Logged-in user for the top-bar avatar. Reads the stored user object, falling back to the flat
+ * firstname / lastname / email keys some login paths write instead.
+ */
+function getHeaderUser(): { name: string; initials: string } {
+  let user: { firstname?: string; lastname?: string; email?: string } | null = null;
+  try {
+    user = getUser();
+  } catch {
+    user = null;
+  }
+  const first = (user?.firstname ?? localStorage.getItem("firstname") ?? "").trim();
+  const last = (user?.lastname ?? localStorage.getItem("lastname") ?? "").trim();
+  const email = (user?.email ?? localStorage.getItem("email") ?? "").trim();
+  const name = `${first} ${last}`.trim() || email || "User";
+  const initials =
+    (first[0] ?? "") + (last[0] ?? "") ||
+    name.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2);
+  return { name, initials: (initials || "U").toUpperCase() };
 }
+
+/** Name shown beside the logo in the top bar. */
+const BRAND_NAME = "Dashboard View";
+
+/** Which Day / Month / Range tab the applied {from, to} corresponds to, so the top-bar control can highlight it. */
+function periodModeOf({ from, to }: { from: Date; to: Date }): PeriodMode {
+  if (from.toDateString() === to.toDateString()) return "day";
+  const sameMonth = from.getFullYear() === to.getFullYear() && from.getMonth() === to.getMonth();
+  const endOfMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0);
+  const reachesMonthEnd = to.toDateString() === endOfMonth.toDateString() || to.toDateString() === new Date().toDateString();
+  if (sameMonth && from.getDate() === 1 && reachesMonthEnd) return "month";
+  return "range";
+}
+
+interface SiteOption {
+  id: number;
+  name: string;
+}
+
+// The dropdown list is portalled to <body> (outside the page's theme variables), so it's styled with
+// literal values: white card, soft shadow, rounded rows with a light-grey hover.
+const FILTER_SELECT_CONTENT_CLASS =
+  "z-[60] max-h-72 rounded-xl border border-black/10 bg-white p-1 shadow-[0_12px_28px_rgba(26,26,24,0.16)]";
+const FILTER_SELECT_ITEM_CLASS =
+  "rounded-lg py-2 text-[13.5px] text-[#1a1a18] focus:bg-[#f5f4f0] focus:text-[#1a1a18] data-[state=checked]:font-semibold";
 
 interface FiltersPopoverProps {
   buildingOptions: string[];
@@ -872,51 +844,68 @@ function FiltersPopover({
   const [category, setCategory] = useState(initialCategory);
 
   return (
-    <div className="w-72 rounded-lg border border-brand-border bg-white p-4 shadow-lg">
-      <div className="text-brand-caption font-bold text-brand-green uppercase tracking-wide mb-3">Filters</div>
-      <div className="mb-3">
-        <label className="block text-brand-body-5 text-brand-text-light mb-1">Building / Wing</label>
-        <select
-          value={building}
-          onChange={(e) => setBuilding(e.target.value)}
-          className="w-full rounded-full border border-brand px-3 py-2 text-brand-body-4 text-brand-text"
-        >
-          <option value="all">All Buildings</option>
+    <div className="pc-pop pc-filters">
+      <div className="pc-head">
+        <div className="pc-title pc-title-left">Filters</div>
+      </div>
+
+      <label className="pc-label" htmlFor="revamp-filter-building">Building / Wing</label>
+      <Select value={building} onValueChange={setBuilding}>
+        <SelectTrigger id="revamp-filter-building" className="pc-select">
+          <SelectValue placeholder="All Buildings" />
+        </SelectTrigger>
+        <SelectContent className={FILTER_SELECT_CONTENT_CLASS}>
+          <SelectItem value="all" className={FILTER_SELECT_ITEM_CLASS}>All Buildings</SelectItem>
           {buildingOptions.map((b) => (
-            <option key={b} value={b}>
+            <SelectItem key={b} value={b} className={FILTER_SELECT_ITEM_CLASS}>
               {b}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-        {buildingOptions.length === 0 && (
-          <p className="mt-1 text-brand-caption text-brand-text-light">No building-level data loaded for this period yet.</p>
-        )}
-      </div>
-      <div className="mb-4">
-        <label className="block text-brand-body-5 text-brand-text-light mb-1">Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-        >
-          <option value="all">All Categories</option>
+        </SelectContent>
+      </Select>
+      {buildingOptions.length === 0 && (
+        <p className="pc-note">No building-level data loaded for this period yet.</p>
+      )}
+
+      <label className="pc-label" htmlFor="revamp-filter-category">Category</label>
+      <Select value={category} onValueChange={setCategory}>
+        <SelectTrigger id="revamp-filter-category" className="pc-select">
+          <SelectValue placeholder="All Categories" />
+        </SelectTrigger>
+        <SelectContent className={FILTER_SELECT_CONTENT_CLASS}>
+          <SelectItem value="all" className={FILTER_SELECT_ITEM_CLASS}>All Categories</SelectItem>
           {categoryOptions.map((c) => (
-            <option key={c} value={c}>
+            <SelectItem key={c} value={c} className={FILTER_SELECT_ITEM_CLASS}>
               {c}
-            </option>
+            </SelectItem>
           ))}
-        </select>
+        </SelectContent>
+      </Select>
+
+      <div className="pc-actions">
+        <button
+          type="button"
+          onClick={() => {
+            onApply(building, category);
+            onClose();
+          }}
+          className="pc-primary"
+        >
+          Apply
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setBuilding("all");
+            setCategory("all");
+            onApply("all", "all");
+            onClose();
+          }}
+          className="pc-ghost"
+        >
+          Clear
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          onApply(building, category);
-          onClose();
-        }}
-        className="w-full rounded-full bg-brand py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
-      >
-        Apply Filters
-      </button>
     </div>
   );
 }
@@ -925,50 +914,6 @@ interface HeaderSearchResult {
   moduleKey: string;
   moduleLabel: string;
   subTab: string;
-}
-
-interface SearchPopoverProps {
-  query: string;
-  onQueryChange: (query: string) => void;
-  results: HeaderSearchResult[];
-  onSelect: (result: HeaderSearchResult) => void;
-}
-
-function SearchPopover({ query, onQueryChange, results, onSelect }: SearchPopoverProps) {
-  return (
-    <div className="w-80 rounded-lg border border-brand-border bg-white p-3 shadow-lg">
-      <div className="flex items-center gap-2 rounded-full border border-brand-sidebar px-3 py-2">
-        <Search className="h-4 w-4 flex-shrink-0 text-brand-text-light" />
-        <input
-          autoFocus
-          type="text"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search: vendor, patrol, billing, AMC…"
-          className="w-full flex-1 text-brand-body-4 text-brand-text outline-none"
-        />
-      </div>
-      {query.trim() && (
-        <div className="mt-2 max-h-64 overflow-y-auto">
-          {results.length ? (
-            results.map((r) => (
-              <button
-                key={`${r.moduleKey}-${r.subTab}`}
-                type="button"
-                onClick={() => onSelect(r)}
-                className="w-full rounded-md px-3 py-2 text-left text-brand-body-5 text-brand-text hover:bg-brand-light"
-              >
-                <span className="text-brand-text-light">{r.moduleLabel}</span> {" › "}
-                <span className="font-semibold">{r.subTab}</span>
-              </button>
-            ))
-          ) : (
-            <p className="px-3 py-2 text-brand-body-5 text-brand-text-light">No matching module or tab.</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
@@ -1652,13 +1597,16 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
 }
 
 export default function RevampDashboardPage() {
-  const [activeModule, setActiveModule] = useState<string>(MODULES[0].key);
+  // "My Dashboard" is pinned first in MODULES so its tab renders first, but the page should land on
+  // Maintenance by default, not an (often empty) My Dashboard. Its first sub-tab (Tickets) opens with it.
+  const [activeModule, setActiveModule] = useState<string>("maintenance");
   const current = MODULES.find((m) => m.key === activeModule) ?? MODULES[0];
   const [activeSubTab, setActiveSubTab] = useState<string>(current.subTabs[0]);
   const [goldenActive, setGoldenActive] = useState(false);
   const [redFlagActive, setRedFlagActive] = useState(false);
-  const [railCollapsed, setRailCollapsed] = useState(false);
-  const [activeInsightCategory, setActiveInsightCategory] = useState("critical");
+  // The Insights panel starts collapsed on every load; the user expands it on demand.
+  const [railCollapsed, setRailCollapsed] = useState(true);
+  const [activeInsightCategory, setActiveInsightCategory] = useState("");
   const insightRailData = useMemo(() => getInsightRailData(activeModule), [activeModule]);
   useEffect(() => {
     setActiveInsightCategory(insightRailData.categories[0]?.key ?? "");
@@ -1747,7 +1695,14 @@ export default function RevampDashboardPage() {
 
   const [dashboardDateRange, setDashboardDateRange] = useState<{ from: Date; to: Date }>(getDefaultDashboardDateRange);
   const [periodPopupOpen, setPeriodPopupOpen] = useState(false);
+  const [periodPopupMode, setPeriodPopupMode] = useState<PeriodMode>("range");
+  const navigate = useNavigate();
+  const headerUser = useMemo(getHeaderUser, []);
+  const periodWrapRef = useRef<HTMLDivElement>(null);
+  const filtersWrapRef = useRef<HTMLDivElement>(null);
   const [filtersPopupOpen, setFiltersPopupOpen] = useState(false);
+  useDismissOnOutsideClick(periodWrapRef, periodPopupOpen, () => setPeriodPopupOpen(false));
+  useDismissOnOutsideClick(filtersWrapRef, filtersPopupOpen, () => setFiltersPopupOpen(false));
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const [appliedBuilding, setAppliedBuilding] = useState("all");
   const [appliedCategory, setAppliedCategory] = useState("all");
@@ -3051,10 +3006,6 @@ export default function RevampDashboardPage() {
     return results.slice(0, 12);
   }, [headerSearchQuery]);
 
-  const scrollTabs = (direction: -1 | 1) => {
-    tabsRef.current?.scrollBy({ left: direction * 200, behavior: "smooth" });
-  };
-
   const handleModuleChange = (moduleKey: string) => {
     setActiveModule(moduleKey);
     const nextModule = MODULES.find((m) => m.key === moduleKey);
@@ -3067,52 +3018,131 @@ export default function RevampDashboardPage() {
   };
 
   return (
-    <div className="bg-brand-bg h-screen flex flex-col overflow-hidden">
-      <div ref={navRef} className="flex-shrink-0 z-30 bg-brand-bg">
-      {/* Title bar */}
-      <div className="flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
-        <h1 className="text-brand-h2 font-bold text-brand-text">Dashboard View</h1>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-brand-body-4 text-brand-text-light md:inline">
-            {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+    <div className="veda-theme bg-brand-bg h-screen flex flex-col overflow-hidden" style={VEDA_CSS_VARS}>
+      <div ref={navRef} className="veda-nav flex-shrink-0 z-30 bg-brand-bg">
+      {/* Top bar: logo · site · search · period · filters */}
+      <div className="veda-topbar vt-bar flex flex-wrap items-center gap-x-3 gap-y-2 bg-white border-b border-brand-border px-6 py-3">
+        <div className="vt-brand flex flex-shrink-0 items-center gap-2.5">
+          <span className="vt-logo" aria-hidden="true">
+            <Building2 className="h-5 w-5" strokeWidth={2} />
           </span>
+          <span className="vt-brand-name hidden md:inline">{BRAND_NAME}</span>
+        </div>
 
-          <Select
-            value={appliedSite}
-            onValueChange={handleSiteChange}
-            disabled={sitesLoading || allowedSites.length === 0}
+        <Select
+          value={appliedSite}
+          onValueChange={handleSiteChange}
+          disabled={sitesLoading || allowedSites.length === 0}
+        >
+          <SelectTrigger className="vt-site" aria-label="Select site">
+            <div className="vt-site-text">
+              <div className="vt-site-title">Select site</div>
+              <div className="vt-site-sub">
+                <SelectValue placeholder="No sites" />
+              </div>
+            </div>
+            <div className="vt-site-icon">
+              <ChevronsUpDown className="h-4 w-4" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sites</SelectItem>
+            {allowedSites.map((site) => (
+              <SelectItem key={site.id} value={String(site.id)}>
+                {site.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="vt-actions ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div
+            className="vt-search relative"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setSearchPopupOpen(false);
+            }}
           >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select Site" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sites</SelectItem>
-              {allowedSites.map((site) => (
-                <SelectItem key={site.id} value={String(site.id)}>
-                  {site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setPeriodPopupOpen((v) => !v);
-                setFiltersPopupOpen(false);
-                setSearchPopupOpen(false);
+            <Search className="vt-search-icon h-4 w-4" />
+            <input
+              type="text"
+              value={headerSearchQuery}
+              onChange={(e) => {
+                setHeaderSearchQuery(e.target.value);
+                setSearchPopupOpen(true);
               }}
-              className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
-            >
-              <CalendarDays className="w-4 h-4" />
-              {periodButtonLabel(dashboardDateRange)}
-              <ChevronDown className="w-4 h-4" />
-            </button>
+              onFocus={() => {
+                setSearchPopupOpen(true);
+                setPeriodPopupOpen(false);
+                setFiltersPopupOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setHeaderSearchQuery("");
+                  setSearchPopupOpen(false);
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Enter" && headerSearchResults[0]) {
+                  navigateTo(headerSearchResults[0].moduleKey, headerSearchResults[0].subTab);
+                  setSearchPopupOpen(false);
+                  setHeaderSearchQuery("");
+                }
+              }}
+              placeholder="Search modules, tabs, vendor, AMC…"
+              aria-label="Search dashboard"
+              className="vt-search-input"
+            />
+            {searchPopupOpen && headerSearchQuery.trim() && (
+              <div
+                className="vt-search-results"
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                {headerSearchResults.length ? (
+                  headerSearchResults.map((r) => (
+                    <button
+                      key={`${r.moduleKey}-${r.subTab}`}
+                      type="button"
+                      onClick={() => {
+                        navigateTo(r.moduleKey, r.subTab);
+                        setSearchPopupOpen(false);
+                        setHeaderSearchQuery("");
+                      }}
+                      className="vt-search-result"
+                    >
+                      <span className="text-brand-text-light">{r.moduleLabel}</span> {" › "}
+                      <span className="font-semibold">{r.subTab}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-brand-body-5 text-brand-text-light">No matching module or tab.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div ref={periodWrapRef} className="vt-period-wrap relative flex items-center gap-2">
+            <span className="vt-period-label hidden 2xl:inline">{periodButtonLabel(dashboardDateRange)}</span>
+            <div className="vt-seg" role="group" aria-label="Period" title={periodButtonLabel(dashboardDateRange)}>
+              {(["day", "month", "range"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setPeriodPopupMode(m);
+                    setPeriodPopupOpen(true);
+                    setFiltersPopupOpen(false);
+                    setSearchPopupOpen(false);
+                  }}
+                  className={cn("vt-seg-btn", periodModeOf(dashboardDateRange) === m && "on")}
+                >
+                  {m === "day" ? "Day" : m === "month" ? "Month" : "Range"}
+                </button>
+              ))}
+            </div>
             {periodPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
-                <SelectPeriodPopover
+                <PeriodCalendarPopover
+                  key={periodPopupMode}
                   initialRange={dashboardDateRange}
+                  mode={periodPopupMode}
                   onApply={(range) => setDashboardDateRange(range)}
                   onReset={() => setDashboardDateRange(getDefaultDashboardDateRange())}
                   onClose={() => setPeriodPopupOpen(false)}
@@ -3121,7 +3151,7 @@ export default function RevampDashboardPage() {
             )}
           </div>
 
-          <div className="relative">
+          <div ref={filtersWrapRef} className="vt-filters-wrap relative">
             <button
               type="button"
               onClick={() => {
@@ -3136,7 +3166,7 @@ export default function RevampDashboardPage() {
                 appliedBuilding !== "all" || appliedCategory !== "all" ? "border-brand text-brand" : "border-brand-border"
               )}
             >
-              <SettingsIcon className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4" />
             </button>
             {filtersPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
@@ -3155,49 +3185,47 @@ export default function RevampDashboardPage() {
             )}
           </div>
 
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setSearchPopupOpen((v) => !v);
-                setPeriodPopupOpen(false);
-                setFiltersPopupOpen(false);
-              }}
-              aria-label="Search"
-              title="Search"
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-brand-border text-brand-text hover:bg-brand-light"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="vt-avatar" aria-label={`Account menu for ${headerUser.name}`} title={headerUser.name}>
+                {headerUser.initials}
+              </button>
+            </DropdownMenuTrigger>
+            {/* Portalled to <body>, so styled with literal values rather than theme variables. */}
+            <DropdownMenuContent
+              align="end"
+              sideOffset={10}
+              className="w-56 rounded-2xl border border-black/10 bg-white p-2 shadow-[0_18px_40px_rgba(26,26,24,0.16)]"
             >
-              <Search className="w-4 h-4" />
-            </button>
-            {searchPopupOpen && (
-              <div className="absolute right-0 top-full z-40 mt-2">
-                <SearchPopover
-                  query={headerSearchQuery}
-                  onQueryChange={setHeaderSearchQuery}
-                  results={headerSearchResults}
-                  onSelect={(r) => {
-                    navigateTo(r.moduleKey, r.subTab);
-                    setSearchPopupOpen(false);
-                    setHeaderSearchQuery("");
-                  }}
-                />
-              </div>
-            )}
-          </div>
+              <div className="truncate px-3 py-2 text-[14px] font-bold text-[#1a1a18]">{headerUser.name}</div>
+              <DropdownMenuSeparator className="bg-black/10" />
+              <DropdownMenuItem
+                onClick={() => navigate("/")}
+                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-[#1a1a18] focus:bg-[#f5f4f0] focus:text-[#1a1a18]"
+              >
+                <Home className="h-[18px] w-[18px]" />
+                Back to Home
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async () => {
+                  await logoutUser();
+                  permissionService.clearUserData();
+                  clearAuth();
+                  window.location.assign("/login");
+                }}
+                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium text-[#B23A2F] focus:bg-[#fbeceb] focus:text-[#B23A2F]"
+              >
+                <LogOut className="h-[18px] w-[18px]" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {/* Underline tab nav */}
-      <div className="flex items-center bg-white border-b border-brand-border px-2">
-        <button
-          type="button"
-          onClick={() => scrollTabs(-1)}
-          className="flex-shrink-0 p-2 text-brand-text-light hover:text-brand-text"
-          aria-label="Scroll tabs left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div ref={tabsRef} className="flex overflow-x-auto scrollbar-hide">
+      <div className="veda-modtabs flex items-center bg-white border-b border-brand-border px-2">
+        <div ref={tabsRef} className="veda-seg flex overflow-x-auto scrollbar-hide">
           {MODULES.map((module) => {
             const isActive = module.key === activeModule;
             return (
@@ -3221,7 +3249,7 @@ export default function RevampDashboardPage() {
 
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
         <div className="flex items-start gap-4 flex-row-reverse">
         <InsightsRail
           collapsed={railCollapsed}
@@ -3268,23 +3296,26 @@ export default function RevampDashboardPage() {
         </div>
         {isTicketsView ? (
           <>
-          <div className="relative w-full">
-            {(sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && (
-              <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
-                <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
-                {sitesLoading ? "Resolving your allowed sites…" : "Loading ticket, asset, audit, AMC, checklist, inventory, waste, attendance, survey and vendor analytics for the selected sites and date range…"}
+          {/* veda-loading: while any Maintenance data is loading, every card shows as a soft shimmering
+              placeholder (see veda-dashboard.css) instead of "—" / "Loading…" / "No data" text. */}
+          <div
+            className={cn(
+              "veda-grid relative w-full",
+              (sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && "veda-loading"
+            )}
+          >
+            {!isMyDashboardModule && (
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  onClick={resetTicketsLayout}
+                  className="flex items-center gap-1.5 text-brand-body-5 text-brand-text-light hover:text-brand-green"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset layout
+                </button>
               </div>
             )}
-            <div className="flex justify-end mb-2">
-              <button
-                type="button"
-                onClick={resetTicketsLayout}
-                className="flex items-center gap-1.5 text-brand-body-5 text-brand-text-light hover:text-brand-green"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset layout
-              </button>
-            </div>
 
             <ResponsiveGridLayout
               className="layout"

@@ -1,15 +1,17 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-// Brand-coral intensity scale (matches --color-primary #DA7756), with zero
-// treated as a distinct neutral "no events" state rather than the lightest
-// heat color.
-const HEATMAP_ZERO_COLOR = "#E3E1D9";
+// Grey intensity scale — light to dark, never black. "No tickets" is the lightest neutral so it still
+// reads as a distinct "nothing here" state. (The previous coral #DA7756 for the busiest cells was being
+// recoloured purple by the dashboard theme's legacy-colour remap, so this scale avoids that hex.)
+const HEATMAP_ZERO_COLOR = "#ECEBE6";
 const HEATMAP_LEGEND = [
   { color: HEATMAP_ZERO_COLOR, label: "No tickets" },
-  { color: "#F8E3DA", label: "Light" },
-  { color: "#EFBBA1", label: "Moderate" },
-  { color: "#DA7756", label: "Busiest" },
+  { color: "#D9D7D0", label: "Light" },
+  { color: "#B5B3AB", label: "Moderate" },
+  { color: "#7E7C75", label: "Busiest" },
 ];
 const HEATMAP_COLORS = HEATMAP_LEGEND.slice(1).map((s) => s.color);
 
@@ -19,6 +21,25 @@ function colorForValue(value: number, max: number): string {
   const bucket = Math.min(HEATMAP_COLORS.length - 1, Math.floor(ratio * HEATMAP_COLORS.length));
   return HEATMAP_COLORS[bucket];
 }
+
+// Hover tooltip: soft greys instead of the browser's near-black native tooltip. Portalled to <body>
+// (the grid cards are CSS-transformed, which would break a fixed-position tooltip inside them), so it
+// uses literal colours rather than theme variables.
+const TOOLTIP_STYLE: React.CSSProperties = {
+  position: "fixed",
+  zIndex: 1000,
+  transform: "translate(-50%, calc(-100% - 8px))",
+  pointerEvents: "none",
+  padding: "6px 10px",
+  borderRadius: 8,
+  background: "#E4E2DA",
+  color: "#2E2D2A",
+  border: "1px solid rgba(26, 26, 24, 0.12)",
+  boxShadow: "0 6px 16px rgba(26, 26, 24, 0.14)",
+  fontSize: 12,
+  fontWeight: 500,
+  whiteSpace: "nowrap",
+};
 
 export interface TicketHeatmapCardProps {
   title: string;
@@ -45,6 +66,7 @@ export function TicketHeatmapCard({
   className,
 }: TicketHeatmapCardProps) {
   const max = Math.max(1, ...data.flat());
+  const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
 
   return (
     <Card className={cn("border-brand-border", className)}>
@@ -76,7 +98,15 @@ export function TicketHeatmapCard({
                 {(data[dayIdx] ?? []).map((value, hourIdx) => (
                   <div
                     key={hourIdx}
-                    title={`${day} ${hours[hourIdx]}:00 · ${value} tickets`}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setTip({
+                        text: `${day} ${String(hours[hourIdx]).padStart(2, "0")}:00 · ${value} ${value === 1 ? "ticket" : "tickets"}`,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top,
+                      });
+                    }}
+                    onMouseLeave={() => setTip(null)}
                     className="aspect-square rounded-md"
                     style={{ backgroundColor: colorForValue(value, max) }}
                   />
@@ -96,6 +126,7 @@ export function TicketHeatmapCard({
         </div>
 
         {insight && <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>}
+        {tip && createPortal(<div style={{ ...TOOLTIP_STYLE, left: tip.x, top: tip.y }}>{tip.text}</div>, document.body)}
       </CardContent>
     </Card>
   );

@@ -3,7 +3,7 @@
 // Survey, Vendor, Safety) instead of one hook per module. Each hook follows the same
 // shape: fetch its module's endpoints in parallel via Promise.all, skip
 // entirely while `enabled` is false or sites/dates aren't resolved yet.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchTicketsOverview,
   fetchTicketsTrends,
@@ -133,6 +133,26 @@ interface UseFmDashboardModuleArgs {
   enabled: boolean;
 }
 
+/**
+ * Keeps a module's data alive across tab switches.
+ *
+ * Each dashboard section passes `enabled` = "this tab is showing", so leaving a tab and coming back
+ * flipped it false → true and every hook re-ran all of its requests. Instead, a module is switched on
+ * the first time it's shown and then stays on, and its site / date params are only updated while it
+ * is actually visible. Result: switching tabs never refetches; changing the site or date range
+ * refetches once, when the user next looks at that tab (and immediately for the tab they're on); a
+ * full page reload starts from scratch.
+ */
+function useKeepAliveArgs(args: UseFmDashboardModuleArgs): UseFmDashboardModuleArgs {
+  const activated = useRef(false);
+  const snapshot = useRef({ siteIds: args.siteIds, fromDate: args.fromDate, toDate: args.toDate });
+  if (args.enabled) {
+    activated.current = true;
+    snapshot.current = { siteIds: args.siteIds, fromDate: args.fromDate, toDate: args.toDate };
+  }
+  return { ...snapshot.current, enabled: activated.current };
+}
+
 // ============================================================================
 // Tickets
 // ============================================================================
@@ -153,7 +173,11 @@ const EMPTY_TICKETS_DATA: TicketsDashboardData = {
   quality: null,
 };
 
-export function useTicketsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+// Secondary endpoints must never take the whole module down if one of them errors.
+const optional = <T,>(request: Promise<T>): Promise<T | null> => request.catch(() => null);
+
+export function useTicketsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<TicketsDashboardData>(EMPTY_TICKETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -212,7 +236,8 @@ const EMPTY_ASSETS_DATA: AssetsDashboardData = {
   maintenance: null,
 };
 
-export function useAssetsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAssetsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AssetsDashboardData>(EMPTY_ASSETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -270,7 +295,8 @@ const EMPTY_AUDIT_DATA: AuditDashboardData = {
   findings: null,
 };
 
-export function useAuditDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAuditDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AuditDashboardData>(EMPTY_AUDIT_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -328,7 +354,8 @@ const EMPTY_AMC_DATA: AmcDashboardData = {
   coverage: null,
 };
 
-export function useAmcDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAmcDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AmcDashboardData>(EMPTY_AMC_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -381,7 +408,8 @@ const EMPTY_CHECKLISTS_DATA: ChecklistsDashboardData = {
   findings: null,
 };
 
-export function useChecklistsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useChecklistsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<ChecklistsDashboardData>(EMPTY_CHECKLISTS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -441,7 +469,8 @@ const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
   kpisTable: null,
 };
 
-export function useInventoryDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<InventoryDashboardData>(EMPTY_INVENTORY_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -502,7 +531,8 @@ const EMPTY_WASTE_DATA: WasteDashboardData = {
   records: null,
 };
 
-export function useWasteDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useWasteDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<WasteDashboardData>(EMPTY_WASTE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -563,7 +593,8 @@ const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
   staffingGapVsBreach: null,
 };
 
-export function useAttendanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAttendanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AttendanceDashboardData>(EMPTY_ATTENDANCE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -624,7 +655,8 @@ const EMPTY_SURVEY_DATA: SurveyDashboardData = {
   weeklyCsatBreakdown: null,
 };
 
-export function useSurveyDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<SurveyDashboardData>(EMPTY_SURVEY_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -683,7 +715,8 @@ const EMPTY_VENDOR_DATA: VendorDashboardData = {
   kycRisk: null,
 };
 
-export function useVendorDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useVendorDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<VendorDashboardData>(EMPTY_VENDOR_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -739,7 +772,8 @@ const EMPTY_PERMITS_DATA: PermitsDashboardData = {
   detail: null,
 };
 
-export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function usePermitsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<PermitsDashboardData>(EMPTY_PERMITS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -794,7 +828,8 @@ const EMPTY_INCIDENTS_DATA: IncidentsDashboardData = {
   hotspots: null,
 };
 
-export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useIncidentsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<IncidentsDashboardData>(EMPTY_INCIDENTS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -863,7 +898,8 @@ const EMPTY_CRM_DATA: CrmDashboardData = {
   eventsInsight: null,
 };
 
-export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useCrmDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<CrmDashboardData>(EMPTY_CRM_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -987,7 +1023,8 @@ const EMPTY_FINANCE_DATA: FinanceDashboardData = {
   poWoGrnSesInsight: null,
 };
 
-export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useFinanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<FinanceDashboardData>(EMPTY_FINANCE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
