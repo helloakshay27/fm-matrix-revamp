@@ -14,6 +14,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "preview": "vite preview",
     "generate-icons": "./generate-icons.sh",
+    "kb:catalog": "node scripts/generate-fm-kb-catalog.mjs",
+    "kb:agent": "npm --prefix kb-agent start",
     "electron": "electron .",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "npm run generate-icons && npm run build && electron-builder",

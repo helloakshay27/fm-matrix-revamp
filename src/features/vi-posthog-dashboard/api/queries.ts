@@ -132,9 +132,9 @@ export function useAdoptionTrend(f: QueryFilters) {
 
 export function useGrowth(f: QueryFilters) {
   return useQuery({
-    queryKey: [...ROOT, 'growth', f.to, f.os.join(',')],
+    queryKey: [...ROOT, 'growth', f.from, f.to, f.os.join(',')],
     queryFn: () =>
-      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, os: f.os }),
+      fetchGrowth({ from: f.from, to: f.to, weeks: GROWTH_WEEKS, os: f.os }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -156,6 +156,18 @@ export function useRoles(f: QueryFilters) {
     queryFn: () => fetchRoles(range(f)),
     enabled: f.enabled,
     ...CACHE,
+  });
+}
+
+export function useRecentActiveUsers(f: QueryFilters) {
+  return useQuery({
+    queryKey: [...ROOT, 'recent_active_users', ...keyBase(f)],
+    queryFn: () => fetchRecentActiveUsers(range(f)),
+    enabled: f.enabled,
+    ...CACHE,
+    // A live log: the 10 newest events (not distinct users), refreshed every 15 s.
+    staleTime: 0,
+    refetchInterval: 15 * 1000,
   });
 }
 
