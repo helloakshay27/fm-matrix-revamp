@@ -97,9 +97,10 @@ export function useAdoptionTrend(f: AccountingQueryFilters, weeks = 8) {
 
 export function useGrowth(f: AccountingQueryFilters, weeks = 6) {
   return useQuery({
-    queryKey: [...ROOT, 'growth', f.to, f.os ? f.os.join(',') : 'all', f.provider || 'all', weeks],
+    queryKey: [...ROOT, 'growth', f.from, f.to, f.os ? f.os.join(',') : 'all', f.provider || 'all', weeks],
     queryFn: () =>
       fetchGrowth({
+        from: f.from,
         to: f.to,
         weeks,
         os: f.os,
@@ -110,7 +111,7 @@ export function useGrowth(f: AccountingQueryFilters, weeks = 6) {
   });
 }
 
-export function useRetention(f: AccountingQueryFilters, weeks = 6) {
+export function useRetention(f: AccountingQueryFilters, weeks = 8) {
   return useQuery({
     queryKey: [...ROOT, 'retention', f.to, f.os ? f.os.join(',') : 'all', f.provider || 'all', weeks],
     queryFn: () =>

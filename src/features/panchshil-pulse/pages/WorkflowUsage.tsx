@@ -7,7 +7,8 @@ import { tileToKpi } from "../utils/tileAdapter";
 import { fmtC } from "../utils/calculations";
 import type { ModuleOption } from "../../posthog-dashboard/data/metrics";
 
-const VISIBLE = 8;
+/** Every module / sub-module gets its own button; the row scrolls sideways (see .mnav-buckets). */
+const VISIBLE = Infinity;
 
 // ----------------------------------------------------------------
 // Module / sub-module nav — derived from the API module tree

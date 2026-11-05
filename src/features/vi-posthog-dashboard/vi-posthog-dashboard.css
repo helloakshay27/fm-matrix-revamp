@@ -757,3 +757,13 @@
 /* The date control is the popover above (.daterange / .daterange-pop); this only adds the
    disabled state, which the reference has no need for because its Apply never disables. */
 .vi-ph .dr-apply[disabled]{opacity:.45;cursor:not-allowed}
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.vi-ph .mnav{min-width:0;max-width:100%}
+.vi-ph .mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.vi-ph .mnav-buckets > *{flex:0 0 auto}
+.vi-ph .mnav-buckets button{margin-bottom:0}
+.vi-ph .mnav-mods{min-width:0}
+.vi-ph .mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.vi-ph .mnav-mods .segbar > *{flex:0 0 auto}

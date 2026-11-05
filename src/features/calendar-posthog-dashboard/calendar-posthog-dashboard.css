@@ -730,3 +730,15 @@
   .cal-ph .page{display:block!important}
   .cal-ph .card,.cal-ph .tile,.cal-ph .stat{break-inside:avoid}
 }
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.cal-ph .mnav{min-width:0;max-width:100%}
+.cal-ph .mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.cal-ph .mnav-buckets > *{flex:0 0 auto}
+.cal-ph .mnav-buckets button{margin-bottom:0}
+.cal-ph .mnav-mods{min-width:0}
+.cal-ph .mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.cal-ph .mnav-mods .segbar > *{flex:0 0 auto}
+.cal-ph .mnav-row{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.cal-ph .mnav-row > *{flex:0 0 auto;white-space:nowrap}

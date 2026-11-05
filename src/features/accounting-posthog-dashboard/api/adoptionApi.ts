@@ -42,6 +42,8 @@ export interface AccountingRangeFilters {
 export interface AccountingWeeklyFilters {
   to: string; // YYYY-MM-DD
   weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   os?: AccountingOsType[];
   provider?: string;
 }
@@ -117,7 +119,7 @@ export const fetchAdoptionTrend = (f: AccountingWeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
 
 export const fetchGrowth = (f: AccountingWeeklyFilters) =>
-  get<GrowthResponse>('growth', weeklyParams(f));
+  get<GrowthResponse>('growth', { ...weeklyParams(f), ...(f.from ? { from: f.from } : {}) });
 
 export const fetchRetention = (f: AccountingWeeklyFilters) =>
   get<RetentionResponse>('retention', weeklyParams(f));
@@ -179,7 +181,6 @@ export const fetchRecentActiveUsers = (f: AccountingRangeFilters) =>
 export async function downloadRecentActiveUsers(f: AccountingRangeFilters): Promise<Blob> {
   const qs = new URLSearchParams({
     ...rangeParams(f),
-    limit: '10',
   });
   const response = await client.get<Blob>(
     `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,

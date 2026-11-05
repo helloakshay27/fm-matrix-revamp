@@ -11,13 +11,12 @@ export function ModuleNav() {
     subModulesList, selectedSubModule, setSelectedSubModule, subModulesLoading
   } = useCalendarDashboard();
 
-  // "More" dropdown logic for modules
-  const maxVisibleModules = 8;
+  // Every module and sub-module gets its own button; each row scrolls sideways.
+  const maxVisibleModules = Infinity;
   const visibleModules = modulesList.slice(0, maxVisibleModules);
   const moreModules = modulesList.slice(maxVisibleModules);
 
-  // "More" dropdown logic for submodules
-  const maxVisibleSubModules = 8;
+  const maxVisibleSubModules = Infinity;
   const visibleSubModules = subModulesList.slice(0, maxVisibleSubModules);
   const moreSubModules = subModulesList.slice(maxVisibleSubModules);
 
@@ -36,7 +35,7 @@ export function ModuleNav() {
   return (
     <div className="mnav" id="modNav" style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px' }}>
       {/* 1. Modules Row (Tabs) */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid var(--border)' }}>
+      <div className="mnav-row" style={{ display: 'flex', alignItems: 'flex-end', gap: '20px', borderBottom: '1px solid var(--border)' }}>
         {flowsLoading && modulesList.length === 0 ? (
           Array.from({ length: 6 }).map((_, i) => (
             <span key={i} className="segbar-skeleton" style={{ width: 80, height: 24, borderRadius: 4, background: 'var(--surface2)', opacity: 0.5, marginBottom: '12px' }} />
@@ -58,7 +57,7 @@ export function ModuleNav() {
                     border: 'none',
                     borderRadius: 0,
                     padding: '0 0 12px 0',
-                    marginBottom: '-1px',
+                    whiteSpace: 'nowrap',
                     cursor: 'pointer',
                     fontSize: '15px',
                     fontWeight: isSelected ? 500 : 400,
@@ -102,7 +101,7 @@ export function ModuleNav() {
 
       {/* 2. Submodules Row (Pills) — only shown when the selected module has real sub-paths */}
       {selectedModule && subModulesList.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="mnav-row" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {visibleSubModules.map((sm) => {
             const displayName = sm.name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toLowerCase());
             const isSelected = sm.name === selectedSubModule;

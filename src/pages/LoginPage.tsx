@@ -465,6 +465,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // §6.5 names this property `user_name`; `name` is kept alongside it so existing
         // queries and the PostHog person UI keep working.
         user_name: `${response.firstname || ""} ${response.lastname || ""}`.trim(),
+        // Read by the usage-analytics download's first_name / last_name columns.
+        first_name: response.firstname || undefined,
+        last_name: response.lastname || undefined,
         contact_number: response.mobile ?? response.phone ?? undefined,
         user_type: response.user_type,
         user_role: response.user_type,

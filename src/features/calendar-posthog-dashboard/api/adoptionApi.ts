@@ -42,6 +42,8 @@ export interface CalendarRangeFilters {
 export interface CalendarWeeklyFilters {
   to: string; // YYYY-MM-DD
   weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   os?: CalendarOsType[];
   provider?: string;
 }
@@ -117,7 +119,7 @@ export const fetchAdoptionTrend = (f: CalendarWeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
 
 export const fetchGrowth = (f: CalendarWeeklyFilters) =>
-  get<GrowthResponse>('growth', weeklyParams(f));
+  get<GrowthResponse>('growth', { ...weeklyParams(f), ...(f.from ? { from: f.from } : {}) });
 
 export const fetchRetention = (f: CalendarWeeklyFilters) =>
   get<RetentionResponse>('retention', weeklyParams(f));
@@ -179,7 +181,6 @@ export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
 export async function downloadRecentActiveUsers(f: CalendarRangeFilters): Promise<Blob> {
   const qs = new URLSearchParams({
     ...rangeParams(f),
-    limit: '10',
   });
   const response = await client.get<Blob>(
     `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,

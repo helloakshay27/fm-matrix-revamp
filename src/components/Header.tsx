@@ -218,6 +218,9 @@ export const Header = () => {
       // app's login response carries neither, so they are omitted rather than faked.
       user_name:
         [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      // Read by the usage-analytics download's first_name / last_name columns.
+      first_name: u?.firstname || undefined,
+      last_name: u?.lastname || undefined,
       contact_number: u?.mobile ?? u?.phone ?? undefined,
       role: u?.lock_role?.name ?? undefined,
       is_logged_in: true,

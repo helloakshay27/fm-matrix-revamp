@@ -7,13 +7,19 @@ import {
 } from '../api/adoptionApi';
 import { formatRelativeActivityTime } from '@/features/posthog-dashboard/data/format';
 
-function downloadBlob(blob: Blob): void {
+function downloadBlob(blob: Blob | null): void {
+  // The API client turns a failed (non-JSON) response into `null`.
+  if (!blob) throw new Error('The activity export came back empty');
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = 'recent-active-users.xlsx';
+  // Firefox only follows a click on a link that is in the page, and Safari can
+  // cancel the download if the URL is revoked straight away.
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function ActivityUser({ user }: { user: RecentActiveUser }) {
