@@ -1,6 +1,6 @@
-// FM Dashboard data-fetching hooks — one file for all 10 module sections
+// FM Dashboard data-fetching hooks — one file for all 11 module sections
 // (Tickets, Assets, Audit, AMC, Checklists, Inventory, Waste, Attendance,
-// Survey, Vendor) instead of one hook per module. Each hook follows the same
+// Survey, Vendor, Safety) instead of one hook per module. Each hook follows the same
 // shape: fetch its module's endpoints in parallel via Promise.all, skip
 // entirely while `enabled` is false or sites/dates aren't resolved yet.
 import { useEffect, useState } from "react";
@@ -75,6 +75,7 @@ import {
   fetchInventoryStockHealth,
   fetchInventoryConsumption,
   fetchInventoryOperations,
+  fetchInventoryKpisTable,
   type InventoryOverviewData,
   type InventoryStockHealthData,
   type InventoryConsumptionData,
@@ -83,6 +84,7 @@ import {
   fetchWasteBreakdown,
   fetchWasteTrend,
   fetchWasteVendor,
+  fetchWasteRecords,
   type WasteOverviewData,
   type WasteBreakdownData,
   type WasteTrendData,
@@ -91,6 +93,7 @@ import {
   fetchAttendanceDepartment,
   fetchAttendanceTrend,
   fetchAttendancePatterns,
+  fetchAttendanceStaffingGapVsBreach,
   type AttendanceOverviewData,
   type AttendanceDepartmentData,
   type AttendanceTrendData,
@@ -98,6 +101,7 @@ import {
   fetchSurveyOverview,
   fetchSurveyBreakdown,
   fetchSurveyTrend,
+  fetchSurveyWeeklyCsatBreakdown,
   fetchSurveyTiming,
   type SurveyOverviewData,
   type SurveyBreakdownData,
@@ -117,11 +121,11 @@ import {
   type PermitsOverviewData,
   type PermitsBottleneckData,
   type PermitsDetailData,
-  fetchIncidentsOverview,
+  fetchIncidentKpis,
   fetchIncidentsTrend,
   fetchIncidentsAnalysis,
   fetchIncidentsHotspots,
-  type IncidentsOverviewData,
+  type IncidentKpisData,
   type IncidentsTrendData,
   type IncidentsAnalysisData,
   type IncidentsHotspotsData,
@@ -481,6 +485,7 @@ export interface InventoryDashboardData {
   stockHealth: InventoryStockHealthData | null;
   consumption: InventoryConsumptionData | null;
   operations: InventoryOperationsData | null;
+  kpisTable: unknown;
 }
 
 const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
@@ -488,6 +493,7 @@ const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
   stockHealth: null,
   consumption: null,
   operations: null,
+  kpisTable: null,
 };
 
 export function useInventoryDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -508,10 +514,11 @@ export function useInventoryDashboardData({ siteIds, fromDate, toDate, enabled }
       fetchInventoryStockHealth(params),
       fetchInventoryConsumption(params),
       fetchInventoryOperations(params),
+      fetchInventoryKpisTable(params),
     ])
-      .then(([overview, stockHealth, consumption, operations]) => {
+      .then(([overview, stockHealth, consumption, operations, kpisTable]) => {
         if (cancelled) return;
-        setData({ overview, stockHealth, consumption, operations });
+        setData({ overview, stockHealth, consumption, operations, kpisTable });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -539,6 +546,7 @@ export interface WasteDashboardData {
   breakdown: WasteBreakdownData | null;
   trend: WasteTrendData | null;
   vendor: WasteVendorData | null;
+  records: unknown;
 }
 
 const EMPTY_WASTE_DATA: WasteDashboardData = {
@@ -546,6 +554,7 @@ const EMPTY_WASTE_DATA: WasteDashboardData = {
   breakdown: null,
   trend: null,
   vendor: null,
+  records: null,
 };
 
 export function useWasteDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -561,10 +570,16 @@ export function useWasteDashboardData({ siteIds, fromDate, toDate, enabled }: Us
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([fetchWasteOverview(params), fetchWasteBreakdown(params), fetchWasteTrend(params), fetchWasteVendor(params)])
-      .then(([overview, breakdown, trend, vendor]) => {
+    Promise.all([
+      fetchWasteOverview(params),
+      fetchWasteBreakdown(params),
+      fetchWasteTrend(params),
+      fetchWasteVendor(params),
+      fetchWasteRecords(params),
+    ])
+      .then(([overview, breakdown, trend, vendor, records]) => {
         if (cancelled) return;
-        setData({ overview, breakdown, trend, vendor });
+        setData({ overview, breakdown, trend, vendor, records });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -592,6 +607,7 @@ export interface AttendanceDashboardData {
   department: AttendanceDepartmentData | null;
   trend: AttendanceTrendData | null;
   patterns: AttendancePatternsData | null;
+  staffingGapVsBreach: unknown;
 }
 
 const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
@@ -599,6 +615,7 @@ const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
   department: null,
   trend: null,
   patterns: null,
+  staffingGapVsBreach: null,
 };
 
 export function useAttendanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -619,10 +636,11 @@ export function useAttendanceDashboardData({ siteIds, fromDate, toDate, enabled 
       fetchAttendanceDepartment(params),
       fetchAttendanceTrend(params),
       fetchAttendancePatterns(params),
+      fetchAttendanceStaffingGapVsBreach(params),
     ])
-      .then(([overview, department, trend, patterns]) => {
+      .then(([overview, department, trend, patterns, staffingGapVsBreach]) => {
         if (cancelled) return;
-        setData({ overview, department, trend, patterns });
+        setData({ overview, department, trend, patterns, staffingGapVsBreach });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -650,6 +668,7 @@ export interface SurveyDashboardData {
   breakdown: SurveyBreakdownData | null;
   trend: SurveyTrendData | null;
   timing: SurveyTimingData | null;
+  weeklyCsatBreakdown: unknown;
 }
 
 const EMPTY_SURVEY_DATA: SurveyDashboardData = {
@@ -657,6 +676,7 @@ const EMPTY_SURVEY_DATA: SurveyDashboardData = {
   breakdown: null,
   trend: null,
   timing: null,
+  weeklyCsatBreakdown: null,
 };
 
 export function useSurveyDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
@@ -672,10 +692,16 @@ export function useSurveyDashboardData({ siteIds, fromDate, toDate, enabled }: U
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([fetchSurveyOverview(params), fetchSurveyBreakdown(params), fetchSurveyTrend(params), fetchSurveyTiming(params)])
-      .then(([overview, breakdown, trend, timing]) => {
+    Promise.all([
+      fetchSurveyOverview(params),
+      fetchSurveyBreakdown(params),
+      fetchSurveyTrend(params),
+      fetchSurveyWeeklyCsatBreakdown(params),
+      fetchSurveyTiming(params),
+    ])
+      .then(([overview, breakdown, trend, weeklyCsatBreakdown, timing]) => {
         if (cancelled) return;
-        setData({ overview, breakdown, trend, timing });
+        setData({ overview, breakdown, trend, weeklyCsatBreakdown, timing });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -830,6 +856,7 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(EMPTY_PERMITS_DATA);
 
     const params = { siteIds, fromDate, toDate };
     Promise.all([fetchPermitsOverview(params), fetchPermitsBottleneck(params), fetchPermitsDetail(params)])
@@ -839,6 +866,7 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        setData(EMPTY_PERMITS_DATA);
         setError(err instanceof Error ? err.message : "Failed to load permits dashboard data");
       })
       .finally(() => {
@@ -859,14 +887,14 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
 // ============================================================================
 
 export interface IncidentsDashboardData {
-  overview: IncidentsOverviewData | null;
+  kpis: IncidentKpisData | null;
   trend: IncidentsTrendData | null;
   analysis: IncidentsAnalysisData | null;
   hotspots: IncidentsHotspotsData | null;
 }
 
 const EMPTY_INCIDENTS_DATA: IncidentsDashboardData = {
-  overview: null,
+  kpis: null,
   trend: null,
   analysis: null,
   hotspots: null,
@@ -883,20 +911,22 @@ export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(EMPTY_INCIDENTS_DATA);
 
     const params = { siteIds, fromDate, toDate };
     Promise.all([
-      fetchIncidentsOverview(params),
+      fetchIncidentKpis(siteIds),
       fetchIncidentsTrend(params),
       fetchIncidentsAnalysis(params),
       fetchIncidentsHotspots(params),
     ])
-      .then(([overview, trend, analysis, hotspots]) => {
+      .then(([kpis, trend, analysis, hotspots]) => {
         if (cancelled) return;
-        setData({ overview, trend, analysis, hotspots });
+        setData({ kpis, trend, analysis, hotspots });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        setData(EMPTY_INCIDENTS_DATA);
         setError(err instanceof Error ? err.message : "Failed to load incidents dashboard data");
       })
       .finally(() => {

@@ -53,6 +53,7 @@ export interface SafetyGridItem {
 interface SafetyGridSectionProps {
   storageKey: string;
   items: SafetyGridItem[];
+  layoutOverrides?: Record<string, Partial<Omit<GridLayout.Layout, "i">>>;
   /** Renders the coded default layout with drag/resize/reset disabled — for modules that shouldn't be user-repositionable. */
   static?: boolean;
   /** Stacks cards to full width, one per row, at the sm/xs/xxs breakpoints instead of letting react-grid-layout naively clamp x/w (which leaves items overlapping or clipped off-canvas on narrower laptop screens). Opt-in so existing CRM/Finance grids keep their current behavior. */
@@ -109,6 +110,7 @@ function stackLayoutFullWidth(layout: GridLayout.Layout[], toCols: number): Grid
 export function SafetyGridSection({
   storageKey,
   items,
+  layoutOverrides,
   static: isStatic,
   responsive,
   moduleKey,
@@ -143,7 +145,16 @@ export function SafetyGridSection({
   useEffect(() => {
     if (effectiveStatic || visibleKeys) return;
     const stored = loadStoredLayout(storageKey);
-    if (stored) setLayout(stored);
+    if (stored) {
+      const savedByKey = new Map(stored.map((item) => [item.i, item]));
+      setLayout(
+        defaultLayout.map((item) => ({
+          ...item,
+          ...savedByKey.get(item.i),
+          ...layoutOverrides?.[item.i],
+        })),
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey, effectiveStatic]);
 
