@@ -721,3 +721,15 @@
   .acc-ph .page{display:block!important}
   .acc-ph .card,.acc-ph .tile,.acc-ph .stat{break-inside:avoid}
 }
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.acc-ph .mnav{min-width:0;max-width:100%}
+.acc-ph .mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.acc-ph .mnav-buckets > *{flex:0 0 auto}
+.acc-ph .mnav-buckets button{margin-bottom:0}
+.acc-ph .mnav-mods{min-width:0}
+.acc-ph .mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.acc-ph .mnav-mods .segbar > *{flex:0 0 auto}
+.acc-ph .mnav-row{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.acc-ph .mnav-row > *{flex:0 0 auto;white-space:nowrap}

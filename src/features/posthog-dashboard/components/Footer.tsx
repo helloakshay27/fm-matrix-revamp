@@ -2,7 +2,7 @@ export function Footer() {
   return (
     <div className="footer">
       <b>Data note.</b> Every number on this page comes from the FM Adoption Analytics API
-      (<code>/fm/adoption/*</code>), computed from PostHog autocapture events for this tenant only —
+      (<code>/commercial/fm/adoption/*</code>), computed from PostHog autocapture events for this tenant only —
       no cross-tenant data. Because only autocapture is instrumented, some metrics are documented
       proxies rather than exact measures: <code>U6</code> bounce is a session with ≤ 1 pageview,
       <code>A4</code> dormancy uses a single 14-day cut, <code>A5</code> activation treats the first

@@ -39,16 +39,6 @@ export const ANALYTICS_BASE_URL =
  */
 export const VI_APP_ID = (import.meta.env.VITE_VI_ADOPTION_APP_ID as string | undefined) ?? '31';
 
-/**
- * Vi my Workspace ships as a mobile app only, so `device_type` is pinned rather than exposed
- * as a control. Verified against the API: adding it to an app_id query changes nothing
- * (every app_id event is already Mobile), so it narrows the scan without dropping data.
- *
- * It is dropped as soon as the caller picks an OS: once `os` is doing the platform
- * filtering, `device_type` on top of it is redundant, so only one platform parameter is
- * ever sent.
- */
-const VI_DEVICE_TYPE: DeviceType = 'Mobile';
 
 /** `os` values the API matches on — case-sensitive. */
 export type OsType = 'iOS' | 'Android';
@@ -139,6 +129,8 @@ export type ViDeviceSplitRow = UsageDistributionResponse['device_split']['device
 export type ViSurface = 'app' | 'web';
 
 export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteIds'> {
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   os?: OsType[];
 }
 
@@ -188,16 +180,16 @@ export type {
   WorkflowUsageResponse,
 };
 
-function baseParams(os?: OsType[], surface: ViSurface = 'app') {
-  if (surface === 'web') return { url: ANALYTICS_TENANT_URL };
-
-  const p: Record<string, string> = { app_id: VI_APP_ID };
-  // One platform parameter at a time: `os` once the control bar picks iOS or Android,
-  // the pinned `device_type` only while it is still on All.
+// The Vi API (Commercial::ViController) fixes the scope on the server: the Vi app (app_id 31,
+// project_code MS-01) and Vi web (client vi-web). So no app_id / project_code / url is sent, and All
+// covers both; picking iOS or Android narrows to the app.
+function baseParams(os?: OsType[], _surface: ViSurface = 'app') {
+  const p: Record<string, string> = {};
   if (os?.length) p.os = os.join(',');
-  else p.device_type = VI_DEVICE_TYPE;
   return p;
 }
+
+const VI_ADOPTION_PATH = '/commercial/vi/adoption';
 
 const rangeParams = (f: ViRangeFilters) => ({
   ...baseParams(f.os, f.surface),
@@ -212,12 +204,12 @@ const weeklyParams = (f: ViWeeklyFilters) => ({
 });
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  const qs = new URLSearchParams({ ...params, project_code: VI_PROJECT_CODE }).toString();
-  const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
+  const qs = new URLSearchParams(params).toString();
+  const res = await client.get<T>(`${VI_ADOPTION_PATH}/${path}?${qs}`);
   return res.data;
 }
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = `${VI_ADOPTION_PATH}/active_users_export`;
 
 export const fetchRecentActiveUsers = (f: ViRangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', {
@@ -226,10 +218,7 @@ export const fetchRecentActiveUsers = (f: ViRangeFilters) =>
   });
 
 export async function downloadRecentActiveUsers(f: ViRangeFilters): Promise<Blob> {
-  const qs = new URLSearchParams({
-    ...rangeParams(f),
-    project_code: VI_PROJECT_CODE,
-  });
+  const qs = new URLSearchParams(rangeParams(f));
   const response = await client.get<Blob>(
     `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
     { responseType: 'blob' },
@@ -265,7 +254,8 @@ export const fetchAdoptionEngagement = (f: ViRangeFilters) =>
 export const fetchAdoptionTrend = (f: ViWeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
 
-export const fetchGrowth = (f: ViWeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f));
+export const fetchGrowth = (f: ViWeeklyFilters) =>
+  get<GrowthResponse>('growth', { ...weeklyParams(f), ...(f.from ? { from: f.from } : {}) });
 
 export const fetchRetention = (f: ViWeeklyFilters) =>
   get<RetentionResponse>('retention', weeklyParams(f));

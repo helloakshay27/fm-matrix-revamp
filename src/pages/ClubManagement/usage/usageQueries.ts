@@ -72,7 +72,7 @@ export function useClubRecentActiveUsers(filters: UsageFilters) {
 export function useAdoptionUsageQueries(filters: UsageFilters) {
   const params = rangeParams(filters);
   const trend = weeklyParams(filters, 8);
-  const growth = weeklyParams(filters, 6);
+  const growth = { ...weeklyParams(filters, 6), from: filters.rangeFrom };
   const retention = weeklyParams(filters, 8);
   return useQueries({
     queries: [

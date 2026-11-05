@@ -510,3 +510,13 @@ html[data-ss-theme="dark"]{
 @media(prefers-reduced-motion:reduce){
   .ss-app *,.ss-app *::before,.ss-app *::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.ss-app .mnav{min-width:0;max-width:100%}
+.ss-app .mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.ss-app .mnav-buckets > *{flex:0 0 auto}
+.ss-app .mnav-buckets button{margin-bottom:0}
+.ss-app .mnav-mods{min-width:0}
+.ss-app .mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.ss-app .mnav-mods .segbar > *{flex:0 0 auto}

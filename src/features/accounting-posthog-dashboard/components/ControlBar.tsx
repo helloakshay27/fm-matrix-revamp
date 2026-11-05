@@ -5,6 +5,13 @@ import { RANGE_LABELS, type DateRange } from '../data/constants';
 import { useAccountingDashboard } from '../context/accountingDashboardStore';
 import { ACCOUNTING_APP_ID } from '../api/adoptionApi';
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 const PRESETS: DateRange[] = [7, 30, 90];
 
 /**
@@ -80,17 +87,18 @@ export function ControlBar() {
                 type="date"
                 id="dateFrom"
                 value={draft.from}
-                max={draft.to || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                max={draft.to && draft.to < todayYmd() ? draft.to : todayYmd()}
+                onChange={(e) => setDraft((d) => ({ ...d, from: clampToToday(e.target.value) }))}
                 aria-label="From date"
               />
               <span className="dr-to">&ndash;</span>
               <input
                 type="date"
+                max={todayYmd()}
                 id="dateTo"
                 value={draft.to}
                 min={draft.from || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                onChange={(e) => setDraft((d) => ({ ...d, to: clampToToday(e.target.value) }))}
                 aria-label="To date"
               />
             </div>
