@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format as formatDate, subDays } from "date-fns";
@@ -33,7 +34,17 @@ function defaultRange(days: number) {
   return { from, to };
 }
 
+/**
+ * The old FM adoption page. It read /fm/adoption/overview, /timeseries, /engagement, /events and /sites,
+ * which the backend no longer serves: FM's usage analytics now live at /fm-usage-analytics on their own
+ * API (/commercial/fm/adoption). The route sends people there; the old page is kept below for reference.
+ */
 export function FmAdoptionDashboardPage() {
+  return <Navigate to="/fm-usage-analytics" replace />;
+}
+
+/** The old page (not routed). */
+export function LegacyFmAdoptionDashboardPage() {
   const [dateRange, setDateRange] = useState(() => defaultRange(30));
   const [activePresetDays, setActivePresetDays] = useState<number | null>(30);
   const [siteId, setSiteId] = useState("all");

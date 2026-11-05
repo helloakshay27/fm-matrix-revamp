@@ -136,7 +136,11 @@ export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteId
 
 export interface RecentActiveUser {
   user_id: string;
-  display_name: string;
+  /** "First Last" as the API sends it (the person's name). */
+  user_name?: string | null;
+  email?: string | null;
+  /** Older API field; the API now sends user_name. */
+  display_name?: string | null;
   path: string | null;
   last_event: string | null;
   minutes_ago: number | null;

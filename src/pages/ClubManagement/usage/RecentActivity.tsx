@@ -1,7 +1,7 @@
 import { Download } from "lucide-react";
-import * as XLSX from "xlsx";
-import type { RecentActiveUser } from "@/features/posthog-dashboard/api/adoptionApi";
-import { useClubRecentActiveUsers } from "./usageQueries";
+import { useState } from "react";
+import { activityUserLabel, downloadRecentActiveUsers, type RecentActiveUser } from "@/features/posthog-dashboard/api/adoptionApi";
+import { clubRangeParams, useClubRecentActiveUsers } from "./usageQueries";
 import type { UsageFilters } from "./usageData";
 
 function relativeTime(minutesAgo: number | null, lastEvent: string | null) {
@@ -23,11 +23,11 @@ function ActivityRow({ user }: { user: RecentActiveUser }) {
   return (
     <li className="recent-activity-row">
       <span className="recent-activity-avatar" aria-hidden="true">
-        {(user.display_name || user.user_id || "?").trim().slice(0, 1).toUpperCase()}
+        {activityUserLabel(user).trim().slice(0, 1).toUpperCase()}
       </span>
       <span className="recent-activity-detail">
-        <span className="recent-activity-name" title={user.display_name || user.user_id}>
-          {user.display_name || user.user_id || "Unknown user"}
+        <span className="recent-activity-name" title={user.email || activityUserLabel(user)}>
+          {activityUserLabel(user)}
         </span>
         <span className="recent-activity-path" title={user.path || user.last_event || ""}>
           {user.path || user.last_event || "Active"}
@@ -41,36 +41,29 @@ function ActivityRow({ user }: { user: RecentActiveUser }) {
 export function RecentActivity({ filters }: { filters: UsageFilters }) {
   const query = useClubRecentActiveUsers(filters);
   const users = query.data?.users ?? [];
-  const isDownloadDisabled = query.isFetching || users.length === 0;
+  const [isDownloading, setIsDownloading] = useState(false);
+  const isDownloadDisabled = isDownloading;
 
-  const downloadActivity = () => {
-    if (!users.length) return;
-
-    const rows = users.map((user) => ({
-      "Activity / User Name": user.display_name || user.user_id || "Unknown user",
-      "User ID": user.user_id || "",
-      "Activity Description / Route": user.path || user.last_event || "Active",
-      "Organization / Site": user.site_name || "",
-      "Last Event Timestamp": user.last_event || "",
-      "Minutes Ago": user.minutes_ago ?? "",
-      "Activity Time": relativeTime(user.minutes_ago, user.last_event),
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    worksheet["!cols"] = [
-      { wch: 28 },
-      { wch: 24 },
-      { wch: 48 },
-      { wch: 26 },
-      { wch: 28 },
-      { wch: 14 },
-      { wch: 20 },
-    ];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Recent Activity");
-
-    const now = new Date();
-    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
-    XLSX.writeFile(workbook, `club-management-recent-activity-${date}.xlsx`);
+  // Every event in the range as the server-built .xlsx (Club's own API), not just the 10 rows shown.
+  const downloadActivity = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const blob = await downloadRecentActiveUsers(clubRangeParams(filters));
+      if (!blob) throw new Error("The activity export came back empty");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `club_active_users_${filters.rangeFrom}_to_${filters.rangeTo}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Unable to download Club activity", error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -81,7 +74,7 @@ export function RecentActivity({ filters }: { filters: UsageFilters }) {
           type="button"
           className="recent-activity-download"
           aria-label="Download Recent Activity"
-          title={users.length ? "Download Recent Activity" : "No recent activity to download"}
+          title="Download every event in the range (.xlsx)"
           onClick={downloadActivity}
           disabled={isDownloadDisabled}
         >
@@ -89,7 +82,7 @@ export function RecentActivity({ filters }: { filters: UsageFilters }) {
         </button>
       </div>
 
-      {query.isFetching ? (
+      {query.isLoading ? (
         <ul className="recent-activity-list" aria-label="Loading recent activity" aria-busy="true">
           {[0, 1, 2, 3].map((row) => (
             <li className="recent-activity-skeleton" key={row}>
@@ -106,7 +99,7 @@ export function RecentActivity({ filters }: { filters: UsageFilters }) {
       ) : users.length ? (
         <ul className="recent-activity-list">
           {users.map((user, index) => (
-            <ActivityRow key={`${user.user_id}-${user.last_event ?? index}`} user={user} />
+            <ActivityRow key={`${index}-${user.user_id}`} user={user} />
           ))}
         </ul>
       ) : (
