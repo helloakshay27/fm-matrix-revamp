@@ -239,12 +239,44 @@ interface TicketsTrendsResponse {
   filters: TicketsDashboardFilters;
 }
 
+export interface TicketsByTenantRow {
+  entity_id: number;
+  name: string;
+  ticket_count: number;
+}
+
+export interface TicketsCsatData {
+  score: number | null;
+  scale_max: number;
+  rated_tickets: number;
+  distribution: { rating: number; count: number }[];
+}
+
+export interface TicketsApproachingEscalationData {
+  threshold_hours: number;
+  count: number;
+  response_due: number;
+  resolution_due: number;
+}
+
+export interface TicketsCategoryComparisonRow {
+  category_type_id: number;
+  name: string;
+  total: number;
+  status_count: { pending: number; in_progress: number; on_hold: number; closed: number };
+  status_percent: { pending: number; in_progress: number; on_hold: number; closed: number };
+}
+
 const TICKETS_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/tickets/tickets_overview",
-  TRENDS: "/fm_dashboard/tickets/tickets_trends",
-  BREAKDOWN: "/fm_dashboard/tickets/tickets_breakdown",
-  WORKFORCE: "/fm_dashboard/tickets/tickets_workforce",
-  QUALITY: "/fm_dashboard/tickets/tickets_quality",
+  OVERVIEW: "/fm_dashboard/tickets/tickets_overview.json",
+  TRENDS: "/fm_dashboard/tickets/tickets_trends.json",
+  BREAKDOWN: "/fm_dashboard/tickets/tickets_breakdown.json",
+  WORKFORCE: "/fm_dashboard/tickets/tickets_workforce.json",
+  QUALITY: "/fm_dashboard/tickets/tickets_quality.json",
+  BY_TENANT: "/fm_dashboard/tickets/tickets_by_tenant.json",
+  CSAT: "/fm_dashboard/tickets/tickets_csat.json",
+  APPROACHING_ESCALATION: "/fm_dashboard/tickets/tickets_approaching_escalation.json",
+  CATEGORY_COMPARISON: "/fm_dashboard/tickets/tickets_category_comparison.json",
 } as const;
 
 export const fetchTicketsOverview = (params: TicketsDashboardParams) =>
@@ -261,6 +293,26 @@ export const fetchTicketsWorkforce = (params: TicketsDashboardParams) =>
 
 export const fetchTicketsQuality = (params: TicketsDashboardParams) =>
   fetchFmDashboardJson<TicketsQualityResponse>(TICKETS_ENDPOINTS.QUALITY, params).then((res) => res.tickets_quality);
+
+export const fetchTicketsByTenant = (params: TicketsDashboardParams) =>
+  fetchFmDashboardJson<{ tickets_by_tenant: TicketsByTenantRow[] }>(TICKETS_ENDPOINTS.BY_TENANT, params).then(
+    (res) => res.tickets_by_tenant ?? []
+  );
+
+export const fetchTicketsCsat = (params: TicketsDashboardParams) =>
+  fetchFmDashboardJson<{ tickets_csat: TicketsCsatData }>(TICKETS_ENDPOINTS.CSAT, params).then((res) => res.tickets_csat);
+
+export const fetchTicketsApproachingEscalation = (params: TicketsDashboardParams) =>
+  fetchFmDashboardJson<{ tickets_approaching_escalation: TicketsApproachingEscalationData }>(
+    TICKETS_ENDPOINTS.APPROACHING_ESCALATION,
+    params
+  ).then((res) => res.tickets_approaching_escalation);
+
+export const fetchTicketsCategoryComparison = (params: TicketsDashboardParams) =>
+  fetchFmDashboardJson<{ tickets_category_comparison: TicketsCategoryComparisonRow[] }>(
+    TICKETS_ENDPOINTS.CATEGORY_COMPARISON,
+    params
+  ).then((res) => res.tickets_category_comparison ?? []);
 
 // ============================================================================
 // Assets
@@ -293,6 +345,12 @@ export interface AssetsOverviewData {
     unclassified: number;
   };
   top_currently_down: AssetTopDown[];
+  breakdown_rate_vs_range?: {
+    current_percent: number;
+    healthy_min_percent: number;
+    healthy_max_percent: number;
+    status: string;
+  };
 }
 
 export interface AssetsConditionData {
@@ -338,6 +396,15 @@ export interface AssetsCategoryData {
   breakdowns_by_category: AssetCategoryBreakdownCount[];
   cost_by_category: AssetCategoryCost[];
   breakdowns_by_allocation: AssetAllocationBreakdown[];
+  broken_allocated_to_others_count?: number;
+  subgroup_wise_breakdown?: AssetSubgroupBreakdown[];
+}
+
+export interface AssetSubgroupBreakdown {
+  pms_asset_sub_group_id: number;
+  name: string;
+  total: number;
+  breakdown_count: number;
 }
 
 export interface AssetHighMaintenanceCost {
@@ -362,6 +429,15 @@ export interface AssetsMaintenanceData {
   repair_cost_vs_asset_value: Record<string, unknown>[];
   high_maintenance_cost_assets: AssetHighMaintenanceCost[];
   top_repeat_offenders: AssetRepeatOffender[];
+  asset_ownership_cost?: AssetOwnershipCost[];
+}
+
+export interface AssetOwnershipCost {
+  pms_asset_id: number;
+  name: string;
+  repair_cost: number;
+  amc_cost: number;
+  total_cost: number;
 }
 
 interface AssetsOverviewResponse {
@@ -559,20 +635,43 @@ export interface AmcOverviewData {
     upcoming_visits_30d: number;
     due_missed_visits: number;
   };
-  contract_split: {
-    asset_contracts: number;
-    service_contracts: number;
-  };
+  /**
+   * Newer API: one row per contract type, e.g. [{ amc_type: "Asset", count: 27807 }].
+   * Older API: { asset_contracts, service_contracts }. Both are still seen in the wild.
+   */
+  contract_split: AmcContractSplitRow[] | { asset_contracts?: number; service_contracts?: number };
   cost: {
     total_amc_value: number;
     cost_at_risk_percent: number;
   };
+  frequency_wise_visits?: {
+    sample_size: number;
+    data: AmcFrequencyVisitRow[];
+  };
 }
 
-export interface AmcExpiryUrgencyRow {
-  criticality: string;
-  expiry_bucket: string;
+export interface AmcContractSplitRow {
+  amc_type: string;
   count: number;
+}
+
+export interface AmcFrequencyVisitRow {
+  frequency: string;
+  contracts: number;
+  expected_visits: number;
+  completed_visits: number;
+}
+
+/** One row per contract — bucketed client-side from days_to_expiry. */
+export interface AmcExpiryUrgencyRow {
+  id?: number;
+  contract_name?: string | null;
+  amc_end_date?: string | null;
+  days_to_expiry: number | null;
+  criticality: string;
+  /** Older API shape: rows were pre-aggregated per bucket instead of per contract. */
+  expiry_bucket?: string;
+  count?: number;
 }
 
 export interface AmcExpiryData {
@@ -581,12 +680,14 @@ export interface AmcExpiryData {
     expiring_0_30: number;
     expiring_31_90: number;
     active_90_plus: number;
+    today?: string;
+    without_expiry_date?: number;
   };
   urgency_vs_criticality: AmcExpiryUrgencyRow[];
 }
 
 export interface AmcVendorConcentrationRow {
-  supplier_id: number;
+  supplier_id?: number;
   vendor_name: string;
   total_contracts: number;
   expired_contracts: number;
@@ -599,9 +700,27 @@ export interface AmcMonthlyCost {
   total_cost: number;
 }
 
+export interface AmcVendorStatusContract {
+  contract_name: string | null;
+  amc_start_date: string | null;
+  amc_end_date: string | null;
+  amc_cost: number | null;
+  status: string;
+  completed_visits: number;
+  missed_visits: number;
+}
+
+export interface AmcVendorStatusRow {
+  vendor_name: string;
+  total_contracts: number;
+  missed_visits: number;
+  contracts: AmcVendorStatusContract[];
+}
+
 export interface AmcVendorData {
   vendor_concentration: AmcVendorConcentrationRow[];
   monthly_cost_trend: AmcMonthlyCost[];
+  vendor_status?: AmcVendorStatusRow[];
 }
 
 export interface AmcCoverageByCategory {
@@ -1377,11 +1496,72 @@ interface VendorKycRiskResponse {
   filters: FmDashboardFilters;
 }
 
+export interface VendorPerformanceTableRow {
+  pms_supplier_id: number;
+  vendor_name: string;
+  total_contracts: number;
+  live_contracts: number;
+  completed_visits: number;
+  missed_visits: number;
+}
+
+export interface VendorPerformanceScoreData {
+  score: number | null;
+  grade: string | null;
+  sla_compliance_percent: number | null;
+  response_within_target_percent: number | null;
+  contract_fulfilment_percent: number | null;
+}
+
+export interface VendorOnTimeCompletionData {
+  on_time_percent: number | null;
+  on_time_visits: number;
+  scheduled_visits: number;
+  completed_visits: number;
+  missed_visits: number;
+  completed_without_actual_date: number;
+}
+
+export interface VendorHealthData {
+  total_missed_visits: number;
+  by_vendor: { pms_supplier_id: number; vendor_name: string; missed_visits: number }[];
+}
+
+export interface VendorContractRenewalsData {
+  total_renewals_due: number;
+  kyc_renewals_due: number;
+  amc_renewals_due: number;
+}
+
+export interface VendorResponseTrendData {
+  by_month: { month: string; avg_response_hours: number | null; sla_target_hours: number | null }[];
+}
+
+export interface VendorWorkflowBottlenecksData {
+  slowest_stage: string | null;
+  stages: { stage: string; avg_hours: number | null }[];
+}
+
+export interface VendorKycStatusData {
+  total_at_risk_count: number;
+  expired_count: number;
+  missing_count: number;
+  total_active_count: number;
+}
+
 const VENDOR_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/vendor/vendor_overview",
-  PERFORMANCE: "/fm_dashboard/vendor/vendor_performance",
-  REPEAT_ISSUES: "/fm_dashboard/vendor/vendor_repeat_issues",
-  KYC_RISK: "/fm_dashboard/vendor/vendor_kyc_risk",
+  OVERVIEW: "/fm_dashboard/vendor/vendor_overview.json",
+  PERFORMANCE: "/fm_dashboard/vendor/vendor_performance.json",
+  REPEAT_ISSUES: "/fm_dashboard/vendor/vendor_repeat_issues.json",
+  KYC_RISK: "/fm_dashboard/vendor/vendor_kyc_risk.json",
+  PERFORMANCE_TABLE: "/fm_dashboard/vendor/vendor_performance_table.json",
+  PERFORMANCE_SCORE: "/fm_dashboard/vendor/vendor_performance_score.json",
+  ON_TIME_COMPLETION: "/fm_dashboard/vendor/vendor_on_time_completion.json",
+  HEALTH: "/fm_dashboard/vendor/vendor_health.json",
+  CONTRACT_RENEWALS: "/fm_dashboard/vendor/vendor_contract_renewals.json",
+  RESPONSE_TREND: "/fm_dashboard/vendor/vendor_response_trend.json",
+  WORKFLOW_BOTTLENECKS: "/fm_dashboard/vendor/vendor_workflow_bottlenecks.json",
+  KYC_STATUS: "/fm_dashboard/vendor/vendor_kyc_status.json",
 } as const;
 
 export const fetchVendorOverview = (params: FmDashboardParams) =>
@@ -1397,6 +1577,49 @@ export const fetchVendorRepeatIssues = (params: FmDashboardParams) =>
 
 export const fetchVendorKycRisk = (params: FmDashboardParams) =>
   fetchFmDashboardJson<VendorKycRiskResponse>(VENDOR_ENDPOINTS.KYC_RISK, params).then((res) => res.vendor_kyc_risk);
+
+export const fetchVendorPerformanceTable = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_performance_table: { by_vendor: VendorPerformanceTableRow[] } }>(
+    VENDOR_ENDPOINTS.PERFORMANCE_TABLE,
+    params
+  ).then((res) => res.vendor_performance_table?.by_vendor ?? []);
+
+export const fetchVendorPerformanceScore = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_performance_score: VendorPerformanceScoreData }>(
+    VENDOR_ENDPOINTS.PERFORMANCE_SCORE,
+    params
+  ).then((res) => res.vendor_performance_score);
+
+export const fetchVendorOnTimeCompletion = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_on_time_completion: VendorOnTimeCompletionData }>(
+    VENDOR_ENDPOINTS.ON_TIME_COMPLETION,
+    params
+  ).then((res) => res.vendor_on_time_completion);
+
+export const fetchVendorHealth = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_health: VendorHealthData }>(VENDOR_ENDPOINTS.HEALTH, params).then((res) => res.vendor_health);
+
+export const fetchVendorContractRenewals = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_contract_renewals: VendorContractRenewalsData }>(
+    VENDOR_ENDPOINTS.CONTRACT_RENEWALS,
+    params
+  ).then((res) => res.vendor_contract_renewals);
+
+export const fetchVendorResponseTrend = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_response_trend: VendorResponseTrendData }>(VENDOR_ENDPOINTS.RESPONSE_TREND, params).then(
+    (res) => res.vendor_response_trend
+  );
+
+export const fetchVendorWorkflowBottlenecks = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_workflow_bottlenecks: VendorWorkflowBottlenecksData }>(
+    VENDOR_ENDPOINTS.WORKFLOW_BOTTLENECKS,
+    params
+  ).then((res) => res.vendor_workflow_bottlenecks);
+
+export const fetchVendorKycStatus = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ vendor_kyc_status: VendorKycStatusData }>(VENDOR_ENDPOINTS.KYC_STATUS, params).then(
+    (res) => res.vendor_kyc_status
+  );
 
 // ============================================================================
 // Permits (Safety module)

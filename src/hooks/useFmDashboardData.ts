@@ -10,11 +10,35 @@ import {
   fetchTicketsBreakdown,
   fetchTicketsWorkforce,
   fetchTicketsQuality,
+  fetchTicketsByTenant,
+  fetchTicketsCsat,
+  fetchTicketsApproachingEscalation,
+  fetchTicketsCategoryComparison,
+  type TicketsByTenantRow,
+  type TicketsCsatData,
+  type TicketsApproachingEscalationData,
+  type TicketsCategoryComparisonRow,
   type TicketsOverviewData,
   type TicketsTrendsData,
   type TicketsBreakdownData,
   type TicketsWorkforceData,
   type TicketsQualityData,
+  fetchVendorPerformanceTable,
+  fetchVendorPerformanceScore,
+  fetchVendorOnTimeCompletion,
+  fetchVendorHealth,
+  fetchVendorContractRenewals,
+  fetchVendorResponseTrend,
+  fetchVendorWorkflowBottlenecks,
+  fetchVendorKycStatus,
+  type VendorPerformanceTableRow,
+  type VendorPerformanceScoreData,
+  type VendorOnTimeCompletionData,
+  type VendorHealthData,
+  type VendorContractRenewalsData,
+  type VendorResponseTrendData,
+  type VendorWorkflowBottlenecksData,
+  type VendorKycStatusData,
   fetchAssetsOverview,
   fetchAssetsCondition,
   fetchAssetsCategory,
@@ -164,6 +188,10 @@ export interface TicketsDashboardData {
   breakdown: TicketsBreakdownData | null;
   workforce: TicketsWorkforceData | null;
   quality: TicketsQualityData | null;
+  byTenant: TicketsByTenantRow[];
+  csat: TicketsCsatData | null;
+  approachingEscalation: TicketsApproachingEscalationData | null;
+  categoryComparison: TicketsCategoryComparisonRow[];
 }
 
 const EMPTY_TICKETS_DATA: TicketsDashboardData = {
@@ -172,13 +200,16 @@ const EMPTY_TICKETS_DATA: TicketsDashboardData = {
   breakdown: null,
   workforce: null,
   quality: null,
+  byTenant: [],
+  csat: null,
+  approachingEscalation: null,
+  categoryComparison: [],
 };
 
 // Secondary endpoints must never take the whole module down if one of them errors.
 const optional = <T,>(request: Promise<T>): Promise<T | null> => request.catch(() => null);
 
-export function useTicketsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
-  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
+export function useTicketsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
   const [data, setData] = useState<TicketsDashboardData>(EMPTY_TICKETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,10 +228,24 @@ export function useTicketsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
       fetchTicketsBreakdown(params),
       fetchTicketsWorkforce(params),
       fetchTicketsQuality(params),
+      optional(fetchTicketsByTenant(params)),
+      optional(fetchTicketsCsat(params)),
+      optional(fetchTicketsApproachingEscalation(params)),
+      optional(fetchTicketsCategoryComparison(params)),
     ])
-      .then(([overview, trends, breakdown, workforce, quality]) => {
+      .then(([overview, trends, breakdown, workforce, quality, byTenant, csat, approachingEscalation, categoryComparison]) => {
         if (cancelled) return;
-        setData({ overview, trends, breakdown, workforce, quality });
+        setData({
+          overview,
+          trends,
+          breakdown,
+          workforce,
+          quality,
+          byTenant: byTenant ?? [],
+          csat,
+          approachingEscalation,
+          categoryComparison: categoryComparison ?? [],
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -707,6 +752,14 @@ export interface VendorDashboardData {
   performance: VendorPerformanceData | null;
   repeatIssues: VendorRepeatIssuesData | null;
   kycRisk: VendorKycRiskData | null;
+  performanceTable: VendorPerformanceTableRow[];
+  performanceScore: VendorPerformanceScoreData | null;
+  onTimeCompletion: VendorOnTimeCompletionData | null;
+  health: VendorHealthData | null;
+  contractRenewals: VendorContractRenewalsData | null;
+  responseTrend: VendorResponseTrendData | null;
+  workflowBottlenecks: VendorWorkflowBottlenecksData | null;
+  kycStatus: VendorKycStatusData | null;
 }
 
 const EMPTY_VENDOR_DATA: VendorDashboardData = {
@@ -714,6 +767,14 @@ const EMPTY_VENDOR_DATA: VendorDashboardData = {
   performance: null,
   repeatIssues: null,
   kycRisk: null,
+  performanceTable: [],
+  performanceScore: null,
+  onTimeCompletion: null,
+  health: null,
+  contractRenewals: null,
+  responseTrend: null,
+  workflowBottlenecks: null,
+  kycStatus: null,
 };
 
 export function useVendorDashboardData(rawArgs: UseFmDashboardModuleArgs) {
@@ -735,10 +796,45 @@ export function useVendorDashboardData(rawArgs: UseFmDashboardModuleArgs) {
       fetchVendorPerformance(params),
       fetchVendorRepeatIssues(params),
       fetchVendorKycRisk(params),
+      optional(fetchVendorPerformanceTable(params)),
+      optional(fetchVendorPerformanceScore(params)),
+      optional(fetchVendorOnTimeCompletion(params)),
+      optional(fetchVendorHealth(params)),
+      optional(fetchVendorContractRenewals(params)),
+      optional(fetchVendorResponseTrend(params)),
+      optional(fetchVendorWorkflowBottlenecks(params)),
+      optional(fetchVendorKycStatus(params)),
     ])
-      .then(([overview, performance, repeatIssues, kycRisk]) => {
+      .then(
+        ([
+          overview,
+          performance,
+          repeatIssues,
+          kycRisk,
+          performanceTable,
+          performanceScore,
+          onTimeCompletion,
+          health,
+          contractRenewals,
+          responseTrend,
+          workflowBottlenecks,
+          kycStatus,
+        ]) => {
         if (cancelled) return;
-        setData({ overview, performance, repeatIssues, kycRisk });
+        setData({
+          overview,
+          performance,
+          repeatIssues,
+          kycRisk,
+          performanceTable: performanceTable ?? [],
+          performanceScore,
+          onTimeCompletion,
+          health,
+          contractRenewals,
+          responseTrend,
+          workflowBottlenecks,
+          kycStatus,
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
