@@ -17,6 +17,29 @@ const buildUrl = (path: string, fromDate: Date, toDate: Date, extra: Record<stri
   return `${API_CONFIG.BASE_URL}${path}?${params}`;
 };
 
+export interface BodyInjuryCategoryBodyPartRow {
+  category?: string;
+  body_part?: string;
+  injury_count?: number;
+}
+
+interface BodyInjuryCategoryBodyPartBreakdown {
+  total_injuries?: number;
+  data?: BodyInjuryCategoryBodyPartRow[];
+}
+
+interface BodyInjuryChartPayload {
+  response?: string;
+  percentage?: Record<string, number>;
+  category_body_part_breakdown?: BodyInjuryCategoryBodyPartBreakdown;
+}
+
+export interface BodyInjuryChartResponse extends BodyInjuryChartPayload {
+  success?: number;
+  message?: string;
+  data?: BodyInjuryChartPayload;
+}
+
 const get = async (url: string) => {
   const resp = await fetch(url, { method: 'GET', headers: { Authorization: getAuthHeader() } });
   if (!resp.ok) throw new Error(`Request failed: ${resp.status}`);
@@ -57,7 +80,7 @@ const incidentAnalyticsAPI = {
     return get(buildUrl('/incident_dashboard/rca_data.json', fromDate, toDate, { page: String(page), ...(resolvedSiteId ? { site_id: resolvedSiteId } : {}) }));
   },
 
-  async getBodyInjuryChart(fromDate: Date, toDate: Date, siteId?: string) {
+  async getBodyInjuryChart(fromDate: Date, toDate: Date, siteId?: string): Promise<BodyInjuryChartResponse> {
     const resolvedSiteId = siteId || localStorage.getItem('selectedSiteId') || '';
     return get(buildUrl('/incident_dashboard/body_injury_chart.json', fromDate, toDate, resolvedSiteId ? { site_id: resolvedSiteId } : {}));
   },

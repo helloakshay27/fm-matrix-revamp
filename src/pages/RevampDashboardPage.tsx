@@ -47,6 +47,13 @@ import {
   type TableBadgeTone,
 } from "@/components/charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
 import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
@@ -181,13 +188,10 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "inventory-health-score", x: 0, y: 365, w: 12, h: 3, minW: 6, minH: 3 },
   { i: "inventory-consumption-trend", x: 0, y: 368, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "inventory-category-consumption", x: 0, y: 374, w: 12, h: 6, minW: 6, minH: 4 },
-  { i: "inventory-deadstock-value", x: 0, y: 380, w: 12, h: 6, minW: 6, minH: 4 },
-  { i: "inventory-kpi-table", x: 0, y: 386, w: 12, h: 7, minW: 6, minH: 5 },
 
   // Maintenance › Waste
   { i: "waste-section-label", x: 0, y: 393, w: 12, h: 1, minW: 6, minH: 1 },
   { i: "waste-kpi-row", x: 0, y: 394, w: 12, h: 4, minW: 6, minH: 3 },
-  { i: "waste-workflow-bottlenecks", x: 0, y: 398, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "waste-breakdown", x: 0, y: 403, w: 4, h: 8, minW: 3, minH: 6 },
   { i: "waste-vendor-performance", x: 4, y: 403, w: 4, h: 8, minW: 3, minH: 6 },
   { i: "waste-sustainability", x: 8, y: 403, w: 4, h: 8, minW: 3, minH: 6 },
@@ -591,6 +595,98 @@ function EmptyStateCard({
   );
 }
 
+interface DashboardApiTableRow extends Record<string, unknown> {
+  __rowKey: string;
+}
+
+function isDashboardRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function extractDashboardRecords(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => (isDashboardRecord(item) ? [item] : item == null ? [] : [{ value: item }]));
+  }
+  if (!isDashboardRecord(value)) return [];
+
+  const nestedKeys = ["records", "rows", "data", "items", "results", "kpis", "weekly_breakdown", "by_week"];
+  for (const key of nestedKeys) {
+    const nested = value[key];
+    if (Array.isArray(nested) || isDashboardRecord(nested)) {
+      const rows = extractDashboardRecords(nested);
+      if (rows.length) return rows;
+    }
+  }
+
+  const nestedArray = Object.values(value).find(Array.isArray);
+  return nestedArray ? extractDashboardRecords(nestedArray) : [value];
+}
+
+function toDashboardApiTableRows(payload: unknown): DashboardApiTableRow[] {
+  return extractDashboardRecords(payload).map((row, index) => {
+    const rowId = row.id ?? row.record_id ?? row.week ?? row.week_start ?? row.date ?? row.name ?? row.category ?? index;
+    return { ...row, __rowKey: `${String(rowId)}-${index}` };
+  });
+}
+
+function dashboardApiTableColumns(rows: DashboardApiTableRow[]): DataTableColumn<DashboardApiTableRow>[] {
+  const keys = [...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => key !== "__rowKey")))].slice(0, 8);
+  const columnKeys = keys.length ? keys : ["value"];
+
+  return columnKeys.map((key) => ({
+    key,
+    header: key.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    render: (row) => {
+      const value = row[key];
+      const display =
+        value == null
+          ? "—"
+          : typeof value === "object"
+            ? JSON.stringify(value)
+            : String(value);
+      return <span className="text-brand-text">{display || "—"}</span>;
+    },
+  }));
+}
+
+/**
+ * Filters the Maintenance grid's ~130 hand-authored `<div key chart_code>` children down to just
+ * the ones the user has saved to My Dashboard, without touching (or duplicating) that JSX —
+ * this is the single point where the "My Dashboard" preview and the real Maintenance tab diverge.
+ */
+function filterGridChildren(children: ReactNode, enabled: boolean, visibleKeys: Set<string>): ReactNode {
+  // `children` is a single <>...</> Fragment wrapping ~130 sibling <div> grid items.
+  // react-grid-layout requires each of those divs as a direct child of the grid (matched to
+  // its layout entry by `key`), so unwrap the Fragment's own children back into a flat array
+  // rather than rendering the Fragment element itself as one opaque child (which breaks the
+  // grid entirely) — and deliberately avoid React.Children.toArray/.map, which would silently
+  // rewrite each div's key with a scoping prefix and break react-grid-layout's key-based match.
+  const items: ReactNode[] =
+    isValidElement(children) && Array.isArray((children.props as { children?: ReactNode }).children)
+      ? ((children.props as { children: ReactNode[] }).children)
+      : [];
+
+  if (!enabled) return items;
+
+  return items.filter((child) => {
+    if (!isValidElement(child)) return false;
+    const chartCode = (child.props as { chart_code?: string }).chart_code;
+    return chartCode ? visibleKeys.has(chartCode) : false;
+  });
+}
+
+/**
+ * Same user-id lookup already used above for `fetchAllowedSites` — this page's actual runtime
+ * only ever populates the flat "userId"/"user_id" localStorage keys, not the "user" JSON blob
+ * `getUser()` (from src/utils/auth.ts) reads, so `getUser()?.id` silently resolves to undefined
+ * here even when logged in. Returns null (not NaN) when nothing usable is stored.
+ */
+function getRevampUserId(): number | null {
+  const raw = localStorage.getItem("userId") ?? localStorage.getItem("user_id") ?? getUser()?.id;
+  const id = Number(raw);
+  return raw && !Number.isNaN(id) ? id : null;
+}
+
 // --- Header controls: Select Period / Filters / Search popovers ---
 // Defined at module scope (not nested inside the page component) so their
 // identity is stable across parent re-renders — otherwise every loading/error
@@ -949,19 +1045,6 @@ function auditScoreTone(percent: number): TableBadgeTone {
 // Maintenance › AMC, Checklists, and Inventory analytics — wired to the live
 // /fm_dashboard/amc/*, /fm_dashboard/checklists/*, /fm_dashboard/inventory/* endpoints.
 // Only fixed column definitions live here now; figures are computed at render time.
-interface InventoryKpiRow {
-  kpi: string;
-  formula: string;
-  value: string;
-  tone: TableBadgeTone;
-}
-
-const INVENTORY_KPI_COLUMNS: DataTableColumn<InventoryKpiRow>[] = [
-  { key: "kpi", header: "KPI", render: (row) => <span className="text-brand-text">{row.kpi}</span> },
-  { key: "formula", header: "Formula", render: (row) => <span className="text-brand-body-5 text-brand-text-light">{row.formula}</span> },
-  { key: "value", header: "Value", render: (row) => <TableBadge tone={row.tone}>{row.value}</TableBadge> },
-];
-
 // Maintenance › Waste analytics — wired to the live /fm_dashboard/waste/* endpoints.
 // Only the fixed column shape lives here now; row data is computed at render time
 // from waste_breakdown.by_category (the API has no per-record log, only aggregates).
@@ -1668,7 +1751,37 @@ export default function RevampDashboardPage() {
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const [appliedBuilding, setAppliedBuilding] = useState("all");
   const [appliedCategory, setAppliedCategory] = useState("all");
+  const [appliedSite, setAppliedSite] = useState(() => {
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    return stored && !stored.includes(",") ? stored : "all";
+  });
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (sitesLoading || allowedSites.length === 0) return;
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    const validStoredSite =
+      typeof stored === "string" &&
+      !stored.includes(",") &&
+      allowedSites.some((site) => String(site.id) === stored)
+        ? stored
+        : "all";
+    setAppliedSite(validStoredSite);
+  }, [allowedSites, sitesLoading]);
+
+  const handleSiteChange = (site: string) => {
+    setAppliedSite(site);
+    const siteIds =
+      site === "all" ? allowedSites.map((allowedSite) => allowedSite.id).join(",") : site;
+    localStorage.setItem("selecteSiteIdsDashboard", siteIds);
+  };
+
+  // The Site filter narrows the `site_id` query sent to every /fm_dashboard endpoint (server-side),
+  // so each module re-fetches for just that site instead of filtering rows client-side.
+  const dashboardSiteIds = useMemo(
+    () => (appliedSite === "all" ? allowedSites.map((st) => st.id) : allowedSites.filter((st) => String(st.id) === appliedSite).map((st) => st.id)),
+    [allowedSites, appliedSite]
+  );
 
   const dashboardFromDate = useMemo(() => formatApiDate(dashboardDateRange.from), [dashboardDateRange.from]);
   const dashboardToDate = useMemo(() => formatApiDate(dashboardDateRange.to), [dashboardDateRange.to]);
@@ -2575,8 +2688,6 @@ export default function RevampDashboardPage() {
   const inventoryOverview = inventoryApiData.overview;
   const inventoryStockHealth = inventoryApiData.stockHealth;
   const inventoryConsumption = inventoryApiData.consumption;
-  const inventoryOperations = inventoryApiData.operations;
-
   const inventoryTypeBreakdownData = useMemo(() => {
     const rows = inventoryOverview?.type_criticality_breakdown ?? [];
     const byType = new Map<string, { type: string; critical: number; nonCritical: number }>();
@@ -2623,69 +2734,13 @@ export default function RevampDashboardPage() {
     [inventoryConsumption]
   );
 
-  const inventoryDeadstockData = useMemo(
-    () =>
-      (inventoryStockHealth?.dead_stock.by_category ?? []).map((c) => ({
-        category: c.category,
-        value: c.value_at_risk,
-      })),
-    [inventoryStockHealth]
-  );
-
-  const inventoryKpiRows: InventoryKpiRow[] = useMemo(() => {
-    const rows: InventoryKpiRow[] = [];
-    if (inventoryOverview) {
-      rows.push({
-        kpi: "Current Inventory Value",
-        formula: "Σ (Quantity × Unit Cost)",
-        value: `₹${inventoryOverview.current_inventory_value.value.toLocaleString()} (${inventoryOverview.current_inventory_value.costed_items_count} costed items)`,
-        tone: "amber",
-      });
-    }
-    if (inventoryStockHealth) {
-      rows.push({
-        kpi: "Critical Stock Status",
-        formula: "Items below reorder threshold",
-        value: `${inventoryStockHealth.critical_stock_count} flagged`,
-        tone: inventoryStockHealth.critical_stock_count > 0 ? "red" : "green",
-      });
-      rows.push({
-        kpi: "Dead Stock & Overstock Value",
-        formula: "Value of items with zero movement in 90+ days",
-        value: `₹${inventoryStockHealth.dead_stock.total_value.toLocaleString()} across ${inventoryStockHealth.dead_stock.item_count} items`,
-        tone: inventoryStockHealth.dead_stock.item_count > 0 ? "red" : "green",
-      });
-    }
-    if (inventoryConsumption) {
-      rows.push({
-        kpi: "Turnover Ratio",
-        formula: "Consumption ÷ Avg Stock Held",
-        value: `${inventoryConsumption.turnover_ratio}x`,
-        tone: inventoryConsumption.turnover_ratio < 1 ? "red" : "green",
-      });
-    }
-    if (inventoryOperations) {
-      rows.push({
-        kpi: "GRN Workflow Status",
-        formula: "Goods Received pending vs completed",
-        value: `${inventoryOperations.grn_workflow.pending} pending, ${inventoryOperations.grn_workflow.completed} completed`,
-        tone: inventoryOperations.grn_workflow.pending > 0 ? "amber" : "green",
-      });
-      rows.push({
-        kpi: "Green Inventory Adoption %",
-        formula: "Ecofriendly items ÷ Total items × 100",
-        value: `${inventoryOperations.green_inventory.adoption_percent}%`,
-        tone: inventoryOperations.green_inventory.adoption_percent >= 30 ? "green" : "amber",
-      });
-    }
-    return rows;
-  }, [inventoryOverview, inventoryStockHealth, inventoryConsumption, inventoryOperations]);
-
   // --- Waste section: derived from the live /fm_dashboard/waste/* endpoints ---
   const wasteOverview = wasteApiData.overview;
   const wasteBreakdown = wasteApiData.breakdown;
   const wasteTrend = wasteApiData.trend;
   const wasteVendorData = wasteApiData.vendor;
+  const wasteRecordRows = useMemo(() => toDashboardApiTableRows(wasteApiData.records), [wasteApiData.records]);
+  const wasteRecordColumns = useMemo(() => dashboardApiTableColumns(wasteRecordRows), [wasteRecordRows]);
 
   const wasteFreshnessTone: "green" | "amber" | "red" = useMemo(() => {
     const days = wasteOverview?.days_since_last_activity;
@@ -2792,6 +2847,14 @@ export default function RevampDashboardPage() {
   const attendanceDepartment = attendanceApiData.department;
   const attendanceTrend = attendanceApiData.trend;
   const attendancePatterns = attendanceApiData.patterns;
+  const attendanceStaffingGapRows = useMemo(
+    () => toDashboardApiTableRows(attendanceApiData.staffingGapVsBreach),
+    [attendanceApiData.staffingGapVsBreach]
+  );
+  const attendanceStaffingGapColumns = useMemo(
+    () => dashboardApiTableColumns(attendanceStaffingGapRows),
+    [attendanceStaffingGapRows]
+  );
 
   const attendanceTrendChartData = useMemo(
     () =>
@@ -2847,6 +2910,14 @@ export default function RevampDashboardPage() {
   const surveyBreakdown = surveyApiData.breakdown;
   const surveyTrend = surveyApiData.trend;
   const surveyTiming = surveyApiData.timing;
+  const surveyWeeklyBreakdownRows = useMemo(
+    () => toDashboardApiTableRows(surveyApiData.weeklyCsatBreakdown),
+    [surveyApiData.weeklyCsatBreakdown]
+  );
+  const surveyWeeklyBreakdownColumns = useMemo(
+    () => dashboardApiTableColumns(surveyWeeklyBreakdownRows),
+    [surveyWeeklyBreakdownRows]
+  );
 
   const surveyCategoryRows = useMemo(() => {
     const rows = (surveyBreakdown?.response_by_category ?? []).filter(
@@ -3006,6 +3077,24 @@ export default function RevampDashboardPage() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
 
+          <Select
+            value={appliedSite}
+            onValueChange={handleSiteChange}
+            disabled={sitesLoading || allowedSites.length === 0}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Site" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sites</SelectItem>
+              {allowedSites.map((site) => (
+                <SelectItem key={site.id} value={String(site.id)}>
+                  {site.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <div className="relative">
             <button
               type="button"
@@ -3043,7 +3132,7 @@ export default function RevampDashboardPage() {
               aria-label="Filters"
               title="Filters"
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
+                "veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
                 appliedBuilding !== "all" || appliedCategory !== "all" ? "border-brand text-brand" : "border-brand-border"
               )}
             >
@@ -4991,52 +5080,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-deadstock-value" chart_id="inventory-deadstock-value" className="h-full">
-                {inventoryDeadstockData.length ? (
-                  <BarChartCard
-                    title="Dead Stock & Overstock Value"
-                    subtitle={
-                      inventoryStockHealth
-                        ? `${inventoryStockHealth.dead_stock.item_count} items with zero movement in 90+ days — value at risk, by category`
-                        : undefined
-                    }
-                    data={inventoryDeadstockData}
-                    categoryKey="category"
-                    orientation="horizontal"
-                    categoryColors={inventoryDeadstockData.map(() => "#9EC8BA")}
-                    series={[{ dataKey: "value", name: "Value at risk" }]}
-                    showInfoIcon
-                    insightVariant="plain"
-                    insight="This is blocked capital sitting on shelves — worth a write-off or liquidation review, not just a count of inactive line items."
-                    className="h-full overflow-auto"
-                  />
-                ) : (
-                  <EmptyStateCard
-                    title="Dead Stock & Overstock Value"
-                    subtitle="Value at risk, by category"
-                    message="No dead-stock items for this period."
-                    className="h-full overflow-auto"
-                  />
-                )}
-              </div>
-
-              <div key="inventory-kpi-table" chart_id="inventory-kpi-table" className="h-full">
-                <DataTableCard
-                  title="Inventory KPIs"
-                  subtitle="Computed live from the selected sites and date range"
-                  columns={INVENTORY_KPI_COLUMNS}
-                  data={inventoryKpiRows}
-                  getRowKey={(row) => row.kpi}
-                  insight={
-                    inventoryOverview
-                      ? `Current Inventory Value is based on the ${inventoryOverview.current_inventory_value.costed_items_count} items with confirmed unit cost — the remaining items need cost data added before the true portfolio total is complete.`
-                      : undefined
-                  }
-                  className="h-full overflow-auto"
-                />
-              </div>
-
-              <div key="waste-section-label" chart_id="waste-section-label" className="h-full flex items-center gap-2">
+              <div key="waste-section-label" chart_code="fm-waste-section-label" className="h-full flex items-center gap-2 relative">
+                <AddToDashboardButton chartId="fm-waste-section-label" moduleKey="maintenance" subTab="Waste" height="1" width="12" position="0,393" />
                 <div ref={registerMaintenanceSectionRef("Waste")} className="h-0" />
                 <span className="text-sm">♻</span>
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
@@ -5090,16 +5135,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="waste-workflow-bottlenecks" chart_id="waste-workflow-bottlenecks" className="h-full">
-                <EmptyStateCard
-                  title="Workflow Bottlenecks"
-                  subtitle="Where waste records are stuck in the cycle"
-                  message="The waste API doesn't track a dispatch/verification workflow stage — only generated vs. recycled totals per record. Not available."
-                  className="h-full"
-                />
-              </div>
-
-              <div key="waste-breakdown" chart_id="waste-breakdown" className="h-full">
+              <div key="waste-breakdown" chart_code="fm-waste-breakdown" className="h-full relative">
+                <AddToDashboardButton chartId="fm-waste-breakdown" moduleKey="maintenance" subTab="Waste" height="8" width="4" position="0,403" />
                 {wasteCategoryProgressRows.length || wasteCommodityProgressRows.length || wasteBuildingProgressRows.length ? (
                   <ProgressListCard
                     title="Waste Breakdown"
@@ -5171,9 +5208,11 @@ export default function RevampDashboardPage() {
                             <span className="font-semibold" style={{ color: BRAND_HEX.warn }}>
                               {wasteHazardousRow.generated_kg.toLocaleString()} KG
                             </span>
-                            <TableBadge tone={wasteHazardousRow.recycled_kg > 0 ? "green" : "amber"}>
-                              {wasteHazardousRow.recycled_kg > 0 ? `${wasteHazardousRow.recycled_kg.toLocaleString()} KG recycled` : "Awaiting Verification"}
-                            </TableBadge>
+                            {wasteHazardousRow.recycled_kg > 0 && (
+                              <TableBadge tone="green">
+                                {`${wasteHazardousRow.recycled_kg.toLocaleString()} KG recycled`}
+                              </TableBadge>
+                            )}
                           </span>
                         ) : (
                           <TableBadge tone="grey">No hazardous waste logged</TableBadge>
@@ -5238,8 +5277,18 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="waste-records-table" chart_id="waste-records-table" className="h-full">
-                {wasteCategoryTableRows.length ? (
+              <div key="waste-records-table" chart_code="fm-waste-records-table" className="h-full relative">
+                <AddToDashboardButton chartId="fm-waste-records-table" moduleKey="maintenance" subTab="Waste" height="8" width="12" position="0,415" />
+                {wasteRecordRows.length ? (
+                  <DataTableCard
+                    title="Waste Records"
+                    subtitle="Individual waste records for the selected sites and date range"
+                    columns={wasteRecordColumns}
+                    data={wasteRecordRows}
+                    getRowKey={(row) => row.__rowKey}
+                    className="h-full overflow-auto"
+                  />
+                ) : wasteCategoryTableRows.length ? (
                   <DataTableCard
                     title="Waste Generation by Category"
                     subtitle={
@@ -5376,13 +5425,25 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="attendance-staffing-breach" chart_id="attendance-staffing-breach" className="h-full">
-                <EmptyStateCard
-                  title="Staffing gaps vs category breach rate"
-                  subtitle="Same days plotted together — is an absence the reason a category spikes?"
-                  message="None of the 4 attendance endpoints cross-reference staffing gaps against ticket breach rate — that correlation isn't available from this API."
-                  className="h-full"
-                />
+              <div key="attendance-staffing-breach" chart_code="fm-attendance-staffing-breach" className="h-full relative">
+                <AddToDashboardButton chartId="fm-attendance-staffing-breach" moduleKey="maintenance" subTab="Attendance" height="6" width="12" position="0,443" />
+                {attendanceStaffingGapRows.length ? (
+                  <DataTableCard
+                    title="Staffing gaps vs category breach rate"
+                    subtitle="Staffing and ticket-breach correlation for the selected sites and date range"
+                    columns={attendanceStaffingGapColumns}
+                    data={attendanceStaffingGapRows}
+                    getRowKey={(row) => row.__rowKey}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Staffing gaps vs category breach rate"
+                    subtitle="Staffing and ticket-breach correlation"
+                    message="No staffing-gap or category-breach correlation data for the selected sites and date range."
+                    className="h-full"
+                  />
+                )}
               </div>
 
               <div key="attendance-repeat-lateness" chart_id="attendance-repeat-lateness" className="h-full">
@@ -5478,8 +5539,17 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-weekly-breakdown-table" chart_id="survey-weekly-breakdown-table" className="h-full">
-                {surveyWeeklyTableRows.length ? (
+              <div key="survey-weekly-breakdown-table" chart_code="fm-survey-weekly-breakdown-table" className="h-full relative">
+                <AddToDashboardButton chartId="fm-survey-weekly-breakdown-table" moduleKey="maintenance" subTab="Survey" height="6" width="12" position="0,474" />
+                {surveyWeeklyBreakdownRows.length ? (
+                  <DataTableCard
+                    title="Weekly CSAT Breakdown"
+                    columns={surveyWeeklyBreakdownColumns}
+                    data={surveyWeeklyBreakdownRows}
+                    getRowKey={(row) => row.__rowKey}
+                    className="h-full overflow-auto"
+                  />
+                ) : surveyWeeklyTableRows.length ? (
                   <DataTableCard
                     title="Weekly CSAT Breakdown"
                     columns={SURVEY_WEEKLY_TABLE_COLUMNS}
@@ -5694,6 +5764,9 @@ export default function RevampDashboardPage() {
         ) : isSafetyView ? (
           <SafetyPanel
             activeSection={activeSubTab}
+            siteIds={dashboardSiteIds}
+            fromDate={dashboardFromDate}
+            toDate={dashboardToDate}
             permits={permitsApiData}
             permitsLoading={permitsLoading || sitesLoading}
             incidents={incidentsApiData}
@@ -5738,6 +5811,66 @@ export default function RevampDashboardPage() {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {isMyDashboardModule && (
+          <div className="space-y-8 mt-8">
+            {savedSafetyKeys.size > 0 && (
+              <SafetyPanel
+                activeSection=""
+                siteIds={dashboardSiteIds}
+                fromDate={dashboardFromDate}
+                toDate={dashboardToDate}
+                permits={permitsApiData}
+                permitsLoading={permitsLoading || sitesLoading}
+                incidents={incidentsApiData}
+                incidentsLoading={incidentsLoading || sitesLoading}
+                visibleKeys={savedSafetyKeys}
+              />
+            )}
+            {savedFinanceKeys.size > 0 && (
+              <FinancePanel
+                activeSection=""
+                data={financeApiData}
+                loading={financeLoading || sitesLoading}
+                visibleKeys={savedFinanceKeys}
+              />
+            )}
+            {savedCrmKeys.size > 0 && (
+              <CrmPanel activeSection="" data={crmApiData} loading={crmLoading || sitesLoading} visibleKeys={savedCrmKeys} />
+            )}
+            {savedOverviewKeys.size > 0 && (
+              <OverviewPanel
+                activeSection=""
+                visibleKeys={savedOverviewKeys}
+                onNavigate={(moduleKey, subTab) => {
+                  if (subTab) navigateTo(moduleKey, subTab);
+                  else handleModuleChange(moduleKey);
+                }}
+              />
+            )}
+            {savedTransitioningKeys.size > 0 && (
+              <TransitioningPanel activeSection="" visibleKeys={savedTransitioningKeys} />
+            )}
+            {savedUtilityKeys.size > 0 && <UtilityPanel activeSection="" visibleKeys={savedUtilityKeys} />}
+            {savedSecurityKeys.size > 0 && <SecurityPanel activeSection="" visibleKeys={savedSecurityKeys} />}
+            {savedVasKeys.size > 0 && <VasPanel activeSection="" visibleKeys={savedVasKeys} />}
+            {savedMaintenanceKeys.size === 0 &&
+              savedSafetyKeys.size === 0 &&
+              savedFinanceKeys.size === 0 &&
+              savedCrmKeys.size === 0 &&
+              savedOverviewKeys.size === 0 &&
+              savedTransitioningKeys.size === 0 &&
+              savedUtilityKeys.size === 0 &&
+              savedSecurityKeys.size === 0 &&
+              savedVasKeys.size === 0 && (
+                <EmptyStateCard
+                  title="No cards on My Dashboard yet"
+                  message='Click the "+" on any card across Overview, Transitioning, Maintenance, Safety, Finance, CRM, Utility, Security or Value Added Services to add it here.'
+                  className="h-40"
+                />
+              )}
           </div>
         )}
         </div>

@@ -50,6 +50,7 @@ export interface SafetyGridItem {
 interface SafetyGridSectionProps {
   storageKey: string;
   items: SafetyGridItem[];
+  layoutOverrides?: Record<string, Partial<Omit<GridLayout.Layout, "i">>>;
   /** Renders the coded default layout with drag/resize/reset disabled — for modules that shouldn't be user-repositionable. */
   static?: boolean;
   /** Stacks cards to full width, one per row, at the sm/xs/xxs breakpoints instead of letting react-grid-layout naively clamp x/w (which leaves items overlapping or clipped off-canvas on narrower laptop screens). Opt-in so existing CRM/Finance grids keep their current behavior. */
@@ -89,15 +90,54 @@ function stackLayoutFullWidth(layout: GridLayout.Layout[], toCols: number): Grid
  * screenshots) on first load; a saved layout only applies after the user has
  * actually dragged/resized something in this section.
  */
-export function SafetyGridSection({ storageKey, items, static: isStatic, responsive }: SafetyGridSectionProps) {
-  const defaultLayout: GridLayout.Layout[] = items.map((item) => ({ i: item.key, ...item.layout }));
+export function SafetyGridSection({
+  storageKey,
+  items,
+  layoutOverrides,
+  static: isStatic,
+  responsive,
+  moduleKey,
+  subTab,
+  visibleKeys,
+}: SafetyGridSectionProps) {
+  const visibleItems = visibleKeys ? items.filter((item) => visibleKeys.has(`fm-${item.key}`)) : items;
+  const myDashboardCards = useMyDashboardStore((s) => s.cards);
+  const updateMyDashboardCardLayout = useMyDashboardStore((s) => s.updateCardLayout);
+  // A "My Dashboard" preview is always drag/resize-enabled (it has its own persistence path,
+  // below) regardless of the source panel's own `static` setting.
+  const effectiveStatic = isStatic && !visibleKeys;
+  const defaultLayout: GridLayout.Layout[] = visibleItems.map((item) => {
+    if (visibleKeys) {
+      const saved = myDashboardCards.find((c) => c.chartId === `fm-${item.key}`);
+      const [x, y] = (saved?.position ?? "").split(",").map(Number);
+      return {
+        i: item.key,
+        x: Number.isFinite(x) ? x : item.layout.x,
+        y: Number.isFinite(y) ? y : item.layout.y,
+        w: Number(saved?.width) || item.layout.w,
+        h: Number(saved?.height) || item.layout.h,
+        minW: item.layout.minW,
+        minH: item.layout.minH,
+      };
+    }
+    return { i: item.key, ...item.layout };
+  });
   const [layout, setLayout] = useState<GridLayout.Layout[]>(defaultLayout);
   const { ref: measuredRef, width: measuredWidth } = useContainerWidth();
 
   useEffect(() => {
     if (isStatic) return;
     const stored = loadStoredLayout(storageKey);
-    if (stored) setLayout(stored);
+    if (stored) {
+      const savedByKey = new Map(stored.map((item) => [item.i, item]));
+      setLayout(
+        defaultLayout.map((item) => ({
+          ...item,
+          ...savedByKey.get(item.i),
+          ...layoutOverrides?.[item.i],
+        })),
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey, isStatic]);
 

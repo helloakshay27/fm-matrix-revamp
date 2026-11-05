@@ -1,6 +1,6 @@
-// FM Dashboard analytics API — one file for all 10 module sections
+// FM Dashboard analytics API — one file for all 11 module sections
 // (Tickets, Assets, Audit, AMC, Checklists, Inventory, Waste, Attendance,
-// Survey, Vendor) instead of one file per module, so the whole
+// Survey, Vendor, Safety) instead of one file per module, so the whole
 // /fm_dashboard/* surface lives in a single place.
 //
 // Base URL and auth are always resolved dynamically via apiConfig (getFullUrl,
@@ -911,10 +911,11 @@ interface InventoryOperationsResponse {
 }
 
 const INVENTORY_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/inventory/inventory_overview",
-  STOCK_HEALTH: "/fm_dashboard/inventory/inventory_stock_health",
-  CONSUMPTION: "/fm_dashboard/inventory/inventory_consumption",
-  OPERATIONS: "/fm_dashboard/inventory/inventory_operations",
+  OVERVIEW: "/fm_dashboard/inventory/inventory_overview.json",
+  STOCK_HEALTH: "/fm_dashboard/inventory/inventory_stock_health.json",
+  CONSUMPTION: "/fm_dashboard/inventory/inventory_consumption.json",
+  OPERATIONS: "/fm_dashboard/inventory/inventory_operations.json",
+  KPIS_TABLE: "/fm_dashboard/inventory/inventory_kpis_table",
 } as const;
 
 export const fetchInventoryOverview = (params: FmDashboardParams) =>
@@ -933,6 +934,11 @@ export const fetchInventoryConsumption = (params: FmDashboardParams) =>
 export const fetchInventoryOperations = (params: FmDashboardParams) =>
   fetchFmDashboardJson<InventoryOperationsResponse>(INVENTORY_ENDPOINTS.OPERATIONS, params).then(
     (res) => res.inventory_operations
+  );
+
+export const fetchInventoryKpisTable = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ inventory_kpis_table: unknown }>(INVENTORY_ENDPOINTS.KPIS_TABLE, params).then(
+    (res) => res.inventory_kpis_table
   );
 
 // ============================================================================
@@ -1022,10 +1028,11 @@ interface WasteVendorResponse {
 }
 
 const WASTE_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/waste/waste_overview",
-  BREAKDOWN: "/fm_dashboard/waste/waste_breakdown",
-  TREND: "/fm_dashboard/waste/waste_trend",
-  VENDOR: "/fm_dashboard/waste/waste_vendor",
+  OVERVIEW: "/fm_dashboard/waste/waste_overview.json",
+  BREAKDOWN: "/fm_dashboard/waste/waste_breakdown.json",
+  TREND: "/fm_dashboard/waste/waste_trend.json",
+  VENDOR: "/fm_dashboard/waste/waste_vendor.json",
+  RECORDS: "/fm_dashboard/waste/waste_records",
 } as const;
 
 export const fetchWasteOverview = (params: FmDashboardParams) =>
@@ -1039,6 +1046,9 @@ export const fetchWasteTrend = (params: FmDashboardParams) =>
 
 export const fetchWasteVendor = (params: FmDashboardParams) =>
   fetchFmDashboardJson<WasteVendorResponse>(WASTE_ENDPOINTS.VENDOR, params).then((res) => res.waste_vendor);
+
+export const fetchWasteRecords = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ waste_records: unknown }>(WASTE_ENDPOINTS.RECORDS, params).then((res) => res.waste_records);
 
 // ============================================================================
 // Attendance
@@ -1126,10 +1136,11 @@ interface AttendancePatternsResponse {
 }
 
 const ATTENDANCE_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/attendance/attendance_overview",
-  DEPARTMENT: "/fm_dashboard/attendance/attendance_department",
-  TREND: "/fm_dashboard/attendance/attendance_trend",
-  PATTERNS: "/fm_dashboard/attendance/attendance_patterns",
+  OVERVIEW: "/fm_dashboard/attendance/attendance_overview.json",
+  DEPARTMENT: "/fm_dashboard/attendance/attendance_department.json",
+  TREND: "/fm_dashboard/attendance/attendance_trend.json",
+  PATTERNS: "/fm_dashboard/attendance/attendance_patterns.json",
+  STAFFING_GAP_VS_BREACH: "/fm_dashboard/attendance/staffing_gap_vs_breach",
 } as const;
 
 export const fetchAttendanceOverview = (params: FmDashboardParams) =>
@@ -1148,6 +1159,11 @@ export const fetchAttendanceTrend = (params: FmDashboardParams) =>
 export const fetchAttendancePatterns = (params: FmDashboardParams) =>
   fetchFmDashboardJson<AttendancePatternsResponse>(ATTENDANCE_ENDPOINTS.PATTERNS, params).then(
     (res) => res.attendance_patterns
+  );
+
+export const fetchAttendanceStaffingGapVsBreach = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ staffing_gap_vs_breach: unknown }>(ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH, params).then(
+    (res) => res.staffing_gap_vs_breach
   );
 
 // ============================================================================
@@ -1228,10 +1244,11 @@ interface SurveyTimingResponse {
 }
 
 const SURVEY_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/survey/survey_overview",
-  BREAKDOWN: "/fm_dashboard/survey/survey_breakdown",
-  TREND: "/fm_dashboard/survey/survey_trend",
-  TIMING: "/fm_dashboard/survey/survey_timing",
+  OVERVIEW: "/fm_dashboard/survey/survey_overview.json",
+  BREAKDOWN: "/fm_dashboard/survey/survey_breakdown.json",
+  TREND: "/fm_dashboard/survey/survey_trend.json",
+  WEEKLY_CSAT_BREAKDOWN: "/fm_dashboard/survey/survey_weekly_csat_breakdown",
+  TIMING: "/fm_dashboard/survey/survey_timing.json",
 } as const;
 
 export const fetchSurveyOverview = (params: FmDashboardParams) =>
@@ -1242,6 +1259,11 @@ export const fetchSurveyBreakdown = (params: FmDashboardParams) =>
 
 export const fetchSurveyTrend = (params: FmDashboardParams) =>
   fetchFmDashboardJson<SurveyTrendResponse>(SURVEY_ENDPOINTS.TREND, params).then((res) => res.survey_trend);
+
+export const fetchSurveyWeeklyCsatBreakdown = (params: FmDashboardParams) =>
+  fetchFmDashboardJson<{ survey_weekly_csat_breakdown: unknown }>(SURVEY_ENDPOINTS.WEEKLY_CSAT_BREAKDOWN, params).then(
+    (res) => res.survey_weekly_csat_breakdown
+  );
 
 export const fetchSurveyTiming = (params: FmDashboardParams) =>
   fetchFmDashboardJson<SurveyTimingResponse>(SURVEY_ENDPOINTS.TIMING, params).then((res) => res.survey_timing);
@@ -1350,15 +1372,17 @@ export const fetchVendorKycRisk = (params: FmDashboardParams) =>
 // ============================================================================
 // Permits (Safety module)
 // ============================================================================
-// Field names below follow the naming convention confirmed across every
-// other module on this API (status_breakdown: {lowercase status keys},
-// *_percent, *_count, by_x arrays with name/total — see ChecklistsOverviewData
-// and TicketsOverviewData). Not verified against a live response — the
-// reference doc's bearer token only validates against the doc author's local
-// dev server, which wasn't reachable to confirm exact field names. Kept
-// defensive throughout ([key: string]: unknown + optional row fields) so real
-// data still renders correctly once confirmed, and anything genuinely absent
-// falls back to "—"/EmptyStateCard in the UI rather than a fabricated number.
+
+async function fetchSafetyDashboardJson<T extends { success?: number; message?: string }>(
+  endpoint: string,
+  params: FmDashboardParams
+): Promise<T> {
+  const response = await fetchFmDashboardJson<T>(endpoint, params);
+  if (response.success === 0) {
+    throw new Error(response.message || `Safety dashboard request failed for ${endpoint}`);
+  }
+  return response;
+}
 
 export interface PermitsStatusBreakdown {
   open?: number;
@@ -1374,66 +1398,80 @@ export interface PermitsStatusBreakdown {
 export interface PermitsOverviewData {
   total_permits: number;
   status_breakdown: PermitsStatusBreakdown;
-  /** Confirmed field name — per the reference doc's Notes section ("permits_overview.permit_compliance ... combine client-side with incidents_overview.sohi_score"). */
-  permit_compliance?: number;
-  safety_compliance_percent?: number;
-  violations_count?: number;
+  permit_compliance?: {
+    percent: number;
+    valid_count: number;
+    active_count: number;
+    total_permits: number;
+  };
+  safety_compliance?: {
+    percent: number;
+    active_permits_checked: number;
+  };
+  permit_violations?: { count: number };
+  draft_percent_of_total?: number;
   [key: string]: unknown;
 }
 
 export interface PermitLevelBottleneckRow {
-  level?: string;
-  name?: string;
+  invoice_approval_level_id?: number;
+  level_name?: string;
+  oldest_stuck_days?: number;
   stuck_count?: number;
-  count?: number;
   [key: string]: unknown;
 }
 
 export interface PermitTypeRiskRow {
-  type?: string;
+  permit_type_id?: number;
   name?: string;
   count?: number;
   [key: string]: unknown;
 }
 
 export interface PermitsBottleneckData {
-  by_level?: PermitLevelBottleneckRow[];
-  by_type?: PermitTypeRiskRow[];
+  approval_level_bottleneck?: PermitLevelBottleneckRow[];
+  risk_weighted_type_breakdown?: PermitTypeRiskRow[];
   [key: string]: unknown;
 }
 
 export interface PermitAgeTimelinePoint {
-  days_ago?: number;
+  pms_permit_id?: number;
+  reference_number?: string;
+  permit_type?: string;
+  age_days?: number;
   status?: string;
-  ref?: string;
   [key: string]: unknown;
 }
 
 export interface PermitExceptionRow {
-  ref?: string;
-  permit_ref?: string;
-  type?: string;
+  pms_permit_id?: number;
+  reference_number?: string;
   permit_type?: string;
-  date_label?: string;
   raised_date?: string;
   expiry_date?: string;
   days_open?: number;
   status?: string;
+  exception_category?: string;
   [key: string]: unknown;
 }
 
 export interface PermitRepeatExtensionRow {
-  ref?: string;
-  permit_ref?: string;
-  type?: string;
+  pms_permit_id?: number;
+  reference_number?: string;
+  permit_type?: string;
+  status?: string;
   extension_count?: number;
   [key: string]: unknown;
 }
 
 export interface PermitsDetailData {
-  age_timeline?: PermitAgeTimelinePoint[];
-  exceptions?: PermitExceptionRow[];
-  repeat_extensions?: PermitRepeatExtensionRow[];
+  age_timeline?: { total: number; data: PermitAgeTimelinePoint[] };
+  repeat_extensions?: { total: number; data: PermitRepeatExtensionRow[] };
+  exceptions_log?: {
+    total: number;
+    by_category: Record<string, number>;
+    data: PermitExceptionRow[];
+  };
   [key: string]: unknown;
 }
 
@@ -1463,111 +1501,72 @@ const PERMITS_ENDPOINTS = {
 } as const;
 
 export const fetchPermitsOverview = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<PermitsOverviewResponse>(PERMITS_ENDPOINTS.OVERVIEW, params).then((res) => res.permits_overview);
+  fetchSafetyDashboardJson<PermitsOverviewResponse>(PERMITS_ENDPOINTS.OVERVIEW, params).then((res) => res.permits_overview);
 
 export const fetchPermitsBottleneck = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<PermitsBottleneckResponse>(PERMITS_ENDPOINTS.BOTTLENECK, params).then(
+  fetchSafetyDashboardJson<PermitsBottleneckResponse>(PERMITS_ENDPOINTS.BOTTLENECK, params).then(
     (res) => res.permits_bottleneck
   );
 
 export const fetchPermitsDetail = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<PermitsDetailResponse>(PERMITS_ENDPOINTS.DETAIL, params).then((res) => res.permits_detail);
+  fetchSafetyDashboardJson<PermitsDetailResponse>(PERMITS_ENDPOINTS.DETAIL, params).then((res) => res.permits_detail);
 
 // ============================================================================
 // Incidents (Safety module)
 // ============================================================================
-// Same caveat as Permits: not verified against a live response. Two field
-// names ARE confirmed from the reference doc's Notes section: `sohi_score`
-// (on incidents_overview — combine client-side with permits_overview's
-// permit_compliance for the SOHI-vs-Permit-Compliance contradiction card) and
-// `avg_resolution_time` + `sample_size` (on incidents_analysis — the note
-// warns this is thin, only ~44 incidents system-wide have a real closure
-// timestamp, so check sample_size before trusting the number). Everything
-// else follows this API's established naming convention. The doc also notes
-// `level_wise`/`status_summary`/`top_categories`/`incident_kpis`/`rca_data`
-// are NOT part of these 4 endpoints — they live on a separate, pre-existing
-// `incident_dashboard/*` surface that this integration does not touch.
 
 export interface IncidentsStatusBreakdown {
+  total?: number;
   open?: number;
   under_investigation?: number;
   pending?: number;
   closed?: number;
   final_closure?: number;
   provisional_closure?: number;
-  [key: string]: unknown;
-}
-
-export interface IncidentsOverviewData {
-  total_incidents: number;
-  status_breakdown?: IncidentsStatusBreakdown;
-  /** Confirmed field — see file-header note. */
-  sohi_score?: number;
-  near_miss_rate?: number;
-  incidents_per_million_sqft?: number;
-  ltir?: number;
-  safe_man_hours?: number;
-  external_support_count?: number;
-  external_support_percent?: number;
-  /** Raw underlying record count, when it differs from total_incidents (data-quality flag). */
-  raw_record_count?: number;
+  other?: number;
   [key: string]: unknown;
 }
 
 export interface IncidentTrendPoint {
   month?: string;
-  incidents?: number;
+  incident_count?: number;
   [key: string]: unknown;
 }
 
 export interface IncidentsTrendData {
   monthly_trend?: IncidentTrendPoint[];
-  [key: string]: unknown;
-}
-
-export interface IncidentSeverityRow {
-  name?: string;
-  severity?: string;
-  count?: number;
-  value?: number;
+  external_support?: {
+    count: number;
+    total: number;
+    percent: number;
+  };
   [key: string]: unknown;
 }
 
 export interface IncidentRootCauseRow {
-  name?: string;
-  cause?: string;
+  root_cause?: string;
   count?: number;
-  value?: number;
-  [key: string]: unknown;
-}
-
-export interface IncidentCategoryRow {
-  category?: string;
-  name?: string;
-  count?: number;
-  percent?: number;
   [key: string]: unknown;
 }
 
 export interface IncidentsAnalysisData {
-  severity_distribution?: IncidentSeverityRow[];
   root_cause_breakdown?: IncidentRootCauseRow[];
-  category_breakdown?: IncidentCategoryRow[];
+  percent?: number;
   closure_rate_percent?: number;
-  /** Confirmed field — see file-header note. Thin: only ~44 incidents system-wide have a real closure timestamp. */
-  avg_resolution_time?: number;
-  /** Confirmed field — check before trusting avg_resolution_time. */
-  sample_size?: number;
-  closure_integrity_percent?: number;
-  closure_integrity_sample_size?: number;
+  closed_incident_quality?: {
+    qualifying_count: number;
+    total_closed: number;
+    percent: number;
+  };
+  avg_resolution_time?: { days: number; sample_size: number };
   safety_compliance_score?: number;
   [key: string]: unknown;
 }
 
 export interface IncidentLocationRow {
+  tower_id?: number;
   location?: string;
-  name?: string;
-  count?: number;
+  low_risk_count?: number;
   [key: string]: unknown;
 }
 
@@ -1577,18 +1576,31 @@ export interface IncidentBodyPartRow {
   [bodyPart: string]: unknown;
 }
 
+export interface IncidentRequiringActionRow {
+  incident_id: number;
+  date: string;
+  category: string | null;
+  level: string;
+  status: string;
+  description: string;
+  rca: string | null;
+  assigned_to: string;
+  days_open: number;
+}
+
 export interface IncidentsHotspotsData {
-  by_location?: IncidentLocationRow[];
+  status_breakdown?: IncidentsStatusBreakdown;
+  severity_distribution?: Record<string, number>;
+  quiet_escalation_by_location?: {
+    location_coverage_count: number;
+    data: IncidentLocationRow[];
+  };
   by_body_part?: IncidentBodyPartRow[];
+  incidents_requiring_action_count?: number;
+  incidents_requiring_action?: IncidentRequiringActionRow[];
   [key: string]: unknown;
 }
 
-interface IncidentsOverviewResponse {
-  success: number;
-  message: string;
-  incidents_overview: IncidentsOverviewData;
-  filters: FmDashboardFilters;
-}
 interface IncidentsTrendResponse {
   success: number;
   message: string;
@@ -1608,30 +1620,43 @@ interface IncidentsHotspotsResponse {
   filters: FmDashboardFilters;
 }
 
+export interface IncidentKpisData {
+  zero_incident_days: number;
+  incident_rate: {
+    incidents: number;
+    area: number;
+    rate: number;
+  };
+  ltir: {
+    injuries: number;
+    work_hours: number;
+    value: number;
+  };
+}
+
 const INCIDENTS_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/incident/incidents_overview",
   TREND: "/fm_dashboard/incident/incidents_trend",
   ANALYSIS: "/fm_dashboard/incident/incidents_analysis",
   HOTSPOTS: "/fm_dashboard/incident/incidents_hotspots",
 } as const;
 
-export const fetchIncidentsOverview = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<IncidentsOverviewResponse>(INCIDENTS_ENDPOINTS.OVERVIEW, params).then(
-    (res) => res.incidents_overview
-  );
-
 export const fetchIncidentsTrend = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<IncidentsTrendResponse>(INCIDENTS_ENDPOINTS.TREND, params).then((res) => res.incidents_trend);
+  fetchSafetyDashboardJson<IncidentsTrendResponse>(INCIDENTS_ENDPOINTS.TREND, params).then((res) => res.incidents_trend);
 
 export const fetchIncidentsAnalysis = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<IncidentsAnalysisResponse>(INCIDENTS_ENDPOINTS.ANALYSIS, params).then(
+  fetchSafetyDashboardJson<IncidentsAnalysisResponse>(INCIDENTS_ENDPOINTS.ANALYSIS, params).then(
     (res) => res.incidents_analysis
   );
 
 export const fetchIncidentsHotspots = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<IncidentsHotspotsResponse>(INCIDENTS_ENDPOINTS.HOTSPOTS, params).then(
+  fetchSafetyDashboardJson<IncidentsHotspotsResponse>(INCIDENTS_ENDPOINTS.HOTSPOTS, params).then(
     (res) => res.incidents_hotspots
   );
+
+export const fetchIncidentKpis = (siteIds: FmDashboardParams["siteIds"]) =>
+  fetchSafetyDashboardJson<{ success: number; message?: string; data: IncidentKpisData }>("/incident_dashboard/incident_kpis", {
+    siteIds,
+  }).then((res) => res.data);
 
 // ============================================================================
 // Finance

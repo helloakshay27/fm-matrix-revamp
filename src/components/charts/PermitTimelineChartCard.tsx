@@ -1,4 +1,5 @@
 import {
+  CartesianGrid,
   ScatterChart,
   Scatter,
   XAxis,
@@ -16,13 +17,13 @@ import { cn } from "@/lib/utils";
 export interface PermitTimelinePoint {
   /** Days ago the permit was raised/expired — 0 = today, positive = in the past. */
   daysAgo: number;
-  status: "Expired" | "Draft" | "Open";
+  status: string;
 }
 
-const STATUS_COLORS: Record<PermitTimelinePoint["status"], string> = {
-  Expired: "#E7848E",
-  Draft: "#EDC488",
-  Open: "#6B9BCC",
+const STATUS_COLORS: Record<string, string> = {
+  Expired: "var(--color-error)",
+  Draft: "var(--color-warning)",
+  Open: "var(--color-info)",
 };
 
 function TimelineTooltip({ active, payload }: TooltipProps<number, string>) {
@@ -69,14 +70,15 @@ export function PermitTimelineChartCard({
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={height}>
-            <ScatterChart margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <ScatterChart margin={{ top: 8, right: 32, left: 36, bottom: 0 }}>
+              <CartesianGrid vertical horizontal={false} stroke="var(--color-border-subtle)" />
               <XAxis
                 type="number"
                 dataKey="daysAgo"
                 reversed
                 domain={[-20, 200]}
-                ticks={[200, 150, 100, 50, 0]}
-                tickFormatter={(v: number) => (v <= 0 ? (v === 0 ? "today" : `${-v}d ago`) : `${v}d ago`)}
+                ticks={[200, 150, 100, 50, 0, -20]}
+                tickFormatter={(v: number) => (v === 0 ? "today" : `${v}d ago`)}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
@@ -87,7 +89,7 @@ export function PermitTimelineChartCard({
               <Tooltip content={<TimelineTooltip />} cursor={{ strokeDasharray: "3 3" }} />
               <Scatter data={jittered} dataKey="jitter">
                 {jittered.map((d, i) => (
-                  <Cell key={i} fill={STATUS_COLORS[d.status]} />
+                  <Cell key={i} fill={STATUS_COLORS[d.status] ?? "var(--color-info)"} />
                 ))}
               </Scatter>
             </ScatterChart>
