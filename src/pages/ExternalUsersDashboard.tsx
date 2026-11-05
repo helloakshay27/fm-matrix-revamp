@@ -513,7 +513,7 @@ export const ExternalUsersDashboard = () => {
         : baseUrl.startsWith("http")
           ? baseUrl.replace(/\/+$/, "")
           : `https://${baseUrl.replace(/\/+$/, "")}`;
-      const url = `${apiBaseUrl}/pms/users/${user.id}/update_vi_user`;
+      const url = `${apiBaseUrl}/pms/users/${user.id}/update_vi_user.json`;
       const payload = {
         user: {
           lock_user_permissions_attributes: [
@@ -559,7 +559,7 @@ export const ExternalUsersDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       if (!baseUrl || !token) throw new Error('Missing base URL or token');
-      const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user`;
+      const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user.json`;
       await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
       setExternalUsers(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
       setPagination(prev => ({

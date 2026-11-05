@@ -331,6 +331,9 @@ const InventoryConsumptionDashboard = lazy(
 const InventoryConsumptionViewPage = lazy(
   () => import("./pages/InventoryConsumptionViewPage")
 );
+const InventoryConsumptionAddPage = lazy(
+  () => import("./pages/InventoryConsumptionAddPage")
+);
 const EcoFriendlyListPage = lazy(() => import("./pages/EcoFriendlyListPage"));
 const NewInboundPage = lazy(() =>
   import("./pages/NewInboundPage").then((m) => ({ default: m.NewInboundPage }))
@@ -1984,6 +1987,9 @@ const ViAuditManagementDashboardPage = lazy(
 const ViIncidentManagementDashboardPage = lazy(
   () => import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
 );
+const ViInspectionManagementDashboardPage = lazy(
+  () => import("./pages/vi-inspection/dashboard/ViInspectionManagementDashboardPage")
+);
 const IncidentReporterListPage = lazy(
   () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
 );
@@ -2059,6 +2065,13 @@ const ViInspectionTypeMasterPage = lazy(
 const ViInspectionChecklistMasterPage = lazy(
   () => import("./features/vi-inspection/master/InspectionChecklistPage")
 );
+const ViTrainingCategoryMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingCategoryPage")
+);
+const ViTrainingChecklistMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingChecklistPage")
+);
+const ViZoneMasterPage = lazy(() => import("./features/vi-zone/master/ZonePage"));
 const InspectionSpocListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionSpocListPage,
@@ -2564,6 +2577,9 @@ const HolidayCalendarPage = lazy(() =>
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
 );
+const SsoLoginPage = lazy(() =>
+  import("@/pages/SsoLoginPage").then((m) => ({ default: m.SsoLoginPage }))
+);
 const OTPVerificationPage = lazy(() =>
   import("@/pages/OTPVerificationPage").then((m) => ({
     default: m.OTPVerificationPage,
@@ -2684,6 +2700,11 @@ const LockFunctionEdit = lazy(() =>
 const LockModuleList = lazy(() =>
   import("./pages/settings/LockModuleList").then((m) => ({
     default: m.LockModuleList,
+  }))
+);
+const LockPhasesList = lazy(() =>
+  import("./pages/settings/LockPhasesList").then((m) => ({
+    default: m.LockPhasesList,
   }))
 );
 const LockSubFunctionList = lazy(() =>
@@ -5016,6 +5037,10 @@ function App() {
                             path="/vi-incident/management-dashboard"
                             element={<ViIncidentManagementDashboardPage />}
                           />
+                          <Route
+                            path="/vi-inspection/management-dashboard"
+                            element={<ViInspectionManagementDashboardPage />}
+                          />
 
                           {/* Backend Routes */}
                           <Route
@@ -5135,6 +5160,10 @@ function App() {
                             <Route
                               path="settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="settings/modules"
@@ -5263,6 +5292,7 @@ function App() {
                               )
                             }
                           />
+                          <Route path="/sso-login" element={<SsoLoginPage />} />
                           <Route
                             path="/otp-verification"
                             element={<OTPVerificationPage />}
@@ -5311,6 +5341,16 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          {/* CEO dashboard renders outside the main Layout (full width, no header/sidebar) */}
+                          <Route
+                            path="/vas/ceo-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <PATMCeoDashboard />
                               </ProtectedRoute>
                             }
                           />
@@ -8505,6 +8545,10 @@ function App() {
                               element={<InventoryConsumptionViewPage />}
                             />
                             <Route
+                              path="/maintenance/inventory-consumption/view/:id/add"
+                              element={<InventoryConsumptionAddPage />}
+                            />
+                            <Route
                               path="/maintenance/eco-friendly-list"
                               element={<EcoFriendlyListPage />}
                             />
@@ -8606,10 +8650,6 @@ function App() {
                             <Route
                               path="/accounting/vendor/template"
                               element={<VendorStatementTemplateEditPage />}
-                            />
-                            <Route
-                              path="/vas/ceo-dashboard"
-                              element={<PATMCeoDashboard />}
                             />
                             <Route
                               path="/vas/projects"
@@ -9447,6 +9487,18 @@ function App() {
                             <Route
                               path="/settings/inspection-master/inspection-checklist"
                               element={<ViInspectionChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/category"
+                              element={<ViTrainingCategoryMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/checklist"
+                              element={<ViTrainingChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/zone"
+                              element={<ViZoneMasterPage />}
                             />
                             <Route
                               path="/safety/audit-list"
@@ -10733,6 +10785,10 @@ function App() {
                             <Route
                               path="/settings/account/lock-module"
                               element={<LockModuleList />}
+                            />
+                            <Route
+                              path="/settings/account/lock-phases"
+                              element={<LockPhasesList />}
                             />
                             <Route
                               path="/settings/account/lock-function"

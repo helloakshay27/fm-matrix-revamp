@@ -676,7 +676,7 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                             )}
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold text-gray-800">Root Cause</label>
+                                <label className="text-sm font-semibold text-gray-800">Root Cause <span className="text-brand">*</span></label>
                                 <FormControl fullWidth size="small">
                                     <MuiSelect
                                         value={rootCause.causeId}

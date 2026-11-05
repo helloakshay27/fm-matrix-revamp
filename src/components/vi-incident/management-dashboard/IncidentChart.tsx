@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Chart, registerables, type ChartDataset } from "chart.js";
-import { C, type ChartKind, type ChartSpec } from "./data";
+import { C, PALETTE, fadeHex, type ChartKind, type ChartSpec } from "./data";
 
 Chart.register(...registerables);
 
@@ -21,7 +21,7 @@ export function IncidentChart({ spec, type, compactDonut = false }: IncidentChar
         return {
           label: series.label,
           data: [...series.data],
-          backgroundColor: series.pieColors ? [...series.pieColors] : [C.terra, C.sage, C.teal, "#6B9BCC", "#EDC488", "#E7848E", "#108C72"],
+          backgroundColor: series.pieColors ? [...series.pieColors] : [...PALETTE],
           borderWidth: 0,
         };
       }
@@ -38,7 +38,7 @@ export function IncidentChart({ spec, type, compactDonut = false }: IncidentChar
         label: series.label,
         data: [...series.data],
         borderColor: series.lineColor ?? C.terra,
-        backgroundColor: series.lineFill ?? "rgba(218,119,86,.10)",
+        backgroundColor: series.lineFill ?? fadeHex(C.terra, 0.12),
         tension: 0.35,
         fill: true,
         borderWidth: 2.5,
@@ -66,8 +66,8 @@ export function IncidentChart({ spec, type, compactDonut = false }: IncidentChar
         scales: isPie
           ? undefined
           : {
-              x: { stacked: Boolean(spec.stacked), ticks: { color: C.sage, font: { size: 10 } }, grid: { color: "#EDE7D7" } },
-              y: { stacked: Boolean(spec.stacked), beginAtZero: true, ticks: { color: C.sage, font: { size: 10 } }, grid: { color: "#EDE7D7" } },
+              x: { stacked: Boolean(spec.stacked), ticks: { color: C.sage, font: { size: 10 } }, grid: { color: "#EDE7DF" } },
+              y: { stacked: Boolean(spec.stacked), beginAtZero: true, ticks: { color: C.sage, font: { size: 10 } }, grid: { color: "#EDE7DF" } },
             },
       },
     });

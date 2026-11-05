@@ -283,7 +283,7 @@ export const ClassPurchaseAdd = () => {
             label={<RequiredLabel>End date</RequiredLabel>}
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            disabled
             fullWidth
             variant="outlined"
             slotProps={{ inputLabel: { shrink: true } }}
@@ -347,7 +347,7 @@ export const ClassPurchaseAdd = () => {
           Cancel
         </button>
         <button type="button" onClick={() => submit()} disabled={isSubmitting} className="fm-action-primary">
-          {isSubmitting ? "Saving..." : "Create Purchase"}
+          {isSubmitting ? "Saving..." : "Create Class Sale"}
         </button>
       </div>
     </div>

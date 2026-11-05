@@ -23,10 +23,12 @@ import {
   AlertTriangle,
   Search,
   LayoutDashboard,
+  Building2,
   Save,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import "@/styles/veda-dashboard.css";
 import {
   PieChartCard,
   BarChartCard,
@@ -50,10 +52,15 @@ import {
 } from "@/components/charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
-import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
+import { VEDA_PALETTE, VEDA_COLORS, VEDA_CSS_VARS, VEDA_PIE_PROPS, getVedaColor } from "@/styles/vedaTheme";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 import { FinancePanel } from "@/components/dashboard/FinancePanel";
 import { CrmPanel } from "@/components/dashboard/CrmPanel";
+import { TransitioningPanel } from "@/components/dashboard/TransitioningPanel";
+import { OverviewPanel } from "@/components/dashboard/OverviewPanel";
+import { UtilityPanel } from "@/components/dashboard/UtilityPanel";
+import { SecurityPanel } from "@/components/dashboard/SecurityPanel";
+import { VasPanel } from "@/components/dashboard/VasPanel";
 import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
 import { useMyDashboardStore } from "@/stores/myDashboardStore";
 import { formatChartLabel } from "@/utils/formatChartLabel";
@@ -227,7 +234,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
 
   // Maintenance › Vendor
   { i: "vendor-section-label", x: 0, y: 485, w: 12, h: 1, minW: 6, minH: 1 },
-  { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 8, minW: 6, minH: 6 },
+  { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 11, minW: 6, minH: 6 },
   { i: "vendor-repeat-requests", x: 0, y: 494, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-response-time", x: 0, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
   { i: "vendor-amc-status-table", x: 6, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
@@ -235,6 +242,9 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "vendor-response-trend", x: 0, y: 512, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "vendor-expired-kyc", x: 0, y: 518, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-data-hygiene-banner", x: 0, y: 523, w: 12, h: 2, minW: 6, minH: 2 },
+  { i: "vendor-missed-visits", x: 0, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  { i: "vendor-workflow-bottlenecks", x: 6, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  { i: "vendor-contract-performance", x: 0, y: 532, w: 12, h: 8, minW: 6, minH: 5 },
 ];
 
 const MAINTENANCE_LAYOUT_BY_KEY = new Map(DEFAULT_TICKETS_LAYOUT.map((l) => [l.i, l]));
@@ -258,6 +268,10 @@ function classifyChartCode(
   if (maintenanceLayout) return { moduleKey: "maintenance", key, defaultLayout: maintenanceLayout };
   if (key.startsWith("fin-")) return { moduleKey: "finance", key };
   if (key.startsWith("crm-")) return { moduleKey: "crm", key };
+  if (key.startsWith("tr-")) return { moduleKey: "transitioning", key };
+  if (key.startsWith("ut-")) return { moduleKey: "utility", key };
+  if (key.startsWith("sec-")) return { moduleKey: "security", key };
+  if (key.startsWith("vas-")) return { moduleKey: "vas", key };
   if (SAFETY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) return { moduleKey: "safety", key };
   return null;
 }
@@ -338,6 +352,15 @@ const MODULES: ModuleDefinition[] = [
     icon: LayoutDashboard,
     summary: "Cards you've added from Maintenance, Safety, Finance and CRM, in one place.",
     subTabs: [],
+    stats: [],
+    chips: [],
+  },
+  {
+    key: "overview",
+    label: "Overview",
+    icon: Building2,
+    summary: "Portfolio command center — module snapshot, attention queue and site health trend.",
+    subTabs: ["Overview", "Modules", "Health"],
     stats: [],
     chips: [],
   },
@@ -514,11 +537,11 @@ interface CategoryRow {
 }
 
 const AGE_TIER_COLORS = [
-  ANALYTICS_PALETTE[3],
-  ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[0],
-  ANALYTICS_PALETTE[3],
+  VEDA_PALETTE[3],
+  VEDA_PALETTE[2],
+  VEDA_PALETTE[2],
+  VEDA_PALETTE[0],
+  VEDA_PALETTE[3],
 ];
 
 // Axis labels only — the heatmap's cell values always come from the API.
@@ -528,8 +551,9 @@ const HEATMAP_HOURS_FALLBACK = Array.from({ length: 24 }, (_, i) => i);
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "2025-10" -> "Oct '25" */
-function formatMonthLabel(month: string): string {
-  const [year, mon] = month.split("-");
+function formatMonthLabel(month?: string | null): string {
+  if (!month) return "";
+  const [year, mon] = String(month).split("-");
   const idx = Number(mon) - 1;
   const name = MONTH_NAMES[idx] ?? mon;
   return `${name} '${(year ?? "").slice(2)}`;
@@ -551,11 +575,11 @@ function vsLastMonthDisplay(percent: number | null): { display: string; tone: "r
 // Fixed, known source set the API always returns — colors keyed by name so
 // they stay correct regardless of the order the backend returns them in.
 const SOURCE_COLOR_MAP: Record<string, string> = {
-  "Manual/Direct": "#8E7BE0",
-  Asset: "#8E7BE0",
-  Checklist: "#6B9BCC",
-  Survey: "#9EC8BA",
-  Patrolling: "#8E7BE0",
+  "Manual/Direct": VEDA_COLORS.purple,
+  Asset: VEDA_COLORS.purple,
+  Checklist: VEDA_COLORS.blue,
+  Survey: VEDA_COLORS.mint,
+  Patrolling: VEDA_COLORS.purple,
 };
 
 /** Small placeholder for a widget whose backing field the ticket dashboard API doesn't provide (yet) or returned empty. */
@@ -787,16 +811,25 @@ function SelectPeriodPopover({ initialRange, onApply, onReset, onClose }: Select
   );
 }
 
+interface SiteOption {
+  id: number;
+  name: string;
+}
+
 interface FiltersPopoverProps {
+  siteOptions: SiteOption[];
+  initialSite: string;
   buildingOptions: string[];
   categoryOptions: string[];
   initialBuilding: string;
   initialCategory: string;
-  onApply: (building: string, category: string) => void;
+  onApply: (building: string, category: string, site: string) => void;
   onClose: () => void;
 }
 
 function FiltersPopover({
+  siteOptions,
+  initialSite,
   buildingOptions,
   categoryOptions,
   initialBuilding,
@@ -804,12 +837,28 @@ function FiltersPopover({
   onApply,
   onClose,
 }: FiltersPopoverProps) {
+  const [site, setSite] = useState(initialSite);
   const [building, setBuilding] = useState(initialBuilding);
   const [category, setCategory] = useState(initialCategory);
 
   return (
     <div className="w-72 rounded-lg border border-brand-border bg-white p-4 shadow-lg">
       <div className="text-brand-caption font-bold text-brand-green uppercase tracking-wide mb-3">Filters</div>
+      <div className="mb-3">
+        <label className="block text-brand-body-5 text-brand-text-light mb-1">Site</label>
+        <select
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+          className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
+        >
+          <option value="all">All Sites</option>
+          {siteOptions.map((st) => (
+            <option key={st.id} value={String(st.id)}>
+              {st.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="mb-3">
         <label className="block text-brand-body-5 text-brand-text-light mb-1">Building / Wing</label>
         <select
@@ -846,7 +895,7 @@ function FiltersPopover({
       <button
         type="button"
         onClick={() => {
-          onApply(building, category);
+          onApply(building, category, site);
           onClose();
         }}
         className="w-full rounded-full bg-brand py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
@@ -944,14 +993,14 @@ const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
 // (Asset Management Dashboard through Asset Ownership Cost Analysis) in
 // fm_matrix_phase10 (29).html.
 const BRAND_HEX = {
-  green: "#798C5E",
-  ok: "#108C72",
-  warn: "#EDC488",
-  err: "#DA7756",
-  blue: "#6B9BCC",
-  orange: "#DA7756",
-  teal: "#9EC8BA",
-  dark: "#2C2C2C",
+  green: VEDA_COLORS.olive,
+  ok: VEDA_COLORS.growth,
+  warn: VEDA_COLORS.warning,
+  err: VEDA_COLORS.danger,
+  blue: VEDA_COLORS.blue,
+  orange: VEDA_COLORS.purple,
+  teal: VEDA_COLORS.mint,
+  dark: VEDA_COLORS.ink,
 };
 
 // Maintenance › Assets and Audit analytics — wired to the live
@@ -1050,6 +1099,29 @@ interface VendorPerformanceTableRow {
   slaCompliancePercent: number | null;
 }
 
+interface VendorContractTableRow {
+  vendorName: string;
+  totalContracts: number;
+  liveContracts: number;
+  completedVisits: number;
+  missedVisits: number;
+}
+
+const VENDOR_CONTRACT_TABLE_COLUMNS: DataTableColumn<VendorContractTableRow>[] = [
+  { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
+  { key: "contracts", header: "Contracts", align: "center", render: (row) => <span className="text-brand-text">{row.totalContracts}</span> },
+  { key: "live", header: "Live", align: "center", render: (row) => <span className="text-brand-text">{row.liveContracts}</span> },
+  { key: "completed", header: "Visits Done", align: "center", render: (row) => <span className="text-brand-text">{row.completedVisits}</span> },
+  {
+    key: "missed",
+    header: "Missed Visits",
+    align: "center",
+    render: (row) => (
+      <TableBadge tone={row.missedVisits === 0 ? "green" : row.missedVisits >= 20 ? "red" : "amber"}>{row.missedVisits}</TableBadge>
+    ),
+  },
+];
+
 const VENDOR_PERFORMANCE_TABLE_COLUMNS: DataTableColumn<VendorPerformanceTableRow>[] = [
   { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
   {
@@ -1077,19 +1149,19 @@ const VENDOR_PERFORMANCE_TABLE_COLUMNS: DataTableColumn<VendorPerformanceTableRo
 ];
 
 const INSIGHT_ITEM_TONE_STYLES = {
-  err: { bg: "rgba(218,119,86,0.16)", color: "#DA7756" },
+  err: { bg: "rgba(218,119,86,0.16)", color: "#5A4BE0" },
   warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
-  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#12A150" },
 } as const;
 
 const INSIGHT_CATEGORY_TONE_STYLES = {
-  err: { bg: "rgba(218,119,86,0.16)", color: "#DA7756" },
+  err: { bg: "rgba(218,119,86,0.16)", color: "#5A4BE0" },
   warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
   terra: { bg: "rgba(218,119,86,0.16)", color: "#A34A30" },
   purple: { bg: "rgba(206,203,246,0.3)", color: "#4B4780" },
   info: { bg: "rgba(107,155,204,0.18)", color: "#3A6A9A" },
   sage: { bg: "rgba(121,140,94,0.16)", color: "#798C5E" },
-  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#12A150" },
 } as const;
 
 type InsightTone = keyof typeof INSIGHT_CATEGORY_TONE_STYLES;
@@ -1216,12 +1288,12 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
       >
         <span
           className="flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ background: "rgba(218,119,86,0.15)", color: "#DA7756" }}
+          style={{ background: "rgba(218,119,86,0.15)", color: "#5A4BE0" }}
         >
           <Lightbulb className="h-4 w-4" />
         </span>
         <span className="text-brand-body-5 font-semibold text-brand-text">Insights</span>
-        <span className="animate-pulse rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: "#DA7756" }}>
+        <span className="animate-pulse rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: "#5A4BE0" }}>
           {INSIGHT_GLOW_TOTAL}
         </span>
       </button>
@@ -1291,7 +1363,7 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
                           </span>
                           <span className="flex flex-shrink-0 items-center gap-1.5">
                             {item.isNew && (
-                              <span className="rounded px-1 py-px text-[8px] font-bold" style={{ background: "rgba(16,140,114,0.12)", color: "#108C72" }}>
+                              <span className="rounded px-1 py-px text-[8px] font-bold" style={{ background: "rgba(16,140,114,0.12)", color: "#12A150" }}>
                                 <span className="mr-0.5 inline-block h-1 w-1 animate-pulse rounded-full bg-current" />
                                 NEW
                               </span>
@@ -1350,6 +1422,26 @@ export default function RevampDashboardPage() {
   );
   const savedCrmKeys = useMemo(
     () => new Set(myDashboardCards.filter((c) => c.moduleKey === "crm").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedTransitioningKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "transitioning").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedOverviewKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "overview").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedUtilityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "utility").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedSecurityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "security").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedVasKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "vas").map((c) => c.chartId)),
     [myDashboardCards]
   );
 
@@ -1434,6 +1526,11 @@ export default function RevampDashboardPage() {
   const isSafetyView = activeModule === "safety";
   const isFinanceView = activeModule === "finance";
   const isCrmView = activeModule === "crm";
+  const isTransitioningView = activeModule === "transitioning";
+  const isOverviewView = activeModule === "overview";
+  const isUtilityView = activeModule === "utility";
+  const isSecurityView = activeModule === "security";
+  const isVasView = activeModule === "vas";
 
   const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -1508,7 +1605,7 @@ export default function RevampDashboardPage() {
   };
 
   // --- Tickets section: dynamic site scope, date range, and live API data ---
-  const [dashboardSiteIds, setDashboardSiteIds] = useState<number[]>([]);
+  const [allowedSites, setAllowedSites] = useState<SiteOption[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [sitesError, setSitesError] = useState<string | null>(null);
 
@@ -1524,11 +1621,11 @@ export default function RevampDashboardPage() {
     fetchAllowedSites(userId)
       .then((res) => {
         if (cancelled) return;
-        const ids = (res.sites ?? [])
-          .map((s) => s.id)
-          .filter((id): id is number => typeof id === "number");
-        setDashboardSiteIds(ids);
-        if (ids.length === 0) setSitesError("No sites are allowed for this user.");
+        const sites = (res.sites ?? [])
+          .filter((s) => typeof s.id === "number")
+          .map((s) => ({ id: s.id as number, name: s.name ?? `Site ${s.id}` }));
+        setAllowedSites(sites);
+        if (sites.length === 0) setSitesError("No sites are allowed for this user.");
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1548,7 +1645,15 @@ export default function RevampDashboardPage() {
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const [appliedBuilding, setAppliedBuilding] = useState("all");
   const [appliedCategory, setAppliedCategory] = useState("all");
+  const [appliedSite, setAppliedSite] = useState("all");
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+
+  // The Site filter narrows the `site_id` query sent to every /fm_dashboard endpoint (server-side),
+  // so each module re-fetches for just that site instead of filtering rows client-side.
+  const dashboardSiteIds = useMemo(
+    () => (appliedSite === "all" ? allowedSites.map((st) => st.id) : allowedSites.filter((st) => String(st.id) === appliedSite).map((st) => st.id)),
+    [allowedSites, appliedSite]
+  );
 
   const dashboardFromDate = useMemo(() => formatApiDate(dashboardDateRange.from), [dashboardDateRange.from]);
   const dashboardToDate = useMemo(() => formatApiDate(dashboardDateRange.to), [dashboardDateRange.to]);
@@ -1792,25 +1897,39 @@ export default function RevampDashboardPage() {
   }, [ticketsOverview]);
   const poolTotal = ticketsOverview?.pool_composition.total ?? 0;
 
-  const categoryStackData = useMemo(
-    () =>
-      (ticketsBreakdown?.by_category ?? []).map((c) => ({
-        category: c.name,
-        pending: c.status_breakdown.pending,
-        inProgress: c.status_breakdown.in_progress,
-        onHold: c.status_breakdown.on_hold,
-        closed: c.status_breakdown.closed,
-      })),
-    [ticketsBreakdown]
-  );
+  // Tickets category names come back padded ("ELECTRICAL SYSTEM "), so compare trimmed.
+  const matchesCategoryFilter = (name: string) => appliedCategory === "all" || name.trim() === appliedCategory.trim();
+
+  // tickets_category_comparison is the dedicated per-category status source; the older
+  // tickets_breakdown.by_category stays as a fallback if that endpoint returned nothing.
+  const categoryStackData = useMemo(() => {
+    const comparison = ticketsApiData.categoryComparison;
+    const rows = comparison.length
+      ? comparison.map((c) => ({
+          category: c.name.trim(),
+          pending: c.status_count.pending,
+          inProgress: c.status_count.in_progress,
+          onHold: c.status_count.on_hold,
+          closed: c.status_count.closed,
+        }))
+      : (ticketsBreakdown?.by_category ?? []).map((c) => ({
+          category: c.name.trim(),
+          pending: c.status_breakdown.pending,
+          inProgress: c.status_breakdown.in_progress,
+          onHold: c.status_breakdown.on_hold,
+          closed: c.status_breakdown.closed,
+        }));
+    return rows.filter((r) => matchesCategoryFilter(r.category));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketsApiData.categoryComparison, ticketsBreakdown, appliedCategory]);
 
   const categoryTableData: CategoryRow[] = useMemo(
     () =>
-      (ticketsBreakdown?.by_category ?? []).map((c) => {
+      (ticketsBreakdown?.by_category ?? []).filter((c) => matchesCategoryFilter(c.name)).map((c) => {
         const trend = vsLastMonthDisplay(c.vs_last_month_percent);
         const ageingDays = Math.round(parseFloat(c.avg_ageing_days) || 0);
         return {
-          category: c.name,
+          category: c.name.trim(),
           total: c.total,
           tatBreach: c.tat_breach_percent,
           tatTone: tatBreachTone(c.tat_breach_percent),
@@ -1820,8 +1939,21 @@ export default function RevampDashboardPage() {
           ageingHighlight: ageingDays >= 60,
         };
       }),
-    [ticketsBreakdown]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ticketsBreakdown, appliedCategory]
   );
+
+  const ticketsByTenantData = useMemo(
+    () =>
+      ticketsApiData.byTenant
+        .slice()
+        .sort((a, b) => b.ticket_count - a.ticket_count)
+        .slice(0, 10)
+        .map((t) => ({ tenant: t.name, tickets: t.ticket_count })),
+    [ticketsApiData.byTenant]
+  );
+  const ticketsCsat = ticketsApiData.csat;
+  const ticketsApproachingEscalation = ticketsApiData.approachingEscalation;
 
   const replyResolutionData = useMemo(
     () =>
@@ -1908,7 +2040,7 @@ export default function RevampDashboardPage() {
     [ticketsBreakdown]
   );
   const sourceOriginColors = useMemo(
-    () => sourceOriginData.map((s, i) => SOURCE_COLOR_MAP[s.source] ?? getPaletteColor(i)),
+    () => sourceOriginData.map((s, i) => SOURCE_COLOR_MAP[s.source] ?? getVedaColor(i)),
     [sourceOriginData]
   );
 
@@ -2069,6 +2201,23 @@ export default function RevampDashboardPage() {
             label: `₹${a.total_repair_cost.toLocaleString()}${
               a.repair_cost_ratio_percent !== null ? ` · ${a.repair_cost_ratio_percent}% ratio` : ""
             }`,
+          },
+        })),
+    [assetsMaintenance]
+  );
+
+  const assetOwnershipCostRows = useMemo(
+    () =>
+      (assetsMaintenance?.asset_ownership_cost ?? [])
+        .filter((a) => a.total_cost > 0)
+        .slice()
+        .sort((a, b) => b.total_cost - a.total_cost)
+        .slice(0, 8)
+        .map((a) => ({
+          label: a.name,
+          badge: {
+            tone: "amber" as TableBadgeTone,
+            label: `₹${a.total_cost.toLocaleString()} · repair ₹${a.repair_cost.toLocaleString()} + AMC ₹${a.amc_cost.toLocaleString()}`,
           },
         })),
     [assetsMaintenance]
@@ -2260,17 +2409,54 @@ export default function RevampDashboardPage() {
     ];
   }, [amcExpiry]);
 
+  // amc_expiry.urgency_vs_criticality is one row per contract (days_to_expiry + criticality),
+  // so the expiry buckets are computed here, in the same order as the timeline above.
   const amcUrgencyCriticalityData = useMemo(() => {
     const rows = amcExpiry?.urgency_vs_criticality ?? [];
-    const buckets = new Map<string, { bucket: string; critical: number; nonCritical: number }>();
+    const bucketFor = (days: number | null) => {
+      if (days === null || days === undefined) return null;
+      if (days < 0) return "Expired";
+      if (days <= 30) return "Expiring 0-30d";
+      if (days <= 90) return "Expiring 31-90d";
+      return "Active 90+ d";
+    };
+    const order = ["Expired", "Expiring 0-30d", "Expiring 31-90d", "Active 90+ d"];
+    const buckets = new Map(order.map((b) => [b, { bucket: b, critical: 0, nonCritical: 0 }]));
     rows.forEach((r) => {
-      const entry = buckets.get(r.expiry_bucket) ?? { bucket: r.expiry_bucket, critical: 0, nonCritical: 0 };
-      if (r.criticality === "Critical") entry.critical += r.count;
-      else entry.nonCritical += r.count;
-      buckets.set(r.expiry_bucket, entry);
+      // Older API: already aggregated as { expiry_bucket, count }; newer API: one row per contract.
+      const key = r.expiry_bucket ?? bucketFor(r.days_to_expiry ?? null);
+      if (!key) return;
+      const entry = buckets.get(key) ?? { bucket: key, critical: 0, nonCritical: 0 };
+      const amount = typeof r.count === "number" ? r.count : 1;
+      if (r.criticality === "Critical") entry.critical += amount;
+      else entry.nonCritical += amount;
+      buckets.set(key, entry);
     });
-    return Array.from(buckets.values());
+    return Array.from(buckets.values())
+      .sort((a, b) => {
+        const ia = order.indexOf(a.bucket);
+        const ib = order.indexOf(b.bucket);
+        return (ia === -1 ? order.length : ia) - (ib === -1 ? order.length : ib);
+      })
+      .filter((b) => b.critical + b.nonCritical > 0);
   }, [amcExpiry]);
+
+  // amc_overview.contract_split is either a list of { amc_type, count } (newer API) or the older
+  // { asset_contracts, service_contracts } object — normalise both to chart rows.
+  const amcContractSplitData = useMemo(() => {
+    const split = amcOverview?.contract_split;
+    if (!split) return [];
+    if (Array.isArray(split)) {
+      return split.map((c) => ({
+        type: /contract/i.test(c.amc_type) ? c.amc_type : `${c.amc_type} Contracts`,
+        total: c.count,
+      }));
+    }
+    return [
+      { type: "Asset Contracts", total: split.asset_contracts ?? 0 },
+      { type: "Service Contracts", total: split.service_contracts ?? 0 },
+    ];
+  }, [amcOverview]);
 
   const amcVendorConcentrationData = useMemo(
     () =>
@@ -2614,7 +2800,7 @@ export default function RevampDashboardPage() {
         label: r.category,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown, appliedCategory]);
 
@@ -2628,7 +2814,7 @@ export default function RevampDashboardPage() {
         label: r.commodity,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown]);
 
@@ -2642,7 +2828,7 @@ export default function RevampDashboardPage() {
         label: r.name,
         value: `${r.generated_kg.toLocaleString()} KG`,
         percent: Math.round((r.generated_kg / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [wasteBreakdown, appliedBuilding]);
 
@@ -2769,7 +2955,7 @@ export default function RevampDashboardPage() {
         label: r.category as string,
         value: typeof r.percent === "number" ? `${r.percent}% (${r.count})` : `${r.count}`,
         percent: Math.round(((r.count as number) / max) * 100),
-        color: getPaletteColor(i),
+        color: getVedaColor(i),
       }));
   }, [surveyBreakdown]);
 
@@ -2807,6 +2993,58 @@ export default function RevampDashboardPage() {
   const vendorPerformance = vendorApiData.performance;
   const vendorRepeatIssuesData = vendorApiData.repeatIssues;
   const vendorKycRisk = vendorApiData.kycRisk;
+  const vendorPerformanceScore = vendorApiData.performanceScore;
+  const vendorOnTime = vendorApiData.onTimeCompletion;
+  const vendorHealth = vendorApiData.health;
+  const vendorRenewals = vendorApiData.contractRenewals;
+  const vendorResponseTrend = vendorApiData.responseTrend;
+  const vendorBottlenecks = vendorApiData.workflowBottlenecks;
+  const vendorKycStatus = vendorApiData.kycStatus;
+
+  const vendorMissedVisitData = useMemo(
+    () =>
+      (vendorHealth?.by_vendor ?? [])
+        .slice()
+        .sort((a, b) => b.missed_visits - a.missed_visits)
+        .slice(0, 10)
+        .map((v) => ({ vendor: v.vendor_name.trim(), missed: v.missed_visits })),
+    [vendorHealth]
+  );
+
+  const vendorResponseTrendData = useMemo(
+    () =>
+      (vendorResponseTrend?.by_month ?? []).map((m) => ({
+        month: formatMonthLabel(m.month),
+        avgResponse: Number(m.avg_response_hours) || 0,
+        target: Number(m.sla_target_hours) || 0,
+      })),
+    [vendorResponseTrend]
+  );
+
+  const vendorBottleneckData = useMemo(
+    () =>
+      (vendorBottlenecks?.stages ?? [])
+        .filter((st) => st.avg_hours !== null)
+        .map((st) => ({ stage: st.stage, hours: Number(st.avg_hours) })),
+    [vendorBottlenecks]
+  );
+
+  // Per-vendor contract table from vendor_performance_table (contracts + visits), kept separate
+  // from the request/SLA table above, which comes from vendor_performance.
+  const vendorContractTableRows: VendorContractTableRow[] = useMemo(
+    () =>
+      vendorApiData.performanceTable
+        .slice()
+        .sort((a, b) => b.missed_visits - a.missed_visits)
+        .map((r) => ({
+          vendorName: r.vendor_name.trim(),
+          totalContracts: r.total_contracts,
+          liveContracts: r.live_contracts,
+          completedVisits: r.completed_visits,
+          missedVisits: r.missed_visits,
+        })),
+    [vendorApiData.performanceTable]
+  );
 
   const vendorPerformanceRows = useMemo(() => {
     const rows = (vendorPerformance?.by_vendor ?? []).filter((r) => typeof r.vendor_name === "string");
@@ -2815,7 +3053,7 @@ export default function RevampDashboardPage() {
       label: r.vendor_name as string,
       value: typeof r.sla_compliance_percent === "number" ? `${r.sla_compliance_percent}%` : "–",
       percent: typeof r.total_requests === "number" ? Math.round((r.total_requests / max) * 100) : 0,
-      color: getPaletteColor(i),
+      color: getVedaColor(i),
     }));
   }, [vendorPerformance]);
 
@@ -2872,8 +3110,9 @@ export default function RevampDashboardPage() {
     (assetsCategory?.category_wise_breakdown ?? []).forEach((c) => names.add(c.name));
     (wasteBreakdown?.by_category ?? []).forEach((c) => names.add(c.category));
     (amcCoverage?.coverage_by_category ?? []).forEach((c) => names.add(c.name));
+    (ticketsApiData.categoryComparison ?? []).forEach((c) => names.add(c.name.trim()));
     return Array.from(names).sort();
-  }, [assetsCategory, wasteBreakdown, amcCoverage]);
+  }, [assetsCategory, wasteBreakdown, amcCoverage, ticketsApiData.categoryComparison]);
 
   const headerSearchResults: HeaderSearchResult[] = useMemo(() => {
     const q = headerSearchQuery.trim().toLowerCase();
@@ -2965,10 +3204,10 @@ export default function RevampDashboardPage() {
   };
 
   return (
-    <div className="bg-brand-bg h-screen flex flex-col overflow-hidden">
-      <div ref={navRef} className="flex-shrink-0 z-30 bg-brand-bg">
+    <div className="veda-theme bg-brand-bg h-screen flex flex-col overflow-hidden" style={VEDA_CSS_VARS}>
+      <div ref={navRef} className="veda-nav flex-shrink-0 z-30 bg-brand-bg">
       {/* Title bar */}
-      <div className="flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
+      <div className="veda-topbar flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
         <h1 className="text-brand-h2 font-bold text-brand-text">Dashboard View</h1>
         <div className="flex items-center gap-3">
           <span className="hidden text-brand-body-4 text-brand-text-light md:inline">
@@ -2983,7 +3222,7 @@ export default function RevampDashboardPage() {
                 setFiltersPopupOpen(false);
                 setSearchPopupOpen(false);
               }}
-              className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
+              className="veda-period flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
             >
               <CalendarDays className="w-4 h-4" />
               {periodButtonLabel(dashboardDateRange)}
@@ -3012,8 +3251,8 @@ export default function RevampDashboardPage() {
               aria-label="Filters"
               title="Filters"
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
-                appliedBuilding !== "all" || appliedCategory !== "all" ? "border-brand text-brand" : "border-brand-border"
+                "veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
+                appliedBuilding !== "all" || appliedCategory !== "all" || appliedSite !== "all" ? "border-brand text-brand" : "border-brand-border"
               )}
             >
               <SettingsIcon className="w-4 h-4" />
@@ -3021,13 +3260,16 @@ export default function RevampDashboardPage() {
             {filtersPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <FiltersPopover
+                  siteOptions={allowedSites}
+                  initialSite={appliedSite}
                   buildingOptions={wasteBuildingOptions}
                   categoryOptions={categoryFilterOptions}
                   initialBuilding={appliedBuilding}
                   initialCategory={appliedCategory}
-                  onApply={(building, category) => {
+                  onApply={(building, category, site) => {
                     setAppliedBuilding(building);
                     setAppliedCategory(category);
+                    setAppliedSite(site);
                   }}
                   onClose={() => setFiltersPopupOpen(false)}
                 />
@@ -3045,7 +3287,7 @@ export default function RevampDashboardPage() {
               }}
               aria-label="Search"
               title="Search"
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-brand-border text-brand-text hover:bg-brand-light"
+              className="veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border border-brand-border text-brand-text hover:bg-brand-light"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -3068,7 +3310,7 @@ export default function RevampDashboardPage() {
       </div>
 
       {/* Underline tab nav */}
-      <div className="flex items-center bg-white border-b border-brand-border px-2">
+      <div className="veda-modtabs flex items-center bg-white border-b border-brand-border px-2">
         <button
           type="button"
           onClick={() => scrollTabs(-1)}
@@ -3077,7 +3319,7 @@ export default function RevampDashboardPage() {
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <div ref={tabsRef} className="flex overflow-x-auto scrollbar-hide">
+        <div ref={tabsRef} className="veda-seg flex overflow-x-auto scrollbar-hide">
           {MODULES.map((module) => {
             const isActive = module.key === activeModule;
             return (
@@ -3086,7 +3328,8 @@ export default function RevampDashboardPage() {
                 type="button"
                 onClick={() => handleModuleChange(module.key)}
                 className={cn(
-                  "flex-shrink-0 whitespace-nowrap px-4 py-3 text-brand-body-4 font-medium border-b-2 transition-colors",
+                  "veda-seg-btn flex-shrink-0 whitespace-nowrap px-4 py-3 text-brand-body-4 font-medium border-b-2 transition-colors",
+                  isActive ? "on" : "",
                   isActive
                     ? "text-brand border-brand"
                     : "text-brand-text border-transparent hover:text-brand"
@@ -3112,9 +3355,9 @@ export default function RevampDashboardPage() {
           onNavigate={navigateTo}
         />
         <div className="min-w-0 flex-1">
-        <div className="sticky top-0 z-20 bg-brand-bg">
+        <div className="veda-sticky sticky top-0 z-20 bg-brand-bg">
         {/* Pill sub-navbar for the active module */}
-        <div className="flex flex-wrap gap-1.5 pt-3 pb-3">
+        <div className="veda-chips flex flex-wrap gap-1.5 pt-3 pb-3">
           {current.subTabs.map((subTab) => {
             const isActive = subTab === activeSubTab;
             return (
@@ -3123,7 +3366,8 @@ export default function RevampDashboardPage() {
                 type="button"
                 onClick={() => setActiveSubTab(subTab)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+                  "veda-chip rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+                  isActive ? "on" : "",
                   isActive
                     ? "bg-brand text-white border-brand"
                     : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
@@ -3163,7 +3407,7 @@ export default function RevampDashboardPage() {
               type="button"
               onClick={handleSaveDashboard}
               disabled={isSavingDashboard}
-              className="flex items-center gap-2 rounded-lg bg-[#C72030] hover:bg-[#A01020] disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 text-white text-brand-body-5 font-semibold transition-colors"
+              className="veda-save flex items-center gap-2 rounded-lg bg-[#C72030] hover:bg-[#A01020] disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 text-white text-brand-body-5 font-semibold transition-colors"
             >
               {isSavingDashboard ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -3177,7 +3421,7 @@ export default function RevampDashboardPage() {
 
         {isMyDashboardModule && savedMaintenanceKeys.size === 0 ? null : isTicketsView ? (
           <>
-          <div className="relative w-full">
+          <div className="veda-grid relative w-full">
             {(sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && (
               <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
                 <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
@@ -3258,6 +3502,7 @@ export default function RevampDashboardPage() {
               <div key="ticket-pool" chart_code="fm-ticket-pool" className="h-full relative">
                 <AddToDashboardButton chartId="fm-ticket-pool" moduleKey="maintenance" subTab="Tickets" height="7" width="12" position="0,3" />
                 <PieChartCard
+                  {...VEDA_PIE_PROPS}
                   title="Ticket pool composition"
                   subtitle={`${poolTotal} total · Pending / In Progress / On Hold / Closed`}
                   data={poolCompositionData}
@@ -3290,7 +3535,7 @@ export default function RevampDashboardPage() {
                       ? "Categories stacked mostly with Pending + In Progress and little Closed haven't been picked up yet; categories that are mostly Closed are in healthier shape."
                       : "No category breakdown available for this period."
                   }
-                  seriesColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#9EC8BA"]}
+                  seriesColors={["#7FD6AE", "#2F6FE0", "#5A4BE0", "#7FD6AE"]}
                   series={[
                     { dataKey: "pending", name: "Pending" },
                     { dataKey: "inProgress", name: "In Progress" },
@@ -3576,12 +3821,25 @@ export default function RevampDashboardPage() {
               </div>
               <div key="by-tenant" chart_code="fm-by-tenant" className="h-full relative">
                 <AddToDashboardButton chartId="fm-by-tenant" moduleKey="maintenance" subTab="Tickets" height="5" width="4" position="8,69" />
-                <EmptyStateCard
-                  title="By Tenant"
-                  subtitle="Which tenant raises the most"
-                  message="Not available from the ticket dashboard API — tenant/account grouping isn't part of these 5 endpoints."
-                  className="h-full overflow-auto"
-                />
+                {ticketsByTenantData.length ? (
+                  <BarChartCard
+                    title="By Tenant"
+                    subtitle="Which tenant raises the most"
+                    data={ticketsByTenantData}
+                    categoryKey="tenant"
+                    orientation="horizontal"
+                    categoryColors={ticketsByTenantData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "tickets", name: "Tickets" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="By Tenant"
+                    subtitle="Which tenant raises the most"
+                    message="No tenant-wise tickets for the selected sites and date range."
+                    className="h-full overflow-auto"
+                  />
+                )}
               </div>
 
               <div key="location-volume" chart_code="fm-location-volume" className="h-full relative">
@@ -3614,9 +3872,20 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="purple"
                   label="Customer Satisfaction Score"
-                  value="0"
-                  accent="warning"
-                  subtitle="Not returned by the ticket dashboard API"
+                  value={ticketsCsat?.score != null ? `${ticketsCsat.score}/${ticketsCsat.scale_max}` : "—"}
+                  accent={ticketsCsat?.score != null && ticketsCsat.score >= 4 ? "success" : "warning"}
+                  subtitle={
+                    ticketsCsat
+                      ? `${ticketsCsat.rated_tickets} rated ticket${ticketsCsat.rated_tickets === 1 ? "" : "s"}` +
+                        (ticketsCsat.distribution.length
+                          ? ` · ${ticketsCsat.distribution
+                              .filter((d) => d.count > 0)
+                              .map((d) => `${d.rating}★ ${d.count}`)
+                              .join(" · ")}`
+                          : "")
+                      : "Loading…"
+                  }
+                  progress={ticketsCsat?.score != null ? (ticketsCsat.score / (ticketsCsat.scale_max || 5)) * 100 : undefined}
                   className="h-full"
                 />
               </div>
@@ -3625,9 +3894,13 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Approaching Escalation"
-                  value="0"
-                  accent="error"
-                  subtitle="Not returned by the ticket dashboard API"
+                  value={ticketsApproachingEscalation ? String(ticketsApproachingEscalation.count) : "—"}
+                  accent={ticketsApproachingEscalation && ticketsApproachingEscalation.count > 0 ? "error" : "success"}
+                  subtitle={
+                    ticketsApproachingEscalation
+                      ? `Within ${ticketsApproachingEscalation.threshold_hours}h · ${ticketsApproachingEscalation.response_due} response due · ${ticketsApproachingEscalation.resolution_due} resolution due`
+                      : "Loading…"
+                  }
                   className="h-full"
                 />
               </div>
@@ -3657,7 +3930,7 @@ export default function RevampDashboardPage() {
                     subtitle="Same tenant, same issue, raised more than once — a fix that isn't holding"
                     data={repeatComplaintsData}
                     categoryKey="issue"
-                    categoryColors={repeatComplaintsData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={repeatComplaintsData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "count", name: "Occurrences" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -3686,7 +3959,7 @@ export default function RevampDashboardPage() {
                     }
                     data={assetLinkedData}
                     categoryKey="asset"
-                    categoryColors={assetLinkedData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={assetLinkedData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "count", name: "Tickets" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -3864,9 +4137,9 @@ export default function RevampDashboardPage() {
                   title="Breakdown rate vs acceptable range"
                   subtitle={assetHealth ? `${assetHealth.total} total assets · acceptable: 5–10%` : "acceptable: 5–10%"}
                   segments={[
-                    { value: 70, color: "#E39090" },
-                    { value: 15, color: "#CDCAF5" },
-                    { value: 15, color: "#76CDC1" },
+                    { value: 70, color: "#E5484D" },
+                    { value: 15, color: "#4839C4" },
+                    { value: 15, color: "#12A150" },
                   ]}
                   centerValue={assetHealth ? `${assetHealth.breakdown_rate_percent}%` : "—"}
                   centerLabel="Breakdown Rate"
@@ -3903,7 +4176,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="%"
-                  categoryColors={["#DA7756", "#9EC8BA"]}
+                  categoryColors={["#5A4BE0", "#7FD6AE"]}
                   series={[{ dataKey: "rate", name: "Breakdown rate" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -3980,6 +4253,7 @@ export default function RevampDashboardPage() {
               <div key="asset-lifecycle" chart_code="fm-asset-lifecycle" className="h-full relative">
                 <AddToDashboardButton chartId="fm-asset-lifecycle" moduleKey="maintenance" subTab="Assets" height="7" width="12" position="0,137" />
                 <PieChartCard
+                  {...VEDA_PIE_PROPS}
                   title="Asset Lifecycle Status"
                   subtitle="In Use · Breakdown · Allocated · In Store · Disposed"
                   data={assetLifecycleData}
@@ -4125,12 +4399,23 @@ export default function RevampDashboardPage() {
 
               <div key="asset-ownership-cost" chart_code="fm-asset-ownership-cost" className="h-full relative">
                 <AddToDashboardButton chartId="fm-asset-ownership-cost" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="6,160" />
-                <EmptyStateCard
-                  title="Asset Ownership Cost Analysis"
-                  subtitle="Repair spend + AMC contract cost, per asset"
-                  message="Not available from the assets dashboard API — per-asset AMC contract cost isn't returned by these 4 endpoints, only aggregate AMC coverage counts."
-                  className="h-full overflow-auto"
-                />
+                {assetOwnershipCostRows.length ? (
+                  <StatListCard
+                    title="Asset Ownership Cost Analysis"
+                    subtitle="Repair spend + AMC contract cost, per asset"
+                    borderTone="error"
+                    rows={assetOwnershipCostRows}
+                    note="Top assets by total cost of ownership (repair + AMC) for the selected sites."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Asset Ownership Cost Analysis"
+                    subtitle="Repair spend + AMC contract cost, per asset"
+                    message="No repair or AMC cost recorded against assets for this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
               </div>
 
               <div key="audit-section-label" chart_code="fm-audit-section-label" className="h-full flex items-center relative">
@@ -4231,6 +4516,7 @@ export default function RevampDashboardPage() {
                 <AddToDashboardButton chartId="fm-audit-status-overview" moduleKey="maintenance" subTab="Audit" height="7" width="12" position="0,181" />
                 {auditStatusOverviewData.length ? (
                   <PieChartCard
+                  {...VEDA_PIE_PROPS}
                     title="Audit Status Overview"
                     subtitle="Scheduled · In Progress · Paused · Completed · Overdue · Closed · Cancelled"
                     data={auditStatusOverviewData}
@@ -4356,7 +4642,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={auditCompletionBarData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={auditCompletionBarData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Completion" }]}
                     labelFormatter={(_value, index) => auditCompletionBarData[index]?.fraction ?? ""}
                     showInfoIcon
@@ -4489,7 +4775,7 @@ export default function RevampDashboardPage() {
                     data={amcExpiryTimelineData}
                     categoryKey="bucket"
                     orientation="horizontal"
-                    categoryColors={["#DA7756", "#EDC488", "#9EC8BA", "#108C72"]}
+                    categoryColors={["#5A4BE0", "#F2A312", "#7FD6AE", "#12A150"]}
                     series={[{ dataKey: "count", name: "Contracts" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -4522,7 +4808,7 @@ export default function RevampDashboardPage() {
                     data={amcUrgencyCriticalityData}
                     categoryKey="bucket"
                     orientation="horizontal"
-                    seriesColors={["#DA7756", "#9EC8BA"]}
+                    seriesColors={["#5A4BE0", "#7FD6AE"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
@@ -4553,7 +4839,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={amcVendorConcentrationData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={amcVendorConcentrationData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Missed/expired" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -4589,10 +4875,7 @@ export default function RevampDashboardPage() {
                   <BarChartCard
                     title="Service vs Asset Contract Split"
                     subtitle={`${amcOverview.total_contracts.toLocaleString()} total contracts`}
-                    data={[
-                      { type: "Asset Contracts", total: amcOverview.contract_split.asset_contracts },
-                      { type: "Service Contracts", total: amcOverview.contract_split.service_contracts },
-                    ]}
+                    data={amcContractSplitData}
                     categoryKey="type"
                     series={[{ dataKey: "total", name: "Total Contracts" }]}
                     showInfoIcon
@@ -4646,7 +4929,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={amcCoverageByCategoryData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={amcCoverageByCategoryData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "pct", name: "Coverage" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -4748,7 +5031,7 @@ export default function RevampDashboardPage() {
                     categoryKey="type"
                     orientation="horizontal"
                     stacked
-                    seriesColors={["#9EC8BA", "#DA7756", "#8E7BE0"]}
+                    seriesColors={["#7FD6AE", "#5A4BE0", "#2F6FE0"]}
                     series={[
                       { dataKey: "completed", name: "Completed" },
                       { dataKey: "open", name: "Open" },
@@ -4820,7 +5103,7 @@ export default function RevampDashboardPage() {
                     data={checklistTop10CompletedData}
                     categoryKey="checklist"
                     orientation="horizontal"
-                    categoryColors={checklistTop10CompletedData.map(() => "#9EC8BA")}
+                    categoryColors={checklistTop10CompletedData.map(() => "#7FD6AE")}
                     series={[{ dataKey: "completions", name: "Completions" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -4846,7 +5129,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
-                    categoryColors={checklistSitewiseComplianceData.map((_, i) => getPaletteColor(i))}
+                    categoryColors={checklistSitewiseComplianceData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "compliance", name: "Compliance" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -5008,7 +5291,7 @@ export default function RevampDashboardPage() {
                     subtitle="Critical vs Non-Critical, per inventory type"
                     data={inventoryTypeBreakdownData}
                     categoryKey="type"
-                    seriesColors={["#8E7BE0", "#DA7756"]}
+                    seriesColors={["#2F6FE0", "#5A4BE0"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
@@ -5099,7 +5382,7 @@ export default function RevampDashboardPage() {
                     data={inventoryDeadstockData}
                     categoryKey="category"
                     orientation="horizontal"
-                    categoryColors={inventoryDeadstockData.map(() => "#9EC8BA")}
+                    categoryColors={inventoryDeadstockData.map(() => "#7FD6AE")}
                     series={[{ dataKey: "value", name: "Value at risk" }]}
                     showInfoIcon
                     insightVariant="plain"
@@ -5684,9 +5967,46 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Vendors At KYC Risk"
-                  value={vendorKycRisk ? `${vendorKycRisk.total_at_risk_count}` : "…"}
-                  accent={vendorKycRisk && vendorKycRisk.total_at_risk_count > 0 ? "error" : "success"}
-                  subtitle={vendorKycRisk ? `of ${vendorKycRisk.total_active_count} active vendors` : undefined}
+                  value={vendorKycStatus ? `${vendorKycStatus.total_at_risk_count}` : vendorKycRisk ? `${vendorKycRisk.total_at_risk_count}` : "…"}
+                  accent={(vendorKycStatus ?? vendorKycRisk)?.total_at_risk_count ? "error" : "success"}
+                  subtitle={
+                    vendorKycStatus
+                      ? `${vendorKycStatus.expired_count} expired · ${vendorKycStatus.missing_count} missing · of ${vendorKycStatus.total_active_count} active`
+                      : vendorKycRisk
+                        ? `of ${vendorKycRisk.total_active_count} active vendors`
+                        : undefined
+                  }
+                />
+                <StatHeroCard
+                  tone="blue"
+                  label="Vendor Performance Score"
+                  value={vendorPerformanceScore?.score != null ? `${vendorPerformanceScore.score}` : "…"}
+                  accent={vendorPerformanceScore?.score != null && vendorPerformanceScore.score >= 70 ? "success" : "warning"}
+                  subtitle={
+                    vendorPerformanceScore
+                      ? `Grade ${vendorPerformanceScore.grade ?? "–"} · SLA ${vendorPerformanceScore.sla_compliance_percent ?? "–"}% · Contract fulfilment ${vendorPerformanceScore.contract_fulfilment_percent ?? "–"}%`
+                      : undefined
+                  }
+                  progress={vendorPerformanceScore?.score ?? undefined}
+                />
+                <StatHeroCard
+                  tone="peach"
+                  label="On-time Visit Completion"
+                  value={vendorOnTime?.on_time_percent != null ? `${vendorOnTime.on_time_percent}%` : "…"}
+                  accent={vendorOnTime?.on_time_percent != null && vendorOnTime.on_time_percent >= 80 ? "success" : "warning"}
+                  subtitle={
+                    vendorOnTime
+                      ? `${vendorOnTime.on_time_visits} on time · ${vendorOnTime.completed_visits} completed · ${vendorOnTime.missed_visits} missed of ${vendorOnTime.scheduled_visits}`
+                      : undefined
+                  }
+                  progress={vendorOnTime?.on_time_percent ?? undefined}
+                />
+                <StatHeroCard
+                  tone="purple"
+                  label="Contract Renewals Due"
+                  value={vendorRenewals ? `${vendorRenewals.total_renewals_due.toLocaleString()}` : "…"}
+                  accent={vendorRenewals && vendorRenewals.total_renewals_due > 0 ? "warning" : "success"}
+                  subtitle={vendorRenewals ? `${vendorRenewals.amc_renewals_due.toLocaleString()} AMC · ${vendorRenewals.kyc_renewals_due} KYC` : undefined}
                 />
               </div>
 
@@ -5766,8 +6086,27 @@ export default function RevampDashboardPage() {
                             badge: { tone: (vendorOverview.onboarding_pending_count > 0 ? "amber" : "green") as TableBadgeTone, label: `${vendorOverview.onboarding_pending_count}` },
                           },
                           { label: "Inactive Vendors", badge: { tone: "grey" as TableBadgeTone, label: `${vendorOverview.inactive_count}` } },
-                          { label: "Expiring Documents", badge: { tone: "grey" as TableBadgeTone, label: "Not returned by API" } },
-                          { label: "Performance Flags", badge: { tone: "grey" as TableBadgeTone, label: "Not returned by API" } },
+                          {
+                            label: "Contract Renewals Due",
+                            badge: {
+                              tone: (vendorRenewals && vendorRenewals.total_renewals_due > 0 ? "amber" : "green") as TableBadgeTone,
+                              label: vendorRenewals ? `${vendorRenewals.total_renewals_due.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "Missed Visits (all vendors)",
+                            badge: {
+                              tone: (vendorHealth && vendorHealth.total_missed_visits > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "KYC Expired / Missing",
+                            badge: {
+                              tone: (vendorKycStatus && vendorKycStatus.total_at_risk_count > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorKycStatus ? `${vendorKycStatus.expired_count} / ${vendorKycStatus.missing_count}` : "–",
+                            },
+                          },
                         ]
                       : []
                   }
@@ -5777,12 +6116,27 @@ export default function RevampDashboardPage() {
 
               <div key="vendor-response-trend" chart_code="fm-vendor-response-trend" className="h-full relative">
                 <AddToDashboardButton chartId="fm-vendor-response-trend" moduleKey="maintenance" subTab="Vendor" height="6" width="12" position="0,512" />
-                <EmptyStateCard
-                  title="Vendor response time trend"
-                  subtitle="Monthly · per-vendor SLA trend"
-                  message="None of the 4 vendor endpoints return a per-vendor monthly response-time trend — only a point-in-time overall/by-vendor snapshot is available."
-                  className="h-full"
-                />
+                {vendorResponseTrendData.length ? (
+                  <ComboBarLineChartCard
+                    title="Vendor response time trend"
+                    subtitle="Monthly · bars = average response (hrs), line = SLA target (hrs)"
+                    data={vendorResponseTrendData}
+                    categoryKey="month"
+                    bar={{ dataKey: "avgResponse", name: "Avg Response (hrs)" }}
+                    line={{ dataKey: "target", name: "SLA Target (hrs)" }}
+                    showInfoIcon
+                    insightVariant="plain"
+                    insight="Months where the bar sits above the line are months vendors missed their response-time target."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Vendor response time trend"
+                    subtitle="Monthly · average response vs SLA target"
+                    message="No vendor response-time data for the selected sites and date range."
+                    className="h-full"
+                  />
+                )}
               </div>
 
               <div key="vendor-expired-kyc" chart_code="fm-vendor-expired-kyc" className="h-full relative">
@@ -5817,6 +6171,58 @@ export default function RevampDashboardPage() {
                     : "Loading vendor data quality signal…"}
                 </p>
               </div>
+
+              <div key="vendor-missed-visits" chart_code="fm-vendor-missed-visits" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-missed-visits" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="0,525" />
+                {vendorMissedVisitData.length ? (
+                  <BarChartCard
+                    title="Missed visits by vendor"
+                    subtitle={vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()} missed visits in total` : undefined}
+                    data={vendorMissedVisitData}
+                    categoryKey="vendor"
+                    orientation="horizontal"
+                    categoryColors={vendorMissedVisitData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "missed", name: "Missed visits" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard title="Missed visits by vendor" message="No missed vendor visits for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+
+              <div key="vendor-workflow-bottlenecks" chart_code="fm-vendor-workflow-bottlenecks" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-workflow-bottlenecks" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="6,525" />
+                {vendorBottleneckData.length ? (
+                  <BarChartCard
+                    title="Vendor workflow bottlenecks"
+                    subtitle={vendorBottlenecks?.slowest_stage ? `Slowest stage: ${vendorBottlenecks.slowest_stage} · average hours per stage` : "Average hours per stage"}
+                    data={vendorBottleneckData}
+                    categoryKey="stage"
+                    orientation="horizontal"
+                    categoryColors={vendorBottleneckData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "hours", name: "Avg hours" }]}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard title="Vendor workflow bottlenecks" message="No stage timing data for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+
+              <div key="vendor-contract-performance" chart_code="fm-vendor-contract-performance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-contract-performance" moduleKey="maintenance" subTab="Vendor" height="8" width="12" position="0,532" />
+                {vendorContractTableRows.length ? (
+                  <DataTableCard
+                    title="Vendor contract & visit performance"
+                    subtitle="Contracts held and visits completed or missed, per vendor"
+                    columns={VENDOR_CONTRACT_TABLE_COLUMNS}
+                    data={vendorContractTableRows}
+                    getRowKey={(row) => row.vendorName}
+                    className="h-full overflow-auto no-drag"
+                  />
+                ) : (
+                  <EmptyStateCard title="Vendor contract & visit performance" message="No vendor contract data for the selected sites and date range." className="h-full" />
+                )}
+              </div>
                 </>,
                 isMyDashboardModule,
                 savedMaintenanceKeys
@@ -5840,6 +6246,26 @@ export default function RevampDashboardPage() {
           />
         ) : isCrmView ? (
           <CrmPanel activeSection={activeSubTab} data={crmApiData} loading={crmLoading || sitesLoading} />
+        ) : isOverviewView ? (
+          <OverviewPanel
+            activeSection={activeSubTab}
+            onNavigate={(moduleKey, subTab) => {
+              if (moduleKey === "overview" && subTab) {
+                setActiveSubTab(subTab);
+                return;
+              }
+              if (subTab) navigateTo(moduleKey, subTab);
+              else handleModuleChange(moduleKey);
+            }}
+          />
+        ) : isTransitioningView ? (
+          <TransitioningPanel activeSection={activeSubTab} />
+        ) : isUtilityView ? (
+          <UtilityPanel activeSection={activeSubTab} />
+        ) : isSecurityView ? (
+          <SecurityPanel activeSection={activeSubTab} />
+        ) : isVasView ? (
+          <VasPanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
@@ -5897,13 +6323,34 @@ export default function RevampDashboardPage() {
             {savedCrmKeys.size > 0 && (
               <CrmPanel activeSection="" data={crmApiData} loading={crmLoading || sitesLoading} visibleKeys={savedCrmKeys} />
             )}
+            {savedOverviewKeys.size > 0 && (
+              <OverviewPanel
+                activeSection=""
+                visibleKeys={savedOverviewKeys}
+                onNavigate={(moduleKey, subTab) => {
+                  if (subTab) navigateTo(moduleKey, subTab);
+                  else handleModuleChange(moduleKey);
+                }}
+              />
+            )}
+            {savedTransitioningKeys.size > 0 && (
+              <TransitioningPanel activeSection="" visibleKeys={savedTransitioningKeys} />
+            )}
+            {savedUtilityKeys.size > 0 && <UtilityPanel activeSection="" visibleKeys={savedUtilityKeys} />}
+            {savedSecurityKeys.size > 0 && <SecurityPanel activeSection="" visibleKeys={savedSecurityKeys} />}
+            {savedVasKeys.size > 0 && <VasPanel activeSection="" visibleKeys={savedVasKeys} />}
             {savedMaintenanceKeys.size === 0 &&
               savedSafetyKeys.size === 0 &&
               savedFinanceKeys.size === 0 &&
-              savedCrmKeys.size === 0 && (
+              savedCrmKeys.size === 0 &&
+              savedOverviewKeys.size === 0 &&
+              savedTransitioningKeys.size === 0 &&
+              savedUtilityKeys.size === 0 &&
+              savedSecurityKeys.size === 0 &&
+              savedVasKeys.size === 0 && (
                 <EmptyStateCard
                   title="No cards on My Dashboard yet"
-                  message='Click the "+" on any card across Maintenance, Safety, Finance or CRM to add it here.'
+                  message='Click the "+" on any card across Overview, Transitioning, Maintenance, Safety, Finance, CRM, Utility, Security or Value Added Services to add it here.'
                   className="h-40"
                 />
               )}

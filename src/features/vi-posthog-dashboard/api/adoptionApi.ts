@@ -229,7 +229,6 @@ export async function downloadRecentActiveUsers(f: ViRangeFilters): Promise<Blob
   const qs = new URLSearchParams({
     ...rangeParams(f),
     project_code: VI_PROJECT_CODE,
-    limit: '10',
   });
   const response = await client.get<Blob>(
     `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,

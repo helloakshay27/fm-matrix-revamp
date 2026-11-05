@@ -104,6 +104,10 @@ interface UserData {
   lock_user_permission?: LockUserPermission;
   profile_type?: string;
   profile_icon_url?: string;
+  siganture_attach?: string | { document_url?: string } | null;
+  signature_attach?: string | { document_url?: string } | null;
+  signature_url?: string | null;
+  siganture_url?: string | null;
   report_to_id?: number | string;
   report_to?: any;
   report_to_name?: string;
@@ -240,8 +244,11 @@ export const EditFMUserPage = () => {
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -366,8 +373,21 @@ export const EditFMUserPage = () => {
     if (userData && Object.keys(userData).length > 0) {
       setLockId(userData.lock_user_permission?.id);
       const avatarUrl = userData.profile_icon_url || userData.profile_image_url || userData.profile_image;
+      const signatureUrl =
+        (typeof userData.siganture_attach === "string"
+          ? userData.siganture_attach
+          : userData.siganture_attach?.document_url) ||
+        (typeof userData.signature_attach === "string"
+          ? userData.signature_attach
+          : userData.signature_attach?.document_url) ||
+        userData.signature_url ||
+        userData.siganture_url;
+
       if (avatarUrl) {
         setProfileImagePreview(avatarUrl);
+      }
+      if (signatureUrl) {
+        setSignaturePreview(signatureUrl);
       }
       setFormData({
         firstName: userData.firstname || "",
@@ -436,6 +456,26 @@ export const EditFMUserPage = () => {
     fileInputRef.current?.click();
   };
 
+  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Signature image size must be less than 2MB");
+        return;
+      }
+      setSignatureFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSignaturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSignatureClick = () => {
+    signatureInputRef.current?.click();
+  };
+
   const validateForm = (): boolean => {
     if (!formData.firstName) {
       toast.error("Please enter first name");
@@ -498,6 +538,10 @@ export const EditFMUserPage = () => {
 
     if (profileImage) {
       formDataToSend.append("user[profile_icon]", profileImage);
+    }
+
+    if (signatureFile) {
+      formDataToSend.append("siganture_attach", signatureFile);
     }
 
     const permissions = [
@@ -605,6 +649,35 @@ export const EditFMUserPage = () => {
                 </div>
                 <p className="mt-2 text-sm text-gray-500 font-medium">Profile Photo</p>
                 <p className="text-xs text-gray-400">Recommended: Square image, max 2MB</p>
+              </div>
+
+              <div className="mb-8 flex flex-col items-center">
+                <div
+                  className="relative group flex h-28 w-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#d1d5db] bg-white transition hover:border-[#C72030]"
+                  onClick={handleSignatureClick}
+                >
+                  {signaturePreview ? (
+                    <img
+                      src={signaturePreview}
+                      alt="Signature preview"
+                      className="h-full w-full object-contain p-2"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center text-gray-500">
+                      <Camera size={24} className="mb-2" />
+                      <span className="text-sm font-medium">Upload Signature</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    ref={signatureInputRef}
+                    onChange={handleSignatureChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                <p className="mt-2 text-sm text-gray-500 font-medium">Signature</p>
+                <p className="text-xs text-gray-400">Single signature image, max 2MB</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -35,34 +35,74 @@ export interface ChartSpec {
   horizontal?: boolean;
 }
 
-export const CHARTS = GENERATED_CHARTS as unknown as Record<string, ChartSpec>;
-
-export const C = {
-  terra: "#DA7756",
-  sage: "#798C5E",
-  teal: "#9EC8BA",
-  dark: "#2C2C2C",
-  vi: "#EE2737",
+/** Vi My Workspace brand colour card — the only colours this dashboard uses. */
+export const BRAND = {
+  crimson: "#EE2737",
+  mustard: "#FFC400",
+  aubergine: "#5A084B",
+  slate: "#2F3043",
+  terracotta: "#FF8F6B",
+  sky: "#CADEF8",
+  sand: "#F3E8D1",
+  white: "#FFFFFF",
 } as const;
 
-export const fmt = (n: number) => Number(n).toLocaleString("en-IN");
+/** Category order for donut slices and multi-colour bars. */
+export const PALETTE = [BRAND.aubergine, BRAND.terracotta, BRAND.mustard, BRAND.slate, BRAND.crimson, BRAND.sky, BRAND.sand] as const;
 
-export const FILTER_CIRCLES = [
-  "All Circles",
-  "Maharashtra & Goa",
-  "Tamil Nadu",
-  "Karnataka",
-  "UP East",
-  "UP West",
-  "Andhra Pradesh",
-  "Bihar",
-  "Kolkata",
-  "Haryana",
-  "Punjab",
-];
-export const FUNCTIONS = ["Sales", "Sales & Distribution", "Technology", "Postpaid", "Customer Service", "Finance", "HR"];
-export const ZONES = ["All Zones", "Worli", "Andheri", "Thane", "Pune", "Nashik", "Nagpur"];
-export const CLASSIFICATIONS = ["All classifications", "Non-Compliance", "Other classifications"];
+export const C = {
+  terra: BRAND.terracotta,
+  sage: BRAND.slate,
+  teal: BRAND.sky,
+  dark: BRAND.slate,
+  vi: BRAND.crimson,
+} as const;
+
+// The generated sample specs were authored in the Lockated palette; map them onto the brand card.
+const BRAND_MAP: Record<string, string> = {
+  "#DA7756": BRAND.terracotta,
+  "#F4795F": BRAND.terracotta,
+  "#F9A592": BRAND.terracotta,
+  "#798C5E": BRAND.slate,
+  "#2C2C2C": BRAND.slate,
+  "#6B9BCC": BRAND.aubergine,
+  "#0D47A1": BRAND.aubergine,
+  "#108C72": BRAND.aubergine,
+  "#9EC8BA": BRAND.sky,
+  "#CECBF6": BRAND.sand,
+  "#FDE2C8": BRAND.sand,
+  "#EDC488": BRAND.mustard,
+  "#E7848E": BRAND.crimson,
+  "#EE2737": BRAND.crimson,
+};
+const toBrand = (hex: string) => BRAND_MAP[hex.toUpperCase()] ?? hex;
+
+export function fadeHex(hex: string, alpha: number) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function toBrandSpec(spec: ChartSpec): ChartSpec {
+  return {
+    ...spec,
+    datasets: spec.datasets.map((series) => {
+      const lineColor = series.lineColor ? toBrand(series.lineColor) : undefined;
+      return {
+        ...series,
+        pieColors: series.pieColors?.map(toBrand),
+        barColor: series.barColor ? toBrand(series.barColor) : undefined,
+        lineColor,
+        lineFill: lineColor ? fadeHex(lineColor, 0.12) : undefined,
+      };
+    }),
+  };
+}
+
+export const CHARTS: Record<string, ChartSpec> = Object.fromEntries(
+  Object.entries(GENERATED_CHARTS as unknown as Record<string, ChartSpec>).map(([key, spec]) => [key, toBrandSpec(spec)]),
+);
+
+export const fmt = (n: number) => Number(n).toLocaleString("en-IN");
 
 export const CHART_LABELS: Record<string, string> = {
   incStatus: "Incident Status",
@@ -120,11 +160,12 @@ export const PROGRESS = [
   ["Closed", "58.1%", "var(--ok)"],
 ] as const;
 
-export function titleForFilters(circle: string, zone?: string) {
-  if (circle === "All Circles") {
-    return zone && zone !== "All Zones" ? `Incident · Pan India · ${zone} Zone` : SCOPES.admin.title;
-  }
-  return `Incident · ${circle}${zone && zone !== "All Zones" ? ` · ${zone} Zone` : " Circle"}`;
+/** Circle and zone are display names; "" means none selected. */
+export function titleForFilters(persona: Persona, circles: string[], zone: string) {
+  const zonePart = zone ? ` · ${zone}` : "";
+  if (circles.length === 1) return `Incident · ${circles[0]} Circle${zonePart}`;
+  if (circles.length > 1) return `Incident · ${circles.length} Circles${zonePart}`;
+  return `Incident · ${persona === "admin" ? "Pan India" : "Circle Manager"} View${zonePart}`;
 }
 
 export function cardInfo(title: string) {

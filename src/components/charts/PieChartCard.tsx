@@ -1,23 +1,12 @@
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  type TooltipProps,
-  type LegendProps,
-} from "recharts";
 import { PieChart as PieChartIcon, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_PIE_PALETTE } from "@/styles/vedaTheme";
 
-// Primary pie palette (lavender / teal / terracotta). Once a chart has more
-// categories than this, extra slices borrow the shared bar-chart palette
-// rather than repeating these three colors.
-const PIE_SLICE_COLORS = ["#CDCAF5", "#76CDC1", "#E39090"];
-const BAR_FALLBACK_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
-const EXTENDED_PIE_COLORS = [...PIE_SLICE_COLORS, ...BAR_FALLBACK_COLORS];
+/** Same geometry as the Veda HTML donut: r=54, 10px stroke, 2px gap, first slice at 12 o'clock. */
+const DONUT_R = 54;
+const DONUT_C = 2 * Math.PI * DONUT_R;
+const DONUT_GAP = 2;
 
 export interface PieChartDatum {
   name: string;
@@ -37,39 +26,61 @@ const INSIGHT_TONE_STYLE: Partial<Record<ChartInsightTone, React.CSSProperties>>
   info: { backgroundColor: "rgba(var(--color-info-rgb), 0.08)" },
 };
 
-interface PieTooltipPayloadItem {
+interface DonutSlice {
   name: string;
   value: number;
   color: string;
+  seg: number;
+  dashOffset: number;
 }
 
-function PieTooltip({ active, payload, total }: TooltipProps<number, string> & { total: number }) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0] as unknown as PieTooltipPayloadItem;
-  const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
-  return (
-    <div className="bg-white border border-brand-border rounded-md shadow-md px-3 py-2 min-w-[140px]">
-      <div className="flex items-center gap-2 text-brand-body-4 font-medium text-brand-text">
-        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: item.color }} />
-        {item.name}
-      </div>
-      <div className="text-brand-body-5 text-brand-text-light mt-0.5">
-        {item.value.toLocaleString()} ({percent}%)
-      </div>
-    </div>
-  );
+function buildSlices(data: PieChartDatum[], total: number): DonutSlice[] {
+  let offset = 0;
+  return data.map((d, index) => {
+    const len = total > 0 ? (d.value / total) * DONUT_C : 0;
+    const slice: DonutSlice = {
+      name: d.name,
+      value: d.value,
+      color: VEDA_PIE_PALETTE[index % VEDA_PIE_PALETTE.length],
+      seg: Math.max(len - DONUT_GAP, 0.5),
+      dashOffset: -offset,
+    };
+    offset += len;
+    return slice;
+  });
 }
 
-function PieLegend({ payload }: LegendProps) {
-  if (!payload?.length) return null;
+function DonutRing({ slices, centerLabel }: { slices: DonutSlice[]; centerLabel?: string }) {
   return (
-    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-3">
-      {payload.map((entry) => (
-        <span key={entry.value} className="flex items-center gap-1.5 text-brand-body-5 text-brand-text">
-          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: entry.color }} />
-          {entry.value}
-        </span>
-      ))}
+    <div className="relative h-40 w-40 shrink-0">
+      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+        <circle cx="70" cy="70" r={DONUT_R} fill="none" stroke="#FFFFFF" strokeWidth="10" />
+        {slices.map((slice) => (
+          <circle
+            key={slice.name}
+            cx="70"
+            cy="70"
+            r={DONUT_R}
+            fill="none"
+            stroke={slice.color}
+            strokeWidth="10"
+            strokeDasharray={`${slice.seg} ${DONUT_C - slice.seg}`}
+            strokeDashoffset={slice.dashOffset}
+          >
+            <title>
+              {slice.name}: {slice.value.toLocaleString()}
+            </title>
+          </circle>
+        ))}
+      </svg>
+      {centerLabel && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+          <div>
+            <div className="text-brand-h2 font-bold text-brand-text">{centerLabel}</div>
+            <div className="text-brand-caption text-brand-text-light">Total</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -86,10 +97,12 @@ export interface PieChartCardProps {
   /** "bottom" (default) renders the recharts legend under the donut. "right" renders a
    * value+percent stat list beside it, matching the "Ticket pool composition" panel. */
   legendPosition?: "bottom" | "right";
-  /** Override the default ANALYTICS_PALETTE-by-index colors — use when slices carry a
-   * fixed status meaning (e.g. In Use/Breakdown/Allocated) rather than an arbitrary category. */
+  /** Accepted for callers. Slice colour is always the Veda palette by index. */
   colors?: string[];
   showInfoIcon?: boolean;
+  /** Kept so existing callers compile. Ring size is the Veda donut (160px, 10px stroke). */
+  innerRadius?: string | number;
+  outerRadius?: string | number;
   height?: number;
   className?: string;
 }
@@ -108,61 +121,17 @@ export function PieChartCard({
   insightVariant = "banner",
   centerLabel,
   legendPosition = "bottom",
-  colors,
   showInfoIcon = false,
-  height = 240,
   className,
 }: PieChartCardProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  // Zero-value slices still receive Pie's paddingAngle gaps on both sides,
-  // which shows up as blank notches in the ring — drop them so the donut
-  // only ever renders arcs for categories that actually have data.
   const nonZeroData = data.filter((d) => d.value > 0);
-  const palette = colors ?? (nonZeroData.length > PIE_SLICE_COLORS.length ? EXTENDED_PIE_COLORS : PIE_SLICE_COLORS);
-  const coloredData = nonZeroData.map((d, index) => ({
-    ...d,
-    color: palette[index % palette.length],
-  }));
+  const slices = buildSlices(nonZeroData, total);
 
-  const donut = (
-    <div className="relative" style={{ height, width: legendPosition === "right" ? 180 : "100%" }}>
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart>
-          <Pie
-            data={coloredData}
-            dataKey="value"
-            nameKey="name"
-            innerRadius="58%"
-            outerRadius="85%"
-            paddingAngle={0}
-            stroke="none"
-            label={({ percent }) => (percent && percent >= 0.08 ? `${Math.round(percent * 100)}%` : "")}
-            labelLine={false}
-          >
-            {coloredData.map((d, index) => (
-              <Cell key={index} fill={d.color} />
-            ))}
-          </Pie>
-          <Tooltip content={<PieTooltip total={total} />} />
-          {legendPosition === "bottom" && <Legend content={<PieLegend />} />}
-        </PieChart>
-      </ResponsiveContainer>
-      {centerLabel && (
-        <div
-          className="absolute inset-x-0 top-0 flex items-center justify-center pointer-events-none"
-          style={{ height: legendPosition === "bottom" ? height - 40 : height }}
-        >
-          <div className="text-center">
-            <div className="text-brand-h2 font-bold text-brand-text">{centerLabel}</div>
-            <div className="text-brand-caption text-brand-text-light">Total</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const donut = <DonutRing slices={slices} centerLabel={centerLabel} />;
 
   return (
-    <Card className={cn("border-brand-border relative", className)}>
+    <Card className={cn("border-brand-border relative veda-donut", className)}>
       {showInfoIcon && (
         <button
           type="button"
@@ -194,33 +163,42 @@ export function PieChartCard({
             <span className="text-brand-body-5">No data available</span>
           </div>
         ) : legendPosition === "right" ? (
-          <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
+          <div className="grid grid-cols-[auto_1fr] items-center gap-7">
             {donut}
-            <div>
-              {coloredData.map((d, index) => {
-                const percent = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
+            <div className="min-w-0">
+              {slices.map((d, index) => {
+                const percent = total > 0 ? Math.round((d.value / total) * 100) : 0;
                 return (
                   <div
                     key={d.name}
                     className={cn(
-                      "flex items-center justify-between py-2 text-brand-body-4",
-                      index < coloredData.length - 1 && "border-b border-brand-border"
+                      "grid grid-cols-[12px_minmax(0,1fr)_36px_44px] items-center gap-2 py-[7px] text-[12.5px]",
+                      index < slices.length - 1 && "border-b border-[rgba(26,26,24,0.06)]"
                     )}
                   >
-                    <span className="flex items-center gap-2 text-brand-text">
-                      <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                      {d.name}
+                    <span className="h-2 w-2 rounded-[2px]" style={{ background: d.color }} />
+                    <span className="truncate text-brand-text">{d.name}</span>
+                    <span className="text-right font-bold tabular-nums text-brand-text">
+                      {d.value.toLocaleString()}
                     </span>
-                    <span className="font-bold text-brand-text">
-                      {d.value.toLocaleString()} · {percent}%
-                    </span>
+                    <span className="veda-dl-pct text-right text-[11.5px] text-brand-text-light">{percent}%</span>
                   </div>
                 );
               })}
             </div>
           </div>
         ) : (
-          donut
+          <div>
+            <div className="flex justify-center">{donut}</div>
+            <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+              {slices.map((d) => (
+                <span key={d.name} className="flex items-center gap-1.5 text-[11.5px] text-brand-text">
+                  <span className="h-2 w-2 rounded-[2px]" style={{ background: d.color }} />
+                  {d.name}
+                </span>
+              ))}
+            </div>
+          </div>
         )}
 
         {insight && insightVariant === "plain" && (

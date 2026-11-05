@@ -25,6 +25,8 @@ export interface DurationValue {
 
 export interface TrainerAvailabilitySlot {
   startTime: TimeValue;
+  breakTimeStart?: TimeValue;
+  breakTimeEnd?: TimeValue;
   endTime: TimeValue;
   concurrentSlots: string;
   slotBy: number;
@@ -128,6 +130,14 @@ export function mapTrainerApiData(raw: any): TrainerSetup {
           startTime: {
             hour: String(facilitySlot.start_hour ?? 0).padStart(2, "0"),
             minute: String(facilitySlot.start_min ?? 0).padStart(2, "0"),
+          },
+          breakTimeStart: {
+            hour: String(facilitySlot.break_start_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.break_start_min ?? 0).padStart(2, "0"),
+          },
+          breakTimeEnd: {
+            hour: String(facilitySlot.break_end_hour ?? 0).padStart(2, "0"),
+            minute: String(facilitySlot.break_end_min ?? 0).padStart(2, "0"),
           },
           endTime: {
             hour: String(facilitySlot.end_hour ?? 0).padStart(2, "0"),

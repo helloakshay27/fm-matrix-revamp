@@ -77,14 +77,3 @@ export function AuditTabIcon() {
     </svg>
   );
 }
-
-export function ViLogo() {
-  return (
-    <svg viewBox="0 0 40 40" fill="none">
-      <path d="M4 8l8 24 8-16 8 16 8-24" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="8" cy="6" r="2.5" fill="#fff" />
-      <circle cx="20" cy="6" r="2.5" fill="#fff" />
-      <circle cx="32" cy="6" r="2.5" fill="#fff" />
-    </svg>
-  );
-}

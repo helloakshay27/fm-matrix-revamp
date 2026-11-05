@@ -551,6 +551,20 @@ const pinToCalendarDay = (d?: Date): Date | undefined =>
 const pinRange = (r?: DateRange): DateRange | undefined =>
   r ? { ...r, from: pinToCalendarDay(r.from), to: pinToCalendarDay(r.to) } : r;
 
+const subtractCalendarMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() - months);
+  const lastDayOfTargetMonth = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0
+  ).getDate();
+  result.setDate(Math.min(day, lastDayOfTargetMonth));
+  return result;
+};
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -563,8 +577,12 @@ export const Dashboard = () => {
     SelectedAnalytic[]
   >([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const now = new Date();
+    const from = isExecutiveDashboard
+      ? subtractCalendarMonths(now, 2)
+      : new Date(now.setFullYear(now.getFullYear() - 1));
     const initial: DateRange = {
-      from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+      from,
       to: new Date(),
     };
     return isExecutiveDashboard ? pinRange(initial) : initial;

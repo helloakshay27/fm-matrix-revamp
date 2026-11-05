@@ -31,6 +31,8 @@ import {
   UserPlus,
   AlertTriangle,
   ClipboardList,
+  GraduationCap,
+  Map as MapIcon,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -367,6 +369,25 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
           href: "/settings/inspection-master/inspection-checklist",
         },
       ],
+    },
+    {
+      name: "Training",
+      icon: GraduationCap,
+      subItems: [
+        {
+          name: "Training Category",
+          href: "/settings/training/category",
+        },
+        {
+          name: "Training Checklist",
+          href: "/settings/training/checklist",
+        },
+      ],
+    },
+    {
+      icon: MapIcon,
+      name: "Zone",
+      href: "/settings/zone",
     },
     {
       icon: Circle,

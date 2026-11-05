@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import type { DateRange } from '@/features/posthog-dashboard/data/constants';
 import { useViDashboard, type ViPlatform } from '../context/viDashboardStore';
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 /**
  * The reference (§7.1, cross-cutting controls) is explicit that Vi my Workspace has no admin
  * scope or persona tier — one product, one persona, employees and contractors undifferentiated.
@@ -101,16 +108,17 @@ export function ControlBar() {
               <input
                 type="date"
                 value={draft.from}
-                max={draft.to || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                max={draft.to && draft.to < todayYmd() ? draft.to : todayYmd()}
+                onChange={(e) => setDraft((d) => ({ ...d, from: clampToToday(e.target.value) }))}
                 aria-label="From date"
               />
               <span className="dr-to">–</span>
               <input
                 type="date"
+                max={todayYmd()}
                 value={draft.to}
                 min={draft.from || undefined}
-                onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                onChange={(e) => setDraft((d) => ({ ...d, to: clampToToday(e.target.value) }))}
                 aria-label="To date"
               />
             </div>

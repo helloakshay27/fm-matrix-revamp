@@ -282,6 +282,8 @@ export const TrainerSetupDetails = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <ReadOnlyField label="Facility Slot ID" value={trainer.facilitySlotId} />
             <ReadOnlyField label="Start Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].startTime.hour}:${trainer.availabilitySlots[0].startTime.minute}` : ""} />
+            <ReadOnlyField label="Break Time Start" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].breakTimeStart?.hour ?? "00"}:${trainer.availabilitySlots[0].breakTimeStart?.minute ?? "00"}` : ""} />
+            <ReadOnlyField label="Break Time End" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].breakTimeEnd?.hour ?? "00"}:${trainer.availabilitySlots[0].breakTimeEnd?.minute ?? "00"}` : ""} />
             <ReadOnlyField label="End Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].endTime.hour}:${trainer.availabilitySlots[0].endTime.minute}` : ""} />
             <ReadOnlyField label="Concurrent Slots" value={trainer.availabilitySlots?.[0]?.concurrentSlots} />
             <ReadOnlyField label="Slot Duration (Minutes)" value={trainer.availabilitySlots?.[0]?.slotBy} />
