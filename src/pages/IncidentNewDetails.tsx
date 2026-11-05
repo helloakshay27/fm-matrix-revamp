@@ -2375,7 +2375,7 @@ export const IncidentNewDetails = () => {
                         {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
                     </Button>
 
-                    {shouldShow("Incident", "update") && (
+                    {shouldShow("Incident", "update") && incident?.current_status?.trim().toLowerCase() !== 'closed' && (
                         <Button
                             variant="outline"
                             size="sm"
