@@ -115,8 +115,6 @@ export interface ViWeeklyFilters extends Omit<WeeklyFilters, 'devices' | 'siteId
   os?: OsType[];
 }
 
-<<<<<<< HEAD
-=======
 export interface RecentActiveUser {
   user_id: string;
   /** "First Last" as the API sends it (the person's name). */
@@ -134,7 +132,6 @@ export interface RecentActiveUsersResponse {
   users: RecentActiveUser[];
 }
 
->>>>>>> cd69df4ab (Post Hog changews)
 /**
  * The Vi web host. Kept for reference/reporting only — it is NOT sent as a filter (see
  * VI_APP_ID above); mobile-app events carry no host, so filtering on it drops all of them.
