@@ -628,7 +628,7 @@ export interface AttendanceDashboardData {
   department: AttendanceDepartmentData | null;
   trend: AttendanceTrendData | null;
   patterns: AttendancePatternsData | null;
-  staffingGapVsBreach: AttendanceStaffingGapVsBreachData | null;
+  staffingGapVsBreach: unknown;
 }
 
 const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {

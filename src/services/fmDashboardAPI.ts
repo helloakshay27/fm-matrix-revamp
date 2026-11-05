@@ -1309,10 +1309,9 @@ export const fetchAttendancePatterns = (params: FmDashboardParams) =>
   );
 
 export const fetchAttendanceStaffingGapVsBreach = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<{ staffing_gap_vs_breach: AttendanceStaffingGapVsBreachData }>(
-    ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH,
-    params
-  ).then((res) => res.staffing_gap_vs_breach);
+  fetchFmDashboardJson<{ staffing_gap_vs_breach: unknown }>(ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH, params).then(
+    (res) => res.staffing_gap_vs_breach
+  );
 
 // ============================================================================
 // Survey
@@ -1909,6 +1908,54 @@ export const fetchIncidentKpis = (siteIds: FmDashboardParams["siteIds"]) =>
   fetchSafetyDashboardJson<{ success: number; message?: string; data: IncidentKpisData }>("/incident_dashboard/incident_kpis", {
     siteIds,
   }).then((res) => res.data);
+
+// ============================================================================
+// CRM
+// ============================================================================
+// Matches the FM Matrix CRM dashboard collection: 6 independent endpoints, each
+// with the same `site_id`/`from_date`/`to_date` convention as the rest of the
+// `fm_dashboard/*` surface. The response envelopes are loose because the live
+// backend shape is not yet confirmed in this environment, so every reader in the
+// UI resolves multiple likely key names before falling back to the raw object.
+
+export type CrmRecord = Record<string, unknown>;
+
+async function fetchCrmValue(
+  endpoint: string,
+  envelopeKey: string,
+  params: FmDashboardParams
+): Promise<CrmRecord | CrmRecord[]> {
+  const res = await fetchFmDashboardJson<CrmRecord>(endpoint, params);
+  const value = res[envelopeKey];
+  return (value ?? res) as CrmRecord | CrmRecord[];
+}
+
+const CRM_ENDPOINTS = {
+  LEASE_OVERVIEW: "/fm_dashboard/crm/lease_overview.json",
+  EVENTS_OVERVIEW: "/fm_dashboard/crm/events_overview.json",
+  BROADCAST_OVERVIEW: "/fm_dashboard/crm/broadcast_overview.json",
+  WALLET_OVERVIEW: "/fm_dashboard/crm/wallet_overview.json",
+  WALLET_DISTRIBUTION: "/fm_dashboard/crm/wallet_distribution.json",
+  WALLET_TRANSACTIONS: "/fm_dashboard/crm/wallet_transactions.json",
+} as const;
+
+export const fetchCrmLeaseOverview = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.LEASE_OVERVIEW, "lease_overview", params);
+
+export const fetchCrmEventsOverview = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.EVENTS_OVERVIEW, "events_overview", params);
+
+export const fetchCrmBroadcastOverview = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.BROADCAST_OVERVIEW, "broadcast_overview", params);
+
+export const fetchCrmWalletOverview = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.WALLET_OVERVIEW, "wallet_overview", params);
+
+export const fetchCrmWalletDistribution = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.WALLET_DISTRIBUTION, "wallet_distribution", params);
+
+export const fetchCrmWalletTransactions = (params: FmDashboardParams) =>
+  fetchCrmValue(CRM_ENDPOINTS.WALLET_TRANSACTIONS, "wallet_transactions", params);
 
 // ============================================================================
 // Finance

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import {
   RefreshCw,
@@ -29,6 +29,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PeriodCalendarPopover, type PeriodMode } from "@/components/dashboard/PeriodCalendarPopover";
 import "@/styles/veda-dashboard.css";
 import {
   PieChartCard,
@@ -102,6 +103,7 @@ import {
   useVendorDashboardData,
   usePermitsDashboardData,
   useIncidentsDashboardData,
+  useCrmDashboardData,
   useFinanceDashboardData,
 } from "@/hooks/useFmDashboardData";
 
@@ -248,16 +250,16 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   // Maintenance › Vendor
   { i: "vendor-section-label", x: 0, y: 485, w: 12, h: 1, minW: 6, minH: 1 },
   { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 11, minW: 6, minH: 6 },
-  { i: "vendor-repeat-requests", x: 0, y: 494, w: 12, h: 5, minW: 6, minH: 4 },
-  { i: "vendor-response-time", x: 0, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
-  { i: "vendor-amc-status-table", x: 6, y: 499, w: 6, h: 7, minW: 4, minH: 5 },
-  { i: "vendor-health", x: 0, y: 506, w: 12, h: 6, minW: 6, minH: 4 },
-  { i: "vendor-response-trend", x: 0, y: 512, w: 12, h: 6, minW: 6, minH: 4 },
-  { i: "vendor-expired-kyc", x: 0, y: 518, w: 12, h: 5, minW: 6, minH: 4 },
-  { i: "vendor-data-hygiene-banner", x: 0, y: 523, w: 12, h: 2, minW: 6, minH: 2 },
-  { i: "vendor-missed-visits", x: 0, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
-  { i: "vendor-workflow-bottlenecks", x: 6, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
-  { i: "vendor-contract-performance", x: 0, y: 532, w: 12, h: 8, minW: 6, minH: 5 },
+  // { i: "vendor-repeat-requests", x: 0, y: 494, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "vendor-response-time", x: 0, y: 497, w: 6, h: 7, minW: 4, minH: 5 },
+  { i: "vendor-amc-status-table", x: 6, y: 497, w: 6, h: 7, minW: 4, minH: 5 },
+  // { i: "vendor-health", x: 0, y: 506, w: 12, h: 6, minW: 6, minH: 4 },
+  { i: "vendor-response-trend", x: 0, y: 504, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "vendor-expired-kyc", x: 0, y: 518, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "vendor-data-hygiene-banner", x: 0, y: 510, w: 12, h: 2, minW: 6, minH: 2 },
+  // { i: "vendor-missed-visits", x: 0, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  // { i: "vendor-contract-performance", x: 0, y: 532, w: 12, h: 8, minW: 6, minH: 5 },
+  { i: "vendor-workflow-bottlenecks", x: 0, y: 512, w: 12, h: 7, minW: 6, minH: 5 },
 ];
 
 const MAINTENANCE_LAYOUT_BY_KEY = new Map(DEFAULT_TICKETS_LAYOUT.map((l) => [l.i, l]));
@@ -356,6 +358,8 @@ const STAT_TONE_CLASSES: Record<ChipTone, string> = {
   grey: "text-brand-text",
 };
 
+const MY_DASHBOARD_MODULE_KEY = "my-dashboard";
+
 const MODULES: ModuleDefinition[] = [
   {
     key: MY_DASHBOARD_MODULE_KEY,
@@ -379,24 +383,16 @@ const MODULES: ModuleDefinition[] = [
     key: "transitioning",
     label: "Transitioning",
     icon: RefreshCw,
-    summary: "Snagging, violations and handover-takeover progress across the portfolio.",
+    summary: "Transition and snag data will appear here when the connected source data is available.",
     subTabs: ["HOTO", "Snagging", "Insights", "Fitout"],
-    stats: [
-      { label: "Open Snags", value: "38", tone: "amber" },
-      { label: "Violations", value: "5", tone: "red" },
-      { label: "HOTO Pending", value: "3", tone: "amber" },
-    ],
-    chips: [
-      { label: "38 Open Snags", tone: "amber" },
-      { label: "5 Violations", tone: "red" },
-      { label: "3 HOTO Pending", tone: "amber" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "maintenance",
     label: "Maintenance",
     icon: Wrench,
-    summary: "AMC coverage, asset uptime and PPM checklist compliance.",
+    summary: "Maintenance analytics and operational KPIs from the selected sites and date range.",
     subTabs: [
       "Tickets",
       "Assets",
@@ -409,56 +405,32 @@ const MODULES: ModuleDefinition[] = [
       "Survey",
       "Vendor",
     ],
-    stats: [
-      { label: "AMC Miss", value: "128", tone: "amber" },
-      { label: "Assets Down", value: "63", tone: "red" },
-      { label: "PPM Overdue", value: "676", tone: "red" },
-    ],
-    chips: [
-      { label: "AMC Miss 128", tone: "amber" },
-      { label: "Assets Down 63", tone: "red" },
-      { label: "676 PPM Overdue", tone: "red" },
-      { label: "Vendor Risk Flagged", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "safety",
     label: "Safety",
     icon: HardHat,
-    summary: "Incident closure integrity, permit-to-work backlog and emergency readiness.",
+    summary: "Safety metrics will render here once valid source data is loaded.",
     subTabs: ["SOHI", "Incidents", "Permits", "Emergency"],
-    stats: [
-      { label: "No RCA on Closed Incidents", value: "71%", tone: "red" },
-      { label: "Permits Stuck in Draft", value: "52", tone: "red" },
-    ],
-    chips: [
-      { label: "71% No RCA", tone: "red" },
-      { label: "52 Draft Stuck", tone: "red" },
-      { label: "Emergency Prep Gap", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "finance",
     label: "Finance",
     icon: Wallet,
-    summary: "Invoice ageing, purchase-requisition backlog and wallet adoption.",
+    summary: "Financial portfolio metrics will be shown from the live finance datasets.",
     subTabs: ["Overview", "Procurement", "Invoices", "KPIs", "GDN", "Wallet"],
-    stats: [
-      { label: "Overdue Invoices", value: "2", tone: "red" },
-      { label: "Draft PRs", value: "130", tone: "amber" },
-      { label: "Wallet Active Users", value: "21", tone: "green" },
-    ],
-    chips: [
-      { label: "2 Overdue Invoices", tone: "red" },
-      { label: "130 Draft PRs", tone: "amber" },
-      { label: "Wallet: 21 Users Active", tone: "green" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "crm",
     label: "CRM",
     icon: Users,
-    summary: "Tenant sentiment, loyalty redemption and engagement adoption.",
+    summary: "CRM and tenant engagement widgets will populate from live CRM data.",
     subTabs: ["Overview", "My Pipeline", "Calendar", "My Tasks", "Campaigns"],
     stats: [],
     chips: [],
@@ -467,7 +439,7 @@ const MODULES: ModuleDefinition[] = [
     key: "utility",
     label: "Utility",
     icon: Zap,
-    summary: "Meter health, billing accuracy and solar generation data freshness.",
+    summary: "Utility data will appear when the utility source feeds are available.",
     subTabs: [
       "Energy",
       "Water",
@@ -478,48 +450,26 @@ const MODULES: ModuleDefinition[] = [
       "EV Consumption",
       "Solar Generator",
     ],
-    stats: [
-      { label: "Billing Risk", value: "High", tone: "red" },
-      { label: "Solar Data Staleness", value: "16mo", tone: "red" },
-    ],
-    chips: [
-      { label: "Billing May Be Inflated", tone: "red" },
-      { label: "Meter Logged Out-of-Order", tone: "red" },
-      { label: "Solar Data 16mo Stale", tone: "red" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "security",
     label: "Security",
     icon: Lock,
-    summary: "Patrol system health, gate-pass reconciliation and credential expiry.",
+    summary: "Security metrics will render from the live patrol, visitor and access data.",
     subTabs: ["Gate Passes", "Patrol", "Visitors", "Vehicles", "Staff"],
-    stats: [
-      { label: "Vehicle Insurance Expired", value: "6yr", tone: "red" },
-      { label: "Gate Pass Unmatched", value: "18", tone: "amber" },
-    ],
-    chips: [
-      { label: "Vehicle Ins. 6yr Expired", tone: "red" },
-      { label: "Patrol System Error", tone: "red" },
-      { label: "Expired Creds", tone: "amber" },
-      { label: "Gate Pass 18 Unmatched", tone: "amber" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "vas",
     label: "Value Added Services",
     icon: Star,
-    summary: "Parking utilisation, F&B order flow and amenity booking adoption.",
+    summary: "Service and amenity metrics will populate from the VAS sources.",
     subTabs: ["F&B", "OSR", "Parking", "Booking", "Space Management", "Mailroom"],
-    stats: [
-      { label: "Parking Utilisation", value: "6%", tone: "amber" },
-      { label: "Booking Usage", value: "56pg", tone: "green" },
-    ],
-    chips: [
-      { label: "Parking 6% + 0 Bookings", tone: "amber" },
-      { label: "F&B Order Status", tone: "amber" },
-      { label: "Booking: 56pg Real Usage", tone: "green" },
-    ],
+    stats: [],
+    chips: [],
   },
   // {
   //   key: "marketplace",
@@ -870,25 +820,41 @@ function getHeaderUser(): { name: string; initials: string } {
   return { name, initials: (initials || "U").toUpperCase() };
 }
 
+/** Name shown beside the logo in the top bar. */
+const BRAND_NAME = "Dashboard View";
+
+/** Which Day / Month / Range tab the applied {from, to} corresponds to, so the top-bar control can highlight it. */
+function periodModeOf({ from, to }: { from: Date; to: Date }): PeriodMode {
+  if (from.toDateString() === to.toDateString()) return "day";
+  const sameMonth = from.getFullYear() === to.getFullYear() && from.getMonth() === to.getMonth();
+  const endOfMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0);
+  const reachesMonthEnd = to.toDateString() === endOfMonth.toDateString() || to.toDateString() === new Date().toDateString();
+  if (sameMonth && from.getDate() === 1 && reachesMonthEnd) return "month";
+  return "range";
+}
+
 interface SiteOption {
   id: number;
   name: string;
 }
 
+// The dropdown list is portalled to <body> (outside the page's theme variables), so it's styled with
+// literal values: white card, soft shadow, rounded rows with a light-grey hover.
+const FILTER_SELECT_CONTENT_CLASS =
+  "z-[60] max-h-72 rounded-xl border border-black/10 bg-white p-1 shadow-[0_12px_28px_rgba(26,26,24,0.16)]";
+const FILTER_SELECT_ITEM_CLASS =
+  "rounded-lg py-2 text-[13.5px] text-[#1a1a18] focus:bg-[#f5f4f0] focus:text-[#1a1a18] data-[state=checked]:font-semibold";
+
 interface FiltersPopoverProps {
-  siteOptions: SiteOption[];
-  initialSite: string;
   buildingOptions: string[];
   categoryOptions: string[];
   initialBuilding: string;
   initialCategory: string;
-  onApply: (building: string, category: string, site: string) => void;
+  onApply: (building: string, category: string) => void;
   onClose: () => void;
 }
 
 function FiltersPopover({
-  siteOptions,
-  initialSite,
   buildingOptions,
   categoryOptions,
   initialBuilding,
@@ -896,36 +862,22 @@ function FiltersPopover({
   onApply,
   onClose,
 }: FiltersPopoverProps) {
-  const [site, setSite] = useState(initialSite);
   const [building, setBuilding] = useState(initialBuilding);
   const [category, setCategory] = useState(initialCategory);
 
   return (
-    <div className="w-72 rounded-lg border border-brand-border bg-white p-4 shadow-lg">
-      <div className="text-brand-caption font-bold text-brand-green uppercase tracking-wide mb-3">Filters</div>
-      <div className="mb-3">
-        <label className="block text-brand-body-5 text-brand-text-light mb-1">Site</label>
-        <select
-          value={site}
-          onChange={(e) => setSite(e.target.value)}
-          className="w-full rounded-full border border-brand-sidebar px-3 py-2 text-brand-body-4 text-brand-text"
-        >
-          <option value="all">All Sites</option>
-          {siteOptions.map((st) => (
-            <option key={st.id} value={String(st.id)}>
-              {st.name}
-            </option>
-          ))}
-        </select>
+    <div className="pc-pop pc-filters">
+      <div className="pc-head">
+        <div className="pc-title pc-title-left">Filters</div>
       </div>
-      <div className="mb-3">
-        <label className="block text-brand-body-5 text-brand-text-light mb-1">Building / Wing</label>
-        <select
-          value={building}
-          onChange={(e) => setBuilding(e.target.value)}
-          className="w-full rounded-full border border-brand px-3 py-2 text-brand-body-4 text-brand-text"
-        >
-          <option value="all">All Buildings</option>
+
+      <label className="pc-label" htmlFor="revamp-filter-building">Building / Wing</label>
+      <Select value={building} onValueChange={setBuilding}>
+        <SelectTrigger id="revamp-filter-building" className="pc-select">
+          <SelectValue placeholder="All Buildings" />
+        </SelectTrigger>
+        <SelectContent className={FILTER_SELECT_CONTENT_CLASS}>
+          <SelectItem value="all" className={FILTER_SELECT_ITEM_CLASS}>All Buildings</SelectItem>
           {buildingOptions.map((b) => (
             <SelectItem key={b} value={b} className={FILTER_SELECT_ITEM_CLASS}>
               {b}
@@ -976,16 +928,6 @@ function FiltersPopover({
           Clear
         </button>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          onApply(building, category, site);
-          onClose();
-        }}
-        className="w-full rounded-full bg-brand py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
-      >
-        Apply Filters
-      </button>
     </div>
   );
 }
@@ -1128,30 +1070,7 @@ interface VendorContractTableRow {
   missedVisits: number;
 }
 
-interface VendorContractTableRow {
-  vendorName: string;
-  totalContracts: number;
-  liveContracts: number;
-  completedVisits: number;
-  missedVisits: number;
-}
-
 const VENDOR_CONTRACT_TABLE_COLUMNS: DataTableColumn<VendorContractTableRow>[] = [
-  { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
-  { key: "contracts", header: "Contracts", align: "center", render: (row) => <span className="text-brand-text">{row.totalContracts}</span> },
-  { key: "live", header: "Live", align: "center", render: (row) => <span className="text-brand-text">{row.liveContracts}</span> },
-  { key: "completed", header: "Visits Done", align: "center", render: (row) => <span className="text-brand-text">{row.completedVisits}</span> },
-  {
-    key: "missed",
-    header: "Missed Visits",
-    align: "center",
-    render: (row) => (
-      <TableBadge tone={row.missedVisits === 0 ? "green" : row.missedVisits >= 20 ? "red" : "amber"}>{row.missedVisits}</TableBadge>
-    ),
-  },
-];
-
-const VENDOR_PERFORMANCE_TABLE_COLUMNS: DataTableColumn<VendorPerformanceTableRow>[] = [
   { key: "vendor", header: "Vendor", render: (row) => <span className="font-semibold text-brand-text">{row.vendorName}</span> },
   { key: "contracts", header: "Contracts", align: "center", render: (row) => <span className="text-brand-text">{row.totalContracts}</span> },
   { key: "live", header: "Live", align: "center", render: (row) => <span className="text-brand-text">{row.liveContracts}</span> },
@@ -1203,131 +1122,7 @@ interface InsightCategory {
   items: InsightItem[];
 }
 
-const INSIGHT_CATEGORIES: InsightCategory[] = [
-  {
-    key: "critical",
-    title: "Critical",
-    count: 5,
-    summary: "5 items · P1 leadership action required",
-    tone: "err",
-    items: [
-      { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "15m", isNew: true, module: "safety", subTab: "Permits" },
-      { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "2h", module: "finance", subTab: "Invoices" },
-      { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
-      { priority: "P1", priorityTone: "err", label: "27 Asset Audits Overdue", age: "2m", isNew: true, module: "maintenance", subTab: "Audit" },
-      { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Yesterday", module: "finance", subTab: "Invoices" },
-    ],
-  },
-  {
-    key: "attention",
-    title: "Attention Needed",
-    count: 5,
-    summary: "Human intervention required this week",
-    tone: "warn",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
-      { priority: "P2", priorityTone: "warn", label: "73% Washroom Negative", age: "1h", isNew: true, module: "crm", subTab: "Overview" },
-      { priority: "P2", priorityTone: "warn", label: "Solar Feed Stale", age: "2h", module: "utility", subTab: "Solar Generator" },
-      { priority: "P2", priorityTone: "warn", label: "8 Vendor KYC Expiring", age: "Today", module: "maintenance", subTab: "Vendor" },
-      { priority: "P2", priorityTone: "warn", label: "0 Vendor Audits Conducted", age: "Yesterday", module: "maintenance", subTab: "Vendor" },
-    ],
-  },
-  {
-    key: "op-backlog",
-    title: "Operational Backlog",
-    count: 5,
-    summary: "Workflow queues accumulating across modules",
-    tone: "terra",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "130+ Draft PRs Abandoned", age: "Today", module: "finance", subTab: "Procurement" },
-      { priority: "P2", priorityTone: "warn", label: "55 Permit Drafts Stuck", age: "Today", module: "safety", subTab: "Permits" },
-      { priority: "P2", priorityTone: "warn", label: "15+ Approvals Pending at SI Level", age: "Today", module: "finance", subTab: "Overview" },
-      { priority: "P2", priorityTone: "warn", label: "3 HOTO Pending — 2 Vendor→FM, 1 FM→User", age: "Today", module: "transitioning", subTab: "HOTO" },
-      { priority: "P2", priorityTone: "warn", label: "38 Open Snags — Survey 16, Permit 22", age: "Today", module: "transitioning", subTab: "Snagging" },
-    ],
-  },
-  {
-    key: "data-quality",
-    title: "Data Quality",
-    count: 5,
-    summary: "Data integrity blocking reporting accuracy",
-    tone: "purple",
-    items: [
-      { priority: "P3", priorityTone: "ok", label: "Waste Vendor Field Blank on All Records", age: "Yesterday", module: "maintenance", subTab: "Waste" },
-      { priority: "P3", priorityTone: "ok", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
-      { priority: "P3", priorityTone: "ok", label: "Vohra × 6 Duplicate Bills", age: "Today", module: "utility", subTab: "Energy" },
-      { priority: "P3", priorityTone: "ok", label: "Events + Broadcast APIs Broken", age: "Today", module: "crm", subTab: "Overview" },
-      { priority: "P3", priorityTone: "ok", label: "Lead Module — Seed Data Only", age: "Today", module: "crm", subTab: "Overview" },
-    ],
-  },
-  {
-    key: "predictions",
-    title: "Predictions",
-    count: 1,
-    summary: "Leading indicators signalling deterioration",
-    tone: "info",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "AMC Miss (128) + 63 Breakdowns — Link Unconfirmed", age: "Today", module: "maintenance", subTab: "AMC" },
-    ],
-  },
-  {
-    key: "recommendations",
-    title: "Recommendations",
-    count: 5,
-    summary: "Actions expected to improve portfolio health",
-    tone: "sage",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "Renew Expired Permits", age: "Today", module: "safety", subTab: "Permits" },
-      { priority: "P2", priorityTone: "warn", label: "Start Asset Audit Programme", age: "2h", module: "maintenance", subTab: "Audit" },
-      { priority: "P2", priorityTone: "warn", label: "Resolve Billing Backlog", age: "Yesterday", module: "finance", subTab: "Invoices" },
-      { priority: "P2", priorityTone: "warn", label: "Restore Solar Feed", age: "2h", module: "utility", subTab: "Solar Generator" },
-      { priority: "P2", priorityTone: "warn", label: "Validate Meter Imports", age: "Today", module: "utility", subTab: "Daily Readings" },
-    ],
-  },
-  {
-    key: "positive",
-    title: "Positive Signals",
-    count: 3,
-    summary: "Evidence of effective operational execution",
-    tone: "ok",
-    items: [
-      { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
-      { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
-      { priority: "P3", priorityTone: "ok", label: "Waste Recycling 43%", age: "Yesterday", module: "maintenance", subTab: "Waste" },
-    ],
-  },
-  {
-    key: "anomalies",
-    title: "Anomalies",
-    count: 3,
-    summary: "Unusual readings requiring investigation",
-    tone: "warn",
-    items: [
-      { priority: "P2", priorityTone: "warn", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
-      { priority: "P2", priorityTone: "warn", label: "Common Area Consumption +12%", age: "Today", module: "utility", subTab: "Energy" },
-      { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
-    ],
-  },
-  {
-    key: "escalations",
-    title: "Escalations",
-    count: 2,
-    summary: "Executive action required — cannot delegate",
-    tone: "err",
-    items: [
-      { priority: "P1", priorityTone: "err", label: "Audit Programme Stalled — Escalate Now", age: "Today", module: "maintenance", subTab: "Audit" },
-      { priority: "P1", priorityTone: "err", label: "Phantom Routes Inflating Patrol — Deactivate Import 12", age: "Today", module: "security", subTab: "Patrol" },
-    ],
-  },
-  {
-    key: "recently-changed",
-    title: "Recently Changed",
-    count: 0,
-    summary: "Audit trail · no recent changes",
-    tone: "purple",
-    items: [],
-  },
-];
+const INSIGHT_CATEGORIES: InsightCategory[] = [];
 
 const INSIGHT_GLOW_TOTAL = INSIGHT_CATEGORIES.slice(0, 5).reduce((sum, cat) => sum + cat.count, 0);
 
@@ -1363,120 +1158,14 @@ interface ModuleInsightDataset {
 }
 
 const MODULE_INSIGHT_DATASETS: Record<string, ModuleInsightDataset> = {
-  maintenance: {
-    title: "Maintenance Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
-        { priority: "P1", priorityTone: "err", label: "676 PPM Overdue", age: "Today", module: "maintenance", subTab: "Checklists" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "63 Asset Breakdowns", age: "Today", module: "maintenance", subTab: "Assets" },
-        { priority: "P2", priorityTone: "warn", label: "SLA Breach 28%", age: "Today", module: "maintenance", subTab: "Tickets" },
-      ],
-    },
-  },
-  safety: {
-    title: "Safety Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 2, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "Today", module: "safety", subTab: "Permits" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "55 Draft Permits Stuck", age: "Today", module: "safety", subTab: "Permits" },
-      ],
-      positive: [
-        { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
-        { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
-      ],
-    },
-  },
-  finance: {
-    title: "Financial Intelligence",
-    subtitle: "4 active insights",
-    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "Today", module: "finance", subTab: "Invoices" },
-        { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Today", module: "finance", subTab: "Invoices" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "130 Draft PRs", age: "Today", module: "finance", subTab: "Procurement" },
-        { priority: "P2", priorityTone: "warn", label: "WO API Error", age: "Today", module: "finance", subTab: "Overview" },
-      ],
-    },
-  },
-  utility: {
-    title: "Utility Intelligence",
-    subtitle: "3 active insights",
-    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "Solar Feed Stale", age: "Today", module: "utility", subTab: "Solar Generator" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Meter Anomalies", age: "Today", module: "utility", subTab: "Daily Readings" },
-        { priority: "P2", priorityTone: "warn", label: "Water Monitoring Gap", age: "Today", module: "utility", subTab: "Water" },
-      ],
-    },
-  },
-  crm: {
-    title: "Tenant Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "73% Washroom Negative", age: "Today", module: "crm", subTab: "Overview" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Loyalty Redemption 0%", age: "Today", module: "crm", subTab: "Overview" },
-      ],
-    },
-  },
-  security: {
-    title: "Security Intelligence",
-    subtitle: "3 active insights",
-    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "2 Credentials Expired", age: "Today", module: "security", subTab: "Staff" },
-        { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
-      ],
-    },
-  },
-  vas: {
-    title: "VAS Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "OSR 15 Months Pending", age: "Today", module: "vas", subTab: "OSR" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "Loyalty Unredeemed", age: "Today", module: "vas", subTab: "F&B" },
-      ],
-    },
-  },
-  transitioning: {
-    title: "Transition Intelligence",
-    subtitle: "2 active insights",
-    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
-    items: {
-      critical: [
-        { priority: "P1", priorityTone: "err", label: "38 Open Snags", age: "Today", module: "transitioning", subTab: "Snagging" },
-      ],
-      attention: [
-        { priority: "P2", priorityTone: "warn", label: "5 Violations", age: "Today", module: "transitioning", subTab: "Snagging" },
-      ],
-    },
-  },
+  maintenance: { title: "Maintenance Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  safety: { title: "Safety Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  finance: { title: "Financial Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  utility: { title: "Utility Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  crm: { title: "Tenant Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  security: { title: "Security Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  vas: { title: "VAS Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
+  transitioning: { title: "Transition Intelligence", subtitle: "No live insights yet", health: { critical: 0, dueWeek: 0, escalated: 0, badge: "NO DATA", badgeTone: "purple" }, items: {} },
 };
 
 const DEFAULT_INSIGHT_HEALTH: ModuleInsightHealth = { critical: 5, dueWeek: 12, escalated: 2, badge: "HIGH RISK", badgeTone: "err" };
@@ -1567,63 +1256,6 @@ function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryCha
         >
           <X className="h-4 w-4" />
         </button>
-      </div>
-
-      <div className="m-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold" style={{ color: "#2C2C2C" }}>Intelligence Health</span>
-          <span
-            className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-            style={{ background: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].bg, color: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].color }}
-          >
-            {data.health.badge}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-1.5 text-[10px]" style={{ color: "#798C5E" }}>
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "#108C72" }} />
-          Monitoring
-        </div>
-        <div className="mt-2 flex items-center gap-5">
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#DA7756" }}>{data.health.critical}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Critical</div>
-          </div>
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#EDC488" }}>{data.health.dueWeek}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Due This Week</div>
-          </div>
-          <div>
-            <div className="text-brand-h2 font-bold" style={{ color: "#5A54A8" }}>{data.health.escalated}</div>
-            <div className="text-[9px]" style={{ color: "#888780" }}>Escalated</div>
-          </div>
-        </div>
-        <div className="mt-2 flex items-center justify-between text-[9px]" style={{ color: "#888780" }}>
-          <span>Last Refresh</span>
-          <span className="font-semibold" style={{ color: "#2C2C2C" }}>2 min ago</span>
-        </div>
-      </div>
-
-      <div className="mx-3 mb-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
-        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#2C2C2C" }}>Today's Executive Brief</div>
-        <div className="mb-2 text-[10px]" style={{ color: "#798C5E" }}>Auto-generated portfolio summary</div>
-        <div className="flex flex-col gap-1.5 text-[10px] leading-relaxed" style={{ color: "#2C2C2C" }}>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>Compliance deterioration across permits, audits and vendor accountability now spans multiple workflows.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>Utility billing at ~950 records is the highest unresolved financial exposure on the portfolio.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
-            <span>128 AMC misses and 63 current asset breakdowns are tracked separately — a real trend link isn't confirmed yet, worth watching both together.</span>
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-shrink-0 font-bold" style={{ color: "#EDC488" }}>•</span>
-            <span>Two escalations exceed operational thresholds and cannot be resolved without leadership intervention.</span>
-          </div>
-        </div>
       </div>
 
       <div className="pb-2">
@@ -1817,17 +1449,18 @@ export default function RevampDashboardPage() {
   // right after this ternary chain), so it piggybacks on isTicketsView to reuse the Maintenance
   // grid JSX below without duplicating it, and is handled separately for Safety/Finance/CRM.
   const isTicketsView =
-    activeModule === "maintenance" &&
-    (activeSubTab === "Tickets" ||
-      activeSubTab === "Assets" ||
-      activeSubTab === "Audit" ||
-      activeSubTab === "AMC" ||
-      activeSubTab === "Checklists" ||
-      activeSubTab === "Inventory" ||
-      activeSubTab === "Waste" ||
-      activeSubTab === "Attendance" ||
-      activeSubTab === "Survey" ||
-      activeSubTab === "Vendor");
+    (activeModule === "maintenance" &&
+      (activeSubTab === "Tickets" ||
+        activeSubTab === "Assets" ||
+        activeSubTab === "Audit" ||
+        activeSubTab === "AMC" ||
+        activeSubTab === "Checklists" ||
+        activeSubTab === "Inventory" ||
+        activeSubTab === "Waste" ||
+        activeSubTab === "Attendance" ||
+        activeSubTab === "Survey" ||
+        activeSubTab === "Vendor")) ||
+    isMyDashboardModule;
   const isSafetyView = activeModule === "safety";
   const isFinanceView = activeModule === "finance";
   const isCrmView = activeModule === "crm";
@@ -1865,6 +1498,48 @@ export default function RevampDashboardPage() {
   const resetTicketsLayout = () => {
     localStorage.removeItem(TICKETS_GRID_STORAGE_KEY);
     setTicketsLayout(DEFAULT_TICKETS_LAYOUT);
+  };
+
+  // My Dashboard's own layout for the Maintenance cards it's showing — positioned from each
+  // card's saved height/width/position, falling back to the grid's coded default — completely
+  // separate from `ticketsLayout`/TICKETS_GRID_STORAGE_KEY so rearranging cards here never
+  // touches the real Maintenance tab's own saved layout.
+  const myDashboardMaintenanceLayout: GridLayout.Layout[] = useMemo(() => {
+    if (!isMyDashboardModule) return [];
+    return myDashboardCards
+      .filter((c) => c.moduleKey === "maintenance")
+      .map((c) => {
+        const key = c.chartId.replace(/^fm-/, "");
+        const fallback = MAINTENANCE_LAYOUT_BY_KEY.get(key);
+        const [x, y] = c.position.split(",").map(Number);
+        return {
+          i: key,
+          x: Number.isFinite(x) ? x : (fallback?.x ?? 0),
+          y: Number.isFinite(y) ? y : (fallback?.y ?? 0),
+          w: Number(c.width) || fallback?.w || 6,
+          h: Number(c.height) || fallback?.h || 3,
+          minW: fallback?.minW,
+          minH: fallback?.minH,
+        };
+      });
+  }, [isMyDashboardModule, myDashboardCards]);
+
+  const handleMyDashboardMaintenanceLayoutChange = (nextLayout: GridLayout.Layout[]) => {
+    nextLayout.forEach((item) => {
+      const chartId = `fm-${item.i}`;
+      const card = myDashboardCards.find((c) => c.chartId === chartId);
+      if (!card) return;
+      const height = String(item.h);
+      const width = String(item.w);
+      const position = `${item.x},${item.y}`;
+      if (height === card.height && width === card.width && position === card.position) return;
+      updateMyDashboardCardLayout(chartId, { height, width, position });
+      if (card.serverId) {
+        updateDashboardLayout(card.serverId, { chart_code: chartId, height, width, position }).catch((error) => {
+          console.error(`Failed to save layout for ${chartId}:`, error);
+        });
+      }
+    });
   };
 
   // --- Tickets section: dynamic site scope, date range, and live API data ---
@@ -1915,8 +1590,30 @@ export default function RevampDashboardPage() {
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   const [appliedBuilding, setAppliedBuilding] = useState("all");
   const [appliedCategory, setAppliedCategory] = useState("all");
-  const [appliedSite, setAppliedSite] = useState("all");
+  const [appliedSite, setAppliedSite] = useState(() => {
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    return stored && !stored.includes(",") ? stored : "all";
+  });
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (sitesLoading || allowedSites.length === 0) return;
+    const stored = localStorage.getItem("selecteSiteIdsDashboard");
+    const validStoredSite =
+      typeof stored === "string" &&
+      !stored.includes(",") &&
+      allowedSites.some((site) => String(site.id) === stored)
+        ? stored
+        : "all";
+    setAppliedSite(validStoredSite);
+  }, [allowedSites, sitesLoading]);
+
+  const handleSiteChange = (site: string) => {
+    setAppliedSite(site);
+    const siteIds =
+      site === "all" ? allowedSites.map((allowedSite) => allowedSite.id).join(",") : site;
+    localStorage.setItem("selecteSiteIdsDashboard", siteIds);
+  };
 
   // The Site filter narrows the `site_id` query sent to every /fm_dashboard endpoint (server-side),
   // so each module re-fetches for just that site instead of filtering rows client-side.
@@ -2046,7 +1743,7 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isSafetyView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isSafetyView || (isMyDashboardModule && savedSafetyKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
   const {
@@ -2057,8 +1754,35 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isSafetyView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isSafetyView || (isMyDashboardModule && savedSafetyKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
+
+  const {
+    data: crmApiData,
+    loading: crmLoading,
+    error: crmError,
+  } = useCrmDashboardData({
+    siteIds: dashboardSiteIds,
+    fromDate: dashboardFromDate,
+    toDate: dashboardToDate,
+    enabled: (isCrmView || (isMyDashboardModule && savedCrmKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
+  });
+
+  // Debug: log when CRM view changes
+  useEffect(() => {
+    console.log("[RevampDashboard] CRM state:", {
+      isCrmView,
+      isMyDashboardModule,
+      savedCrmKeys_size: savedCrmKeys.size,
+      sitesLoading,
+      dashboardSiteIds_length: dashboardSiteIds.length,
+      crmEnabled: (isCrmView || (isMyDashboardModule && savedCrmKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
+      crmLoading,
+      crmError,
+      dashboardFromDate,
+      dashboardToDate,
+    });
+  }, [isCrmView, isMyDashboardModule, savedCrmKeys.size, sitesLoading, dashboardSiteIds.length, crmLoading, crmError, dashboardFromDate, dashboardToDate]);
 
   const {
     data: financeApiData,
@@ -2068,7 +1792,7 @@ export default function RevampDashboardPage() {
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
-    enabled: isFinanceView && !sitesLoading && dashboardSiteIds.length > 0,
+    enabled: (isFinanceView || (isMyDashboardModule && savedFinanceKeys.size > 0)) && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
   // Which section(s) failed to load — each one gets its own toast naming the
@@ -2089,6 +1813,7 @@ export default function RevampDashboardPage() {
         { label: "Vendor", error: vendorError },
         { label: "Permits", error: permitsError },
         { label: "Incidents", error: incidentsError },
+        { label: "CRM", error: crmError },
         { label: "Finance", error: financeError },
       ].filter((s): s is { label: string; error: string } => s.error !== null),
     [
@@ -2105,6 +1830,7 @@ export default function RevampDashboardPage() {
       vendorError,
       permitsError,
       incidentsError,
+      crmError,
       financeError,
     ]
   );
@@ -2147,14 +1873,14 @@ export default function RevampDashboardPage() {
     const comparison = ticketsApiData.categoryComparison;
     const rows = comparison.length
       ? comparison.map((c) => ({
-          category: c.name.trim(),
+          category: c.name.trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
           pending: c.status_count.pending,
           inProgress: c.status_count.in_progress,
           onHold: c.status_count.on_hold,
           closed: c.status_count.closed,
         }))
       : (ticketsBreakdown?.by_category ?? []).map((c) => ({
-          category: c.name.trim(),
+          category: c.name.trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
           pending: c.status_breakdown.pending,
           inProgress: c.status_breakdown.in_progress,
           onHold: c.status_breakdown.on_hold,
@@ -2184,15 +1910,25 @@ export default function RevampDashboardPage() {
     [ticketsBreakdown, appliedCategory]
   );
 
-  const ticketsByTenantData = useMemo(
-    () =>
-      ticketsApiData.byTenant
-        .slice()
-        .sort((a, b) => b.ticket_count - a.ticket_count)
-        .slice(0, 10)
-        .map((t) => ({ tenant: t.name, tickets: t.ticket_count })),
-    [ticketsApiData.byTenant]
-  );
+  const ticketsByTenantRows = useMemo(() => {
+    const tenants = ticketsApiData.byTenant
+      .slice()
+      .sort((a, b) => b.ticket_count - a.ticket_count)
+      .map((tenant) => ({
+        ...tenant,
+        label: tenant.name.trim().replace(/\s+/g, " ") || `Tenant ${tenant.entity_id}`,
+      }));
+    const labelCounts = new Map<string, number>();
+    tenants.forEach(({ label }) => {
+      const key = label.toLowerCase();
+      labelCounts.set(key, (labelCounts.get(key) ?? 0) + 1);
+    });
+
+    return tenants.map(({ entity_id, label, ticket_count }) => ({
+      label: (labelCounts.get(label.toLowerCase()) ?? 0) > 1 ? `${label} (#${entity_id})` : label,
+      value: ticket_count.toLocaleString(),
+    }));
+  }, [ticketsApiData.byTenant]);
   const ticketsCsat = ticketsApiData.csat;
   const ticketsApproachingEscalation = ticketsApiData.approachingEscalation;
 
@@ -3091,21 +2827,10 @@ export default function RevampDashboardPage() {
   const vendorKycRisk = vendorApiData.kycRisk;
   const vendorPerformanceScore = vendorApiData.performanceScore;
   const vendorOnTime = vendorApiData.onTimeCompletion;
-  const vendorHealth = vendorApiData.health;
   const vendorRenewals = vendorApiData.contractRenewals;
   const vendorResponseTrend = vendorApiData.responseTrend;
   const vendorBottlenecks = vendorApiData.workflowBottlenecks;
   const vendorKycStatus = vendorApiData.kycStatus;
-
-  const vendorMissedVisitData = useMemo(
-    () =>
-      (vendorHealth?.by_vendor ?? [])
-        .slice()
-        .sort((a, b) => b.missed_visits - a.missed_visits)
-        .slice(0, 10)
-        .map((v) => ({ vendor: v.vendor_name.trim(), missed: v.missed_visits })),
-    [vendorHealth]
-  );
 
   const vendorResponseTrendData = useMemo(
     () =>
@@ -3127,20 +2852,32 @@ export default function RevampDashboardPage() {
 
   // Per-vendor contract table from vendor_performance_table (contracts + visits), kept separate
   // from the request/SLA table above, which comes from vendor_performance.
-  const vendorContractTableRows: VendorContractTableRow[] = useMemo(
-    () =>
-      vendorApiData.performanceTable
-        .slice()
-        .sort((a, b) => b.missed_visits - a.missed_visits)
-        .map((r) => ({
-          vendorName: r.vendor_name.trim(),
-          totalContracts: r.total_contracts,
-          liveContracts: r.live_contracts,
-          completedVisits: r.completed_visits,
-          missedVisits: r.missed_visits,
-        })),
-    [vendorApiData.performanceTable]
-  );
+  const vendorContractTableRows: VendorContractTableRow[] = useMemo(() => {
+    const vendors = vendorApiData.performanceTable
+      .slice()
+      .sort((a, b) => b.missed_visits - a.missed_visits)
+      .map((vendor) => ({
+        ...vendor,
+        name: vendor.vendor_name.trim().replace(/\s+/g, " ") || `Vendor #${vendor.pms_supplier_id}`,
+      }));
+    const nameCounts = new Map<string, number>();
+    vendors.forEach(({ name }) => {
+      const key = name.toLowerCase();
+      nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+    });
+
+    return vendors.map((vendor) => ({
+      vendorId: vendor.pms_supplier_id,
+      vendorName:
+        (nameCounts.get(vendor.name.toLowerCase()) ?? 0) > 1
+          ? `${vendor.name} (#${vendor.pms_supplier_id})`
+          : vendor.name,
+      totalContracts: vendor.total_contracts,
+      liveContracts: vendor.live_contracts,
+      completedVisits: vendor.completed_visits,
+      missedVisits: vendor.missed_visits,
+    }));
+  }, [vendorApiData.performanceTable]);
 
   const vendorPerformanceRows = useMemo(() => {
     const rows = (vendorPerformance?.by_vendor ?? []).filter((r) => typeof r.vendor_name === "string");
@@ -3194,15 +2931,74 @@ export default function RevampDashboardPage() {
     setActiveSubTab(subTab);
   };
 
+  const handleSaveDashboard = async () => {
+    const userId = getRevampUserId();
+    if (!userId) {
+      toast.error("Could not determine the logged-in user — please log in again.");
+      return;
+    }
+
+    setIsSavingDashboard(true);
+    try {
+      // Only "my" existing rows — show/update/destroy aren't scoped to the caller server-side,
+      // so an unfiltered GET here would let another user's same-chart_code row get matched.
+      const existing = await fetchDashboardLayouts(userId);
+      const existingByChartCode = new Map(existing.map((row) => [row.chart_code, row]));
+      const localChartCodes = new Set(myDashboardCards.map((c) => c.chartId));
+
+      const upserts = await Promise.allSettled(
+        myDashboardCards.map(async (card) => {
+          const payload = {
+            chart_code: card.chartId,
+            height: card.height,
+            width: card.width,
+            position: card.position,
+          };
+          const match = existingByChartCode.get(card.chartId);
+          const saved = match
+            ? await updateDashboardLayout(match.id, payload)
+            : await createDashboardLayout(payload);
+          setMyDashboardServerId(card.chartId, saved.id);
+        })
+      );
+
+      // Rows for cards the user has since removed locally — clean them up server-side too.
+      const deletions = await Promise.allSettled(
+        existing
+          .filter((row) => row.chart_code && !localChartCodes.has(row.chart_code))
+          .map((row) => deleteDashboardLayout(row.id))
+      );
+
+      // Explicit confirmation fetch, per the requested POST-then-GET flow.
+      await fetchDashboardLayouts(userId);
+
+      const failedUpserts = upserts.filter((r) => r.status === "rejected").length;
+      const failedDeletions = deletions.filter((r) => r.status === "rejected").length;
+
+      if (failedUpserts || failedDeletions) {
+        toast.error(
+          `Dashboard saved with ${failedUpserts + failedDeletions} error(s) — some cards may not have synced.`
+        );
+      } else {
+        toast.success("Dashboard saved");
+      }
+      markMyDashboardSaved();
+    } catch (error) {
+      console.error("Error saving dashboard:", error);
+      toast.error("Failed to save dashboard. Please try again.");
+    } finally {
+      setIsSavingDashboard(false);
+    }
+  };
+
   return (
     <div className="veda-theme bg-brand-bg h-screen flex flex-col overflow-hidden" style={VEDA_CSS_VARS}>
       <div ref={navRef} className="veda-nav flex-shrink-0 z-30 bg-brand-bg">
-      {/* Title bar */}
-      <div className="veda-topbar flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
-        <h1 className="text-brand-h2 font-bold text-brand-text">Dashboard View</h1>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-brand-body-4 text-brand-text-light md:inline">
-            {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+      {/* Top bar: logo · site · search · period · filters */}
+      <div className="veda-topbar vt-bar flex flex-wrap items-center gap-x-3 gap-y-2 bg-white border-b border-brand-border px-6 py-3">
+        <div className="vt-brand flex flex-shrink-0 items-center gap-2.5">
+          <span className="vt-logo" aria-hidden="true">
+            <Building2 className="h-5 w-5" strokeWidth={2} />
           </span>
           <span className="vt-brand-name hidden md:inline">{BRAND_NAME}</span>
         </div>
@@ -3248,12 +3044,73 @@ export default function RevampDashboardPage() {
                 setHeaderSearchQuery(e.target.value);
                 setSearchPopupOpen(true);
               }}
-              className="veda-period flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-brand-body-4 font-semibold text-white hover:bg-brand-hover"
-            >
-              <CalendarDays className="w-4 h-4" />
-              {periodButtonLabel(dashboardDateRange)}
-              <ChevronDown className="w-4 h-4" />
-            </button>
+              onFocus={() => {
+                setSearchPopupOpen(true);
+                setPeriodPopupOpen(false);
+                setFiltersPopupOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setHeaderSearchQuery("");
+                  setSearchPopupOpen(false);
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Enter" && headerSearchResults[0]) {
+                  navigateTo(headerSearchResults[0].moduleKey, headerSearchResults[0].subTab);
+                  setSearchPopupOpen(false);
+                  setHeaderSearchQuery("");
+                }
+              }}
+              placeholder="Search modules, tabs, vendor, AMC…"
+              aria-label="Search dashboard"
+              className="vt-search-input"
+            />
+            {searchPopupOpen && headerSearchQuery.trim() && (
+              <div
+                className="vt-search-results"
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                {headerSearchResults.length ? (
+                  headerSearchResults.map((r) => (
+                    <button
+                      key={`${r.moduleKey}-${r.subTab}`}
+                      type="button"
+                      onClick={() => {
+                        navigateTo(r.moduleKey, r.subTab);
+                        setSearchPopupOpen(false);
+                        setHeaderSearchQuery("");
+                      }}
+                      className="vt-search-result"
+                    >
+                      <span className="text-brand-text-light">{r.moduleLabel}</span> {" › "}
+                      <span className="font-semibold">{r.subTab}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-brand-body-5 text-brand-text-light">No matching module or tab.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div ref={periodWrapRef} className="vt-period-wrap relative flex items-center gap-2">
+            <span className="vt-period-label hidden 2xl:inline">{periodButtonLabel(dashboardDateRange)}</span>
+            <div className="vt-seg" role="group" aria-label="Period" title={periodButtonLabel(dashboardDateRange)}>
+              {(["day", "month", "range"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setPeriodPopupMode(m);
+                    setPeriodPopupOpen(true);
+                    setFiltersPopupOpen(false);
+                    setSearchPopupOpen(false);
+                  }}
+                  className={cn("vt-seg-btn", periodModeOf(dashboardDateRange) === m && "on")}
+                >
+                  {m === "day" ? "Day" : m === "month" ? "Month" : "Range"}
+                </button>
+              ))}
+            </div>
             {periodPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <PeriodCalendarPopover
@@ -3280,7 +3137,7 @@ export default function RevampDashboardPage() {
               title="Filters"
               className={cn(
                 "veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border text-brand-text hover:bg-brand-light",
-                appliedBuilding !== "all" || appliedCategory !== "all" || appliedSite !== "all" ? "border-brand text-brand" : "border-brand-border"
+                appliedBuilding !== "all" || appliedCategory !== "all" ? "border-brand text-brand" : "border-brand-border"
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -3288,16 +3145,13 @@ export default function RevampDashboardPage() {
             {filtersPopupOpen && (
               <div className="absolute right-0 top-full z-40 mt-2">
                 <FiltersPopover
-                  siteOptions={allowedSites}
-                  initialSite={appliedSite}
                   buildingOptions={wasteBuildingOptions}
                   categoryOptions={categoryFilterOptions}
                   initialBuilding={appliedBuilding}
                   initialCategory={appliedCategory}
-                  onApply={(building, category, site) => {
+                  onApply={(building, category) => {
                     setAppliedBuilding(building);
                     setAppliedCategory(category);
-                    setAppliedSite(site);
                   }}
                   onClose={() => setFiltersPopupOpen(false)}
                 />
@@ -3305,17 +3159,17 @@ export default function RevampDashboardPage() {
             )}
           </div>
 
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setSearchPopupOpen((v) => !v);
-                setPeriodPopupOpen(false);
-                setFiltersPopupOpen(false);
-              }}
-              aria-label="Search"
-              title="Search"
-              className="veda-icon-btn flex h-10 w-10 items-center justify-center rounded-md border border-brand-border text-brand-text hover:bg-brand-light"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="vt-avatar" aria-label={`Account menu for ${headerUser.name}`} title={headerUser.name}>
+                {headerUser.initials}
+              </button>
+            </DropdownMenuTrigger>
+            {/* Portalled to <body>, so styled with literal values rather than theme variables. */}
+            <DropdownMenuContent
+              align="end"
+              sideOffset={10}
+              className="w-56 rounded-2xl border border-black/10 bg-white p-2 shadow-[0_18px_40px_rgba(26,26,24,0.16)]"
             >
               <div className="truncate px-3 py-2 text-[14px] font-bold text-[#1a1a18]">{headerUser.name}</div>
               <DropdownMenuSeparator className="bg-black/10" />
@@ -3345,14 +3199,6 @@ export default function RevampDashboardPage() {
 
       {/* Underline tab nav */}
       <div className="veda-modtabs flex items-center bg-white border-b border-brand-border px-2">
-        <button
-          type="button"
-          onClick={() => scrollTabs(-1)}
-          className="flex-shrink-0 p-2 text-brand-text-light hover:text-brand-text"
-          aria-label="Scroll tabs left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
         <div ref={tabsRef} className="veda-seg flex overflow-x-auto scrollbar-hide">
           {MODULES.map((module) => {
             const isActive = module.key === activeModule;
@@ -3455,12 +3301,12 @@ export default function RevampDashboardPage() {
 
         {isMyDashboardModule && savedMaintenanceKeys.size === 0 ? null : isTicketsView ? (
           <>
-          <div className="veda-grid relative w-full">
-            {(sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && (
-              <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
-                <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
-                {sitesLoading ? "Resolving your allowed sites…" : "Loading ticket, asset, audit, AMC, checklist, inventory, waste, attendance, survey and vendor analytics for the selected sites and date range…"}
-              </div>
+          {/* veda-loading: while any Maintenance data is loading, every card shows as a soft shimmering
+              placeholder (see veda-dashboard.css) instead of "—" / "Loading…" / "No data" text. */}
+          <div
+            className={cn(
+              "veda-grid relative w-full",
+              (sitesLoading || ticketsLoading || assetsLoading || auditLoading || amcLoading || checklistsLoading || inventoryLoading || wasteLoading || attendanceLoading || surveyLoading || vendorLoading) && "veda-loading"
             )}
           >
             {!isMyDashboardModule && (
@@ -3478,9 +3324,9 @@ export default function RevampDashboardPage() {
 
             <ResponsiveGridLayout
               className="layout"
-              layouts={{ lg: reconcileLayout(ticketsLayout) }}
-              onDragStop={(layout) => persistTicketsLayout(layout)}
-              onResizeStop={(layout) => persistTicketsLayout(layout)}
+              layouts={{ lg: isMyDashboardModule ? myDashboardMaintenanceLayout : reconcileLayout(ticketsLayout) }}
+              onDragStop={isMyDashboardModule ? handleMyDashboardMaintenanceLayoutChange : (layout) => persistTicketsLayout(layout)}
+              onResizeStop={isMyDashboardModule ? handleMyDashboardMaintenanceLayoutChange : (layout) => persistTicketsLayout(layout)}
               breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
               cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
               rowHeight={48}
@@ -3492,7 +3338,10 @@ export default function RevampDashboardPage() {
               isDraggable
               isResizable
             >
-              <div key="hero-sla" chart_id="hero-sla" className="h-full">
+              {filterGridChildren(
+                <>
+              <div key="hero-sla" chart_code="fm-hero-sla" className="h-full relative">
+                <AddToDashboardButton chartId="fm-hero-sla" moduleKey="maintenance" subTab="Tickets" height="3" width="4" position="0,0" />
                 <div ref={registerMaintenanceSectionRef("Tickets")} className="h-0" />
                 <StatHeroCard
                   tone="purple"
@@ -3508,7 +3357,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="hero-customer" chart_id="hero-customer" className="h-full">
+              <div key="hero-customer" chart_code="fm-hero-customer" className="h-full relative">
+                <AddToDashboardButton chartId="fm-hero-customer" moduleKey="maintenance" subTab="Tickets" height="3" width="4" position="4,0" />
                 <StatHeroCard
                   tone="teal"
                   label="Customer Tickets"
@@ -3518,7 +3368,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="hero-internal" chart_id="hero-internal" className="h-full">
+              <div key="hero-internal" chart_code="fm-hero-internal" className="h-full relative">
+                <AddToDashboardButton chartId="fm-hero-internal" moduleKey="maintenance" subTab="Tickets" height="3" width="4" position="8,0" />
                 <StatHeroCard
                   tone="peach"
                   label="Internal Tickets"
@@ -3529,7 +3380,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="ticket-pool" chart_id="ticket-pool" className="h-full">
+              <div key="ticket-pool" chart_code="fm-ticket-pool" className="h-full relative">
+                <AddToDashboardButton chartId="fm-ticket-pool" moduleKey="maintenance" subTab="Tickets" height="7" width="12" position="0,3" />
                 <PieChartCard
                   {...VEDA_PIE_PROPS}
                   title="Ticket pool composition"
@@ -3548,7 +3400,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="category-bar" chart_id="category-bar" className="h-full">
+              <div key="category-bar" chart_code="fm-category-bar" className="h-full relative">
+                <AddToDashboardButton chartId="fm-category-bar" moduleKey="maintenance" subTab="Tickets" height="7" width="12" position="0,10" />
                 <BarChartCard
                   title="Category comparison"
                   subtitle="Status breakdown per category for the selected sites and date range"
@@ -3576,7 +3429,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="category-table" chart_id="category-table" className="h-full">
+              <div key="category-table" chart_code="fm-category-table" className="h-full relative">
+                <AddToDashboardButton chartId="fm-category-table" moduleKey="maintenance" subTab="Tickets" height="7" width="12" position="0,17" />
                 <DataTableCard
                   title="Category comparison — detail"
                   subtitle="Total, breach rate, trend and average ageing per category"
@@ -3592,7 +3446,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="reply-resolution" chart_id="reply-resolution" className="h-full">
+              <div key="reply-resolution" chart_code="fm-reply-resolution" className="h-full relative">
+                <AddToDashboardButton chartId="fm-reply-resolution" moduleKey="maintenance" subTab="Tickets" height="7" width="6" position="0,24" />
                 <ComboBarLineChartCard
                   title="First Reply vs Resolution Time"
                   subtitle="Monthly · bars = reply (hrs), line = resolution (days)"
@@ -3607,7 +3462,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="sla-breach" chart_id="sla-breach" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="sla-breach" chart_code="fm-sla-breach" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3 relative">
+                <AddToDashboardButton chartId="fm-sla-breach" moduleKey="maintenance" subTab="Tickets" height="7" width="6" position="6,24" />
                 <BarChartCard
                   title="SLA breach analysis"
                   subtitle="Breaches per month for the selected date range"
@@ -3639,7 +3495,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="resolved-age" chart_id="resolved-age" className="h-full">
+              <div key="resolved-age" chart_code="fm-resolved-age" className="h-full relative">
+                <AddToDashboardButton chartId="fm-resolved-age" moduleKey="maintenance" subTab="Tickets" height="6" width="6" position="0,31" />
                 <BarChartCard
                   title="Resolved tickets by age tier"
                   subtitle="How fast are tickets actually getting closed?"
@@ -3653,7 +3510,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="unresolved-age" chart_id="unresolved-age" className="h-full">
+              <div key="unresolved-age" chart_code="fm-unresolved-age" className="h-full relative">
+                <AddToDashboardButton chartId="fm-unresolved-age" moduleKey="maintenance" subTab="Tickets" height="6" width="6" position="6,31" />
                 <BarChartCard
                   title="Unresolved tickets by age tier"
                   subtitle="How long has the still-open backlog been waiting?"
@@ -3668,7 +3526,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="ticket-heatmap" chart_id="ticket-heatmap" className="h-full">
+              <div key="ticket-heatmap" chart_code="fm-ticket-heatmap" className="h-full relative">
+                <AddToDashboardButton chartId="fm-ticket-heatmap" moduleKey="maintenance" subTab="Tickets" height="8" width="12" position="0,37" />
                 <TicketHeatmapCard
                   title="Ticket volume · hour × day"
                   subtitle="When does demand actually spike?"
@@ -3680,7 +3539,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="tech-workload" chart_id="tech-workload" className="h-full">
+              <div key="tech-workload" chart_code="fm-tech-workload" className="h-full relative">
+                <AddToDashboardButton chartId="fm-tech-workload" moduleKey="maintenance" subTab="Tickets" height="6" width="12" position="0,45" />
                 {techWorkloadData.length ? (
                   <BarChartCard
                     title="Technician workload"
@@ -3706,7 +3566,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="golden-open" chart_id="golden-open" className="h-full">
+              <div key="golden-open" chart_code="fm-golden-open" className="h-full relative">
+                <AddToDashboardButton chartId="fm-golden-open" moduleKey="maintenance" subTab="Tickets" height="3" width="3" position="0,51" />
                 <StatHeroCard
                   tone="purple"
                   label="Golden Open"
@@ -3716,7 +3577,8 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="redflag-open" chart_id="redflag-open" className="h-full">
+              <div key="redflag-open" chart_code="fm-redflag-open" className="h-full relative">
+                <AddToDashboardButton chartId="fm-redflag-open" moduleKey="maintenance" subTab="Tickets" height="3" width="3" position="3,51" />
                 <StatHeroCard
                   tone="teal"
                   label="Red Flag Open"
@@ -3726,7 +3588,8 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="golden-age" chart_id="golden-age" className="h-full">
+              <div key="golden-age" chart_code="fm-golden-age" className="h-full relative">
+                <AddToDashboardButton chartId="fm-golden-age" moduleKey="maintenance" subTab="Tickets" height="3" width="3" position="6,51" />
                 <StatHeroCard
                   tone="peach"
                   label="Golden Avg Age"
@@ -3736,7 +3599,8 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="sitewide-age" chart_id="sitewide-age" className="h-full">
+              <div key="sitewide-age" chart_code="fm-sitewide-age" className="h-full relative">
+                <AddToDashboardButton chartId="fm-sitewide-age" moduleKey="maintenance" subTab="Tickets" height="3" width="3" position="9,51" />
                 <StatHeroCard
                   tone="blue"
                   label="Site-wide Avg Age"
@@ -3747,7 +3611,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="golden-redflag-chart" chart_id="golden-redflag-chart" className="h-full">
+              <div key="golden-redflag-chart" chart_code="fm-golden-redflag-chart" className="h-full relative">
+                <AddToDashboardButton chartId="fm-golden-redflag-chart" moduleKey="maintenance" subTab="Tickets" height="6" width="12" position="0,54" />
                 {goldenRedFlagData.length ? (
                   <BarChartCard
                     title="Golden & Red Flag analysis — by person, by age"
@@ -3801,7 +3666,8 @@ export default function RevampDashboardPage() {
                 />
               </div> */}
 
-              <div key="by-user" chart_id="by-user" className="h-full">
+              <div key="by-user" chart_code="fm-by-user" className="h-full relative">
+                <AddToDashboardButton chartId="fm-by-user" moduleKey="maintenance" subTab="Tickets" height="5" width="4" position="0,69" />
                 {byUserRows.length ? (
                   <StatListCard
                     title="By User"
@@ -3819,7 +3685,8 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
-              <div key="by-dept" chart_id="by-dept" className="h-full">
+              <div key="by-dept" chart_code="fm-by-dept" className="h-full relative">
+                <AddToDashboardButton chartId="fm-by-dept" moduleKey="maintenance" subTab="Tickets" height="5" width="4" position="4,69" />
                 {byDeptRows.length ? (
                   <StatListCard
                     title="By Department"
@@ -3838,15 +3705,11 @@ export default function RevampDashboardPage() {
               </div>
               <div key="by-tenant" chart_code="fm-by-tenant" className="h-full relative">
                 <AddToDashboardButton chartId="fm-by-tenant" moduleKey="maintenance" subTab="Tickets" height="5" width="4" position="8,69" />
-                {ticketsByTenantData.length ? (
-                  <BarChartCard
+                {ticketsByTenantRows.length ? (
+                  <StatListCard
                     title="By Tenant"
                     subtitle="Which tenant raises the most"
-                    data={ticketsByTenantData}
-                    categoryKey="tenant"
-                    orientation="horizontal"
-                    categoryColors={ticketsByTenantData.map((_, i) => getVedaColor(i))}
-                    series={[{ dataKey: "tickets", name: "Tickets" }]}
+                    rows={ticketsByTenantRows}
                     className="h-full overflow-auto"
                   />
                 ) : (
@@ -3859,7 +3722,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="location-volume" chart_id="location-volume" className="h-full">
+              <div key="location-volume" chart_code="fm-location-volume" className="h-full relative">
+                <AddToDashboardButton chartId="fm-location-volume" moduleKey="maintenance" subTab="Tickets" height="5" width="12" position="0,74" />
                 {locationVolumeData.length ? (
                   <BarChartCard
                     title="Location-wise Ticket Volume"
@@ -3885,7 +3749,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="csat" chart_id="csat" className="h-full">
+              <div key="csat" chart_code="fm-csat" className="h-full relative">
+                <AddToDashboardButton chartId="fm-csat" moduleKey="maintenance" subTab="Tickets" height="3" width="6" position="0,79" />
                 <StatHeroCard
                   tone="purple"
                   label="Customer Satisfaction Score"
@@ -3906,7 +3771,8 @@ export default function RevampDashboardPage() {
                   className="h-full"
                 />
               </div>
-              <div key="escalation" chart_id="escalation" className="h-full">
+              <div key="escalation" chart_code="fm-escalation" className="h-full relative">
+                <AddToDashboardButton chartId="fm-escalation" moduleKey="maintenance" subTab="Tickets" height="3" width="6" position="6,79" />
                 <StatHeroCard
                   tone="teal"
                   label="Approaching Escalation"
@@ -3921,7 +3787,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="source-origin" chart_id="source-origin" className="h-full">
+              <div key="source-origin" chart_code="fm-source-origin" className="h-full relative">
+                <AddToDashboardButton chartId="fm-source-origin" moduleKey="maintenance" subTab="Tickets" height="5" width="12" position="0,82" />
                 <BarChartCard
                   title="Source-wise ticket origin"
                   subtitle="Manual/Direct · Asset · Checklist · Survey · Patrolling — where tickets actually come from"
@@ -3937,7 +3804,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="repeat-complaints" chart_id="repeat-complaints" className="h-full">
+              <div key="repeat-complaints" chart_code="fm-repeat-complaints" className="h-full relative">
+                <AddToDashboardButton chartId="fm-repeat-complaints" moduleKey="maintenance" subTab="Tickets" height="5" width="12" position="0,87" />
                 {repeatComplaintsData.length ? (
                   <BarChartCard
                     title="Repeat Complaints"
@@ -3961,7 +3829,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-linked-tickets" chart_id="asset-linked-tickets" className="h-full">
+              <div key="asset-linked-tickets" chart_code="fm-asset-linked-tickets" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-linked-tickets" moduleKey="maintenance" subTab="Tickets" height="4" width="12" position="0,92" />
                 {assetLinkedData.length ? (
                   <BarChartCard
                     title="Asset-Breakdown-Linked Tickets"
@@ -3999,7 +3868,8 @@ export default function RevampDashboardPage() {
                 />
               </div> */}
 
-              <div key="peak-hours" chart_id="peak-hours" className="h-full">
+              <div key="peak-hours" chart_code="fm-peak-hours" className="h-full relative">
+                <AddToDashboardButton chartId="fm-peak-hours" moduleKey="maintenance" subTab="Tickets" height="5" width="12" position="0,103" />
                 {peakHoursData.length ? (
                   <BarChartCard
                     title="Peak Complaint Hours"
@@ -4022,17 +3892,20 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="assets-section-label" chart_id="assets-section-label" className="h-full flex items-center">
+              <div key="assets-section-label" chart_code="fm-assets-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-assets-section-label" moduleKey="maintenance" subTab="Assets" height="1" width="12" position="0,108" />
                 <div ref={registerMaintenanceSectionRef("Assets")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Asset Management Dashboard
                 </span>
               </div>
 
-              <div key="asset-hero-total" chart_id="asset-hero-total" className="h-full">
+              <div key="asset-hero-total" chart_code="fm-asset-hero-total" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-total" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="0,109" />
                 <StatHeroCard tone="purple" label="Total Assets" value={assetsOverview ? String(assetsOverview.total_assets) : "—"} accent="neutral" subtitle="Full site inventory" className="h-full overflow-auto" />
               </div>
-              <div key="asset-hero-good" chart_id="asset-hero-good" className="h-full">
+              <div key="asset-hero-good" chart_code="fm-asset-hero-good" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-good" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="2,109" />
                 <StatHeroCard
                   tone="teal"
                   label="Good Condition"
@@ -4046,7 +3919,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-fair" chart_id="asset-hero-fair" className="h-full">
+              <div key="asset-hero-fair" chart_code="fm-asset-hero-fair" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-fair" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="4,109" />
                 <StatHeroCard
                   tone="peach"
                   label="Fair Condition"
@@ -4060,7 +3934,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-bad" chart_id="asset-hero-bad" className="h-full">
+              <div key="asset-hero-bad" chart_code="fm-asset-hero-bad" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-bad" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="6,109" />
                 <StatHeroCard
                   tone="blue"
                   label="Bad Condition"
@@ -4074,7 +3949,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-health" chart_id="asset-hero-health" className="h-full">
+              <div key="asset-hero-health" chart_code="fm-asset-hero-health" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-health" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="8,109" />
                 <StatHeroCard
                   tone="purple"
                   label="Equipment Health Score"
@@ -4085,11 +3961,13 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="asset-hero-replacement" chart_id="asset-hero-replacement" className="h-full">
+              <div key="asset-hero-replacement" chart_code="fm-asset-hero-replacement" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-hero-replacement" moduleKey="maintenance" subTab="Assets" height="3" width="2" position="10,109" />
                 <StatHeroCard tone="peach" label="Replacement Due" value={assetsOverview ? String(assetsOverview.replacement_due_count) : "—"} accent="error" subtitle="End-of-life · Procure now" className="h-full overflow-auto" />
               </div>
 
-              <div key="asset-health-card" chart_id="asset-health-card" className="h-full">
+              <div key="asset-health-card" chart_code="fm-asset-health-card" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-health-card" moduleKey="maintenance" subTab="Assets" height="7" width="12" position="0,112" />
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">Asset Health</h3>
@@ -4191,7 +4069,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-repeat-breakdowns" chart_id="asset-repeat-breakdowns" className="h-full">
+              <div key="asset-repeat-breakdowns" chart_code="fm-asset-repeat-breakdowns" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-repeat-breakdowns" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="6,125" />
                 {repeatOffendersRows.length ? (
                   <StatListCard
                     title="Repeat breakdowns"
@@ -4257,7 +4136,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-lifecycle" chart_id="asset-lifecycle" className="h-full">
+              <div key="asset-lifecycle" chart_code="fm-asset-lifecycle" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-lifecycle" moduleKey="maintenance" subTab="Assets" height="7" width="12" position="0,137" />
                 <PieChartCard
                   {...VEDA_PIE_PROPS}
                   title="Asset Lifecycle Status"
@@ -4271,7 +4151,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="asset-amc-pair" chart_id="asset-amc-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="asset-amc-pair" chart_code="fm-asset-amc-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3 relative">
+                <AddToDashboardButton chartId="fm-asset-amc-pair" moduleKey="maintenance" subTab="Assets" height="5" width="12" position="0,144" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -4305,7 +4186,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="asset-mttr-pair" chart_id="asset-mttr-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="asset-mttr-pair" chart_code="fm-asset-mttr-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3 relative">
+                <AddToDashboardButton chartId="fm-asset-mttr-pair" moduleKey="maintenance" subTab="Assets" height="5" width="12" position="0,149" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -4328,7 +4210,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="asset-repair-cost-ratio" chart_id="asset-repair-cost-ratio" className="h-full">
+              <div key="asset-repair-cost-ratio" chart_code="fm-asset-repair-cost-ratio" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-repair-cost-ratio" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="0,154" />
                 {repairCostRatioData.length ? (
                   <BarChartCard
                     title="Repair Cost vs Asset Value Ratio"
@@ -4353,7 +4236,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-cost-by-category" chart_id="asset-cost-by-category" className="h-full">
+              <div key="asset-cost-by-category" chart_code="fm-asset-cost-by-category" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-cost-by-category" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="6,154" />
                 {costByCategoryData.length ? (
                   <BarChartCard
                     title="Cost by Asset Category"
@@ -4378,7 +4262,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="asset-high-maintenance" chart_id="asset-high-maintenance" className="h-full">
+              <div key="asset-high-maintenance" chart_code="fm-asset-high-maintenance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-high-maintenance" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="0,160" />
                 {highMaintenanceCostRows.length ? (
                   <StatListCard
                     title="High Maintenance Cost Assets"
@@ -4419,14 +4304,16 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="audit-section-label" chart_id="audit-section-label" className="h-full flex items-center">
+              <div key="audit-section-label" chart_code="fm-audit-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-audit-section-label" moduleKey="maintenance" subTab="Audit" height="1" width="12" position="0,166" />
                 <div ref={registerMaintenanceSectionRef("Audit")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Audit Dashboard
                 </span>
               </div>
 
-              <div key="audit-open-observations" chart_id="audit-open-observations" className="h-full">
+              <div key="audit-open-observations" chart_code="fm-audit-open-observations" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-open-observations" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="0,167" />
                 <StatHeroCard
                   tone="purple"
                   label="Open Observations"
@@ -4436,7 +4323,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-score" chart_id="audit-score" className="h-full">
+              <div key="audit-score" chart_code="fm-audit-score" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-score" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="6,167" />
                 <StatHeroCard
                   tone="teal"
                   label="Audit Score"
@@ -4451,7 +4339,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-asset-completion-pct" chart_id="audit-asset-completion-pct" className="h-full">
+              <div key="audit-asset-completion-pct" chart_code="fm-audit-asset-completion-pct" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-asset-completion-pct" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="0,170" />
                 <StatHeroCard
                   tone="purple"
                   label="Asset Audit Completion %"
@@ -4465,7 +4354,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-missing-assets" chart_id="audit-missing-assets" className="h-full">
+              <div key="audit-missing-assets" chart_code="fm-audit-missing-assets" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-missing-assets" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="6,170" />
                 <StatHeroCard
                   tone="teal"
                   label="Missing Assets Detected"
@@ -4475,7 +4365,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-missing-docs" chart_id="audit-missing-docs" className="h-full">
+              <div key="audit-missing-docs" chart_code="fm-audit-missing-docs" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-missing-docs" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="0,173" />
                 <StatHeroCard
                   tone="purple"
                   label="Assets Missing Documentation"
@@ -4485,7 +4376,8 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              <div key="audit-qr-compliance" chart_id="audit-qr-compliance" className="h-full">
+              <div key="audit-qr-compliance" chart_code="fm-audit-qr-compliance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-qr-compliance" moduleKey="maintenance" subTab="Audit" height="3" width="6" position="6,173" />
                 <StatHeroCard
                   tone="teal"
                   label="QR / Barcode Compliance %"
@@ -4496,7 +4388,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="audit-unauthorized-movement" chart_id="audit-unauthorized-movement" className="h-full">
+              <div key="audit-unauthorized-movement" chart_code="fm-audit-unauthorized-movement" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-unauthorized-movement" moduleKey="maintenance" subTab="Audit" height="5" width="12" position="0,176" />
                 <EmptyStateCard
                   title="Unauthorized Asset Movement Alerts"
                   subtitle="Assets shifted from designated location without approval"
@@ -4505,7 +4398,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="audit-status-overview" chart_id="audit-status-overview" className="h-full">
+              <div key="audit-status-overview" chart_code="fm-audit-status-overview" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-status-overview" moduleKey="maintenance" subTab="Audit" height="7" width="12" position="0,181" />
                 {auditStatusOverviewData.length ? (
                   <PieChartCard
                   {...VEDA_PIE_PROPS}
@@ -4532,7 +4426,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="audit-kpi-table" chart_id="audit-kpi-table" className="h-full">
+              <div key="audit-kpi-table" chart_code="fm-audit-kpi-table" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-kpi-table" moduleKey="maintenance" subTab="Audit" height="8" width="12" position="0,188" />
                 <DataTableCard
                   title="Audit KPIs"
                   subtitle="Computed live from the selected sites and date range"
@@ -4583,7 +4478,8 @@ export default function RevampDashboardPage() {
                 )}
               </div> */}
 
-              <div key="audit-status-repository" chart_id="audit-status-repository" className="h-full">
+              <div key="audit-status-repository" chart_code="fm-audit-status-repository" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-status-repository" moduleKey="maintenance" subTab="Audit" height="7" width="12" position="0,215" />
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">Audit Status by Type</h3>
@@ -4621,7 +4517,8 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="audit-completion-bar" chart_id="audit-completion-bar" className="h-full">
+              <div key="audit-completion-bar" chart_code="fm-audit-completion-bar" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-completion-bar" moduleKey="maintenance" subTab="Audit" height="6" width="12" position="0,222" />
                 {auditCompletionBarData.length ? (
                   <BarChartCard
                     title="Audit completion by type"
@@ -4692,14 +4589,16 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-section-label" chart_id="amc-section-label" className="h-full flex items-center">
+              <div key="amc-section-label" chart_code="fm-amc-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-amc-section-label" moduleKey="maintenance" subTab="AMC" height="1" width="12" position="0,237" />
                 <div ref={registerMaintenanceSectionRef("AMC")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   AMC Contracts
                 </span>
               </div>
 
-              <div key="amc-health-card" chart_id="amc-health-card" className="h-full">
+              <div key="amc-health-card" chart_code="fm-amc-health-card" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-health-card" moduleKey="maintenance" subTab="AMC" height="7" width="12" position="0,238" />
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2">
                     <h3 className="text-brand-body-3 font-bold text-brand-text">AMC Health</h3>
@@ -4746,7 +4645,8 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="amc-discrepancy-banner" chart_id="amc-discrepancy-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center">
+              <div key="amc-discrepancy-banner" chart_code="fm-amc-discrepancy-banner" className="h-full overflow-auto bg-brand-warning-light border border-brand-warning rounded-lg p-3 flex items-center relative">
+                <AddToDashboardButton chartId="fm-amc-discrepancy-banner" moduleKey="maintenance" subTab="AMC" height="2" width="12" position="0,245" />
                 <p className="text-brand-body-5 text-[#8A5A00] leading-relaxed">
                   {amcOverview
                     ? `₹${(amcOverview.cost.total_amc_value / 10000000).toFixed(2)} Cr total AMC value across ${amcOverview.total_contracts.toLocaleString()} contracts — ${amcOverview.cost.cost_at_risk_percent}% of it is sitting in expired or never-serviced contracts.`
@@ -4754,7 +4654,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-expiry-timeline" chart_id="amc-expiry-timeline" className="h-full">
+              <div key="amc-expiry-timeline" chart_code="fm-amc-expiry-timeline" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-expiry-timeline" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,247" />
                 {amcExpiryTimelineData.length ? (
                   <BarChartCard
                     title="AMC contract expiry timeline"
@@ -4777,7 +4678,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-expiry-banner" chart_id="amc-expiry-banner" className="h-full overflow-auto bg-brand-light border border-brand rounded-lg p-3 flex items-center">
+              <div key="amc-expiry-banner" chart_code="fm-amc-expiry-banner" className="h-full overflow-auto bg-brand-light border border-brand rounded-lg p-3 flex items-center relative">
+                <AddToDashboardButton chartId="fm-amc-expiry-banner" moduleKey="maintenance" subTab="AMC" height="2" width="12" position="0,253" />
                 <p className="text-brand-body-5 text-brand font-semibold leading-relaxed">
                   {amcOverview
                     ? `${amcOverview.health.expired.toLocaleString()} of ${amcOverview.total_contracts.toLocaleString()} contracts are already expired, not approaching expiry.`
@@ -4785,7 +4687,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-urgency-criticality" chart_id="amc-urgency-criticality" className="h-full">
+              <div key="amc-urgency-criticality" chart_code="fm-amc-urgency-criticality" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-urgency-criticality" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,255" />
                 {amcUrgencyCriticalityData.length ? (
                   <BarChartCard
                     title="Expiry urgency vs asset criticality"
@@ -4813,7 +4716,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-vendor-concentration" chart_id="amc-vendor-concentration" className="h-full">
+              <div key="amc-vendor-concentration" chart_code="fm-amc-vendor-concentration" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-vendor-concentration" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,261" />
                 {amcVendorConcentrationData.length ? (
                   <BarChartCard
                     title="Is this one vendor, or a systemic collapse?"
@@ -4879,7 +4783,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-critical-pending-pair" chart_id="amc-critical-pending-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3">
+              <div key="amc-critical-pending-pair" chart_code="fm-amc-critical-pending-pair" className="h-full overflow-auto bg-white border border-brand-border rounded-lg p-4 flex flex-col gap-3 relative">
+                <AddToDashboardButton chartId="fm-amc-critical-pending-pair" moduleKey="maintenance" subTab="AMC" height="5" width="12" position="0,277" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <StatHeroCard
                     tone="purple"
@@ -4903,7 +4808,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="amc-coverage-by-category" chart_id="amc-coverage-by-category" className="h-full">
+              <div key="amc-coverage-by-category" chart_code="fm-amc-coverage-by-category" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-coverage-by-category" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,282" />
                 {amcCoverageByCategoryData.length ? (
                   <BarChartCard
                     title="AMC Coverage by Asset Category"
@@ -4932,7 +4838,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="amc-cost-trend" chart_id="amc-cost-trend" className="h-full">
+              <div key="amc-cost-trend" chart_code="fm-amc-cost-trend" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-cost-trend" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,288" />
                 {amcCostTrendData.length ? (
                   <AreaTrendChartCard
                     title="Monthly AMC Cost Trend"
@@ -4956,14 +4863,16 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-section-label" chart_id="checklist-section-label" className="h-full flex items-center">
+              <div key="checklist-section-label" chart_code="fm-checklist-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-checklist-section-label" moduleKey="maintenance" subTab="Checklists" height="1" width="12" position="0,294" />
                 <div ref={registerMaintenanceSectionRef("Checklists")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Digital Checklist Dashboard
                 </span>
               </div>
 
-              <div key="checklist-inhouse-card" chart_id="checklist-inhouse-card" className="h-full">
+              <div key="checklist-inhouse-card" chart_code="fm-checklist-inhouse-card" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-inhouse-card" moduleKey="maintenance" subTab="Checklists" height="7" width="6" position="0,295" />
                 {checklistInHouse ? (
                   <StatusSummaryCard
                     title="In-House"
@@ -4984,7 +4893,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-oem-card" chart_id="checklist-oem-card" className="h-full">
+              <div key="checklist-oem-card" chart_code="fm-checklist-oem-card" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-oem-card" moduleKey="maintenance" subTab="Checklists" height="7" width="6" position="6,295" />
                 {checklistVendorExecution ? (
                   <StatusSummaryCard
                     title="Vendor"
@@ -5005,7 +4915,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-type-breakdown" chart_id="checklist-type-breakdown" className="h-full">
+              <div key="checklist-type-breakdown" chart_code="fm-checklist-type-breakdown" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-type-breakdown" moduleKey="maintenance" subTab="Checklists" height="6" width="12" position="0,302" />
                 {checklistTypeBreakdownData.length ? (
                   <BarChartCard
                     title="Checklist type breakdown"
@@ -5014,7 +4925,7 @@ export default function RevampDashboardPage() {
                     categoryKey="type"
                     orientation="horizontal"
                     stacked
-                    seriesColors={["#7FD6AE", "#5A4BE0", "#2F6FE0"]}
+                    seriesColors={[BRAND_HEX.dark, BRAND_HEX.warn, BRAND_HEX.orange, BRAND_HEX.err, BRAND_HEX.ok]}
                     series={[
                       { dataKey: "scheduled", name: "Scheduled" },
                       { dataKey: "open", name: "Open" },
@@ -5037,7 +4948,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-skipped-items" chart_id="checklist-skipped-items" className="h-full">
+              <div key="checklist-skipped-items" chart_code="fm-checklist-skipped-items" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-skipped-items" moduleKey="maintenance" subTab="Checklists" height="5" width="12" position="0,308" />
                 {checklistSkippedRows.length ? (
                   <StatListCard
                     title="Perpetually skipped items"
@@ -5056,7 +4968,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-kpi-pair" chart_id="checklist-kpi-pair" className="h-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div key="checklist-kpi-pair" chart_code="fm-checklist-kpi-pair" className="h-full grid grid-cols-1 sm:grid-cols-2 gap-3 relative">
+                <AddToDashboardButton chartId="fm-checklist-kpi-pair" moduleKey="maintenance" subTab="Checklists" height="4" width="12" position="0,313" />
                 <StatHeroCard
                   tone="purple"
                   label="Checklist Closure Rate"
@@ -5077,7 +4990,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="checklist-top10-completed" chart_id="checklist-top10-completed" className="h-full">
+              <div key="checklist-top10-completed" chart_code="fm-checklist-top10-completed" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-top10-completed" moduleKey="maintenance" subTab="Checklists" height="6" width="12" position="0,317" />
                 {checklistTop10CompletedData.length ? (
                   <BarChartCard
                     title="Top Completed Checklists"
@@ -5100,7 +5014,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-sitewise-compliance" chart_id="checklist-sitewise-compliance" className="h-full">
+              <div key="checklist-sitewise-compliance" chart_code="fm-checklist-sitewise-compliance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-sitewise-compliance" moduleKey="maintenance" subTab="Checklists" height="5" width="12" position="0,323" />
                 {checklistSitewiseComplianceData.length ? (
                   <BarChartCard
                     title="Site-wise Compliance"
@@ -5110,6 +5025,7 @@ export default function RevampDashboardPage() {
                     orientation="horizontal"
                     unit="%"
                     valueDomain={[0, 100]}
+                    height={Math.max(220, checklistSitewiseComplianceData.length * 30)}
                     categoryColors={checklistSitewiseComplianceData.map((_, i) => getVedaColor(i))}
                     series={[{ dataKey: "compliance", name: "Compliance" }]}
                     showInfoIcon
@@ -5125,7 +5041,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="checklist-monthly-trend" chart_id="checklist-monthly-trend" className="h-full">
+              <div key="checklist-monthly-trend" chart_code="fm-checklist-monthly-trend" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-monthly-trend" moduleKey="maintenance" subTab="Checklists" height="6" width="12" position="0,328" />
                 {checklistMonthlyTrendData.length ? (
                   <MultiAreaTrendChartCard
                     title="Monthly Completion Trend"
@@ -5216,7 +5133,8 @@ export default function RevampDashboardPage() {
                 </span>
               </div>
 
-              <div key="inventory-kpi-row" chart_id="inventory-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="inventory-kpi-row" chart_code="fm-inventory-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
+                <AddToDashboardButton chartId="fm-inventory-kpi-row" moduleKey="maintenance" subTab="Inventory" height="4" width="12" position="0,351" />
                 <StatHeroCard tone="purple" label="Total Items" value={inventoryOverview ? String(inventoryOverview.total_items) : "—"} accent="neutral" subtitle="All types" />
                 <StatHeroCard
                   tone="teal"
@@ -5243,7 +5161,8 @@ export default function RevampDashboardPage() {
                 <StatHeroCard tone="blue" label="Ecofriendly" value={inventoryOverview ? String(inventoryOverview.eco_friendly_count) : "—"} accent="info" subtitle="Tagged sustainable" />
               </div>
 
-              <div key="inventory-urgent-restock" chart_id="inventory-urgent-restock" className="h-full">
+              <div key="inventory-urgent-restock" chart_code="fm-inventory-urgent-restock" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-urgent-restock" moduleKey="maintenance" subTab="Inventory" height="4" width="12" position="0,355" />
                 {inventoryUrgentRestockRows.length ? (
                   <StatListCard
                     title="Urgent restock priority"
@@ -5263,7 +5182,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-type-breakdown" chart_id="inventory-type-breakdown" className="h-full">
+              <div key="inventory-type-breakdown" chart_code="fm-inventory-type-breakdown" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-type-breakdown" moduleKey="maintenance" subTab="Inventory" height="6" width="12" position="0,359" />
                 {inventoryTypeBreakdownData.length ? (
                   <BarChartCard
                     title="Inventory by type and criticality"
@@ -5288,7 +5208,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-health-score" chart_id="inventory-health-score" className="h-full">
+              <div key="inventory-health-score" chart_code="fm-inventory-health-score" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-health-score" moduleKey="maintenance" subTab="Inventory" height="3" width="12" position="0,365" />
                 <StatHeroCard
                   tone="peach"
                   label="⭐ Inventory Health Score"
@@ -5300,7 +5221,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="inventory-consumption-trend" chart_id="inventory-consumption-trend" className="h-full">
+              <div key="inventory-consumption-trend" chart_code="fm-inventory-consumption-trend" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-consumption-trend" moduleKey="maintenance" subTab="Inventory" height="6" width="12" position="0,368" />
                 {inventoryConsumptionTrendData.length ? (
                   <AreaTrendChartCard
                     title="Consumption Cost & Trend"
@@ -5322,7 +5244,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-category-consumption" chart_id="inventory-category-consumption" className="h-full">
+              <div key="inventory-category-consumption" chart_code="fm-inventory-category-consumption" className="h-full relative">
+                <AddToDashboardButton chartId="fm-inventory-category-consumption" moduleKey="maintenance" subTab="Inventory" height="6" width="12" position="0,374" />
                 {inventoryCategoryConsumptionData.length ? (
                   <BarChartCard
                     title="Category-wise Consumption Quantity"
@@ -5346,53 +5269,6 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="inventory-deadstock-value" chart_code="fm-inventory-deadstock-value" className="h-full relative">
-                <AddToDashboardButton chartId="fm-inventory-deadstock-value" moduleKey="maintenance" subTab="Inventory" height="6" width="12" position="0,380" />
-                {inventoryDeadstockData.length ? (
-                  <BarChartCard
-                    title="Dead Stock & Overstock Value"
-                    subtitle={
-                      inventoryStockHealth
-                        ? `${inventoryStockHealth.dead_stock.item_count} items with zero movement in 90+ days — value at risk, by category`
-                        : undefined
-                    }
-                    data={inventoryDeadstockData}
-                    categoryKey="category"
-                    orientation="horizontal"
-                    categoryColors={inventoryDeadstockData.map(() => "#7FD6AE")}
-                    series={[{ dataKey: "value", name: "Value at risk" }]}
-                    showInfoIcon
-                    insightVariant="plain"
-                    insight="This is blocked capital sitting on shelves — worth a write-off or liquidation review, not just a count of inactive line items."
-                    className="h-full overflow-auto"
-                  />
-                ) : (
-                  <EmptyStateCard
-                    title="Dead Stock & Overstock Value"
-                    subtitle="Value at risk, by category"
-                    message="No dead-stock items for this period."
-                    className="h-full overflow-auto"
-                  />
-                )}
-              </div>
-
-              <div key="inventory-kpi-table" chart_code="fm-inventory-kpi-table" className="h-full relative">
-                <AddToDashboardButton chartId="fm-inventory-kpi-table" moduleKey="maintenance" subTab="Inventory" height="7" width="12" position="0,386" />
-                <DataTableCard
-                  title="Inventory KPIs"
-                  subtitle="Computed live from the selected sites and date range"
-                  columns={INVENTORY_KPI_COLUMNS}
-                  data={inventoryKpiRows}
-                  getRowKey={(row) => row.kpi}
-                  insight={
-                    inventoryOverview
-                      ? `Current Inventory Value is based on the ${inventoryOverview.current_inventory_value.costed_items_count} items with confirmed unit cost — the remaining items need cost data added before the true portfolio total is complete.`
-                      : undefined
-                  }
-                  className="h-full overflow-auto"
-                />
-              </div>
-
               <div key="waste-section-label" chart_code="fm-waste-section-label" className="h-full flex items-center gap-2 relative">
                 <AddToDashboardButton chartId="fm-waste-section-label" moduleKey="maintenance" subTab="Waste" height="1" width="12" position="0,393" />
                 <div ref={registerMaintenanceSectionRef("Waste")} className="h-0" />
@@ -5409,7 +5285,8 @@ export default function RevampDashboardPage() {
                 </span>
               </div>
 
-              <div key="waste-kpi-row" chart_id="waste-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="waste-kpi-row" chart_code="fm-waste-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
+                <AddToDashboardButton chartId="fm-waste-kpi-row" moduleKey="maintenance" subTab="Waste" height="4" width="12" position="0,394" />
                 <StatHeroCard
                   tone="purple"
                   label="Waste Generated"
@@ -5527,7 +5404,8 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="waste-weekly-trend-stale" chart_id="waste-weekly-trend-stale" className="h-full">
+              <div key="waste-weekly-trend-stale" chart_code="fm-waste-weekly-trend-stale" className="h-full relative">
+                <AddToDashboardButton chartId="fm-waste-weekly-trend-stale" moduleKey="maintenance" subTab="Waste" height="4" width="12" position="0,411" />
                 {wasteWeeklyTrendData.length ? (
                   <BarChartCard
                     title="Waste Generation — Weekly Trend"
@@ -5584,14 +5462,16 @@ export default function RevampDashboardPage() {
 
               <div
                 key="waste-handoff-banner"
-                chart_id="waste-handoff-banner"
+
+                chart_code="fm-waste-handoff-banner"
                 className={cn(
-                  "h-full overflow-auto rounded-lg p-3 flex items-center border",
+                  "h-full overflow-auto rounded-lg p-3 flex items-center border relative",
                   wasteFreshnessTone === "red" && "bg-brand-light border-brand",
                   wasteFreshnessTone === "amber" && "bg-brand-warning-light border-brand-warning",
                   wasteFreshnessTone === "green" && "bg-brand-success-bg border-brand-success"
                 )}
               >
+                <AddToDashboardButton chartId="fm-waste-handoff-banner" moduleKey="maintenance" subTab="Waste" height="2" width="12" position="0,423" />
                 <p
                   className={cn(
                     "text-brand-body-5 leading-relaxed",
@@ -5616,14 +5496,16 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="attendance-section-label" chart_id="attendance-section-label" className="h-full flex items-center">
+              <div key="attendance-section-label" chart_code="fm-attendance-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-attendance-section-label" moduleKey="maintenance" subTab="Attendance" height="1" width="12" position="0,426" />
                 <div ref={registerMaintenanceSectionRef("Attendance")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Attendance
                 </span>
               </div>
 
-              <div key="attendance-card" chart_id="attendance-card" className="h-full">
+              <div key="attendance-card" chart_code="fm-attendance-card" className="h-full relative">
+                <AddToDashboardButton chartId="fm-attendance-card" moduleKey="maintenance" subTab="Attendance" height="6" width="12" position="0,427" />
                 <Card className="border-brand-border h-full overflow-auto">
                   <CardHeader className="pb-2 flex-row items-center justify-between">
                     <div>
@@ -5667,7 +5549,8 @@ export default function RevampDashboardPage() {
                 </Card>
               </div>
 
-              <div key="attendance-trend" chart_id="attendance-trend" className="h-full">
+              <div key="attendance-trend" chart_code="fm-attendance-trend" className="h-full relative">
+                <AddToDashboardButton chartId="fm-attendance-trend" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,433" />
                 {attendanceTrendChartData.length ? (
                   <AreaTrendChartCard
                     title="Attendance trend"
@@ -5685,7 +5568,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="attendance-department-wise" chart_id="attendance-department-wise" className="h-full">
+              <div key="attendance-department-wise" chart_code="fm-attendance-department-wise" className="h-full relative">
+                <AddToDashboardButton chartId="fm-attendance-department-wise" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,438" />
                 {attendanceDepartmentRows.length ? (
                   <StatListCard
                     title="Department-wise Present/Absent"
@@ -5731,7 +5615,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="attendance-repeat-lateness" chart_id="attendance-repeat-lateness" className="h-full">
+              <div key="attendance-repeat-lateness" chart_code="fm-attendance-repeat-lateness" className="h-full relative">
+                <AddToDashboardButton chartId="fm-attendance-repeat-lateness" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,449" />
                 {attendanceRepeatAbsenceRows.length || attendanceHabitualLatecomerRows.length ? (
                   <StatListCard
                     title="Repeat absence & habitual lateness"
@@ -5748,14 +5633,16 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-section-label" chart_id="survey-section-label" className="h-full flex items-center">
+              <div key="survey-section-label" chart_code="fm-survey-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-survey-section-label" moduleKey="maintenance" subTab="Survey" height="1" width="12" position="0,454" />
                 <div ref={registerMaintenanceSectionRef("Survey")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Survey
                 </span>
               </div>
 
-              <div key="survey-kpi-row" chart_id="survey-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div key="survey-kpi-row" chart_code="fm-survey-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
+                <AddToDashboardButton chartId="fm-survey-kpi-row" moduleKey="maintenance" subTab="Survey" height="4" width="12" position="0,455" />
                 <StatHeroCard
                   tone="purple"
                   label="Avg CSAT"
@@ -5786,7 +5673,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="survey-satisfaction-scale" chart_id="survey-satisfaction-scale" className="h-full">
+              <div key="survey-satisfaction-scale" chart_code="fm-survey-satisfaction-scale" className="h-full relative">
+                <AddToDashboardButton chartId="fm-survey-satisfaction-scale" moduleKey="maintenance" subTab="Survey" height="4" width="12" position="0,459" />
                 <EmptyStateCard
                   title="Per-question response scale"
                   subtitle="5-point response scale, not just positive/negative"
@@ -5795,7 +5683,8 @@ export default function RevampDashboardPage() {
                 />
               </div>
 
-              <div key="survey-response-by-category" chart_id="survey-response-by-category" className="h-full">
+              <div key="survey-response-by-category" chart_code="fm-survey-response-by-category" className="h-full relative">
+                <AddToDashboardButton chartId="fm-survey-response-by-category" moduleKey="maintenance" subTab="Survey" height="6" width="12" position="0,463" />
                 {surveyCategoryRows.length ? (
                   <ProgressListCard
                     title="Response by Category"
@@ -5808,7 +5697,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-weekly-csat-trend" chart_id="survey-weekly-csat-trend" className="h-full">
+              <div key="survey-weekly-csat-trend" chart_code="fm-survey-weekly-csat-trend" className="h-full relative">
+                <AddToDashboardButton chartId="fm-survey-weekly-csat-trend" moduleKey="maintenance" subTab="Survey" height="5" width="12" position="0,469" />
                 {surveyWeeklyTrendData.length ? (
                   <BarChartCard
                     title="Weekly CSAT trend"
@@ -5847,7 +5737,8 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="survey-hourly-response" chart_id="survey-hourly-response" className="h-full">
+              <div key="survey-hourly-response" chart_code="fm-survey-hourly-response" className="h-full relative">
+                <AddToDashboardButton chartId="fm-survey-hourly-response" moduleKey="maintenance" subTab="Survey" height="5" width="12" position="0,480" />
                 {surveyTiming && surveyTiming.total_responses > 0 ? (
                   <HourlyPatternChartCard
                     title="Response timing — hour of day"
@@ -5867,14 +5758,16 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-section-label" chart_id="vendor-section-label" className="h-full flex items-center">
+              <div key="vendor-section-label" chart_code="fm-vendor-section-label" className="h-full flex items-center relative">
+                <AddToDashboardButton chartId="fm-vendor-section-label" moduleKey="maintenance" subTab="Vendor" height="1" width="12" position="0,485" />
                 <div ref={registerMaintenanceSectionRef("Vendor")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Vendor Management
                 </span>
               </div>
 
-              <div key="vendor-kpi-row" chart_id="vendor-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-auto">
+              <div key="vendor-kpi-row" chart_code="fm-vendor-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 overflow-auto relative">
+                <AddToDashboardButton chartId="fm-vendor-kpi-row" moduleKey="maintenance" subTab="Vendor" height="8" width="12" position="0,486" />
                 <StatHeroCard
                   tone="purple"
                   label="Active Vendors"
@@ -6010,8 +5903,8 @@ export default function RevampDashboardPage() {
                           {
                             label: "Missed Visits (all vendors)",
                             badge: {
-                              tone: (vendorHealth && vendorHealth.total_missed_visits > 0 ? "red" : "green") as TableBadgeTone,
-                              label: vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()}` : "–",
+                              tone: (vendorApiData.health && vendorApiData.health.total_missed_visits > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorApiData.health ? `${vendorApiData.health.total_missed_visits.toLocaleString()}` : "–",
                             },
                           },
                           {
@@ -6029,31 +5922,7 @@ export default function RevampDashboardPage() {
               </div>
               */}
 
-              <div key="vendor-response-trend" chart_code="fm-vendor-response-trend" className="h-full relative">
-                <AddToDashboardButton chartId="fm-vendor-response-trend" moduleKey="maintenance" subTab="Vendor" height="6" width="12" position="0,512" />
-                {vendorResponseTrendData.length ? (
-                  <ComboBarLineChartCard
-                    title="Vendor response time trend"
-                    subtitle="Monthly · bars = average response (hrs), line = SLA target (hrs)"
-                    data={vendorResponseTrendData}
-                    categoryKey="month"
-                    bar={{ dataKey: "avgResponse", name: "Avg Response (hrs)" }}
-                    line={{ dataKey: "target", name: "SLA Target (hrs)" }}
-                    showInfoIcon
-                    insightVariant="plain"
-                    insight="Months where the bar sits above the line are months vendors missed their response-time target."
-                    className="h-full overflow-auto"
-                  />
-                ) : (
-                  <EmptyStateCard
-                    title="Vendor response time trend"
-                    subtitle="Monthly · average response vs SLA target"
-                    message="No vendor response-time data for the selected sites and date range."
-                    className="h-full"
-                  />
-                )}
-              </div>
-
+              {/*
               <div key="vendor-expired-kyc" chart_code="fm-vendor-expired-kyc" className="h-full relative">
                 <AddToDashboardButton chartId="fm-vendor-expired-kyc" moduleKey="maintenance" subTab="Vendor" height="5" width="12" position="0,518" />
                 {vendorExpiredKycRows.length ? (
@@ -6188,26 +6057,8 @@ export default function RevampDashboardPage() {
                 </p>
               </div>
 
-              <div key="vendor-missed-visits" chart_code="fm-vendor-missed-visits" className="h-full relative">
-                <AddToDashboardButton chartId="fm-vendor-missed-visits" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="0,525" />
-                {vendorMissedVisitData.length ? (
-                  <BarChartCard
-                    title="Missed visits by vendor"
-                    subtitle={vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()} missed visits in total` : undefined}
-                    data={vendorMissedVisitData}
-                    categoryKey="vendor"
-                    orientation="horizontal"
-                    categoryColors={vendorMissedVisitData.map((_, i) => getVedaColor(i))}
-                    series={[{ dataKey: "missed", name: "Missed visits" }]}
-                    className="h-full overflow-auto"
-                  />
-                ) : (
-                  <EmptyStateCard title="Missed visits by vendor" message="No missed vendor visits for the selected sites and date range." className="h-full" />
-                )}
-              </div>
-
               <div key="vendor-workflow-bottlenecks" chart_code="fm-vendor-workflow-bottlenecks" className="h-full relative">
-                <AddToDashboardButton chartId="fm-vendor-workflow-bottlenecks" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="6,525" />
+                <AddToDashboardButton chartId="fm-vendor-workflow-bottlenecks" moduleKey="maintenance" subTab="Vendor" height="7" width="12" position="0,512" />
                 {vendorBottleneckData.length ? (
                   <BarChartCard
                     title="Vendor workflow bottlenecks"
@@ -6224,21 +6075,6 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
-              <div key="vendor-contract-performance" chart_code="fm-vendor-contract-performance" className="h-full relative">
-                <AddToDashboardButton chartId="fm-vendor-contract-performance" moduleKey="maintenance" subTab="Vendor" height="8" width="12" position="0,532" />
-                {vendorContractTableRows.length ? (
-                  <DataTableCard
-                    title="Vendor contract & visit performance"
-                    subtitle="Contracts held and visits completed or missed, per vendor"
-                    columns={VENDOR_CONTRACT_TABLE_COLUMNS}
-                    data={vendorContractTableRows}
-                    getRowKey={(row) => row.vendorName}
-                    className="h-full overflow-auto no-drag"
-                  />
-                ) : (
-                  <EmptyStateCard title="Vendor contract & visit performance" message="No vendor contract data for the selected sites and date range." className="h-full" />
-                )}
-              </div>
                 </>,
                 isMyDashboardModule,
                 savedMaintenanceKeys
