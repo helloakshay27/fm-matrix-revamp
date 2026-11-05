@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_BAR_COLOR } from "@/styles/vedaTheme";
 
 export interface ProgressRow {
   label: string;
   value: string;
   percent: number;
-  color: string;
+  /** Accepted for callers. Fill matches the Veda horizontal track (warning). */
+  color?: string;
   onClick?: () => void;
 }
 
@@ -26,11 +28,8 @@ export interface ProgressListCardProps {
 }
 
 /**
- * Label + horizontal progress track + value rows, optionally grouped under
- * section headings — mirrors the repeated ".pb-row" pattern in
- * fm_matrix_phase10 (29).html (Waste Breakdown, Vendor Response Time, Survey
- * Response by Category). No existing card combines a label with an inline
- * progress track.
+ * Label + horizontal progress track + value rows.
+ * Fills use the Veda horizontal-bar colour (warning amber). Values stay ink.
  */
 export function ProgressListCard({ title, subtitle, sections, footnote, className }: ProgressListCardProps) {
   return (
@@ -50,23 +49,23 @@ export function ProgressListCard({ title, subtitle, sections, footnote, classNam
               )}
               <div className="space-y-2">
                 {section.rows.map((row) => (
-                  <div
-                    key={row.label}
-                    onClick={row.onClick}
-                    className={cn("flex items-center gap-3", row.onClick && "cursor-pointer")}
-                  >
-                    <span className="w-28 flex-shrink-0 truncate text-brand-body-5 text-brand-text">{row.label}</span>
-                    <div className="flex-1 h-2 bg-brand-bg rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${Math.min(100, Math.max(0, row.percent))}%`, backgroundColor: row.color }}
-                      />
+                    <div
+                      key={row.label}
+                      onClick={row.onClick}
+                      className={cn("flex items-center gap-3", row.onClick && "cursor-pointer")}
+                    >
+                      <span className="w-28 flex-shrink-0 truncate text-brand-body-5 text-brand-text">{row.label}</span>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${Math.min(100, Math.max(0, row.percent))}%`, backgroundColor: VEDA_BAR_COLOR }}
+                        />
+                      </div>
+                      <span className="flex-shrink-0 text-brand-body-5 font-semibold text-brand-text">
+                        {row.value}
+                      </span>
                     </div>
-                    <span className="flex-shrink-0 text-brand-body-5 font-semibold" style={{ color: row.color }}>
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
+                  ))}
               </div>
               {section.note && (
                 <div className="flex items-center justify-between text-brand-body-5 mt-2">

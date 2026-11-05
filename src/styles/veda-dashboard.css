@@ -439,18 +439,56 @@ html body .veda-theme .recharts-tooltip-cursor { fill: rgba(26, 26, 24, 0.04) !i
 html body .veda-theme .recharts-bar-rectangle path { transition: opacity 0.16s; }
 html body .veda-theme .recharts-bar-rectangle:hover path { opacity: 0.85; }
 
+/* Column charts: one colour per category, Business Genie palette by index.
+   Multi-series charts take one palette colour per series instead. */
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+1) path { fill: var(--v-c0) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+2) path { fill: var(--v-c1) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+3) path { fill: var(--v-c2) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+4) path { fill: var(--v-c3) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+5) path { fill: var(--v-c4) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+6) path { fill: var(--v-c5) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+7) path { fill: var(--v-c6) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(8n+8) path { fill: var(--v-c7) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(1 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c0) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(2 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c1) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(3 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c2) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(4 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c3) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(5 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c4) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(6 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c5) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(7 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c6) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(8 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-c7) !important; }
+/* Horizontal bars: warning fill, matching .htrack > i */
+html body .veda-theme .veda-hbars .recharts-bar-rectangle path { fill: #F2A312 !important; }
+
+/* Lines and area trends: series i takes palette i */
+html body .veda-theme .recharts-line:nth-child(1 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(1 of .recharts-area) .recharts-area-curve { stroke: var(--v-c0) !important; }
+html body .veda-theme .recharts-line:nth-child(2 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(2 of .recharts-area) .recharts-area-curve { stroke: var(--v-c1) !important; }
+html body .veda-theme .recharts-line:nth-child(3 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(3 of .recharts-area) .recharts-area-curve { stroke: var(--v-c2) !important; }
+html body .veda-theme .recharts-line:nth-child(4 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(4 of .recharts-area) .recharts-area-curve { stroke: var(--v-c3) !important; }
+html body .veda-theme .recharts-line:nth-child(5 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(5 of .recharts-area) .recharts-area-curve { stroke: var(--v-c4) !important; }
+html body .veda-theme .recharts-line:nth-child(6 of .recharts-line) .recharts-line-curve { stroke: var(--v-c5) !important; }
+html body .veda-theme .recharts-line:nth-child(7 of .recharts-line) .recharts-line-curve { stroke: var(--v-c6) !important; }
+html body .veda-theme .recharts-line:nth-child(8 of .recharts-line) .recharts-line-curve { stroke: var(--v-c7) !important; }
+html body .veda-theme .recharts-line:nth-child(1 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(1 of .recharts-area) .recharts-dot { fill: var(--v-c0) !important; stroke: var(--v-c0) !important; }
+html body .veda-theme .recharts-line:nth-child(2 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(2 of .recharts-area) .recharts-dot { fill: var(--v-c1) !important; stroke: var(--v-c1) !important; }
+html body .veda-theme .recharts-line:nth-child(3 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(3 of .recharts-area) .recharts-dot { fill: var(--v-c2) !important; stroke: var(--v-c2) !important; }
+html body .veda-theme .recharts-line:nth-child(4 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(4 of .recharts-area) .recharts-dot { fill: var(--v-c3) !important; stroke: var(--v-c3) !important; }
 
 /* ═══ Pie / donut cards (wireframe .donut-wrap + .dl) ═══════════════════ */
-/* Slice colours by index from the Veda palette, whatever colour the card passed */
-html body .veda-theme .recharts-pie-sector:nth-child(8n+1) path { fill: var(--v-c0) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+2) path { fill: var(--v-c1) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+3) path { fill: var(--v-c2) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+4) path { fill: var(--v-c3) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+5) path { fill: var(--v-c4) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+6) path { fill: var(--v-c5) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+7) path { fill: var(--v-c6) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+8) path { fill: var(--v-c7) !important; }
-html body .veda-theme .recharts-pie-sector path { stroke: none !important; }
+/* Slice colours repeat purple, blue, green — the Cases by tower donut */
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+1) path { fill: var(--v-pie0) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+2) path { fill: var(--v-pie1) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+3) path { fill: var(--v-pie2) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector path { stroke: #F5F4F0 !important; stroke-width: 3px !important; }
 /* slice % labels are not part of the wireframe ring */
 html body .veda-theme .recharts-pie-labels { display: none; }
 
@@ -483,6 +521,11 @@ html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child span.font-bo
   font-variant-numeric: tabular-nums;
 }
 html body .veda-theme .grid.grid-cols-\[auto_1fr\] .w-2.h-2 { width: 8px; height: 8px; border-radius: 2px; }
+html body .veda-theme .veda-dl-pct {
+  color: var(--ink-muted) !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+}
 /* Bottom legend variant */
 html body .veda-theme .flex.flex-wrap.justify-center span { color: var(--ink-soft) !important; font-size: 11.5px; }
 
@@ -549,6 +592,45 @@ html body .veda-theme .react-grid-item [class*="text-brand-h1"][class*="font-bol
   letter-spacing: -0.015em;
 }
 html body .veda-theme .react-grid-item .h-1\.5.bg-brand-bg { background: var(--v-white) !important; height: 6px; }
+
+/* Resize grip — a 6px hairline corner tick, same weight as the Hi Society cards */
+html body .veda-theme .react-grid-item > .react-resizable-handle {
+  width: 12px !important;
+  height: 12px !important;
+  z-index: 15;
+  padding: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .react-grid-item > .react-resizable-handle.react-resizable-handle-se {
+  right: 1px !important;
+  bottom: 1px !important;
+}
+html body .veda-theme .react-grid-item > .react-resizable-handle::after {
+  content: "" !important;
+  right: 2px !important;
+  bottom: 2px !important;
+  width: 6px !important;
+  height: 6px !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(26, 26, 24, 0.45) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.45) !important;
+  border-radius: 0 !important;
+  opacity: 1;
+  background: none !important;
+}
+html body .veda-theme .react-grid-item:hover > .react-resizable-handle::after {
+  border-right: 1px solid rgba(26, 26, 24, 0.85) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.85) !important;
+}
+html body .veda-theme .react-grid-placeholder {
+  background: rgba(26, 26, 24, 0.06) !important;
+  border: 1.5px dashed var(--ink-faint) !important;
+  border-radius: 16px !important;
+  opacity: 1 !important;
+}
 
 /* "Add to My Dashboard" button → white icon tile (same slot as the wireframe .stat .ic) */
 html body .veda-theme .react-grid-item > button[aria-label$="My Dashboard"] {

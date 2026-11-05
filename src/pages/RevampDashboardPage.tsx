@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Search,
   LayoutDashboard,
+  Building2,
   Save,
   type LucideIcon,
 } from "lucide-react";
@@ -55,6 +56,11 @@ import { VEDA_PALETTE, VEDA_COLORS, VEDA_CSS_VARS, VEDA_PIE_PROPS, getVedaColor 
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 import { FinancePanel } from "@/components/dashboard/FinancePanel";
 import { CrmPanel } from "@/components/dashboard/CrmPanel";
+import { TransitioningPanel } from "@/components/dashboard/TransitioningPanel";
+import { OverviewPanel } from "@/components/dashboard/OverviewPanel";
+import { UtilityPanel } from "@/components/dashboard/UtilityPanel";
+import { SecurityPanel } from "@/components/dashboard/SecurityPanel";
+import { VasPanel } from "@/components/dashboard/VasPanel";
 import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
 import { useMyDashboardStore } from "@/stores/myDashboardStore";
 import { formatChartLabel } from "@/utils/formatChartLabel";
@@ -259,6 +265,10 @@ function classifyChartCode(
   if (maintenanceLayout) return { moduleKey: "maintenance", key, defaultLayout: maintenanceLayout };
   if (key.startsWith("fin-")) return { moduleKey: "finance", key };
   if (key.startsWith("crm-")) return { moduleKey: "crm", key };
+  if (key.startsWith("tr-")) return { moduleKey: "transitioning", key };
+  if (key.startsWith("ut-")) return { moduleKey: "utility", key };
+  if (key.startsWith("sec-")) return { moduleKey: "security", key };
+  if (key.startsWith("vas-")) return { moduleKey: "vas", key };
   if (SAFETY_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) return { moduleKey: "safety", key };
   return null;
 }
@@ -339,6 +349,15 @@ const MODULES: ModuleDefinition[] = [
     icon: LayoutDashboard,
     summary: "Cards you've added from Maintenance, Safety, Finance and CRM, in one place.",
     subTabs: [],
+    stats: [],
+    chips: [],
+  },
+  {
+    key: "overview",
+    label: "Overview",
+    icon: Building2,
+    summary: "Portfolio command center — module snapshot, attention queue and site health trend.",
+    subTabs: ["Overview", "Modules", "Health"],
     stats: [],
     chips: [],
   },
@@ -1353,6 +1372,26 @@ export default function RevampDashboardPage() {
     () => new Set(myDashboardCards.filter((c) => c.moduleKey === "crm").map((c) => c.chartId)),
     [myDashboardCards]
   );
+  const savedTransitioningKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "transitioning").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedOverviewKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "overview").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedUtilityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "utility").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedSecurityKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "security").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
+  const savedVasKeys = useMemo(
+    () => new Set(myDashboardCards.filter((c) => c.moduleKey === "vas").map((c) => c.chartId)),
+    [myDashboardCards]
+  );
 
   // Fetch this user's persisted /dashboard_layouts as soon as My Dashboard opens — not just
   // after "Save Dashboard" — and rebuild any card that was saved from another browser/session
@@ -1435,6 +1474,11 @@ export default function RevampDashboardPage() {
   const isSafetyView = activeModule === "safety";
   const isFinanceView = activeModule === "finance";
   const isCrmView = activeModule === "crm";
+  const isTransitioningView = activeModule === "transitioning";
+  const isOverviewView = activeModule === "overview";
+  const isUtilityView = activeModule === "utility";
+  const isSecurityView = activeModule === "security";
+  const isVasView = activeModule === "vas";
 
   const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -5846,6 +5890,26 @@ export default function RevampDashboardPage() {
           />
         ) : isCrmView ? (
           <CrmPanel activeSection={activeSubTab} data={crmApiData} loading={crmLoading || sitesLoading} />
+        ) : isOverviewView ? (
+          <OverviewPanel
+            activeSection={activeSubTab}
+            onNavigate={(moduleKey, subTab) => {
+              if (moduleKey === "overview" && subTab) {
+                setActiveSubTab(subTab);
+                return;
+              }
+              if (subTab) navigateTo(moduleKey, subTab);
+              else handleModuleChange(moduleKey);
+            }}
+          />
+        ) : isTransitioningView ? (
+          <TransitioningPanel activeSection={activeSubTab} />
+        ) : isUtilityView ? (
+          <UtilityPanel activeSection={activeSubTab} />
+        ) : isSecurityView ? (
+          <SecurityPanel activeSection={activeSubTab} />
+        ) : isVasView ? (
+          <VasPanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
@@ -5903,13 +5967,34 @@ export default function RevampDashboardPage() {
             {savedCrmKeys.size > 0 && (
               <CrmPanel activeSection="" data={crmApiData} loading={crmLoading || sitesLoading} visibleKeys={savedCrmKeys} />
             )}
+            {savedOverviewKeys.size > 0 && (
+              <OverviewPanel
+                activeSection=""
+                visibleKeys={savedOverviewKeys}
+                onNavigate={(moduleKey, subTab) => {
+                  if (subTab) navigateTo(moduleKey, subTab);
+                  else handleModuleChange(moduleKey);
+                }}
+              />
+            )}
+            {savedTransitioningKeys.size > 0 && (
+              <TransitioningPanel activeSection="" visibleKeys={savedTransitioningKeys} />
+            )}
+            {savedUtilityKeys.size > 0 && <UtilityPanel activeSection="" visibleKeys={savedUtilityKeys} />}
+            {savedSecurityKeys.size > 0 && <SecurityPanel activeSection="" visibleKeys={savedSecurityKeys} />}
+            {savedVasKeys.size > 0 && <VasPanel activeSection="" visibleKeys={savedVasKeys} />}
             {savedMaintenanceKeys.size === 0 &&
               savedSafetyKeys.size === 0 &&
               savedFinanceKeys.size === 0 &&
-              savedCrmKeys.size === 0 && (
+              savedCrmKeys.size === 0 &&
+              savedOverviewKeys.size === 0 &&
+              savedTransitioningKeys.size === 0 &&
+              savedUtilityKeys.size === 0 &&
+              savedSecurityKeys.size === 0 &&
+              savedVasKeys.size === 0 && (
                 <EmptyStateCard
                   title="No cards on My Dashboard yet"
-                  message='Click the "+" on any card across Maintenance, Safety, Finance or CRM to add it here.'
+                  message='Click the "+" on any card across Overview, Transitioning, Maintenance, Safety, Finance, CRM, Utility, Security or Value Added Services to add it here.'
                   className="h-40"
                 />
               )}

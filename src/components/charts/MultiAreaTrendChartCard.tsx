@@ -2,6 +2,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Info, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_PALETTE } from "@/styles/vedaTheme";
 import type { ChartInsightTone } from "./PieChartCard";
 
 export interface AreaSeriesConfig {
@@ -122,30 +123,36 @@ export function MultiAreaTrendChartCard({
           <ResponsiveContainer width="100%" height={height}>
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                {series.map((s) => (
+                {series.map((s, index) => {
+                  const color = VEDA_PALETTE[index % VEDA_PALETTE.length];
+                  return (
                   <linearGradient key={s.dataKey} id={`multi-area-gradient-${s.dataKey}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={s.color} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={s.color} stopOpacity={0.02} />
+                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0.02} />
                   </linearGradient>
-                ))}
+                  );
+                })}
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-subtle)" />
               <XAxis dataKey={categoryKey} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--color-text-light)" }} />
               <YAxis axisLine={false} tickLine={false} width={36} tick={{ fontSize: 11, fill: "var(--color-text-light)" }} />
               <Tooltip content={<MultiAreaTooltip unit={unit} />} />
               <Legend content={<MultiAreaLegend />} />
-              {series.map((s) => (
+              {series.map((s, index) => {
+                const color = VEDA_PALETTE[index % VEDA_PALETTE.length];
+                return (
                 <Area
                   key={s.dataKey}
                   type="monotone"
                   dataKey={s.dataKey}
                   name={s.name}
-                  stroke={s.color}
+                  stroke={color}
                   strokeWidth={2}
                   fill={`url(#multi-area-gradient-${s.dataKey})`}
-                  dot={{ r: 3, fill: s.color }}
+                  dot={{ r: 3, fill: color }}
                 />
-              ))}
+                );
+              })}
             </AreaChart>
           </ResponsiveContainer>
         )}
