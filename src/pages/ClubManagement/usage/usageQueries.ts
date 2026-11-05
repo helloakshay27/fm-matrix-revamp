@@ -33,6 +33,9 @@ function rangeParams(filters: UsageFilters): RangeFilters {
   };
 }
 
+/** Club's from/to request params, shared with the Recent Activity download. */
+export const clubRangeParams = rangeParams;
+
 function weeklyParams(filters: UsageFilters, weeks: number): WeeklyFilters {
   return {
     to: filters.rangeTo,
@@ -66,6 +69,9 @@ export function useClubRecentActiveUsers(filters: UsageFilters) {
     queryKey: ["club-usage", "recent-active-users", params],
     queryFn: ({ signal }) => fetchRecentActiveUsers({ ...params, signal }),
     ...CACHE,
+    // A live log: the 10 newest events, refreshed every 15 s.
+    staleTime: 0,
+    refetchInterval: 15 * 1000,
   });
 }
 

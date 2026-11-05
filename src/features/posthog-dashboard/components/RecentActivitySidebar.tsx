@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 import { useRecentActiveUsers } from '../api/queries';
 import {
+  activityUserLabel,
   downloadRecentActiveUsers,
   type RecentActiveUser,
 } from '../api/adoptionApi';
@@ -32,7 +33,7 @@ function ActivityUser({ user }: { user: RecentActiveUser }) {
   return (
     <li className="recent-activity-user">
       <div className="recent-activity-user-main">
-        <strong>{user.display_name}</strong>
+        <strong title={user.email || undefined}>{activityUserLabel(user)}</strong>
         <span>{user.path || user.last_event || 'Activity recorded'}</span>
       </div>
       <div className="recent-activity-meta">
@@ -87,7 +88,8 @@ export function RecentActivitySidebar({ filters, filtersSettled }: RecentActivit
         <p className="recent-activity-state">No recent activity yet.</p>
       ) : (
         <ul className="recent-activity-list">
-          {users.map((user) => <ActivityUser key={user.user_id} user={user} />)}
+          {/* One row per event, so a user appears many times: key by position, not user_id. */}
+          {users.map((user, index) => <ActivityUser key={`${index}-${user.user_id}`} user={user} />)}
         </ul>
       )}
     </section>
