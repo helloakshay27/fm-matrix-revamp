@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -309,7 +310,14 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
             ) : (
               filteredData.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.id}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      to={`/maintenance/task/details/${item.id}`}
+                      className="text-brand hover:underline"
+                    >
+                      {item.id}
+                    </Link>
+                  </TableCell>
                   <TableCell>{item.checklist_name}</TableCell>
                   <TableCell>{item.type}</TableCell>
                   <TableCell>{item.schedule}</TableCell>
