@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import type { Device, DateRange, Tier, Site } from '../data/constants';
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 const TIER_OPTIONS: { value: Tier; label: string; hint: string }[] = [
   { value: 't1', label: 'Site Manager', hint: 'One or more sites' },
   { value: 't2', label: 'Regional', hint: 'One company and all of its sites' },
@@ -259,17 +266,18 @@ export function ControlBar() {
                 <input
                   type="date"
                   value={draftFrom}
-                  max={draftTo || undefined}
-                  onChange={(event) => setDraftFrom(event.target.value)}
+                  max={draftTo && draftTo < todayYmd() ? draftTo : todayYmd()}
+                  onChange={(event) => setDraftFrom(clampToToday(event.target.value))}
                 />
               </label>
               <label>
                 <span>To</span>
                 <input
                   type="date"
+                  max={todayYmd()}
                   value={draftTo}
                   min={draftFrom || undefined}
-                  onChange={(event) => setDraftTo(event.target.value)}
+                  onChange={(event) => setDraftTo(clampToToday(event.target.value))}
                 />
               </label>
             </div>
