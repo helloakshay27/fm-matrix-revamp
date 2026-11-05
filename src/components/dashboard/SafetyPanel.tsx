@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   StatHeroCard,
@@ -13,6 +13,8 @@ import {
   type TableBadgeTone,
   type PermitTimelinePoint,
   type IncidentTrendDatum,
+  type StatHeroAccent,
+  type StatHeroTone,
 } from "@/components/charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BodyInjuryChartCard, { type BodyInjuryChartApiState } from "@/components/incident-analytics/BodyInjuryChartCard";
@@ -59,7 +61,7 @@ function permitStatusTone(status: string): TableBadgeTone {
   return "grey";
 }
 
-const STATUS_TILE_BG_COLORS = ["#EFEFFB", "#B7DCD44D", "#E3909026", "#85BDF633", "#EFEFFB"];
+const STATUS_TILE_TONES: StatHeroTone[] = ["purple", "teal", "peach", "blue", "purple"];
 
 interface IncidentRow {
   id: string;
@@ -418,16 +420,16 @@ export function SafetyPanel({
 
   const incidentStatusTiles = useMemo(() => {
     if (!incidentStatus) return [];
-    const entries: { label: string; value: number; color: string }[] = [
-      { label: "Open", value: openIncidents ?? NaN, color: "text-brand-error" },
-      { label: "Under Invest.", value: underInvestigationIncidents ?? NaN, color: "text-[#8A5A00]" },
-      { label: "Pending", value: pendingIncidents ?? NaN, color: "text-[#8A5A00]" },
-      { label: "Closed", value: closedIncidents ?? NaN, color: "text-brand-success" },
-      { label: "Final Closure", value: finalClosureIncidents ?? NaN, color: "text-brand-success" },
-      { label: "Prov. Closure", value: provisionalClosureIncidents ?? NaN, color: "text-brand-green" },
-      { label: "Other", value: incidentStatus.other ?? NaN, color: "text-brand-text-light" },
+    const entries: { label: string; value: number; accent: StatHeroAccent }[] = [
+      { label: "Open", value: openIncidents ?? NaN, accent: "error" },
+      { label: "Under Invest.", value: underInvestigationIncidents ?? NaN, accent: "warning" },
+      { label: "Pending", value: pendingIncidents ?? NaN, accent: "warning" },
+      { label: "Closed", value: closedIncidents ?? NaN, accent: "success" },
+      { label: "Final Closure", value: finalClosureIncidents ?? NaN, accent: "success" },
+      { label: "Prov. Closure", value: provisionalClosureIncidents ?? NaN, accent: "green" },
+      { label: "Other", value: incidentStatus.other ?? NaN, accent: "neutral" },
     ].filter((entry) => typeof entry.value === "number" && !Number.isNaN(entry.value));
-    if (typeof totalIncidents === "number") entries.push({ label: "Total", value: totalIncidents, color: "text-brand-text" });
+    if (typeof totalIncidents === "number") entries.push({ label: "Total", value: totalIncidents, accent: "neutral" });
     return entries;
   }, [
     incidentStatus,
@@ -470,7 +472,7 @@ export function SafetyPanel({
     */
     {
       key: "sohi-zero",
-      layout: { x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 0, y: 0, w: 4, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="teal"
@@ -500,7 +502,7 @@ export function SafetyPanel({
     */
     {
       key: "sohi-permit",
-      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 4, y: 0, w: 4, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="blue"
@@ -521,14 +523,16 @@ export function SafetyPanel({
     },
     {
       key: "sohi-contradiction",
-      layout: { x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 8, y: 0, w: 4, h: 3, minW: 2, minH: 3 },
       content: (
-        <div className="rounded-xl bg-[var(--color-bg)] p-4 h-full">
-          <div className="text-brand-body-4 font-bold text-brand-text-light">
-            Safety compliance snapshot
-          </div>
-          <div className="text-brand-body-5 text-brand-text-light mt-0.5">
-            Composite incident score for the selected scope
+        <div className="rounded-xl bg-white border border-brand-border p-4 h-full overflow-auto">
+          <div className="pr-10">
+            <div className="text-brand-body-4 font-bold text-brand-text">
+              Safety compliance snapshot
+            </div>
+            <div className="text-brand-body-5 text-brand-text-light mt-0.5">
+              Composite incident score for the selected scope
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 mt-4">
@@ -552,7 +556,7 @@ export function SafetyPanel({
     },
     {
       key: "sohi-incident-trend",
-      layout: { x: 0, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
+      layout: { x: 0, y: 3, w: 6, h: 6, minW: 4, minH: 4 },
       content: incidentTrendData.length ? (
         <IncidentTrendChartCard
           title="Incident Trend"
@@ -572,9 +576,16 @@ export function SafetyPanel({
     },
     {
       key: "sohi-incident-support",
-      layout: { x: 6, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
+      layout: { x: 6, y: 3, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <div className="bg-white border border-brand-border rounded-lg flex flex-col items-center justify-center text-center p-6 h-full">
+        <div className="bg-white border border-brand-border rounded-lg flex flex-col p-5 h-full">
+          <div className="pr-10">
+            <div className="text-brand-body-3 font-bold text-brand-text">External support required</div>
+            <div className="text-brand-body-5 text-brand-text-light mt-0.5">
+              Share of incidents that needed outside help
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
           <div className="text-4xl font-bold text-brand">
             {typeof externalSupport?.percent === "number"
               ? `${externalSupport.percent}%`
@@ -588,6 +599,15 @@ export function SafetyPanel({
               : incidentsLoading
                 ? "Loading…"
                 : "External support data not available for this period."}
+          </div>
+          {typeof externalSupport?.percent === "number" && (
+            <div className="mt-4 h-2 w-full max-w-[260px] overflow-hidden rounded-full bg-white">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.min(100, Math.max(0, externalSupport.percent))}%`, backgroundColor: "#F2A312" }}
+              />
+            </div>
+          )}
           </div>
         </div>
       ),
@@ -643,7 +663,7 @@ export function SafetyPanel({
     */
     {
       key: "inc-action-count",
-      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="blue"
@@ -721,7 +741,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-rootnote",
-      layout: { x: 0, y: 13, w: 12, h: 2, minW: 4, minH: 2, isResizable: false, isDraggable: false },
+      layout: { x: 0, y: 10, w: 12, h: 2, minW: 4, minH: 2, isResizable: false, isDraggable: false },
       content: (
         <p className="text-brand-body-5 text-brand-text-light">
           Root-cause counts show the reasons recorded for incidents in the selected scope.
@@ -730,7 +750,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-compliance",
-      layout: { x: 0, y: 15, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="teal"
@@ -744,7 +764,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-status-breakdown",
-      layout: { x: 0, y: 18, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 12, w: 12, h: 9, minW: 6, minH: 6 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg p-5 h-full overflow-auto">
           <div className="text-brand-body-3 font-bold text-brand-text">Incident Status Breakdown</div>
@@ -755,14 +775,14 @@ export function SafetyPanel({
           {incidentStatusTiles.length ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               {incidentStatusTiles.map((s, index) => (
-                <div
+                <StatHeroCard
                   key={s.label}
-                  className="rounded-lg p-3 text-center"
-                  style={{ backgroundColor: STATUS_TILE_BG_COLORS[index % STATUS_TILE_BG_COLORS.length] }}
-                >
-                  <div className={cn("text-xl font-bold", s.color)}>{s.value}</div>
-                  <div className="text-brand-body-5 text-black mt-0.5">{s.label}</div>
-                </div>
+                  tone={STATUS_TILE_TONES[index % STATUS_TILE_TONES.length]}
+                  label={s.label}
+                  value={String(s.value)}
+                  accent={s.accent}
+                  className="status-tile"
+                />
               ))}
             </div>
           ) : (
@@ -789,7 +809,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-closure-integrity",
-      layout: { x: 0, y: 27, w: 12, h: 4, minW: 6, minH: 3 },
+      layout: { x: 0, y: 21, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
         <div className="bg-[var(--color-surface)] rounded-lg p-4 h-full overflow-auto">
           <div className="flex items-center justify-between">
@@ -799,7 +819,7 @@ export function SafetyPanel({
                     Closed incidents meeting the API&apos;s quality criteria
               </div>
             </div>
-            <div className="text-right flex-shrink-0 ml-4">
+            <div className="text-right flex-shrink-0 ml-4 mr-10">
               <div className="text-2xl font-bold text-brand-error">
                 {typeof closedIncidentQuality?.percent === "number" ? `${closedIncidentQuality.percent}%` : incidentsLoadingLabel}
               </div>
@@ -818,7 +838,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-quiet-escalation",
-      layout: { x: 0, y: 31, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 25, w: 12, h: 6, minW: 6, minH: 4 },
       content: quietEscalationData.length ? (
         <BarChartCard
           title="Quiet escalation — repeat Low Risk by location"
@@ -842,7 +862,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-table",
-      layout: { x: 0, y: 37, w: 12, h: 8, minW: 6, minH: 5 },
+      layout: { x: 0, y: 31, w: 12, h: 8, minW: 6, minH: 5 },
       content: incidentRows.length ? (
         <DataTableCard
           title="Incidents Requiring Action"
@@ -863,7 +883,7 @@ export function SafetyPanel({
     },
     {
       key: "inc-bodypart",
-      layout: { x: 0, y: 45, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 39, w: 12, h: 6, minW: 6, minH: 4 },
       content: bodyPartChartData.length && bodyPartChartKeys.length ? (
         <BarChartCard
           title="Which category hurts which body part"
@@ -892,14 +912,18 @@ export function SafetyPanel({
     },
     {
       key: "inc-bodyinjury",
-      layout: { x: 0, y: 51, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 45, w: 12, h: 9, minW: 6, minH: 6 },
       content: (
-        <BodyInjuryChartCard
-          startDate={fromDate}
-          endDate={toDate}
-          siteIds={selectedSiteIds}
-          apiState={bodyInjuryApiState}
-        />
+        // The card is shared with other pages and styled for them; veda-injury-card re-skins it to match
+        // the dashboard's cards (see veda-dashboard.css).
+        <div className="veda-injury-card h-full">
+          <BodyInjuryChartCard
+            startDate={fromDate}
+            endDate={toDate}
+            siteIds={selectedSiteIds}
+            apiState={bodyInjuryApiState}
+          />
+        </div>
       ),
     },
   ];
@@ -1313,8 +1337,8 @@ export function SafetyPanel({
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg bg-brand-light px-5 py-4">
-        <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand mb-3">
+      <div className="veda-alert-strip rounded-lg bg-brand-light px-5 py-4">
+        <div className="veda-alert-title flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts
         </div>
@@ -1322,7 +1346,7 @@ export function SafetyPanel({
           {safetyAlerts.map((alert) => (
             <span
               key={alert}
-              className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
+              className="veda-alert-pill rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
             >
               {alert}
             </span>
@@ -1330,11 +1354,10 @@ export function SafetyPanel({
         </div>
       </div>
 
-      <div ref={registerRef("SOHI")} className="scroll-mt-24">
+      <div ref={registerRef("SOHI")} className={cn("scroll-mt-24", (incidentsLoading || permitsLoading) && "veda-loading")}>
         <SafetyGridSection
-          storageKey="safetySohiGridLayout"
+          storageKey="safetySohiGridLayout-v2"
           items={sohiItems}
-          layoutOverrides={{ "sohi-contradiction": { x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 3 } }}
           responsive
           moduleKey="safety"
           subTab="SOHI"
@@ -1342,15 +1365,9 @@ export function SafetyPanel({
         />
       </div>
 
-      <div ref={registerRef("Incidents")} className="scroll-mt-24">
-        {incidentsLoading && (
-          <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
-            <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
-            Loading incident analytics for the selected sites and date range…
-          </div>
-        )}
+      <div ref={registerRef("Incidents")} className={cn("scroll-mt-24", incidentsLoading && "veda-loading")}>
         <SafetyGridSection
-          storageKey="safetyIncidentsGridLayout"
+          storageKey="safetyIncidentsGridLayout-v2"
           items={incidentsItems}
           responsive
           moduleKey="safety"
@@ -1359,13 +1376,7 @@ export function SafetyPanel({
         />
       </div>
 
-      <div ref={registerRef("Permits")} className="scroll-mt-24">
-        {permitsLoading && (
-          <div className="mb-3 flex items-center gap-2 rounded-md border border-brand-border bg-white px-3 py-2 text-brand-body-5 text-brand-text-light">
-            <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
-            Loading permit analytics for the selected sites and date range…
-          </div>
-        )}
+      <div ref={registerRef("Permits")} className={cn("scroll-mt-24", permitsLoading && "veda-loading")}>
         <SafetyGridSection
           storageKey="safetyPermitsGridLayout"
           items={permitsItems}
