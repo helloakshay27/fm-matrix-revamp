@@ -363,8 +363,11 @@ export const getOrganizationsByEmail = async (
   }
 
   if (isViLiveSite) {
+    // const response = await fetch(
+    //   `https://vi-prod-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    // );
     const response = await fetch(
-      `https://vi-prod-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
