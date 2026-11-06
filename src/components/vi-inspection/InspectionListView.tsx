@@ -12,6 +12,7 @@ import {
   InspectionFilterDialog,
   type InspectionFilters,
 } from "./InspectionFilterDialog";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 import { fetchViInspection, num, useViInspectionDashboard, useViInspectionList, useViInspectionMasters } from "./viInspectionApi";
 import {
   DASHBOARD_CARDS,
@@ -45,7 +46,7 @@ const FILTER_LABEL: Record<string, string> = {
   status: "Status",
   circle_id: "Circle",
   personal_area_id: "Personnel Area",
-  work_location_id: "Work Location",
+  zone_id: "Zone",
   facility_type_id: "Type of Facility",
   inspection_type_id: "Inspection Type",
 };
@@ -94,6 +95,8 @@ export const InspectionListView = ({
   const { inspections, pagination, loading } = useViInspectionList(role, page, query);
   const { counts } = useViInspectionDashboard(role);
   const { masters, loading: mastersLoading } = useViInspectionMasters();
+  // Zone names for the applied-filter chip.
+  const { zones } = useCircleZones(filters.circle_id);
 
   /** Writes filters and/or page to the URL; changing filters goes back to page 1. */
   const updateParams = (next: Partial<InspectionFilters>, nextPage?: number) =>
@@ -110,7 +113,7 @@ export const InspectionListView = ({
     const options: Record<string, { value: string; label: string }[]> = {
       circle_id: masters.circles,
       personal_area_id: masters.personalAreas,
-      work_location_id: masters.workLocations,
+      zone_id: zones,
       facility_type_id: masters.facilityTypes,
       inspection_type_id: masters.inspectionTypes,
     };
@@ -133,7 +136,7 @@ export const InspectionListView = ({
       .filter(
         (row) =>
           !term ||
-          [row.inspectionNo, row.inspectionType, row.circle, row.workLocation, row.spocName, row.inspectorLocation].some(
+          [row.inspectionNo, row.inspectionType, row.circle, row.zone, row.spocName, row.inspectorLocation].some(
             (value) => value.toLowerCase().includes(term),
           ),
       );
@@ -225,7 +228,7 @@ export const InspectionListView = ({
               {FILTER_LABEL[key]}: {filterValueLabel(key, value)}
               <button
                 type="button"
-                onClick={() => updateParams({ [key]: "" })}
+                onClick={() => updateParams(key === "circle_id" ? { circle_id: "", zone_id: "" } : { [key]: "" })}
                 className="text-gray-400 hover:text-gray-700"
                 aria-label={`Remove ${FILTER_LABEL[key]} filter`}
               >

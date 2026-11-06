@@ -101,6 +101,8 @@ export interface ViInspectionRecord {
   personalArea: string;
   workLocationId: string;
   workLocation: string;
+  zoneId: string;
+  zone: string;
   inspectionTypeId: string;
   inspectionType: string;
   inspectorLocation: string;
@@ -213,7 +215,7 @@ export const INSPECTION_COLUMNS: ColumnConfig[] = [
   { key: "inspectionDateLabel", label: "Date of Inspection", sortable: true, defaultVisible: true },
   { key: "circle", label: "Circle", sortable: true, defaultVisible: true },
   { key: "personalArea", label: "Personnel Area", sortable: true, defaultVisible: true },
-  { key: "workLocation", label: "Work Location", sortable: true, defaultVisible: true },
+  { key: "zone", label: "Zone", sortable: true, defaultVisible: true },
   { key: "facilityType", label: "Type of Facility", sortable: true, defaultVisible: true },
   { key: "inspectorLocation", label: "Inspection Location", sortable: true, defaultVisible: false },
   { key: "spocName", label: "SPOC", sortable: true, defaultVisible: true },

@@ -1,20 +1,44 @@
-// FM Dashboard data-fetching hooks — one file for all 10 module sections
+// FM Dashboard data-fetching hooks — one file for all 11 module sections
 // (Tickets, Assets, Audit, AMC, Checklists, Inventory, Waste, Attendance,
-// Survey, Vendor) instead of one hook per module. Each hook follows the same
+// Survey, Vendor, Safety) instead of one hook per module. Each hook follows the same
 // shape: fetch its module's endpoints in parallel via Promise.all, skip
 // entirely while `enabled` is false or sites/dates aren't resolved yet.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchTicketsOverview,
   fetchTicketsTrends,
   fetchTicketsBreakdown,
   fetchTicketsWorkforce,
   fetchTicketsQuality,
+  fetchTicketsByTenant,
+  fetchTicketsCsat,
+  fetchTicketsApproachingEscalation,
+  fetchTicketsCategoryComparison,
+  type TicketsByTenantRow,
+  type TicketsCsatData,
+  type TicketsApproachingEscalationData,
+  type TicketsCategoryComparisonRow,
   type TicketsOverviewData,
   type TicketsTrendsData,
   type TicketsBreakdownData,
   type TicketsWorkforceData,
   type TicketsQualityData,
+  fetchVendorPerformanceTable,
+  fetchVendorPerformanceScore,
+  fetchVendorOnTimeCompletion,
+  fetchVendorHealth,
+  fetchVendorContractRenewals,
+  fetchVendorResponseTrend,
+  fetchVendorWorkflowBottlenecks,
+  fetchVendorKycStatus,
+  type VendorPerformanceTableRow,
+  type VendorPerformanceScoreData,
+  type VendorOnTimeCompletionData,
+  type VendorHealthData,
+  type VendorContractRenewalsData,
+  type VendorResponseTrendData,
+  type VendorWorkflowBottlenecksData,
+  type VendorKycStatusData,
   fetchAssetsOverview,
   fetchAssetsCondition,
   fetchAssetsCategory,
@@ -51,6 +75,7 @@ import {
   fetchInventoryStockHealth,
   fetchInventoryConsumption,
   fetchInventoryOperations,
+  fetchInventoryKpisTable,
   type InventoryOverviewData,
   type InventoryStockHealthData,
   type InventoryConsumptionData,
@@ -59,6 +84,7 @@ import {
   fetchWasteBreakdown,
   fetchWasteTrend,
   fetchWasteVendor,
+  fetchWasteRecords,
   type WasteOverviewData,
   type WasteBreakdownData,
   type WasteTrendData,
@@ -67,6 +93,7 @@ import {
   fetchAttendanceDepartment,
   fetchAttendanceTrend,
   fetchAttendancePatterns,
+  fetchAttendanceStaffingGapVsBreach,
   type AttendanceOverviewData,
   type AttendanceDepartmentData,
   type AttendanceTrendData,
@@ -74,6 +101,7 @@ import {
   fetchSurveyOverview,
   fetchSurveyBreakdown,
   fetchSurveyTrend,
+  fetchSurveyWeeklyCsatBreakdown,
   fetchSurveyTiming,
   type SurveyOverviewData,
   type SurveyBreakdownData,
@@ -93,11 +121,11 @@ import {
   type PermitsOverviewData,
   type PermitsBottleneckData,
   type PermitsDetailData,
-  fetchIncidentsOverview,
+  fetchIncidentKpis,
   fetchIncidentsTrend,
   fetchIncidentsAnalysis,
   fetchIncidentsHotspots,
-  type IncidentsOverviewData,
+  type IncidentKpisData,
   type IncidentsTrendData,
   type IncidentsAnalysisData,
   type IncidentsHotspotsData,
@@ -135,6 +163,26 @@ interface UseFmDashboardModuleArgs {
   enabled: boolean;
 }
 
+/**
+ * Keeps a module's data alive across tab switches.
+ *
+ * Each dashboard section passes `enabled` = "this tab is showing", so leaving a tab and coming back
+ * flipped it false → true and every hook re-ran all of its requests. Instead, a module is switched on
+ * the first time it's shown and then stays on, and its site / date params are only updated while it
+ * is actually visible. Result: switching tabs never refetches; changing the site or date range
+ * refetches once, when the user next looks at that tab (and immediately for the tab they're on); a
+ * full page reload starts from scratch.
+ */
+function useKeepAliveArgs(args: UseFmDashboardModuleArgs): UseFmDashboardModuleArgs {
+  const activated = useRef(false);
+  const snapshot = useRef({ siteIds: args.siteIds, fromDate: args.fromDate, toDate: args.toDate });
+  if (args.enabled) {
+    activated.current = true;
+    snapshot.current = { siteIds: args.siteIds, fromDate: args.fromDate, toDate: args.toDate };
+  }
+  return { ...snapshot.current, enabled: activated.current };
+}
+
 // ============================================================================
 // Tickets
 // ============================================================================
@@ -145,6 +193,10 @@ export interface TicketsDashboardData {
   breakdown: TicketsBreakdownData | null;
   workforce: TicketsWorkforceData | null;
   quality: TicketsQualityData | null;
+  byTenant: TicketsByTenantRow[];
+  csat: TicketsCsatData | null;
+  approachingEscalation: TicketsApproachingEscalationData | null;
+  categoryComparison: TicketsCategoryComparisonRow[];
 }
 
 const EMPTY_TICKETS_DATA: TicketsDashboardData = {
@@ -153,9 +205,17 @@ const EMPTY_TICKETS_DATA: TicketsDashboardData = {
   breakdown: null,
   workforce: null,
   quality: null,
+  byTenant: [],
+  csat: null,
+  approachingEscalation: null,
+  categoryComparison: [],
 };
 
-export function useTicketsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+// Secondary endpoints must never take the whole module down if one of them errors.
+const optional = <T,>(request: Promise<T>): Promise<T | null> => request.catch(() => null);
+
+export function useTicketsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<TicketsDashboardData>(EMPTY_TICKETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -174,10 +234,24 @@ export function useTicketsDashboardData({ siteIds, fromDate, toDate, enabled }: 
       fetchTicketsBreakdown(params),
       fetchTicketsWorkforce(params),
       fetchTicketsQuality(params),
+      optional(fetchTicketsByTenant(params)),
+      optional(fetchTicketsCsat(params)),
+      optional(fetchTicketsApproachingEscalation(params)),
+      optional(fetchTicketsCategoryComparison(params)),
     ])
-      .then(([overview, trends, breakdown, workforce, quality]) => {
+      .then(([overview, trends, breakdown, workforce, quality, byTenant, csat, approachingEscalation, categoryComparison]) => {
         if (cancelled) return;
-        setData({ overview, trends, breakdown, workforce, quality });
+        setData({
+          overview,
+          trends,
+          breakdown,
+          workforce,
+          quality,
+          byTenant: byTenant ?? [],
+          csat,
+          approachingEscalation,
+          categoryComparison: categoryComparison ?? [],
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -214,7 +288,8 @@ const EMPTY_ASSETS_DATA: AssetsDashboardData = {
   maintenance: null,
 };
 
-export function useAssetsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAssetsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AssetsDashboardData>(EMPTY_ASSETS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -272,7 +347,8 @@ const EMPTY_AUDIT_DATA: AuditDashboardData = {
   findings: null,
 };
 
-export function useAuditDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAuditDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AuditDashboardData>(EMPTY_AUDIT_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -330,7 +406,8 @@ const EMPTY_AMC_DATA: AmcDashboardData = {
   coverage: null,
 };
 
-export function useAmcDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAmcDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AmcDashboardData>(EMPTY_AMC_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -383,7 +460,8 @@ const EMPTY_CHECKLISTS_DATA: ChecklistsDashboardData = {
   findings: null,
 };
 
-export function useChecklistsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useChecklistsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<ChecklistsDashboardData>(EMPTY_CHECKLISTS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -432,6 +510,7 @@ export interface InventoryDashboardData {
   stockHealth: InventoryStockHealthData | null;
   consumption: InventoryConsumptionData | null;
   operations: InventoryOperationsData | null;
+  kpisTable: unknown;
 }
 
 const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
@@ -439,9 +518,11 @@ const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
   stockHealth: null,
   consumption: null,
   operations: null,
+  kpisTable: null,
 };
 
-export function useInventoryDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<InventoryDashboardData>(EMPTY_INVENTORY_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -459,10 +540,11 @@ export function useInventoryDashboardData({ siteIds, fromDate, toDate, enabled }
       fetchInventoryStockHealth(params),
       fetchInventoryConsumption(params),
       fetchInventoryOperations(params),
+      fetchInventoryKpisTable(params),
     ])
-      .then(([overview, stockHealth, consumption, operations]) => {
+      .then(([overview, stockHealth, consumption, operations, kpisTable]) => {
         if (cancelled) return;
-        setData({ overview, stockHealth, consumption, operations });
+        setData({ overview, stockHealth, consumption, operations, kpisTable });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -490,6 +572,7 @@ export interface WasteDashboardData {
   breakdown: WasteBreakdownData | null;
   trend: WasteTrendData | null;
   vendor: WasteVendorData | null;
+  records: unknown;
 }
 
 const EMPTY_WASTE_DATA: WasteDashboardData = {
@@ -497,9 +580,11 @@ const EMPTY_WASTE_DATA: WasteDashboardData = {
   breakdown: null,
   trend: null,
   vendor: null,
+  records: null,
 };
 
-export function useWasteDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useWasteDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<WasteDashboardData>(EMPTY_WASTE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -512,10 +597,16 @@ export function useWasteDashboardData({ siteIds, fromDate, toDate, enabled }: Us
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([fetchWasteOverview(params), fetchWasteBreakdown(params), fetchWasteTrend(params), fetchWasteVendor(params)])
-      .then(([overview, breakdown, trend, vendor]) => {
+    Promise.all([
+      fetchWasteOverview(params),
+      fetchWasteBreakdown(params),
+      fetchWasteTrend(params),
+      fetchWasteVendor(params),
+      fetchWasteRecords(params),
+    ])
+      .then(([overview, breakdown, trend, vendor, records]) => {
         if (cancelled) return;
-        setData({ overview, breakdown, trend, vendor });
+        setData({ overview, breakdown, trend, vendor, records });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -543,6 +634,7 @@ export interface AttendanceDashboardData {
   department: AttendanceDepartmentData | null;
   trend: AttendanceTrendData | null;
   patterns: AttendancePatternsData | null;
+  staffingGapVsBreach: unknown;
 }
 
 const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
@@ -550,9 +642,11 @@ const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
   department: null,
   trend: null,
   patterns: null,
+  staffingGapVsBreach: null,
 };
 
-export function useAttendanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useAttendanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<AttendanceDashboardData>(EMPTY_ATTENDANCE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -570,10 +664,11 @@ export function useAttendanceDashboardData({ siteIds, fromDate, toDate, enabled 
       fetchAttendanceDepartment(params),
       fetchAttendanceTrend(params),
       fetchAttendancePatterns(params),
+      fetchAttendanceStaffingGapVsBreach(params),
     ])
-      .then(([overview, department, trend, patterns]) => {
+      .then(([overview, department, trend, patterns, staffingGapVsBreach]) => {
         if (cancelled) return;
-        setData({ overview, department, trend, patterns });
+        setData({ overview, department, trend, patterns, staffingGapVsBreach });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -601,6 +696,7 @@ export interface SurveyDashboardData {
   breakdown: SurveyBreakdownData | null;
   trend: SurveyTrendData | null;
   timing: SurveyTimingData | null;
+  weeklyCsatBreakdown: unknown;
 }
 
 const EMPTY_SURVEY_DATA: SurveyDashboardData = {
@@ -608,9 +704,11 @@ const EMPTY_SURVEY_DATA: SurveyDashboardData = {
   breakdown: null,
   trend: null,
   timing: null,
+  weeklyCsatBreakdown: null,
 };
 
-export function useSurveyDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<SurveyDashboardData>(EMPTY_SURVEY_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -623,10 +721,16 @@ export function useSurveyDashboardData({ siteIds, fromDate, toDate, enabled }: U
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([fetchSurveyOverview(params), fetchSurveyBreakdown(params), fetchSurveyTrend(params), fetchSurveyTiming(params)])
-      .then(([overview, breakdown, trend, timing]) => {
+    Promise.all([
+      fetchSurveyOverview(params),
+      fetchSurveyBreakdown(params),
+      fetchSurveyTrend(params),
+      fetchSurveyWeeklyCsatBreakdown(params),
+      fetchSurveyTiming(params),
+    ])
+      .then(([overview, breakdown, trend, weeklyCsatBreakdown, timing]) => {
         if (cancelled) return;
-        setData({ overview, breakdown, trend, timing });
+        setData({ overview, breakdown, trend, weeklyCsatBreakdown, timing });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -654,6 +758,14 @@ export interface VendorDashboardData {
   performance: VendorPerformanceData | null;
   repeatIssues: VendorRepeatIssuesData | null;
   kycRisk: VendorKycRiskData | null;
+  performanceTable: VendorPerformanceTableRow[];
+  performanceScore: VendorPerformanceScoreData | null;
+  onTimeCompletion: VendorOnTimeCompletionData | null;
+  health: VendorHealthData | null;
+  contractRenewals: VendorContractRenewalsData | null;
+  responseTrend: VendorResponseTrendData | null;
+  workflowBottlenecks: VendorWorkflowBottlenecksData | null;
+  kycStatus: VendorKycStatusData | null;
 }
 
 const EMPTY_VENDOR_DATA: VendorDashboardData = {
@@ -661,9 +773,18 @@ const EMPTY_VENDOR_DATA: VendorDashboardData = {
   performance: null,
   repeatIssues: null,
   kycRisk: null,
+  performanceTable: [],
+  performanceScore: null,
+  onTimeCompletion: null,
+  health: null,
+  contractRenewals: null,
+  responseTrend: null,
+  workflowBottlenecks: null,
+  kycStatus: null,
 };
 
-export function useVendorDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useVendorDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<VendorDashboardData>(EMPTY_VENDOR_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -681,10 +802,45 @@ export function useVendorDashboardData({ siteIds, fromDate, toDate, enabled }: U
       fetchVendorPerformance(params),
       fetchVendorRepeatIssues(params),
       fetchVendorKycRisk(params),
+      optional(fetchVendorPerformanceTable(params)),
+      optional(fetchVendorPerformanceScore(params)),
+      optional(fetchVendorOnTimeCompletion(params)),
+      optional(fetchVendorHealth(params)),
+      optional(fetchVendorContractRenewals(params)),
+      optional(fetchVendorResponseTrend(params)),
+      optional(fetchVendorWorkflowBottlenecks(params)),
+      optional(fetchVendorKycStatus(params)),
     ])
-      .then(([overview, performance, repeatIssues, kycRisk]) => {
+      .then(
+        ([
+          overview,
+          performance,
+          repeatIssues,
+          kycRisk,
+          performanceTable,
+          performanceScore,
+          onTimeCompletion,
+          health,
+          contractRenewals,
+          responseTrend,
+          workflowBottlenecks,
+          kycStatus,
+        ]) => {
         if (cancelled) return;
-        setData({ overview, performance, repeatIssues, kycRisk });
+        setData({
+          overview,
+          performance,
+          repeatIssues,
+          kycRisk,
+          performanceTable: performanceTable ?? [],
+          performanceScore,
+          onTimeCompletion,
+          health,
+          contractRenewals,
+          responseTrend,
+          workflowBottlenecks,
+          kycStatus,
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -719,7 +875,8 @@ const EMPTY_PERMITS_DATA: PermitsDashboardData = {
   detail: null,
 };
 
-export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function usePermitsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<PermitsDashboardData>(EMPTY_PERMITS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -730,6 +887,7 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(EMPTY_PERMITS_DATA);
 
     const params = { siteIds, fromDate, toDate };
     Promise.all([fetchPermitsOverview(params), fetchPermitsBottleneck(params), fetchPermitsDetail(params)])
@@ -739,6 +897,7 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        setData(EMPTY_PERMITS_DATA);
         setError(err instanceof Error ? err.message : "Failed to load permits dashboard data");
       })
       .finally(() => {
@@ -759,20 +918,21 @@ export function usePermitsDashboardData({ siteIds, fromDate, toDate, enabled }: 
 // ============================================================================
 
 export interface IncidentsDashboardData {
-  overview: IncidentsOverviewData | null;
+  kpis: IncidentKpisData | null;
   trend: IncidentsTrendData | null;
   analysis: IncidentsAnalysisData | null;
   hotspots: IncidentsHotspotsData | null;
 }
 
 const EMPTY_INCIDENTS_DATA: IncidentsDashboardData = {
-  overview: null,
+  kpis: null,
   trend: null,
   analysis: null,
   hotspots: null,
 };
 
-export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useIncidentsDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<IncidentsDashboardData>(EMPTY_INCIDENTS_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -783,20 +943,22 @@ export function useIncidentsDashboardData({ siteIds, fromDate, toDate, enabled }
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(EMPTY_INCIDENTS_DATA);
 
     const params = { siteIds, fromDate, toDate };
     Promise.all([
-      fetchIncidentsOverview(params),
+      fetchIncidentKpis(siteIds),
       fetchIncidentsTrend(params),
       fetchIncidentsAnalysis(params),
       fetchIncidentsHotspots(params),
     ])
-      .then(([overview, trend, analysis, hotspots]) => {
+      .then(([kpis, trend, analysis, hotspots]) => {
         if (cancelled) return;
-        setData({ overview, trend, analysis, hotspots });
+        setData({ kpis, trend, analysis, hotspots });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        setData(EMPTY_INCIDENTS_DATA);
         setError(err instanceof Error ? err.message : "Failed to load incidents dashboard data");
       })
       .finally(() => {
@@ -839,7 +1001,8 @@ const EMPTY_CRM_DATA: CrmDashboardData = {
   eventsInsight: null,
 };
 
-export function useCrmDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useCrmDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<CrmDashboardData>(EMPTY_CRM_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -963,7 +1126,8 @@ const EMPTY_FINANCE_DATA: FinanceDashboardData = {
   poWoGrnSesInsight: null,
 };
 
-export function useFinanceDashboardData({ siteIds, fromDate, toDate, enabled }: UseFmDashboardModuleArgs) {
+export function useFinanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+  const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
   const [data, setData] = useState<FinanceDashboardData>(EMPTY_FINANCE_DATA);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

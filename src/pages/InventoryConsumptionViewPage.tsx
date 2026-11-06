@@ -158,6 +158,15 @@ const InventoryConsumptionViewPage = () => {
     return "";
   };
 
+  // Backend sends consumption_type as lower-case snake_case (e.g. "issue_to_site");
+  // show it title-cased without underscores ("Issue to Site").
+  const formatConsumptionType = (value: unknown): string => {
+    if (value === null || value === undefined || value === "") return "-";
+    const text = String(value).replace(/_/g, " ").replace(/\s+/g, " ").trim();
+    if (!text) return "-";
+    return text.replace(/\b\w/g, (ch) => ch.toUpperCase());
+  };
+
   // Render cell content for EnhancedTable
   const renderCell = useCallback((item: any, columnKey: string) => {
     switch (columnKey) {
@@ -171,9 +180,8 @@ const InventoryConsumptionViewPage = () => {
         );
       case "add_or_consume": {
         const type = String(item?.consumption_type || "").toLowerCase();
-        const isNegative = ["consume", "lost", "breakage", "spillage"].includes(
-          type
-        );
+        // Everything except Add (and rows with no type) is stock going out.
+        const isNegative = Boolean(type) && type !== "add";
         return (
           <span
             className={`${ledgerNumericCellClass} font-medium ${isNegative ? "text-red-500" : "text-green-500"}`}
@@ -189,7 +197,7 @@ const InventoryConsumptionViewPage = () => {
       case "consumption_type":
         return (
           <span className={ledgerIdentifierCellClass}>
-            {item?.consumption_type || "-"}
+            {formatConsumptionType(item?.consumption_type)}
           </span>
         );
       case "building":

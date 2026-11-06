@@ -50,6 +50,9 @@ import {
   UnifiedAnalyticsSelector,
   dashboardAnalyticsOptions,
   executiveAnalyticsOptions,
+  syncTicketTypeWiseCard,
+  TICKET_TYPE_WISE_ANALYTIC,
+  TICKET_TYPE_WISE_ID,
 } from "@/components/dashboard/UnifiedAnalyticsSelector";
 import { UnifiedDateRangeFilter } from "@/components/dashboard/UnifiedDateRangeFilter";
 import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
@@ -123,6 +126,7 @@ import { TicketAgingClosureFeedbackCard } from "@/components/helpdesk/TicketAgin
 import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerformanceMetricsCard";
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
+import { TicketTypeWiseCard } from "@/components/helpdesk/TicketTypeWiseCard";
 import { UnitCategoryWiseProactiveCard } from "@/components/helpdesk/UnitCategoryWiseProactiveCard";
 import { CommonAreaCategoryWiseCard } from "@/components/helpdesk/CommonAreaCategoryWiseCard";
 import { CommonAreaCategoryWiseProactiveCard } from "@/components/helpdesk/CommonAreaCategoryWiseProactiveCard";
@@ -438,6 +442,18 @@ const buildAssetGroupChartData = (data: any) => {
 };
 
 // Sortable Chart Item Component for Drag and Drop
+/**
+ * Puts `id`'s card at the very top of the grid. Cards that sat above it shift down by its height so
+ * nothing overlaps; react-grid-layout's vertical compaction then closes any gap.
+ */
+const moveLayoutToTop = (layouts: GridLayout.Layout[], id: string): GridLayout.Layout[] => {
+  const item = layouts.find((l) => l.i === id);
+  if (!item || item.y === 0) return layouts;
+  return layouts.map((l) =>
+    l.i === id ? { ...l, y: 0 } : l.y < item.y ? { ...l, y: l.y + item.h } : l
+  );
+};
+
 const SortableChartItem = ({
   id,
   children,
@@ -636,6 +652,9 @@ export const Dashboard = () => {
   >({});
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
+  // Ticket type ("technical", "non-technical", ...) chosen in the Ticket Type Wise card's dropdown.
+  // Passed to the ticket / helpdesk endpoints below; "all" sends no filter.
+  const [ticketTypeFilter, setTicketTypeFilter] = useState<string>("all");
   const [layouts, setLayouts] = useState<GridLayout.Layout[]>([]);
 
   // Rendered height (px) of each chart's open AI Insights panel, keyed by layout id.
@@ -685,6 +704,13 @@ export const Dashboard = () => {
         };
       });
     });
+    if (isExecutiveDashboard) {
+      catalog[TICKET_TYPE_WISE_ANALYTIC.id] = {
+        module: TICKET_TYPE_WISE_ANALYTIC.module,
+        endpoint: TICKET_TYPE_WISE_ANALYTIC.endpoint,
+        title: TICKET_TYPE_WISE_ANALYTIC.title,
+      };
+    }
     return catalog;
   }, [isExecutiveDashboard]);
 
@@ -700,6 +726,14 @@ export const Dashboard = () => {
       })),
     [myDashboardCards]
   );
+
+  // The filter only applies while the Ticket Type Wise card (which owns the dropdown) is on screen
+  // — selected here or pinned to My Dashboard — so a hidden card can never silently filter others.
+  const ticketTypeCardVisible =
+    selectedAnalytics.some((a) => a.endpoint === TICKET_TYPE_WISE_ANALYTIC.endpoint) ||
+    pinnedAnalytics.some((a) => a.endpoint === TICKET_TYPE_WISE_ANALYTIC.endpoint);
+  const ticketTypeFilterValue =
+    ticketTypeCardVisible && ticketTypeFilter !== "all" ? ticketTypeFilter : undefined;
 
   const myDashboardLayout: GridLayout.Layout[] = React.useMemo(
     () =>
@@ -996,7 +1030,18 @@ export const Dashboard = () => {
           }
           return item;
         });
-        setLayouts(migratedLayout);
+        // One-time: an already-saved Ticket Type Wise card was added at the bottom/middle before it
+        // was meant to lead — move it to the top once, then respect wherever the user drags it.
+        const topFlagKey = `${storagePrefix}DashboardTicketTypeAtTop-v1`;
+        let layoutToApply = migratedLayout;
+        if (!localStorage.getItem(topFlagKey)) {
+          layoutToApply = moveLayoutToTop(migratedLayout, TICKET_TYPE_WISE_ID);
+          localStorage.setItem(topFlagKey, "1");
+          if (layoutToApply !== migratedLayout) {
+            localStorage.setItem(`${storagePrefix}DashboardGridLayout`, JSON.stringify(layoutToApply));
+          }
+        }
+        setLayouts(layoutToApply);
       } catch (e) {
         console.error("❌ Failed to parse saved layout", e);
       }
@@ -1006,9 +1051,13 @@ export const Dashboard = () => {
       try {
         // Re-derive module from the catalog: asset cards saved under
         // "asset_management" earlier must run under "assets" to be fetched.
-        const parsedAnalytics = (JSON.parse(savedAnalytics) as SelectedAnalytic[]).map((a) =>
+        const rehydratedAnalytics = (JSON.parse(savedAnalytics) as SelectedAnalytic[]).map((a) =>
           analyticsCatalogById[a.id] ? { ...a, module: analyticsCatalogById[a.id].module } : a
         );
+        // Ticket Type Wise is derived from the Helpdesk selection — re-sync rather than trust storage.
+        const parsedAnalytics = isExecutiveDashboard
+          ? syncTicketTypeWiseCard(rehydratedAnalytics)
+          : rehydratedAnalytics;
         console.log("✅ Parsed saved analytics:", parsedAnalytics);
         setSelectedAnalytics(parsedAnalytics);
         // Pre-mark every saved analytic as loading so the spinner shows
@@ -1240,7 +1289,15 @@ export const Dashboard = () => {
 
     // Remove layouts for cards that are no longer selected
     const selectedIds = selectedAnalytics.map(a => a.id);
-    const filteredLayouts = newLayouts.filter(layout => selectedIds.includes(layout.i));
+    let filteredLayouts = newLayouts.filter(layout => selectedIds.includes(layout.i));
+
+    // Ticket Type Wise appears first: when it's newly added, put it at the top and push the rest down.
+    const typeCard = filteredLayouts.find((l) => l.i === TICKET_TYPE_WISE_ID);
+    if (typeCard && !layouts.some((l) => l.i === TICKET_TYPE_WISE_ID)) {
+      filteredLayouts = filteredLayouts.map((l) =>
+        l.i === TICKET_TYPE_WISE_ID ? { ...l, y: 0 } : { ...l, y: l.y + typeCard.h }
+      );
+    }
 
     setLayouts(filteredLayouts);
   }, [selectedAnalytics]);
@@ -1283,6 +1340,29 @@ export const Dashboard = () => {
       };
       const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}&site_${selectedSite}`;
 
+      // Endpoints that honour the Ticket Type Wise dropdown. Their cache key also carries the chosen
+      // type so changing it refetches just these cards, not every other module on the dashboard.
+      const TYPE_FILTERED_ENDPOINTS = new Set([
+        "tickets:ticket_status",
+        "tickets:tickets_proactive_reactive",
+        "tickets:ticket_aging_matrix",
+        "tickets:response_tat",
+        "tickets:tickets_response_tat",
+        "tickets:resolution_tat",
+        "tickets:tickets_resolution_tat",
+        "helpdesk:aging_closure_feedback",
+        "helpdesk:ticket_performance_metrics",
+        "helpdesk:customer_experience_feedback",
+        "helpdesk:customer_rating_overview",
+        "helpdesk:response_tat_performance_quarterly",
+        "helpdesk:resolution_tat_performance_quarterly",
+        "helpdesk:unit_categorywise_proactive",
+      ]);
+      const cacheKeyFor = (mod: string, endpoint: string) =>
+        TYPE_FILTERED_ENDPOINTS.has(`${mod}:${endpoint}`)
+          ? `${dateKey}&type_${ticketTypeFilterValue ?? "all"}`
+          : dateKey;
+
       // Group analytics by module to minimize API calls
       const moduleGroups = analyticsToFetch.reduce((groups, analytic) => {
         if (!groups[analytic.module]) groups[analytic.module] = [];
@@ -1297,7 +1377,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                dateKey &&
+                cacheKeyFor(module, analytic.endpoint) &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 // Use cached data to keep Promise order alignment and avoid network hit
@@ -1310,7 +1390,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                dateKey &&
+                cacheKeyFor(module, analytic.endpoint) &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1336,7 +1416,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1345,7 +1426,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1354,7 +1436,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getTicketAgingMatrix(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1374,7 +1457,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getResponseTATData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1384,7 +1468,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getResolutionTATReportData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1958,7 +2043,7 @@ export const Dashboard = () => {
             for (const analytic of analytics) {
               const cachedOk =
                 (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                dateKey &&
+                cacheKeyFor(module, analytic.endpoint) &&
                 (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
               if (cachedOk) {
                 promises.push(
@@ -1970,7 +2055,7 @@ export const Dashboard = () => {
               }
               const failedSameRange =
                 (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                dateKey &&
+                cacheKeyFor(module, analytic.endpoint) &&
                 ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
                   null) != null;
               if (failedSameRange) {
@@ -1994,7 +2079,8 @@ export const Dashboard = () => {
                     helpdeskAnalyticsAPI.getAgingClosureFeedbackOverview(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -2003,7 +2089,8 @@ export const Dashboard = () => {
                     helpdeskAnalyticsAPI.getTicketPerformanceMetrics(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -2012,7 +2099,8 @@ export const Dashboard = () => {
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -2022,7 +2110,8 @@ export const Dashboard = () => {
                     helpdeskAnalyticsAPI.getCustomerExperienceFeedback(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -2031,13 +2120,24 @@ export const Dashboard = () => {
                     helpdeskAnalyticsAPI.getResponseTATQuarterly(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
                 case "resolution_tat_performance_quarterly":
                   promises.push(
                     helpdeskAnalyticsAPI.getResolutionTATQuarterly(
+                      dateRange.from!,
+                      dateRange.to!,
+                      activeSiteIds,
+                      ticketTypeFilterValue
+                    )
+                  );
+                  break;
+                case "chart_ticket_type_wise":
+                  promises.push(
+                    helpdeskAnalyticsAPI.getTicketTypeWise(
                       dateRange.from!,
                       dateRange.to!,
                       activeSiteIds
@@ -2049,7 +2149,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getUnitCategorywiseProactiveData(
                       dateRange.from!,
                       dateRange.to!,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -2797,7 +2898,7 @@ export const Dashboard = () => {
             );
             moduleData[analytic.endpoint] = result.value;
             moduleErrs[analytic.endpoint] = null;
-            moduleFetched[analytic.endpoint] = dateKey;
+            moduleFetched[analytic.endpoint] = cacheKeyFor(module, analytic.endpoint);
             // on success, clear any previous failed state
             if ((lastFailedKey as any)?.[module]?.[analytic.endpoint]) {
               // defer clearing by not setting failed key for this endpoint
@@ -2813,7 +2914,7 @@ export const Dashboard = () => {
                 "Request failed";
               updatedFailedKeys[module as keyof DashboardData] = {
                 ...((updatedFailedKeys as any)[module] || {}),
-                [analytic.endpoint]: dateKey,
+                [analytic.endpoint]: cacheKeyFor(module, analytic.endpoint),
               } as any;
             } else {
               const msg =
@@ -2829,7 +2930,7 @@ export const Dashboard = () => {
               moduleErrs[analytic.endpoint] = msg;
               updatedFailedKeys[module as keyof DashboardData] = {
                 ...((updatedFailedKeys as any)[module] || {}),
-                [analytic.endpoint]: dateKey,
+                [analytic.endpoint]: cacheKeyFor(module, analytic.endpoint),
               } as any;
             }
           }
@@ -2887,9 +2988,16 @@ export const Dashboard = () => {
     ) {
       fetchAnalyticsData();
     }
-  }, [selectedAnalytics, pinnedAnalytics, dateRange, selectedSite]);
+  }, [selectedAnalytics, pinnedAnalytics, dateRange, selectedSite, ticketTypeFilterValue]);
 
-  const handleAnalyticsSelectionChange = (analytics: SelectedAnalytic[]) => {
+  const handleAnalyticsSelectionChange = (selection: SelectedAnalytic[]) => {
+    // On the executive dashboard, "Ticket Type Wise Distribution" tracks the Helpdesk selection:
+    // present while any Helpdesk chart is selected, removed when none are.
+    const analytics = isExecutiveDashboard ? syncTicketTypeWiseCard(selection) : selection;
+    // Once the card (and its dropdown) is gone, drop the chosen type so it doesn't come back stale.
+    if (!analytics.some((a) => a.endpoint === TICKET_TYPE_WISE_ANALYTIC.endpoint)) {
+      setTicketTypeFilter("all");
+    }
     setSelectedAnalytics(analytics);
     // Pre-mark every selected analytic as loading so newly added cards show
     // a spinner immediately rather than flashing empty content.
@@ -4417,6 +4525,18 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
+          case "chart_ticket_type_wise": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <TicketTypeWiseCard
+                  title={analytic.title}
+                  data={rawData}
+                  selectedType={ticketTypeFilter}
+                  onTypeChange={setTicketTypeFilter}
+                />
+              </SortableChartItem>
+            );
+          }
           case "unit_categorywise_proactive": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
@@ -5534,7 +5654,28 @@ export const Dashboard = () => {
   const ROW_GAP = 12;
 
   const effectiveLayouts = React.useMemo(() => {
-    const base = layouts || [];
+    const saved = layouts || [];
+    // A selected card with no saved layout (e.g. the derived Ticket Type Wise card appearing for
+    // a selection restored from localStorage) would otherwise fall back to react-grid-layout's
+    // 1x1 default — give it a full-width slot below the existing cards instead.
+    const missing = (selectedAnalytics || []).filter((a) => !saved.some((l) => l.i === a.id));
+    let base = saved;
+    if (missing.length > 0) {
+      // The Ticket Type Wise card leads the grid; anything else missing goes below the existing cards.
+      const leading = missing.filter((a) => a.id === TICKET_TYPE_WISE_ID);
+      const trailing = missing.filter((a) => a.id !== TICKET_TYPE_WISE_ID);
+      const leadH = leading.length ? 8 : 0;
+      let nextY = (saved.length > 0 ? Math.max(...saved.map((l) => l.y + l.h)) : 0) + leadH;
+      base = [
+        ...leading.map((a) => ({ i: a.id, x: 0, y: 0, w: 12, h: 8, minW: 4, minH: 6 })),
+        ...saved.map((l) => (leadH ? { ...l, y: l.y + leadH } : l)),
+        ...trailing.map((a) => {
+          const item = { i: a.id, x: 0, y: nextY, w: 12, h: 8, minW: 4, minH: 6 };
+          nextY += item.h;
+          return item;
+        }),
+      ];
+    }
     if (!Object.keys(insightHeights).length) return base;
     return base.map((item) => {
       const px = insightHeights[item.i];
@@ -5542,7 +5683,7 @@ export const Dashboard = () => {
       const extraRows = Math.ceil((px + ROW_GAP) / (ROW_H + ROW_GAP));
       return { ...item, h: item.h + extraRows };
     });
-  }, [layouts, insightHeights]);
+  }, [layouts, selectedAnalytics, insightHeights]);
 
   return (
     <>

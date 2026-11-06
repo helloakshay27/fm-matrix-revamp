@@ -95,7 +95,7 @@ export const AuditDetailView = ({
                 { label: "Date of Audit", value: audit.basic.dateOfAudit },
                 { label: "Circle", value: audit.basic.circle },
                 { label: "Personnel Area", value: audit.basic.personnelArea },
-                { label: "Work Location", value: audit.basic.workLocation },
+                { label: "Zone", value: audit.basic.zone },
                 { label: "Type of Facility", value: audit.basic.facilityType },
                 { label: "Function", value: audit.basic.function },
                 { label: "Audit Location", value: audit.basic.auditLocation, span: true },

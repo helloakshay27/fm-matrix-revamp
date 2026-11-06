@@ -12,6 +12,7 @@ import {
 import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 import {
   AutocompleteLabel,
   UserSelectField,
@@ -85,7 +86,7 @@ interface BasicDraft {
   inspection_date: string;
   circle_id: string;
   personal_area_id: string;
-  work_location_id: string;
+  zone_id: string;
   inspection_type_id: string;
   inspector_location: string;
   inspection_site_id: string;
@@ -97,7 +98,7 @@ const EMPTY_BASIC: BasicDraft = {
   inspection_date: todayIso(),
   circle_id: "",
   personal_area_id: "",
-  work_location_id: "",
+  zone_id: "",
   inspection_type_id: "",
   inspector_location: "",
   inspection_site_id: "",
@@ -124,6 +125,7 @@ const InspectionInspectorAddPage = () => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [basic, setBasicState] = useState<BasicDraft>(EMPTY_BASIC);
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(basic.circle_id);
   const [answers, setAnswers] = useState<Record<string, AnswerDraft>>({});
   const [spoc, setSpoc] = useState<ViActiveUserOption | null>(null);
   const [functionalHead, setFunctionalHead] =
@@ -142,7 +144,7 @@ const InspectionInspectorAddPage = () => {
       inspection_date: inspection.inspectionDate || todayIso(),
       circle_id: inspection.circleId,
       personal_area_id: inspection.personalAreaId,
-      work_location_id: inspection.workLocationId,
+      zone_id: inspection.zoneId,
       inspection_type_id: inspection.inspectionTypeId,
       inspector_location: inspection.inspectorLocation,
       inspection_site_id: inspection.inspectionSiteId,
@@ -265,7 +267,7 @@ const InspectionInspectorAddPage = () => {
       !basic.inspection_date && "Date of Inspection",
       !basic.circle_id && "Circle",
       !basic.personal_area_id && "Personnel Area",
-      !basic.work_location_id && "Work Location",
+      !basic.zone_id && "Zone",
       !basic.inspection_type_id && "Inspection Type",
       latLongRequired && !basic.inspection_site_id && "Inspection Location",
       latLongRequired && !geo.coords && "Current location (allow location access)",
@@ -483,7 +485,7 @@ const InspectionInspectorAddPage = () => {
                 label="Circle"
                 required
                 value={basic.circle_id}
-                onChange={(v) => setBasic({ circle_id: v })}
+                onChange={(v) => setBasic({ circle_id: v, zone_id: "" })}
                 options={masters.circles}
                 loading={mastersLoading}
                 placeholder="Select circle"
@@ -498,13 +500,14 @@ const InspectionInspectorAddPage = () => {
                 placeholder="Select personnel area"
               />
               <IncidentSelectField
-                label="Work Location"
+                label="Zone"
                 required
-                value={basic.work_location_id}
-                onChange={(v) => setBasic({ work_location_id: v })}
-                options={masters.workLocations}
-                loading={mastersLoading}
-                placeholder="Select work location"
+                value={basic.zone_id}
+                onChange={(v) => setBasic({ zone_id: v })}
+                options={zones}
+                loading={zonesLoading}
+                disabled={!basic.circle_id}
+                placeholder={zonePlaceholder}
               />
               <IncidentSelectField
                 label="Inspection Type"

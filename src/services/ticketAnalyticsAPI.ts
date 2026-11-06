@@ -216,6 +216,13 @@ const getCurrentSiteId = (): string => {
     new URLSearchParams(window.location.search).get('site_id') ;
 };
 
+/**
+ * Ticket-type filter from the dashboard's Ticket Type Wise card. `chart_resolution_tat_report`
+ * takes `type_eq`; the other chart endpoints take `category_type_type_eq`. Omitted for "all"/empty.
+ */
+const typeParam = (name: 'category_type_type_eq' | 'type_eq', categoryType?: string) =>
+  categoryType && categoryType !== 'all' ? `&${name}=${encodeURIComponent(categoryType)}` : '';
+
 export const ticketAnalyticsAPI = {
   // Get tickets categorywise proactive/reactive data
   async getTicketsCategorywiseData(fromDate: Date, toDate: Date, siteId?: string): Promise<TicketCategoryData[]> {
@@ -230,24 +237,24 @@ export const ticketAnalyticsAPI = {
   },
 
   // Get ticket status data
-  async getTicketStatusData(fromDate: Date, toDate: Date, siteId?: string): Promise<TicketStatusData> {
+  async getTicketStatusData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<TicketStatusData> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/ticket_status.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/ticket_status.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
     
     const response = await apiClient.get(url);
     return response.data;
   },
 
   // Get ticket aging matrix data
-  async getTicketAgingMatrix(fromDate: Date, toDate: Date, siteId?: string): Promise<TicketAgingMatrix> {
+  async getTicketAgingMatrix(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<TicketAgingMatrix> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
     
     const response = await apiClient.get(url);
     return response.data;
@@ -274,12 +281,12 @@ export const ticketAnalyticsAPI = {
   },
 
   // Get unit categorywise data — proactive tickets only
-  async getUnitCategorywiseProactiveData(fromDate: Date, toDate: Date, siteId?: string): Promise<UnitCategorywiseData> {
+  async getUnitCategorywiseProactiveData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<UnitCategorywiseData> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/admin/complaints/chart_unit_categorywise_proactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/chart_unit_categorywise_proactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
 
     const response = await apiClient.get(url);
     return response.data;
@@ -310,12 +317,12 @@ export const ticketAnalyticsAPI = {
   },
 
   // Get response TAT data
-  async getResponseTATData(fromDate: Date, toDate: Date, siteId?: string): Promise<ResponseTATData> {
+  async getResponseTATData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<ResponseTATData> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/chart_response_tat.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/chart_response_tat.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
     
     const response = await apiClient.get(url);
     return response.data;
@@ -334,12 +341,12 @@ export const ticketAnalyticsAPI = {
   },
 
   // Get resolution TAT report data
-  async getResolutionTATReportData(fromDate: Date, toDate: Date, siteId?: string): Promise<ResolutionTATReportData> {
+  async getResolutionTATReportData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<ResolutionTATReportData> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('type_eq', categoryType)}`;
 
     const response = await apiClient.get(url);
     return response.data;
