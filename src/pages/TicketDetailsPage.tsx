@@ -4454,14 +4454,14 @@ export const TicketDetailsPage = () => {
                 >
                   Job Sheet
                 </Button>
-                {isTicketClosed && (
+                {/* {isTicketClosed && (
                   <Button
                     onClick={() => setIsFeedbackModalOpen(true)}
                     className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                   >
                     Add Feedback
                   </Button>
-                )}
+                )} */}
               </>
             ) : (
               // Show Logs, Create Task, and Edit buttons for all other tabs
@@ -9119,7 +9119,9 @@ export const TicketDetailsPage = () => {
                             type="button"
                             title="View Ticket"
                             className="inline-flex items-center justify-center text-gray-600 hover:text-[#C72030]"
-                            onClick={() => navigate(`/tickets/details/${ticketData.parent_complaint.id}`)}
+                            // Stay in the current route family — /maintenance/ticket/details/:id renders inside the main
+                            // layout (sidebar + header); the standalone /tickets/details/:id route has neither.
+                            onClick={() => navigate(location.pathname.replace(/[^/]+\/?$/, String(ticketData.parent_complaint.id)))}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -12507,7 +12509,7 @@ export const TicketDetailsPage = () => {
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
                       <p className="text-gray-500">No feedbacks available</p>
-                      {isTicketClosed && (
+                      {/* {isTicketClosed && (
                         <Button
                           onClick={() => setIsFeedbackModalOpen(true)}
                           className="mt-3 bg-brand hover:bg-brand-hover text-white"
@@ -12515,7 +12517,7 @@ export const TicketDetailsPage = () => {
                         >
                           Add Feedback
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   )}
                 </CardContent>

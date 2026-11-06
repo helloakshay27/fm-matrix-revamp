@@ -41,7 +41,7 @@ export function StatusSummaryCard({
         <h3 className="text-brand-body-3 font-semibold text-brand-text">{title}</h3>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
           {metrics.map((metric, index) => (
             <div
               key={metric.label}

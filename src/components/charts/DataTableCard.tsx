@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,8 @@ export interface DataTableCardProps<T> {
   onRowClick?: (row: T) => void;
   insight?: string;
   className?: string;
+  /** Rows visible before the table body scrolls. Tables with fewer rows are not capped. Default 5. */
+  visibleRows?: number;
 }
 
 /**
@@ -74,7 +76,31 @@ export function DataTableCard<T>({
   onRowClick,
   insight,
   className,
+  visibleRows = 5,
 }: DataTableCardProps<T>) {
+  // Show `visibleRows` rows (plus the header) and scroll the rest inside the card, so long tables
+  // don't stretch the page. Row heights vary (badges, wrapped text), so measure the real rows.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || data.length <= visibleRows) {
+      setMaxHeight(undefined);
+      return;
+    }
+    const measure = () => {
+      const head = el.querySelector("thead")?.getBoundingClientRect().height ?? 0;
+      const rows = Array.from(el.querySelectorAll("tbody tr")).slice(0, visibleRows);
+      const body = rows.reduce((sum, row) => sum + row.getBoundingClientRect().height, 0);
+      if (body > 0) setMaxHeight(Math.ceil(head + body));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [data, visibleRows]);
+
   return (
     <Card className={cn("border-brand-border", className)}>
       <CardHeader className="pb-2">
@@ -83,14 +109,19 @@ export function DataTableCard<T>({
       </CardHeader>
       <CardContent>
         <div className="rounded-xl overflow-hidden border border-brand-border">
-          <div className="overflow-x-auto">
+          {/* no-drag: lets the scrollbar be grabbed without dragging the grid card. */}
+          <div
+            ref={scrollRef}
+            className="no-drag overflow-auto"
+            style={maxHeight ? { maxHeight } : undefined}
+          >
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr>
                   {columns.map((col) => (
                     <th
                       key={col.key}
-                      className="analytics-header bg-brand text-white font-semibold text-xs px-4 py-3 whitespace-nowrap text-center"
+                      className="analytics-header sticky top-0 z-10 bg-brand text-white font-semibold text-xs px-4 py-3 whitespace-nowrap text-center"
                     >
                       {col.header}
                     </th>

@@ -30,7 +30,7 @@ export function FilterPillBar({
   className,
 }: FilterPillBarProps) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
       {segments && segments.length > 0 && (
         <div className="flex rounded-full border border-brand-border overflow-hidden">
           {segments.map((segment) => {
@@ -56,11 +56,11 @@ export function FilterPillBar({
         <button
           type="button"
           onClick={onGoldenToggle}
+          aria-pressed={!!goldenActive}
+          // veda-chip: the same pill as the sub-tab chips (Tickets / Assets / Audit…); "on" = dark.
           className={cn(
-            "flex items-center gap-1 rounded-full border px-2.5 py-1 text-brand-caption font-medium transition-colors",
-            goldenActive
-              ? "bg-brand-warning border-brand-warning text-[#5C4A00]"
-              : "bg-white border-brand-border text-brand-green"
+            "veda-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+            goldenActive ? "on" : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
           )}
         >
           <Trophy className="w-3 h-3" />
@@ -72,11 +72,10 @@ export function FilterPillBar({
         <button
           type="button"
           onClick={onRedFlagToggle}
+          aria-pressed={!!redFlagActive}
           className={cn(
-            "flex items-center gap-1 rounded-full border px-2.5 py-1 text-brand-caption font-medium transition-colors",
-            redFlagActive
-              ? "bg-brand border-brand text-white"
-              : "bg-white border-brand-border text-brand-green"
+            "veda-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-brand-caption font-semibold transition-colors whitespace-nowrap",
+            redFlagActive ? "on" : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
           )}
         >
           <Flag className="w-3 h-3" />

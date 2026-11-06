@@ -959,6 +959,19 @@ export const UnifiedAnalyticsSelector: React.FC<
   const getTotalSelectedCount = () =>
     selectedAnalytics.filter((analytic) => analytic.id !== TICKET_TYPE_WISE_ID).length;
 
+  const selectAllAnalytics = () => {
+    const allAnalytics: SelectedAnalytic[] = Object.entries(analyticsOptions).flatMap(
+      ([moduleKey, module]) =>
+        (module as any).options.map((option: any) => ({
+          id: option.id,
+          module: (option.module ?? moduleKey) as any,
+          endpoint: option.endpoint,
+          title: option.label,
+        }))
+    );
+    onSelectionChange(allAnalytics);
+  };
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

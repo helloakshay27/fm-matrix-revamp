@@ -8,38 +8,42 @@ export interface HeroStripItem {
 
 export interface HeroGradientStripCardProps {
   items: HeroStripItem[];
-  /** CSS gradient string — defaults to the terra→sage brand gradient used by the CRM hero strip in fm_matrix_phase10 (29).html */
+  /** Kept so existing callers compile. The strip is the Veda Gardens KPI band: grey fill, ink type, hairline dividers. */
   gradient?: string;
   className?: string;
 }
 
-const DEFAULT_GRADIENT = "linear-gradient(120deg, #B8694A 0%, #DA7756 45%, #798C5E 100%)";
-
 /**
- * Full-width gradient KPI strip — mirrors ".crm-hero"/".crm-hero-item" in
- * fm_matrix_phase10 (29).html. StatHeroCard is a tinted single tile; this is
- * a distinct wide banner of divided cells over one continuous gradient,
- * used as the top-of-module summary row.
+ * Full-width KPI strip for the CRM overview. Layout matches the phase 10
+ * ".crm-hero" row; colour matches the Veda Gardens ".kpis" band — grey card,
+ * ink numbers, colour reserved for status pills elsewhere.
  */
-export function HeroGradientStripCard({ items, gradient = DEFAULT_GRADIENT, className }: HeroGradientStripCardProps) {
+export function HeroGradientStripCard({ items, className }: HeroGradientStripCardProps) {
   return (
     <div
-      className={cn("rounded-xl px-1 py-3.5 flex flex-wrap", className)}
-      style={{ background: gradient }}
+      className={cn("flex h-full flex-wrap items-stretch rounded-2xl", className)}
+      style={{ background: "#F5F4F0" }}
     >
       {items.map((item, index) => (
         <div
           key={item.label}
-          className={cn(
-            "flex-1 min-w-[140px] text-center px-3",
-            index !== items.length - 1 && "border-r border-white/20"
-          )}
+          className="flex min-w-[140px] flex-1 flex-col justify-center px-5 py-3 text-center"
+          style={index === 0 ? undefined : { borderLeft: "1px solid rgba(26,26,24,0.06)" }}
         >
-          <div className="text-[8.5px] font-semibold uppercase tracking-wide text-white/80">{item.label}</div>
-          <div className="leading-tight mt-1" style={{ color: "#ffffff", fontSize: "18px", fontWeight: 700 }}>
+          <div className="text-[11.5px]" style={{ color: "rgba(26,26,24,0.68)" }}>
+            {item.label}
+          </div>
+          <div
+            className="mt-0.5 leading-tight"
+            style={{ color: "#1A1A18", fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em" }}
+          >
             {item.value}
           </div>
-          {item.subtitle && <div className="text-[9px] text-white/70 mt-0.5">{item.subtitle}</div>}
+          {item.subtitle && (
+            <div className="mt-0.5 text-[11.5px]" style={{ color: "rgba(26,26,24,0.48)" }}>
+              {item.subtitle}
+            </div>
+          )}
         </div>
       ))}
     </div>

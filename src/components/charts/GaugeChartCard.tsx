@@ -2,11 +2,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getVedaPieColor } from "@/styles/vedaTheme";
 import type { ChartInsightTone } from "./PieChartCard";
 
 export interface GaugeSegment {
   value: number;
-  color: string;
+  /** Accepted for callers. Arc colour is always the Veda palette by index. */
+  color?: string;
 }
 
 const INSIGHT_TONE_CLASSES: Record<ChartInsightTone, string> = {
@@ -53,8 +55,13 @@ export function GaugeChartCard({
   height = 200,
   className,
 }: GaugeChartCardProps) {
+  const coloredSegments = segments.map((s, index) => ({
+    ...s,
+    color: getVedaPieColor(index),
+  }));
+
   return (
-    <Card className={cn("border-brand-border relative", className)}>
+    <Card className={cn("border-brand-border relative veda-donut", className)}>
       {showInfoIcon && (
         <button
           type="button"
@@ -84,7 +91,7 @@ export function GaugeChartCard({
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
               <Pie
-                data={segments}
+                data={coloredSegments}
                 dataKey="value"
                 cx="50%"
                 cy="100%"
@@ -94,7 +101,7 @@ export function GaugeChartCard({
                 outerRadius="100%"
                 stroke="none"
               >
-                {segments.map((s, index) => (
+                {coloredSegments.map((s, index) => (
                   <Cell key={index} fill={s.color} />
                 ))}
               </Pie>
