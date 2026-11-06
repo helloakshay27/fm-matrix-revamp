@@ -168,7 +168,8 @@ export const Header = () => {
   // properties attach to the person and every subsequent event. Runs on mount
   // (values read from localStorage) and whenever the company/site changes.
   useEffect(() => {
-    const uid = getUser()?.id;
+    const u = getUser();
+    const uid = u?.id;
     if (!uid) return;
     // Desktop (Electron) exposes device name + LAN IP via the preload bridge.
     // In the browser build this is undefined and the fields are simply omitted.
