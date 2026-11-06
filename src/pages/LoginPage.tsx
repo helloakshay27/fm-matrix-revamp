@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Building2, Eye, EyeOff } from "lucide-react";
@@ -460,10 +461,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       sessionStorage.setItem("userId", response.id?.toString() || "");
       sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
-      // const from =
-      //   (location.state as { from?: Location })?.from?.pathname +
-      //     (location.state as { from?: Location })?.from?.search ||
-      //   "/maintenance/asset";
+      const fromLocation = (location.state as { from?: Location })?.from;
+      const from = fromLocation?.pathname
+        ? `${fromLocation.pathname}${fromLocation.search || ""}`
+        : "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
