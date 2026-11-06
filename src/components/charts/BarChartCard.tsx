@@ -92,6 +92,8 @@ export interface BarChartCardProps {
   unit?: string;
   /** "vertical" (default) = columns growing up. "horizontal" = rows growing sideways (e.g. category comparisons). */
   orientation?: "vertical" | "horizontal";
+  /** Render every category label instead of allowing Recharts to hide overlapping ticks. */
+  showAllCategoryLabels?: boolean;
   /** Stack all series into one bar per category instead of grouping them side by side. */
   stacked?: boolean;
   /** Accepted for callers. Single-series vertical bars take VEDA_BAR_PALETTE by category index; horizontal ones are VEDA_BAR_COLOR. */
@@ -124,6 +126,7 @@ export function BarChartCard({
   showInfoIcon = false,
   unit,
   orientation = "vertical",
+  showAllCategoryLabels = false,
   stacked = false,
   categoryColors,
   seriesColors,
@@ -162,6 +165,7 @@ export function BarChartCard({
       domain={isHorizontal ? undefined : valueDomain}
       ticks={isHorizontal ? undefined : valueTicks}
       tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
+      interval={isHorizontal && showAllCategoryLabels ? 0 : undefined}
       tickFormatter={isHorizontal ? undefined : (value: number) => `${value}${unit ?? ""}`}
     />
   );

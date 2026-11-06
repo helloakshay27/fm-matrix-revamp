@@ -74,6 +74,7 @@ import {
   type AttendanceDepartmentData,
   type AttendanceTrendData,
   type AttendancePatternsData,
+  type AttendanceStaffingGapVsBreachData,
   fetchSurveyOverview,
   fetchSurveyBreakdown,
   fetchSurveyTrend,
@@ -582,7 +583,7 @@ export interface AttendanceDashboardData {
   department: AttendanceDepartmentData | null;
   trend: AttendanceTrendData | null;
   patterns: AttendancePatternsData | null;
-  staffingGapVsBreach: unknown;
+  staffingGapVsBreach: AttendanceStaffingGapVsBreachData | null;
 }
 
 const EMPTY_ATTENDANCE_DATA: AttendanceDashboardData = {
