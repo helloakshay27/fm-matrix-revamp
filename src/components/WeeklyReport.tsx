@@ -698,13 +698,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
         const fromDate = formatDate(startDateObj);
         const toDate = formatDate(endDateObj);
-        const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${token}`;
+        const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
         console.log('[WeeklyReport] Ageing Matrix date range', { fromDate, toDate, url });
         console.log('[WeeklyReport] Fetching Tickets Ageing Matrix (matrix / T1..T5 format):', url);
         const controller = new AbortController();
         setAgeingLoading(true);
         setAgeingError(null);
-        fetch(url, { method: 'GET', signal: controller.signal })
+        fetch(url, { method: 'GET', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
             .then(async res => {
                 const status = res.status;
                 let txt = '';

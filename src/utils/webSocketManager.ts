@@ -11,40 +11,48 @@ interface CallbacksConfig {
 class WebSocketManager {
     private cable: any = null;
     private subscriptions: Map<string, any> = new Map();
-    private token: string | null = null;
+    private connectionUrl: string | null = null;
 
     constructor() {
         this.cable = null;
         this.subscriptions = new Map();
-        this.token = null;
+        this.connectionUrl = null;
     }
 
-    // Initialize connection with access token
-    connect(accessToken: string, wsUrl: string = '/cable'): any {
+    // Initialize connection using the browser's secure session cookie.
+    connect(wsUrl: string = '/cable'): any {
+        const connectionUrl = new URL(wsUrl, window.location.href);
+        let removedAuthToken = false;
+        ['token', 'access_token', 'auth_token'].forEach((key) => {
+            if (connectionUrl.searchParams.has(key)) {
+                connectionUrl.searchParams.delete(key);
+                removedAuthToken = true;
+            }
+        });
+
+        if (removedAuthToken) {
+            console.warn('Removed an authentication token from the WebSocket URL');
+        }
+
+        const sanitizedWsUrl = connectionUrl.toString();
+
         // Prevent duplicate connections
-        if (this.cable && this.token === accessToken) {
-            console.log('✅ WebSocket already connected with same token');
+        if (this.cable && this.connectionUrl === sanitizedWsUrl) {
+            console.log('✅ WebSocket already connected to the same URL');
             return this.cable;
         }
 
-        // Disconnect existing connection if token changed
-        if (this.cable && this.token !== accessToken) {
-            console.log('🔄 Token changed, reconnecting...');
+        // Disconnect existing connection if its URL changed
+        if (this.cable && this.connectionUrl !== sanitizedWsUrl) {
+            console.log('🔄 WebSocket URL changed, reconnecting...');
             this.disconnect();
         }
 
-        this.token = accessToken;
-
-        // Create the WebSocket URL with token
-        const fullWsUrl = wsUrl.includes('?')
-            ? `${wsUrl}&token=${accessToken}`
-            : `${wsUrl}?token=${accessToken}`;
-
-        console.log('🔌 Connecting to WebSocket URL:', fullWsUrl);
+        console.log('🔌 Connecting to WebSocket');
 
         try {
-            // Create cable connection with token in URL params
-            this.cable = createConsumer(fullWsUrl);
+            this.cable = createConsumer(sanitizedWsUrl);
+            this.connectionUrl = sanitizedWsUrl;
 
             // Add connection monitoring
             if (this.cable.connection) {
@@ -86,6 +94,7 @@ class WebSocketManager {
             }
 
             this.cable = null;
+            this.connectionUrl = null;
         }
     }
 

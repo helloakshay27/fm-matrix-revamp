@@ -48,12 +48,7 @@ async function fetchMsafeUserDashboardJson(
   const companyId = Number(
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145',
   );
-  const token = localStorage.getItem('token') || '';
   const params = new URLSearchParams({ company_id: String(companyId), type: 'compliance', ...extraParams });
-  if (token) {
-    params.set('token', token);
-    params.set('access_token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_user_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
 

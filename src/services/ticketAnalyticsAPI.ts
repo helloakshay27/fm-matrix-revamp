@@ -1,5 +1,4 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG } from '@/config/apiConfig';
 
 // Types for API responses
 export interface TicketCategoryData {
@@ -231,7 +230,7 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get(url);
     return response.data.tickets || [];
@@ -275,7 +274,7 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     const response = await apiClient.get(url);
     return response.data;
@@ -299,7 +298,7 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/admin/complaints/chart_common_area_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_common_area_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     const response = await apiClient.get(url);
     return response.data;
@@ -311,7 +310,7 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/admin/complaints/chart_common_area_categorywise_proactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_common_area_categorywise_proactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     const response = await apiClient.get(url);
     return response.data;
@@ -335,7 +334,7 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/issue_breakdown_category_wise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/issue_breakdown_category_wise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
     
     const response = await apiClient.get(url);
     return response.data;

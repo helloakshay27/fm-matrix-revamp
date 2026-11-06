@@ -52,14 +52,14 @@ export const createOrganizationAdmin = async (
 
     console.log("Creating organization admin with data:", userData);
 
-    // Build the URL with access token as query parameter
-    const url = `https://${baseUrl}/pms/users/create_organization_admin.json?access_token=${token}`;
+    const url = `https://${baseUrl}/pms/users/create_organization_admin.json`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(userData),
     });

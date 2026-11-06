@@ -40,7 +40,7 @@ export interface InventoryConsumptionNonGreenData {
     info?: string;
   };
 }
-import { API_CONFIG } from '@/config/apiConfig';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Types for inventory analytics API responses
 export interface ItemsStatusData {
@@ -261,11 +261,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/card_inventory_cost_over_month.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/card_inventory_cost_over_month.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -276,11 +275,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/get_inventory_consumption_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/get_inventory_consumption_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -291,11 +289,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/items_status.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/items_status.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -307,11 +304,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/category_wise_items.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/category_wise_items.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -323,11 +319,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -339,11 +334,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/consumption_report_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -355,11 +349,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/consumption_report_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -371,11 +364,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_non_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -387,11 +379,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_green.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -473,11 +464,10 @@ export const inventoryAnalyticsAPI = {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_over_site.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_over_site.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

@@ -334,8 +334,9 @@ export const CreateAdminUserPage = () => {
       };
 
       const response = await axios.post(
-        `https://${baseUrl}/pms/users/create_lock_for_admin.json?access_token=${token}`,
-        payload
+        `https://${baseUrl}/pms/users/create_lock_for_admin.json`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data) {

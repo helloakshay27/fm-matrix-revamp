@@ -1,5 +1,4 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG } from '@/config/apiConfig';
 
 // Types for API responses
 export interface TicketCategoryData {
@@ -181,7 +180,7 @@ export const recentUpdatedApi = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
 
     const response = await apiClient.get(url);
     return response.data.tickets || [];
@@ -190,7 +189,7 @@ export const recentUpdatedApi = {
   // Get recent updates (activities)
   async getRecentUpdates(): Promise<any[]> {
     const siteId = getCurrentSiteId();
-    const url = `/pms/admin/complaints/recent_updates.json?site_ids=${siteId}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/recent_updates.json?site_ids=${siteId}`;
     const response = await apiClient.get(url);
     return response.data.activities || [];
   }

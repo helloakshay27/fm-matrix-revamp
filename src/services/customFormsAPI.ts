@@ -1,5 +1,5 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS, getFullUrl } from '@/config/apiConfig';
+import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 export interface CustomForm {
   id: number;
@@ -336,15 +336,14 @@ export const fetchCustomFormDetailsSimple = async (formCode: string): Promise<Cu
     throw new Error('Form code is required');
   }
   
-  // Use query parameter instead of headers to avoid CORS preflight
-  const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${formCode}/custom_form_preview.json?access_token=${API_CONFIG.TOKEN}`;
+  const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${formCode}/custom_form_preview.json`;
   
   console.log('Fetching custom form details (simple method) from:', url);
   
   try {
-    // Use simple GET request with no custom headers to avoid CORS preflight
     const response = await fetch(url, {
-      method: 'GET'
+      method: 'GET',
+      headers: { Authorization: getAuthHeader() }
     });
     
     console.log('Simple method response status:', response.status);

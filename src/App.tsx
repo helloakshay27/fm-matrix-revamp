@@ -1842,9 +1842,223 @@ const KRCCFormListDashboard = lazy(() =>
     default: m.KRCCFormListDashboard,
   }))
 );
+// Vi Audit — separate pages per role (Auditor / SPOC / Action Owner / Functional Head)
+const AuditorAuditListPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditListPage")
+);
+const AuditorAddAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAddAuditPage")
+);
+const AuditorEditAuditPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorEditAuditPage")
+);
+const AuditorAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorAuditDetailPage")
+);
+const AuditorObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorObservationDetailPage")
+);
+const SpocAuditListPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditListPage")
+);
+const SpocAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocAuditDetailPage")
+);
+const SpocObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocObservationDetailPage")
+);
+const SpocActionPlanPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanPage")
+);
+const ActionOwnerAuditListPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditListPage")
+);
+const ActionOwnerAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerAuditDetailPage")
+);
+const ActionOwnerObservationDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerObservationDetailPage")
+);
+const ActionOwnerActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionPlanDetailPage")
+);
+const ActionOwnerActionTakenPage = lazy(
+  () => import("./pages/vi-audit/action-owner/ActionOwnerActionTakenPage")
+);
+const FunctionalHeadAuditListPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditListPage")
+);
+const FunctionalHeadAuditDetailPage = lazy(
+  () => import("./pages/vi-audit/functional-head/FunctionalHeadAuditDetailPage")
+);
+const FunctionalHeadObservationDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-audit/functional-head/FunctionalHeadObservationDetailPage"
+    )
+);
+const AuditorActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/auditor/AuditorActionPlanDetailPage")
+);
+const SpocActionPlanDetailPage = lazy(
+  () => import("./pages/vi-audit/spoc/SpocActionPlanDetailPage")
+);
+const FunctionalHeadActionPlanDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-audit/functional-head/FunctionalHeadActionPlanDetailPage"
+    )
+);
+
+const ViIncidentManagementDashboardPage = lazy(
+  () =>
+    import("./pages/vi-incident/dashboard/ViIncidentManagementDashboardPage")
+);
+const ViInspectionManagementDashboardPage = lazy(
+  () =>
+    import(
+      "./pages/vi-inspection/dashboard/ViInspectionManagementDashboardPage"
+    )
+);
+const ViAuditManagementDashboardPage = lazy(
+  () => import("./pages/vi-audit/dashboard/ViAuditManagementDashboardPage")
+);
+const IncidentReporterListPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterListPage")
+);
+const IncidentReporterAddPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterAddPage")
+);
+const IncidentReporterDetailPage = lazy(
+  () => import("./pages/vi-incident/reporter/IncidentReporterDetailPage")
+);
+const IncidentSpocListPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocListPage")
+);
+const IncidentSpocDetailPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocDetailPage")
+);
+const IncidentSpocActionPlanPage = lazy(
+  () => import("./pages/vi-incident/spoc/IncidentSpocActionPlanPage")
+);
+const IncidentActionOwnerListPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerListPage")
+);
+const IncidentActionOwnerDetailPage = lazy(
+  () => import("./pages/vi-incident/action-owner/IncidentActionOwnerDetailPage")
+);
+const IncidentActionOwnerActionTakenPage = lazy(
+  () =>
+    import(
+      "./pages/vi-incident/action-owner/IncidentActionOwnerActionTakenPage"
+    )
+);
+const IncidentFunctionalHeadListPage = lazy(
+  () =>
+    import("./pages/vi-incident/functional-head/IncidentFunctionalHeadListPage")
+);
+const IncidentFunctionalHeadDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-incident/functional-head/IncidentFunctionalHeadDetailPage"
+    )
+);
+// const InspectionInspectorListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionInspectorListPage,
+//   }))
+// );
+const InspectionInspectorDetailPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionInspectorDetailPage,
+  }))
+);
+const InspectionSpocDetailPage = lazy(
+  () => import("./pages/vi-inspection/spoc/InspectionSpocDetailPage")
+);
+
+const InspectionActionOwnerDetailPage = lazy(
+  () =>
+    import("./pages/vi-inspection/action-owner/InspectionActionOwnerDetailPage")
+);
+
+const InspectionFunctionalHeadDetailPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionFunctionalHeadDetailPage,
+  }))
+);
+const InspectionInspectorAddPage = lazy(
+  () => import("./pages/vi-inspection/InspectionInspectorAddPage")
+);
+const ViInspectionTypeMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionTypePage")
+);
+const ViInspectionChecklistMasterPage = lazy(
+  () => import("./features/vi-inspection/master/InspectionChecklistPage")
+);
+const ViTrainingCategoryMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingCategoryPage")
+);
+const ViTrainingChecklistMasterPage = lazy(
+  () => import("./features/vi-training/master/TrainingChecklistPage")
+);
+const ViZoneMasterPage = lazy(
+  () => import("./features/vi-zone/master/ZonePage")
+);
+const InspectionActionOwnerListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionActionOwnerListPage,
+  }))
+);
+const InspectionFunctionalHeadListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionFunctionalHeadListPage,
+  }))
+);
 const KRCCFormDetail = lazy(() =>
   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
 );
+const IncidentFunctionalHeadPlanDetailPage = lazy(
+  () =>
+    import(
+      "./pages/vi-incident/functional-head/IncidentFunctionalHeadPlanDetailPage"
+    )
+);
+const InspectionInspectorListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionInspectorListPage,
+  }))
+);
+
+const InspectionSpocActionPlanPage = lazy(
+  () => import("./pages/vi-inspection/spoc/InspectionSpocActionPlanPage")
+);
+
+const InspectionActionOwnerActionTakenPage = lazy(
+  () =>
+    import(
+      "./pages/vi-inspection/action-owner/InspectionActionOwnerActionTakenPage"
+    )
+);
+
+const InspectionSpocListPage = lazy(() =>
+  import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+    default: m.InspectionSpocListPage,
+  }))
+);
+// const InspectionActionOwnerListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionActionOwnerListPage,
+//   }))
+// );
+// const InspectionFunctionalHeadListPage = lazy(() =>
+//   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
+//     default: m.InspectionFunctionalHeadListPage,
+//   }))
+// );
+// const KRCCFormDetail = lazy(() =>
+//   import("./pages/KRCCFormDetail").then((m) => ({ default: m.KRCCFormDetail }))
+// );
 
 // Import Edit Roster Template page
 const EditRosterTemplatePage = lazy(() =>
@@ -4195,7 +4409,6 @@ const WebSocketNotificationInitializer: React.FC<{
   const navigate = useNavigate();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
@@ -4204,7 +4417,7 @@ const WebSocketNotificationInitializer: React.FC<{
 
   //   if (token) {
   //     console.warn("✅ Token available, connecting...");
-  //     connect(token, socketUrl);
+  //     connect(socketUrl);
   //   } else {
   //     console.error("❌ No token available for WebSocket connection");
   //   }
@@ -4418,7 +4631,7 @@ function App() {
 
     if (token) {
       console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
+      connect(socketUrl);
     } else {
       console.error("❌ No token available for WebSocket connection");
     }
@@ -4551,6 +4764,19 @@ function App() {
                           <Route
                             path="/dashboard-revamp"
                             element={<RevampDashboardPage />}
+                          />
+                          <Route
+                            path="/vi-audit/management-dashboard"
+                            element={<ViAuditManagementDashboardPage />}
+                          />
+
+                          <Route
+                            path="/vi-incident/management-dashboard"
+                            element={<ViIncidentManagementDashboardPage />}
+                          />
+                          <Route
+                            path="/vi-inspection/management-dashboard"
+                            element={<ViInspectionManagementDashboardPage />}
                           />
 
                           {/* Backend Routes */}
@@ -8663,6 +8889,206 @@ function App() {
                             <Route
                               path="/safety/m-safe/krcc-form-list"
                               element={<KRCCFormListDashboard />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter"
+                              element={<IncidentReporterListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/add"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/:id/edit"
+                              element={<IncidentReporterAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/reporter/:id"
+                              element={<IncidentReporterDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc"
+                              element={<IncidentSpocListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id"
+                              element={<IncidentSpocDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/spoc/:id/action-plan"
+                              element={<IncidentSpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner"
+                              element={<IncidentActionOwnerListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id"
+                              element={<IncidentActionOwnerDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/action-owner/:id/action-taken"
+                              element={<IncidentActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head"
+                              element={<IncidentFunctionalHeadListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id"
+                              element={<IncidentFunctionalHeadDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-incident/functional-head/:id/plans/:planId"
+                              element={<IncidentFunctionalHeadPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector"
+                              element={<InspectionInspectorListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector/add"
+                              element={<InspectionInspectorAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector/:id/edit"
+                              element={<InspectionInspectorAddPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc"
+                              element={<InspectionSpocListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner"
+                              element={<InspectionActionOwnerListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/functional-head"
+                              element={<InspectionFunctionalHeadListPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/inspector/:id"
+                              element={<InspectionInspectorDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc/:id"
+                              element={<InspectionSpocDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/spoc/:id/action-plan"
+                              element={<InspectionSpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner/:id"
+                              element={<InspectionActionOwnerDetailPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/action-owner/:id/action-taken"
+                              element={<InspectionActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/vi-inspection/functional-head/:id"
+                              element={<InspectionFunctionalHeadDetailPage />}
+                            />
+                            <Route
+                              path="/settings/inspection-master/inspection-type"
+                              element={<ViInspectionTypeMasterPage />}
+                            />
+                            <Route
+                              path="/settings/inspection-master/inspection-checklist"
+                              element={<ViInspectionChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/category"
+                              element={<ViTrainingCategoryMasterPage />}
+                            />
+                            <Route
+                              path="/settings/training/checklist"
+                              element={<ViTrainingChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/zone"
+                              element={<ViZoneMasterPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list"
+                              element={<AuditorAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/add"
+                              element={<AuditorAddAuditPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/edit"
+                              element={<AuditorEditAuditPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id"
+                              element={<AuditorAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId"
+                              element={<AuditorObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit-list/:id/observations/:observationId/plans/:planId"
+                              element={<AuditorActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc"
+                              element={<SpocAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id"
+                              element={<SpocAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId"
+                              element={<SpocObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/plans/:planId"
+                              element={<SpocActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/spoc/:id/observations/:observationId/action-plan"
+                              element={<SpocActionPlanPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner"
+                              element={<ActionOwnerAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id"
+                              element={<ActionOwnerAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId"
+                              element={<ActionOwnerObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId"
+                              element={<ActionOwnerActionPlanDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/action-owner/:id/observations/:observationId/plans/:planId/action-taken"
+                              element={<ActionOwnerActionTakenPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head"
+                              element={<FunctionalHeadAuditListPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id"
+                              element={<FunctionalHeadAuditDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId"
+                              element={<FunctionalHeadObservationDetailPage />}
+                            />
+                            <Route
+                              path="/safety/audit/functional-head/:id/observations/:observationId/plans/:planId"
+                              element={<FunctionalHeadActionPlanDetailPage />}
                             />
                             <Route
                               path="/safety/m-safe"

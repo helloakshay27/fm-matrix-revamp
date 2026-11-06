@@ -61,8 +61,6 @@ const KPI_HISTORY_ENDPOINT_PATHS = [
   "/kpis/history.json",
   "/kpis/history",
 ] as const;
-const KPI_ARCHIVED_BEARER_TOKEN =
-  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 const KPI_OWNER_CACHE_KEY = "kpi_owner_name_cache_v1";
 const KPI_ASSIGNEE_CACHE_KEY = "kpi_assignee_ids_cache_v1";
 const KPI_COMPANY_USERS_CACHE_KEY = "kpi_company_users_cache_v1";
@@ -330,14 +328,14 @@ const apiHeaders = () => ({
 });
 
 const archivedApiHeaders = () => ({
-  ...(getToken() || KPI_ARCHIVED_BEARER_TOKEN
+  ...(getToken()
     ? {}
     : (() => {
         throw new Error("Missing auth token.");
       })()),
   Accept: "application/json",
   "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken() || KPI_ARCHIVED_BEARER_TOKEN}`,
+  Authorization: `Bearer ${getToken()}`,
 });
 
 const getKpiUnitsApiHeaders = () => ({

@@ -169,7 +169,6 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             urlWithParams.searchParams.append('survey_id', ''); // Empty to get all surveys
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('survey_critical_questions', 'true');
@@ -177,7 +176,7 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch critical questions');
             const data = await response.json();
             console.log('Critical Questions API response:', data);
@@ -243,7 +242,6 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             urlWithParams.searchParams.append('survey_id', surveyId ? String(surveyId) : '');
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('trend_survey', 'true');
@@ -252,7 +250,7 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch trending survey');
             const data = await response.json();
             console.log('Trending Survey API response:', data);
@@ -276,7 +274,6 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             if (siteId) urlWithParams.searchParams.append('site_id', String(siteId));
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('site_level', 'true');
@@ -284,7 +281,7 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch site level data');
             const data = await response.json();
             console.log('Site Level API response:', data);
@@ -308,14 +305,13 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('association_count', 'true');
             // Always pass empty values for from_date and to_date to get all records
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch association count');
             const data = await response.json();
             console.log('Association Count API response:', data);
@@ -368,14 +364,13 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('top_surveys', 'true');
             // Always pass empty values for from_date and to_date to get all records
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch top surveys');
             const data = await response.json();
             console.log('Top Surveys API response:', data);
@@ -425,7 +420,6 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         try {
             const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
             const urlWithParams = new URL(url);
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
             if (siteId) urlWithParams.searchParams.append('site_id', String(siteId));
             urlWithParams.searchParams.append('analytics', 'true');
             urlWithParams.searchParams.append('survey_status', 'true');
@@ -433,7 +427,7 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             urlWithParams.searchParams.append('from_date', '');
             urlWithParams.searchParams.append('to_date', '');
             
-            const response = await fetch(urlWithParams.toString());
+            const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
             if (!response.ok) throw new Error('Failed to fetch survey statistics');
             const data = await response.json();
             console.log('Survey Statistics API response:', data);

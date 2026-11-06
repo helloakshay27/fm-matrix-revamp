@@ -116,7 +116,10 @@ const Index = () => {
     if (loading || !isViewCheckComplete) return;
 
     const hostname = window.location.hostname;
-    const isViSite = hostname === "vi-web.gophygital.work";
+    // Vi production and Vi UAT both land on M-Safe
+    const isViSite =
+      hostname === "vi-web.gophygital.work" ||
+      hostname === "vi-uat.gophygital.work";
     const isWebSite =
       hostname === "web.gophygital.work" || hostname.includes("localhost");
     const userType = localStorage.getItem("userType");

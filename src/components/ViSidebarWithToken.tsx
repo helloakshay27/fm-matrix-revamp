@@ -4,8 +4,26 @@ import { useLayout } from '../contexts/LayoutContext';
 import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing } from 'lucide-react';
 import { saveToken, saveUser, getToken, isAuthenticated } from '../utils/auth';
 
-
-
+// Remove `access_token`/`company_id`/`user_id` from the visible URL once the
+// token has been persisted to storage, so it doesn't linger in browser
+// history, proxy logs, or get leaked via the Referer header on navigation.
+const stripViTokenParams = () => {
+    try {
+        const url = new URL(window.location.href);
+        let changed = false;
+        ['access_token', 'company_id', 'user_id'].forEach((key) => {
+            if (url.searchParams.has(key)) {
+                url.searchParams.delete(key);
+                changed = true;
+            }
+        });
+        if (changed) {
+            window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+        }
+    } catch {
+        // Non-fatal - worst case the param stays visible in the address bar.
+    }
+};
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
@@ -91,6 +109,9 @@ const ViSidebarWithToken: React.FC = () => {
                 };
                 saveUser(viUser);
             }
+
+            // Token is now in storage - stop it lingering in the address bar/history.
+            stripViTokenParams();
 
             setHasValidToken(true);
         } else {

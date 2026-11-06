@@ -11,9 +11,10 @@ export async function fetchSystemConstants(params: Record<string, string>) {
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
   });
-  url.searchParams.append('access_token', token);
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok) throw new Error('Failed to fetch system constants');
   return response.json();
 }

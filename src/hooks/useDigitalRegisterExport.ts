@@ -64,8 +64,8 @@ export const useDigitalRegisterExport = (): UseDigitalRegisterExportReturn => {
             intervalRef.current = null;
             if (!isMountedRef.current) return;
             setStatus('done');
-            // Step 3 — download via browser navigation
-            assetExportService.downloadDigitalRegisterExport(export_key);
+            // Step 3 — download (fetched with the auth header, saved as a file)
+            await assetExportService.downloadDigitalRegisterExport(export_key);
             toast.success('Download started!');
           } else if (pollStatus === 'failed') {
             clearInterval(intervalRef.current!);

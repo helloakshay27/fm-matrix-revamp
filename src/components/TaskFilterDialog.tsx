@@ -297,13 +297,15 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
         : `https://${cleanBaseUrl}`;
       
       // Build the API URL - ensure proper format
-      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&access_token=${accessToken}&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
+      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
       
       console.log('Fetching custom forms from:', apiUrl);
       console.log('Base URL:', baseUrl);
       console.log('Access Token:', accessToken ? 'Present' : 'Missing');
       
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);

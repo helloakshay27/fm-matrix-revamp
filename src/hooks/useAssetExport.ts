@@ -180,8 +180,8 @@ export const useAssetExport = (
 
     try {
       if (exportTypeRef.current === 'digital_register') {
-        // Browser navigation — the server returns the file as an attachment
-        assetExportService.downloadDigitalRegisterExport(exportKey);
+        // Fetched with the auth header and saved as a file
+        await assetExportService.downloadDigitalRegisterExport(exportKey);
         toast.success('Download started');
         reset();
       } else {

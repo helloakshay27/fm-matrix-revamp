@@ -24,7 +24,6 @@ export const getCustomerBills = createAsyncThunk(
     ) => {
         try {
             const queryParams = new URLSearchParams();
-            if (token) queryParams.append("access_token", token);
             if (page) queryParams.append("page", String(page));
             if (search) queryParams.append("q[bill_number_or_customer_cont]", search);
             if (billNo) queryParams.append("q[bill_number_cont]", billNo);
@@ -32,11 +31,11 @@ export const getCustomerBills = createAsyncThunk(
 
             const response = await axios.get(
                 `https://${baseUrl}/lock_account_bills/pms_bills.json?${queryParams.toString()}`,
-                // {
-                //     headers: {
-                //         Authorization: `Bearer ${token}`,
-                //     },
-                // }
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             return response.data;
@@ -57,11 +56,13 @@ export const getCustomerBillById = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const queryParams = new URLSearchParams();
-            if (token) queryParams.append("access_token", token);
-
             const response = await axios.get(
-                `https://${baseUrl}/lock_account_bills/${id}.json?${queryParams.toString()}`
+                `https://${baseUrl}/lock_account_bills/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             return response.data;
@@ -82,12 +83,14 @@ export const createCustomerBillPayment = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const queryParams = new URLSearchParams();
-            if (token) queryParams.append("access_token", token);
-
             const response = await axios.post(
-                `https://${baseUrl}/lock_account_bills/${id}/lock_payments.json?${queryParams.toString()}`,
-                data
+                `https://${baseUrl}/lock_account_bills/${id}/lock_payments.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
             return response.data;
@@ -108,14 +111,16 @@ export const cancelCustomerBill = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const queryParams = new URLSearchParams();
-            if (token) queryParams.append("access_token", token);
-
             const response = await axios.post(
-                `https://${baseUrl}/lock_accounts/lock_account_bills/${id}/cancel_lock_account_bill.json?${queryParams.toString()}`,
+                `https://${baseUrl}/lock_accounts/lock_account_bills/${id}/cancel_lock_account_bill.json`,
                 {
                     lock_account_bill: {
                         cancel_note: cancelNote,
+                    },
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );

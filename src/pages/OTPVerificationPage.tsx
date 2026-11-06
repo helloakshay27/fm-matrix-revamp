@@ -10,10 +10,12 @@ import { toast } from "sonner";
 import {
   verifyOTP,
   saveUser,
+  getUser,
   saveToken,
   saveBaseUrl,
   getBaseUrl,
   fetchLockAccount,
+  getViOtpApiBase,
 } from "@/utils/auth";
 import { ArrowLeft } from "lucide-react";
 
@@ -32,9 +34,9 @@ export const OTPVerificationPage = () => {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
-
-  useEffect(() => {
+  const isViSite = hostname.includes("vi-web.gophygital.work") ||
+  hostname.includes("vi-uat.gophygital.work") ;
+    useEffect(() => {
     // Get email from localStorage
     const tempEmail = localStorage.getItem("temp_email");
     if (tempEmail) {
@@ -91,6 +93,8 @@ export const OTPVerificationPage = () => {
       // Check if response has required data
       if (response.verified === true && response.access_token) {
         const baseUrl = getBaseUrl();
+        // The sign-in response already stored the designation; keep it if this response omits it.
+        const signInDesignation = getUser()?.designation;
 
         saveUser({
           id: response.id,
@@ -103,6 +107,7 @@ export const OTPVerificationPage = () => {
           country_code: response.country_code,
           spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation ?? signInDesignation,
         });
         saveToken(response.access_token);
 
@@ -123,9 +128,11 @@ export const OTPVerificationPage = () => {
 
         // Check the hostname to determine redirect
         const hostname = window.location.hostname;
-        const isViSite = hostname.includes("vi-web.gophygital.work");
+        const isViSite =
+          hostname.includes("vi-web.gophygital.work") ||
+          hostname.includes("vi-uat.gophygital.work");
 
-        // Redirect to appropriate dashboard
+        // Redirect to appropriate dashboard (Vi prod + Vi UAT -> M-Safe)
         setTimeout(() => {
           navigate(isViSite ? "/safety/m-safe/internal" : "/maintenance/asset");
         }, 1000);
@@ -186,7 +193,7 @@ export const OTPVerificationPage = () => {
 
     try {
       const response = await fetch(
-        "https://live-api.gophygital.work/resend_code.json",
+        `${getViOtpApiBase()}/resend_code.json`,
         {
           method: "POST",
           headers: {

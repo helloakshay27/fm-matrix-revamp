@@ -307,7 +307,6 @@ const ViewTrainingPerformancePage = () => {
                 asset_id: selectedTaskId.toString(),
                 'q[start_date_gteq]': startDMY,
                 'q[start_date_lteq]': endDMY,
-                access_token: API_CONFIG.TOKEN || ''
             });
 
             const fullUrl = `${exportUrl}?${params.toString()}`;

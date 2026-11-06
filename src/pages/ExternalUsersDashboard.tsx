@@ -1,20 +1,37 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { MSafeImportModal } from '@/components/MSafeImportModal';
-import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Switch } from '@/components/ui/switch';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
-import { ExternalFilterDialog } from './ExternalFilterDialog';
-import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Users,
+  UserCheck,
+  Clock,
+  Shield,
+  Eye,
+  Trash2,
+  Plus,
+  UploadIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { MSafeImportModal } from "@/components/MSafeImportModal";
+import { useMSafeEvents } from "@/components/PostHogMSafeEvents";
+import { toast } from "sonner";
+import axios from "axios";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Switch } from "@/components/ui/switch";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationEllipsis,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import { ExternalFilterDialog } from "./ExternalFilterDialog";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Define External User interface (different from FMUser)
 interface ExternalUser {
@@ -37,7 +54,21 @@ interface ExternalUser {
   lock_user_permission_status: string;
   face_added: boolean | string;
   app_downloaded: boolean | string;
-  lock_user_permission: { id?: number; access_level: string | number; joining_date?: string; role_name?: string; circle_name?: string; department_name?: string; status?: string; employee_id?: string | number; active?: boolean; designation?: string; lock_role_id?: number; department_id?: number; circle_id?: number };
+  lock_user_permission: {
+    id?: number;
+    access_level: string | number;
+    joining_date?: string;
+    role_name?: string;
+    circle_name?: string;
+    department_name?: string;
+    status?: string;
+    employee_id?: string | number;
+    active?: boolean;
+    designation?: string;
+    lock_role_id?: number;
+    department_id?: number;
+    circle_id?: number;
+  };
   line_manager_name?: string;
   line_manager_mobile?: string;
   department?: string;
@@ -57,28 +88,47 @@ interface ExternalUser {
   report_to?: { name?: string; email?: string; mobile?: string };
 }
 
-interface ApiPagination { current_page: number; total_pages: number; total_count: number }
+interface ApiPagination {
+  current_page: number;
+  total_pages: number;
+  total_count: number;
+}
 
 export const ExternalUsersDashboard = () => {
-
   const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 500); // debounce like ServiceDashboard
-  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
+  const [filters, setFilters] = useState({
+    firstname: "",
+    lastname: "",
+    email: "",
+    mobile: "",
+    cluster: "",
+    cluster_id: "",
+    circle: "",
+    department: "",
+    role: "",
+    report_to_id: "",
+  });
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
-  const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] =
+    useState<ExternalUser | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return Number(params.get('page')) || 1;
+    return Number(params.get("page")) || 1;
   });
-  const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
+  const [pagination, setPagination] = useState<ApiPagination>({
+    current_page: 1,
+    total_pages: 1,
+    total_count: 0,
+  });
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
@@ -86,49 +136,80 @@ export const ExternalUsersDashboard = () => {
   const pageSize = 25; // backend default (adjust if needed)
 
   // Permission: show Action button only for these userIds
-  const allowedActionIds = useMemo(() => new Set(['92501', '88468']), []);
-  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-  const canSeeActionButton = currentUserId ? allowedActionIds.has(String(currentUserId)) : false;
-  const canShowUserDeletion = window.location.hostname !== 'vi-uat.gophygital.work';
-
+  const allowedActionIds = useMemo(() => new Set(["92501", "88468"]), []);
+  const currentUserId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const canSeeActionButton = currentUserId
+    ? allowedActionIds.has(String(currentUserId))
+    : false;
+  // const canShowUserDeletion = window.location.hostname !== 'vi-uat.gophygital.work';
 
   useEffect(() => {
     const controller = new AbortController();
     const fetchExternalUsers = async () => {
       setLoading(true);
       try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) {
           setExternalUsers([]);
           setLoading(false);
           return;
         }
         // Ensure baseUrl doesn't get double https://
-        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const cleanBaseUrl = baseUrl.startsWith("http")
+          ? baseUrl
+          : `https://${baseUrl}`;
         let url = `${cleanBaseUrl}/pms/users/non_fte_users.json?page=${page}`;
         // If any filter is applied, use the correct param for each filter
-        const hasFilters = Object.values(filters).some(v => v && v !== '');
+        const hasFilters = Object.values(filters).some((v) => v && v !== "");
         const hasSearch = Boolean(debouncedSearch.trim());
         if (hasFilters) {
           const filterParams = [];
-          if (filters.firstname) filterParams.push(`q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`);
-          if (filters.lastname) filterParams.push(`q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`);
-          if (filters.email) filterParams.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
-          if (filters.mobile) filterParams.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
+          if (filters.firstname)
+            filterParams.push(
+              `q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`
+            );
+          if (filters.lastname)
+            filterParams.push(
+              `q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`
+            );
+          if (filters.email)
+            filterParams.push(
+              `q[email_cont]=${encodeURIComponent(filters.email)}`
+            );
+          if (filters.mobile)
+            filterParams.push(
+              `q[mobile_cont]=${encodeURIComponent(filters.mobile)}`
+            );
           // Prefer exact cluster id filter if present; fallback to name contains
           if (filters.cluster_id) {
-            filterParams.push(`q[company_cluster_id_eq]=${encodeURIComponent(String(filters.cluster_id))}`);
+            filterParams.push(
+              `q[company_cluster_id_eq]=${encodeURIComponent(String(filters.cluster_id))}`
+            );
           } else if (filters.cluster) {
-            filterParams.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+            filterParams.push(
+              `q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`
+            );
           }
-          if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
-          if (filters.department) filterParams.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
-          if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id && filters.report_to_id.includes('@')) {
-            filterParams.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          if (filters.circle)
+            filterParams.push(
+              `q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`
+            );
+          if (filters.department)
+            filterParams.push(
+              `q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`
+            );
+          if (filters.role)
+            filterParams.push(
+              `q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`
+            );
+          if (filters.report_to_id && filters.report_to_id.includes("@")) {
+            filterParams.push(
+              `q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`
+            );
           }
-          url += `&${filterParams.join('&')}`;
+          url += `&${filterParams.join("&")}`;
         } else {
           // Only search by email if no filters
           const emailQuery = debouncedSearch.trim();
@@ -136,36 +217,56 @@ export const ExternalUsersDashboard = () => {
             url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
           }
         }
-        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
-        let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        let users = Array.isArray(response.data.users)
+          ? response.data.users
+          : response.data.users || [];
         // Add derived full name for sorting (trim to avoid double spaces)
         users = users.map((u: any) => ({
           ...u,
-          name: `${u.firstname || ''} ${u.lastname || ''}`.trim()
+          name: `${u.firstname || ""} ${u.lastname || ""}`.trim(),
         }));
         setExternalUsers(users);
-        const resultCount = response.data.pagination?.total_count ?? users.length;
-        const pendingCount = users.filter((u: any) => (u.lock_user_permission?.status || u.status) === 'pending').length;
+        const resultCount =
+          response.data.pagination?.total_count ?? users.length;
+        const pendingCount = users.filter(
+          (u: any) => (u.lock_user_permission?.status || u.status) === "pending"
+        ).length;
         if (response.data.pagination) {
-          setPagination(prev => ({
+          setPagination((prev) => ({
             ...prev,
             total_pages: response.data.pagination.total_pages,
             total_count: response.data.pagination.total_count,
           }));
         } else {
-          setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
+          setPagination((prev) => ({
+            ...prev,
+            total_pages: 1,
+            total_count: users.length,
+          }));
         }
         msafeEvents.onMSafeExternalUserListViewed(resultCount, pendingCount);
-        msafeEvents.onMSafeUserListViewed('non_fte', resultCount);
+        msafeEvents.onMSafeUserListViewed("non_fte", resultCount);
         if (hasSearch) {
-          msafeEvents.onMSafeUserSearchPerformed('non_fte', debouncedSearch.trim().length, users.length);
+          msafeEvents.onMSafeUserSearchPerformed(
+            "non_fte",
+            debouncedSearch.trim().length,
+            users.length
+          );
         }
       } catch (err) {
-        if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
+        if (
+          axios.isCancel?.(err) ||
+          (err as any)?.name === "CanceledError" ||
+          (err as any)?.code === "ERR_CANCELED"
+        ) {
           // ignore canceled requests
         } else {
           setExternalUsers([]);
-          console.error('Error fetching external users:', err);
+          console.error("Error fetching external users:", err);
         }
       } finally {
         setLoading(false);
@@ -178,11 +279,12 @@ export const ExternalUsersDashboard = () => {
   // Reset to first page when new search or filters applied
   // Only reset to page 1 when filters/search change, not on page changes
   // Reset to first page only when the search or filters value actually changes
-  const prevSearchRef = useRef<string>('');
+  const prevSearchRef = useRef<string>("");
   const prevFiltersRef = useRef<typeof filters>(filters);
   useEffect(() => {
-    const hasFilters = Object.values(filters).some(v => v && v !== '');
-    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
+    const hasFilters = Object.values(filters).some((v) => v && v !== "");
+    const filtersChanged =
+      JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
     const searchChanged = debouncedSearch !== prevSearchRef.current;
     if ((searchChanged && debouncedSearch) || (filtersChanged && hasFilters)) {
       setPage(1);
@@ -195,25 +297,42 @@ export const ExternalUsersDashboard = () => {
     {
       title: "External Users",
       count: Array.isArray(externalUsers) ? externalUsers.length : 0,
-      icon: Users
+      icon: Users,
     },
     {
       title: "Active Users",
-      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'approved' || (user as any)?.status === 'approved').length : 0,
-      icon: UserCheck
+      count: Array.isArray(externalUsers)
+        ? externalUsers.filter(
+            (user) =>
+              user.lock_user_permission_status === "approved" ||
+              (user as any)?.status === "approved"
+          ).length
+        : 0,
+      icon: UserCheck,
     },
     {
       title: "Pending Approvals",
-      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'pending' || (user as any)?.status === 'pending').length : 0,
-      icon: Clock
+      count: Array.isArray(externalUsers)
+        ? externalUsers.filter(
+            (user) =>
+              user.lock_user_permission_status === "pending" ||
+              (user as any)?.status === "pending"
+          ).length
+        : 0,
+      icon: Clock,
     },
     {
       title: "Rejected Users",
-      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'rejected' || (user as any)?.status === 'rejected').length : 0,
-      icon: Shield
-    }
+      count: Array.isArray(externalUsers)
+        ? externalUsers.filter(
+            (user) =>
+              user.lock_user_permission_status === "rejected" ||
+              (user as any)?.status === "rejected"
+          ).length
+        : 0,
+      icon: Shield,
+    },
   ];
-
 
   const pillBadge = (bg: string, color: string, label: string) => (
     <span
@@ -225,85 +344,144 @@ export const ExternalUsersDashboard = () => {
   );
 
   const getStatusBadge = (status: string) => {
-    if (!status) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
+    if (!status) return pillBadge("#f3f4f6", "#6b7280", "Unknown");
     switch (status.toLowerCase()) {
-      case 'approved': return pillBadge('#dcfce7', '#15803d', 'Approved');
-      case 'pending': return pillBadge('#fff3e0', '#da7756', 'Pending');
-      case 'rejected': return pillBadge('#fee2e2', '#dc2626', 'Deactivated');
-      default: return pillBadge('#f3f4f6', '#6b7280', status);
+      case "approved":
+        return pillBadge("#dcfce7", "#15803d", "Approved");
+      case "pending":
+        return pillBadge("#fff3e0", "#da7756", "Pending");
+      case "rejected":
+        return pillBadge("#fee2e2", "#dc2626", "Deactivated");
+      default:
+        return pillBadge("#f3f4f6", "#6b7280", status);
     }
   };
 
   const getTypeBadge = (type: string) => {
-    if (!type) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
+    if (!type) return pillBadge("#f3f4f6", "#6b7280", "Unknown");
     switch (type.toLowerCase()) {
-      case 'external': return pillBadge('#fff3e0', '#da7756', 'External');
-      case 'contractor': return pillBadge('#f3e8ff', '#7e22ce', 'Contractor');
-      case 'vendor': return pillBadge('#dbeafe', '#1d4ed8', 'Vendor');
-      default: return pillBadge('#f3f4f6', '#6b7280', type);
+      case "external":
+        return pillBadge("#fff3e0", "#da7756", "External");
+      case "contractor":
+        return pillBadge("#f3e8ff", "#7e22ce", "Contractor");
+      case "vendor":
+        return pillBadge("#dbeafe", "#1d4ed8", "Vendor");
+      default:
+        return pillBadge("#f3f4f6", "#6b7280", type);
     }
   };
 
   const getYesNoBadge = (value: boolean | string) => {
-    const isYes = value === true || value === 'yes' || value === 'Yes';
+    const isYes = value === true || value === "yes" || value === "Yes";
     return isYes
-      ? pillBadge('#dcfce7', '#15803d', 'Yes')
-      : pillBadge('#fee2e2', '#dc2626', 'No');
+      ? pillBadge("#dcfce7", "#15803d", "Yes")
+      : pillBadge("#fee2e2", "#dc2626", "No");
   };
 
   const columns: ColumnConfig[] = [
-    { key: 'name', label: 'Name', sortable: true, hideable: true },
-    { key: 'org_user_id', label: 'Emp ID', sortable: true, hideable: true },
-    { key: 'email', label: 'Email', sortable: true, hideable: true },
-    { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
-    { key: 'gender', label: 'Gender', sortable: true, hideable: true },
-    { key: 'active', label: 'Active', sortable: false, hideable: true },
+    { key: "name", label: "Name", sortable: true, hideable: true },
+    { key: "org_user_id", label: "Emp ID", sortable: true, hideable: true },
+    { key: "email", label: "Email", sortable: true, hideable: true },
+    { key: "mobile", label: "Mobile", sortable: true, hideable: true },
+    { key: "gender", label: "Gender", sortable: true, hideable: true },
+    { key: "active", label: "Active", sortable: false, hideable: true },
     // Birth Date removed per request
-    { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
-    { key: 'status', label: 'Status', sortable: true, hideable: true },
-    { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
-    { key: 'department', label: 'Department/Function', sortable: true, hideable: true },
-    { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
-    { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
-    { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
-    { key: 'role_name', label: 'Role', sortable: true, hideable: true },
-    { key: 'employee_type', label: 'Employee Type', sortable: true, hideable: true },
-    { key: 'created_at', label: 'Created At', sortable: true, hideable: true },
-    { key: 'line_manager_name', label: 'Line Manager Name', sortable: false, hideable: true },
-    { key: 'line_manager_email', label: 'Line Manager Email', sortable: false, hideable: true },
-    { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
+    {
+      key: "joining_date",
+      label: "Joining Date",
+      sortable: true,
+      hideable: true,
+    },
+    { key: "status", label: "Status", sortable: true, hideable: true },
+    { key: "cluster_name", label: "Cluster", sortable: true, hideable: true },
+    {
+      key: "department",
+      label: "Department/Function",
+      sortable: true,
+      hideable: true,
+    },
+    { key: "circle_name", label: "Circle", sortable: true, hideable: true },
+    {
+      key: "work_location",
+      label: "Work Location",
+      sortable: true,
+      hideable: true,
+    },
+    {
+      key: "company_name",
+      label: "Company Name",
+      sortable: true,
+      hideable: true,
+    },
+    { key: "role_name", label: "Role", sortable: true, hideable: true },
+    {
+      key: "employee_type",
+      label: "Employee Type",
+      sortable: true,
+      hideable: true,
+    },
+    { key: "created_at", label: "Created At", sortable: true, hideable: true },
+    {
+      key: "line_manager_name",
+      label: "Line Manager Name",
+      sortable: false,
+      hideable: true,
+    },
+    {
+      key: "line_manager_email",
+      label: "Line Manager Email",
+      sortable: false,
+      hideable: true,
+    },
+    {
+      key: "line_manager_mobile",
+      label: "Line Manager Mobile",
+      sortable: false,
+      hideable: true,
+    },
   ];
 
   // Helper: format any date string to DD/MM/YYYY
   const formatDateDMY = (value?: string) => {
-    if (!value) return '-';
+    if (!value) return "-";
     try {
       const d = new Date(value);
-      if (isNaN(d.getTime())) return '-';
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      if (isNaN(d.getTime())) return "-";
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
       const yyyy = d.getFullYear();
       return `${dd}/${mm}/${yyyy}`;
     } catch {
-      return '-';
+      return "-";
     }
   };
 
-
-  const renderCell = (user: ExternalUser, columnKey: string): React.ReactNode => {
+  const renderCell = (
+    user: ExternalUser,
+    columnKey: string
+  ): React.ReactNode => {
     switch (columnKey) {
-      case 'name':
-        return `${user.firstname || ''} ${user.lastname || ''}`.trim() || '-';
-      case 'org_user_id':
-        return (user as any).org_user_id || (user as any).lock_user_permission?.employee_id || (user as any).employee_id || '-';
-      case 'email':
-        return user.email || '-';
-      case 'mobile':
-        return user.mobile || '-';
-      case 'gender':
-        return user.gender || '-';
-      case 'active': {
-        const isActive = (user as any).lock_user_permission?.active ?? ((user as any).lock_role ? (user as any).lock_role.active === 1 : !!(user as any).active);
+      case "name":
+        return `${user.firstname || ""} ${user.lastname || ""}`.trim() || "-";
+      case "org_user_id":
+        return (
+          (user as any).org_user_id ||
+          (user as any).lock_user_permission?.employee_id ||
+          (user as any).employee_id ||
+          "-"
+        );
+      case "email":
+        return user.email || "-";
+      case "mobile":
+        return user.mobile || "-";
+      case "gender":
+        return user.gender || "-";
+      case "active": {
+        const isActive =
+          (user as any).lock_user_permission?.active ??
+          ((user as any).lock_role
+            ? (user as any).lock_role.active === 1
+            : !!(user as any).active);
         const disabled = updatingIds.has(user.id);
         return (
           <div className="w-full flex justify-center">
@@ -317,47 +495,71 @@ export const ExternalUsersDashboard = () => {
         );
       }
       // removed Birth Date from UI
-      case 'joining_date':
-        return formatDateDMY((user as any).lock_user_permission?.joining_date || (user as any).joining_date);
-      case 'status': {
-        const statusVal = (user as any).lock_user_permission?.status || (user as any).status || (user as any).lock_user_permission_status;
-        return statusVal ? getStatusBadge(statusVal) : '-';
+      case "joining_date":
+        return formatDateDMY(
+          (user as any).lock_user_permission?.joining_date ||
+            (user as any).joining_date
+        );
+      case "status": {
+        const statusVal =
+          (user as any).lock_user_permission?.status ||
+          (user as any).status ||
+          (user as any).lock_user_permission_status;
+        return statusVal ? getStatusBadge(statusVal) : "-";
       }
-      case 'cluster_name':
-        return (user as any).cluster_name || user.cluster || '-';
-      case 'department':
-        return (user as any).lock_user_permission?.department_name || (user as any).department_name || (user as any).department || '-';
-      case 'circle_name':
-        return (user as any).lock_user_permission?.circle_name || (user as any).circle_name || (user as any).circle || '-';
-      case 'work_location':
-        return (user as any).work_location || '-';
-      case 'company_name':
-        return (user as any).ext_company_name || '-';
-      case 'role_name':
-        return (user as any).lock_user_permission?.role_name || (user as any).role_name || (user as any).lock_role?.name || (user as any).lock_role?.display_name || '-';
-      case 'employee_type':
-        return (user as any).employee_type || '-';
-      case 'created_at': {
+      case "cluster_name":
+        return (user as any).cluster_name || user.cluster || "-";
+      case "department":
+        return (
+          (user as any).lock_user_permission?.department_name ||
+          (user as any).department_name ||
+          (user as any).department ||
+          "-"
+        );
+      case "circle_name":
+        return (
+          (user as any).lock_user_permission?.circle_name ||
+          (user as any).circle_name ||
+          (user as any).circle ||
+          "-"
+        );
+      case "work_location":
+        return (user as any).work_location || "-";
+      case "company_name":
+        return (user as any).ext_company_name || "-";
+      case "role_name":
+        return (
+          (user as any).lock_user_permission?.role_name ||
+          (user as any).role_name ||
+          (user as any).lock_role?.name ||
+          (user as any).lock_role?.display_name ||
+          "-"
+        );
+      case "employee_type":
+        return (user as any).employee_type || "-";
+      case "created_at": {
         const created = (user as any).created_at;
-        if (!created) return '-';
+        if (!created) return "-";
         try {
           const d = new Date(created);
-          const day = String(d.getDate()).padStart(2, '0');
-          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
           const year = d.getFullYear();
-          const hours = String(d.getHours()).padStart(2, '0');
-          const minutes = String(d.getMinutes()).padStart(2, '0');
+          const hours = String(d.getHours()).padStart(2, "0");
+          const minutes = String(d.getMinutes()).padStart(2, "0");
           return `${day}/${month}/${year} ${hours}:${minutes}`;
-        } catch { return created; }
+        } catch {
+          return created;
+        }
       }
-      case 'line_manager_name':
-        return (user as any).report_to?.name || 'NA';
-      case 'line_manager_email':
-        return (user as any).report_to?.email || 'NA';
-      case 'line_manager_mobile':
-        return (user as any).report_to?.mobile || 'NA';
+      case "line_manager_name":
+        return (user as any).report_to?.name || "NA";
+      case "line_manager_email":
+        return (user as any).report_to?.email || "NA";
+      case "line_manager_mobile":
+        return (user as any).report_to?.mobile || "NA";
       default:
-        return '-';
+        return "-";
     }
   };
 
@@ -367,7 +569,11 @@ export const ExternalUsersDashboard = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
+          onClick={() =>
+            navigate(`/safety/m-safe/external/user/${user.id}`, {
+              state: { user },
+            })
+          }
           className="h-8 w-8 p-0"
         >
           <Eye className="h-4 w-4" />
@@ -381,79 +587,87 @@ export const ExternalUsersDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(externalUsers.map(user => user.id.toString()));
+      setSelectedItems(externalUsers.map((user) => user.id.toString()));
     } else {
       setSelectedItems([]);
     }
   };
-
 
   const handleActionClick = () => {
     setShowActionPanel(true);
   };
 
   const handleExport = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
     try {
       if (!baseUrl || !token) {
-        toast.error('Missing base URL or token');
+        toast.error("Missing base URL or token");
         return;
       }
 
       let url = `api`;
       if (selectedItems.length > 0) {
-        const ids = selectedItems.join(',');
+        const ids = selectedItems.join(",");
         url += `&ids=${ids}`;
       }
 
       const response = await axios.get(url, {
-        responseType: 'blob',
+        responseType: "blob",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.data || response.data.size === 0) {
-        toast.error('Empty file received from server');
+        toast.error("Empty file received from server");
         return;
       }
 
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'external-users.xlsx';
+      link.download = "external-users.xlsx";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      toast.success('External Users data exported successfully');
-      msafeEvents.onMSafeUserListExported('non_fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
+      toast.success("External Users data exported successfully");
+      msafeEvents.onMSafeUserListExported(
+        "non_fte",
+        selectedItems.length > 0 ? selectedItems.length : pagination.total_count
+      );
       msafeEvents.onMsafeDownloaded({
-        screen: 'msafe_nonfte_list',
-        source: 'list_export',
-        label: 'External (non-FTE) users',
-        file_format: 'xlsx',
-        export_mode: 'server_report',
-        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
+        screen: "msafe_nonfte_list",
+        source: "list_export",
+        label: "External (non-FTE) users",
+        file_format: "xlsx",
+        export_mode: "server_report",
+        row_count:
+          selectedItems.length > 0
+            ? selectedItems.length
+            : pagination.total_count,
         succeeded: true,
       });
     } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export External Users data');
+      console.error("Export failed:", error);
+      toast.error("Failed to export External Users data");
       msafeEvents.onMsafeDownloaded({
-        screen: 'msafe_nonfte_list',
-        source: 'list_export',
-        label: 'External (non-FTE) users',
-        file_format: 'xlsx',
-        export_mode: 'server_report',
-        row_count: selectedItems.length > 0 ? selectedItems.length : pagination.total_count,
+        screen: "msafe_nonfte_list",
+        source: "list_export",
+        label: "External (non-FTE) users",
+        file_format: "xlsx",
+        export_mode: "server_report",
+        row_count:
+          selectedItems.length > 0
+            ? selectedItems.length
+            : pagination.total_count,
         succeeded: false,
-        failure_reason: (error as Error)?.message ?? 'request_failed',
+        failure_reason: (error as Error)?.message ?? "request_failed",
       });
     }
   };
@@ -466,27 +680,42 @@ export const ExternalUsersDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; cluster_id?: string | number; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+  const handleApplyFilters = (newFilters: {
+    firstname: string;
+    lastname: string;
+    email: string;
+    mobile: string;
+    cluster?: string;
+    cluster_id?: string | number;
+    circle?: string;
+    department?: string;
+    role?: string;
+    report_to_id?: string | number;
+  }) => {
     setFilters({
-      firstname: newFilters.firstname || '',
-      lastname: newFilters.lastname || '',
-      email: newFilters.email || '',
-      mobile: newFilters.mobile || '',
-      cluster: newFilters.cluster || '',
-      cluster_id: newFilters.cluster_id ? String(newFilters.cluster_id) : '',
-      circle: newFilters.circle || '',
-      department: newFilters.department || '',
-      role: newFilters.role || '',
-      report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
+      firstname: newFilters.firstname || "",
+      lastname: newFilters.lastname || "",
+      email: newFilters.email || "",
+      mobile: newFilters.mobile || "",
+      cluster: newFilters.cluster || "",
+      cluster_id: newFilters.cluster_id ? String(newFilters.cluster_id) : "",
+      circle: newFilters.circle || "",
+      department: newFilters.department || "",
+      role: newFilters.role || "",
+      report_to_id: newFilters.report_to_id
+        ? String(newFilters.report_to_id)
+        : "",
     });
-    const appliedFields = Object.entries(newFilters).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    const appliedFields = Object.entries(newFilters)
+      .filter(([, v]) => Boolean(v))
+      .map(([k]) => k);
     if (appliedFields.length > 0) {
-      msafeEvents.onMSafeUserFilterApplied('non_fte', appliedFields);
+      msafeEvents.onMSafeUserFilterApplied("non_fte", appliedFields);
     }
     // Immediately reset pagination UI to avoid showing stale total pages
     setPage(1);
     setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
-  }
+  };
 
   const handleToggleActive = async (user: ExternalUser) => {
     const hostname = window.location.hostname;
@@ -494,20 +723,34 @@ export const ExternalUsersDashboard = () => {
     const permission = user.lock_user_permission;
     const previousStatus = permission?.status;
     const activeVal: any = permission?.active;
-    const current = activeVal === true || activeVal === 1 || activeVal === '1';
+    const current = activeVal === true || activeVal === 1 || activeVal === "1";
     if (!permission?.id) {
-      toast.error('Missing permission id');
+      toast.error("Missing permission id");
       return;
     }
     const newValue = !current;
-    const newStatus = newValue ? 'approved' : 'rejected';
+    const newStatus = newValue ? "approved" : "rejected";
     // optimistic update (also reflect status change)
-    setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: newValue, status: newStatus }, status: newStatus } : u));
-    setUpdatingIds(prev => new Set(prev).add(user.id));
+    setExternalUsers((prev) =>
+      prev.map((u) =>
+        u.id === user.id
+          ? {
+              ...u,
+              lock_user_permission: {
+                ...u.lock_user_permission,
+                active: newValue,
+                status: newStatus,
+              },
+              status: newStatus,
+            }
+          : u
+      )
+    );
+    setUpdatingIds((prev) => new Set(prev).add(user.id));
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      if (!baseUrl || !token) throw new Error("Missing base URL or token");
       const apiBaseUrl = isViSite
         ? "https://live-api.gophygital.work"
         : baseUrl.startsWith("http")
@@ -526,25 +769,52 @@ export const ExternalUsersDashboard = () => {
               department_id: permission.department_id,
               lock_role_id: permission.lock_role_id,
               circle_id: permission.circle_id,
-              status: newStatus
-            }
-          ]
-        }
+              status: newStatus,
+            },
+          ],
+        },
       };
-      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
+      await axios.put(url, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(
+        `User ${newValue ? "activated (approved)" : "deactivated (rejected)"} successfully`
+      );
       if (newValue) {
         const createdAt = (user as any).created_at;
-        const pendingAgeDays = createdAt ? Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)) : null;
+        const pendingAgeDays = createdAt
+          ? Math.floor(
+              (Date.now() - new Date(createdAt).getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
+          : null;
         msafeEvents.onMSafeExternalUserApproved(pendingAgeDays);
       }
     } catch (e: any) {
       // revert on error
-      setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));
-      toast.error('Failed to update active status');
-      console.error('Active toggle error', e);
+      setExternalUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id
+            ? {
+                ...u,
+                lock_user_permission: {
+                  ...u.lock_user_permission,
+                  active: current,
+                  status: previousStatus,
+                },
+                status: previousStatus,
+              }
+            : u
+        )
+      );
+      toast.error("Failed to update active status");
+      console.error("Active toggle error", e);
     } finally {
-      setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; });
+      setUpdatingIds((prev) => {
+        const n = new Set(prev);
+        n.delete(user.id);
+        return n;
+      });
     }
   };
 
@@ -556,20 +826,24 @@ export const ExternalUsersDashboard = () => {
     if (!confirmDeleteUser) return;
     setDeleting(true);
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      if (!baseUrl || !token) throw new Error("Missing base URL or token");
       const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user.json`;
-      await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
-      setExternalUsers(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
-      setPagination(prev => ({
+      await axios.delete(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setExternalUsers((prev) =>
+        prev.filter((u) => u.id !== confirmDeleteUser.id)
+      );
+      setPagination((prev) => ({
         ...prev,
-        total_count: Math.max(0, prev.total_count - 1)
+        total_count: Math.max(0, prev.total_count - 1),
       }));
-      toast.success('User deleted successfully');
+      toast.success("User deleted successfully");
     } catch (e: any) {
-      console.error('Delete user error', e);
-      toast.error('Failed to delete user');
+      console.error("Delete user error", e);
+      toast.error("Failed to delete user");
     } finally {
       setDeleting(false);
       setConfirmDeleteUser(null);
@@ -588,7 +862,6 @@ export const ExternalUsersDashboard = () => {
     navigate(`${location.pathname}?page=${newPage}`, { replace: true });
   };
 
-
   // New pagination items (ServiceDashboard style)
   const paginationItems = useMemo(() => {
     const items: React.ReactNode[] = [];
@@ -598,27 +871,36 @@ export const ExternalUsersDashboard = () => {
     const pushPage = (p: number) => {
       items.push(
         <PaginationItem key={p}>
-          <PaginationLink className='cursor-pointer' isActive={current === p} onClick={() => handlePageChange(p)}>
+          <PaginationLink
+            className="cursor-pointer"
+            isActive={current === p}
+            onClick={() => handlePageChange(p)}
+          >
             {p}
           </PaginationLink>
         </PaginationItem>
       );
     };
-    const pushEllipsis = (key: string) => items.push(<PaginationItem key={key}><PaginationEllipsis /></PaginationItem>);
+    const pushEllipsis = (key: string) =>
+      items.push(
+        <PaginationItem key={key}>
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pushPage(i);
     } else {
       pushPage(1);
       if (current <= 3) {
         for (let i = 2; i <= 4; i++) pushPage(i);
-        pushEllipsis('e1');
+        pushEllipsis("e1");
       } else if (current >= totalPages - 2) {
-        pushEllipsis('e1');
+        pushEllipsis("e1");
         for (let i = totalPages - 3; i < totalPages; i++) pushPage(i);
       } else {
-        pushEllipsis('e1');
+        pushEllipsis("e1");
         for (let i = current - 1; i <= current + 1; i++) pushPage(i);
-        pushEllipsis('e2');
+        pushEllipsis("e2");
       }
       pushPage(totalPages);
     }
@@ -652,7 +934,11 @@ export const ExternalUsersDashboard = () => {
         {showActionPanel && (
           <SelectionPanel
             actions={[
-              { label: 'Import', icon: UploadIcon, onClick: () => setImportModalOpen(true) },
+              {
+                label: "Import",
+                icon: UploadIcon,
+                onClick: () => setImportModalOpen(true),
+              },
             ]}
             onClearSelection={() => setShowActionPanel(false)}
           />
@@ -663,26 +949,28 @@ export const ExternalUsersDashboard = () => {
             data={externalUsers || []}
             leftActions={
               <div className="flex gap-2">
-                {canSeeActionButton && shouldShow("External User (NON FTE)", "create") && (
-                  <Button
-                    onClick={handleActionClick}
-                    className="fm-button-fix fm-button-brand px-4 py-2"
-                    variant="ghost"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Action
-                  </Button>
-                )}
-                {canShowUserDeletion && shouldShow("External User (NON FTE)", "destroy") && (
-                  <Button
-                    onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
-                    className="fm-button-fix fm-button-brand px-4 py-2"
-                    variant="ghost"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    User Deletion
-                  </Button>
-                )}
+                {canSeeActionButton &&
+                  shouldShow("External User (NON FTE)", "create") && (
+                    <Button
+                      onClick={handleActionClick}
+                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      variant="ghost"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Action
+                    </Button>
+                  )}
+
+                <Button
+                  onClick={() =>
+                    navigate("/safety/m-safe/external-users/multiple-delete")
+                  }
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  User Deletion
+                </Button>
               </div>
             }
             columns={columns}
@@ -701,20 +989,25 @@ export const ExternalUsersDashboard = () => {
             pageSize={pageSize}
             loading={loading}
             enableSearch={true}
-            onRowClick={user => console.log('Row clicked:', user)}
+            onRowClick={(user) => console.log("Row clicked:", user)}
           />
           {!loading && (
             <div className="flex flex-col items-center gap-2 mt-6">
               <div className="text-sm text-gray-600">
                 Page {page}
-                {pagination.total_pages > 1 ? ` of ${pagination.total_pages}` : ''}
-                {typeof pagination.total_count === 'number' && pagination.total_count > 0 ? ` | Total ${pagination.total_count}` : ''}
+                {pagination.total_pages > 1
+                  ? ` of ${pagination.total_pages}`
+                  : ""}
+                {typeof pagination.total_count === "number" &&
+                pagination.total_count > 0
+                  ? ` | Total ${pagination.total_count}`
+                  : ""}
               </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      className={`cursor-pointer ${page <= 1 ? 'pointer-events-none opacity-50' : ''}`}
+                      className={`cursor-pointer ${page <= 1 ? "pointer-events-none opacity-50" : ""}`}
                       onClick={() => handlePageChange(page - 1)}
                     />
                   </PaginationItem>
@@ -724,11 +1017,15 @@ export const ExternalUsersDashboard = () => {
                     {(() => {
                       const hasServerPages = pagination.total_pages > 1;
                       // If server pagination unknown (==1), allow Next when we received a full page of results.
-                      const canGoNext = hasServerPages ? page < pagination.total_pages : (externalUsers?.length || 0) >= pageSize;
+                      const canGoNext = hasServerPages
+                        ? page < pagination.total_pages
+                        : (externalUsers?.length || 0) >= pageSize;
                       return (
                         <PaginationNext
-                          className={`cursor-pointer ${!canGoNext ? 'pointer-events-none opacity-50' : ''}`}
-                          onClick={() => canGoNext && handlePageChange(page + 1)}
+                          className={`cursor-pointer ${!canGoNext ? "pointer-events-none opacity-50" : ""}`}
+                          onClick={() =>
+                            canGoNext && handlePageChange(page + 1)
+                          }
                         />
                       );
                     })()}
@@ -739,8 +1036,16 @@ export const ExternalUsersDashboard = () => {
           )}
         </div>
 
-        <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
-        <ExternalFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+        <MSafeImportModal
+          isOpen={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          onImport={handleImport}
+        />
+        <ExternalFilterDialog
+          isOpen={isFilterModalOpen}
+          onClose={() => setIsFilterModalOpen(false)}
+          onApplyFilters={handleApplyFilters}
+        />
         {confirmDeleteUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-sm">
@@ -749,12 +1054,26 @@ export const ExternalUsersDashboard = () => {
               </div>
               <div className="p-4 space-y-2 text-sm">
                 <p>Are you sure you want to delete this user?</p>
-                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (Email: {confirmDeleteUser.email})</p>
+                <p className="font-medium">
+                  {`${confirmDeleteUser.firstname || ""} ${confirmDeleteUser.lastname || ""}`.trim() ||
+                    "User"}{" "}
+                  (Email: {confirmDeleteUser.email})
+                </p>
               </div>
               <div className="p-4 flex justify-end gap-2 border-t">
-                <Button variant="outline" onClick={handleCancelDelete} disabled={deleting}>No</Button>
-                <Button className="bg-[#C72030] text-white hover:bg-[#C72030]/90" onClick={handleConfirmDelete} disabled={deleting}>
-                  {deleting ? 'Deleting...' : 'Yes'}
+                <Button
+                  variant="outline"
+                  onClick={handleCancelDelete}
+                  disabled={deleting}
+                >
+                  No
+                </Button>
+                <Button
+                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                  onClick={handleConfirmDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Yes"}
                 </Button>
               </div>
             </div>
@@ -762,5 +1081,5 @@ export const ExternalUsersDashboard = () => {
         )}
       </div>
     </>
-  )
+  );
 };

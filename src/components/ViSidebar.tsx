@@ -26,6 +26,10 @@ import {
   Upload,
   ClipboardCheck,
   UserPlus,
+  AlertTriangle,
+  ClipboardList,
+  GraduationCap,
+  Map as MapIcon,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -99,6 +103,83 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         {
           name: "External Reportee Reassign",
           href: "/safety/m-safe/reportees-reassign",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Audit",
+      icon: ClipboardCheck,
+      href: "/safety/audit",
+      subItems: [
+        {
+          name: "Auditor",
+          href: "/safety/audit-list",
+          color: "text-[#1a1a1a]",
+        },
+        { name: "SPOC", href: "/safety/audit/spoc", color: "text-[#1a1a1a]" },
+        {
+          name: "Action Owner",
+          href: "/safety/audit/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/audit/functional-head",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Incident",
+      icon: AlertTriangle,
+      href: "/safety/vi-incident",
+      subItems: [
+        {
+          name: "Reporter",
+          href: "/safety/vi-incident/reporter",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-incident/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-incident/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-incident/functional-head",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Inspection",
+      icon: ClipboardList,
+      href: "/safety/vi-inspection",
+      subItems: [
+        {
+          name: "Inspector",
+          href: "/safety/vi-inspection/inspector",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "SPOC",
+          href: "/safety/vi-inspection/spoc",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Action Owner",
+          href: "/safety/vi-inspection/action-owner",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Functional Head",
+          href: "/safety/vi-inspection/functional-head",
           color: "text-[#1a1a1a]",
         },
       ],
@@ -273,6 +354,39 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       ],
     },
     {
+      name: "Inspection Master",
+      icon: Star,
+      subItems: [
+        {
+          name: "Inspection Type",
+          href: "/settings/inspection-master/inspection-type",
+        },
+        {
+          name: "Inspection Checklist",
+          href: "/settings/inspection-master/inspection-checklist",
+        },
+      ],
+    },
+    {
+      name: "Training",
+      icon: GraduationCap,
+      subItems: [
+        {
+          name: "Training Category",
+          href: "/settings/training/category",
+        },
+        {
+          name: "Training Checklist",
+          href: "/settings/training/checklist",
+        },
+      ],
+    },
+    {
+      icon: MapIcon,
+      name: "Zone",
+      href: "/settings/zone",
+    },
+    {
       icon: Circle,
       name: "Circle",
       href: "/safety/m-safe/circle",
@@ -311,11 +425,13 @@ const ViSidebar: React.FC = () => {
     isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [isExternalUsersUploadOpen, setIsExternalUsersUploadOpen] = useState(false);
+  const [isExternalUsersUploadOpen, setIsExternalUsersUploadOpen] =
+    useState(false);
 
   // Sidebar items with an `action` open a modal instead of navigating.
   const runItemAction = (action: ModuleItem["action"]) => {
-    if (action === "bulk-upload-external-users") setIsExternalUsersUploadOpen(true);
+    if (action === "bulk-upload-external-users")
+      setIsExternalUsersUploadOpen(true);
   };
 
   // Helper function to find the deepest navigable sub-item
@@ -448,7 +564,11 @@ const ViSidebar: React.FC = () => {
     return (
       <div key={item.name} className="w-full">
         <button
-          onClick={() => (item.action ? runItemAction(item.action) : item.href && handleNavigation(item.href))}
+          onClick={() =>
+            item.action
+              ? runItemAction(item.action)
+              : item.href && handleNavigation(item.href)
+          }
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}
                         ${isActive ? "bg-[#f0e8dc] shadow-inner" : ""}
                     `}

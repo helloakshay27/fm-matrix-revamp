@@ -55,12 +55,10 @@ export const taskExportService = {
    */
   startExport: async (filters?: ExportFilters): Promise<ExportStartResponse> => {
     const siteId = getCurrentSiteId();
-    const accessToken = getAccessToken();
-    
+
     // Build query parameters
     const queryParams = new URLSearchParams();
     queryParams.append('site_id', siteId);
-    queryParams.append('access_token', accessToken);
     
     // Add filters if provided
     if (filters) {

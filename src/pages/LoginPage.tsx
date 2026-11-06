@@ -78,7 +78,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("vi-uat.gophygital.work");
   const isWebSite = hostname.includes("web.gophygital.work");
   const isClubSite =
     hostname === "club.lockated.com" ||
@@ -331,6 +333,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation,
         });
 
         saveBaseUrl(baseUrl);
@@ -376,6 +379,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
+          designation: response.designation,
         });
 
         saveBaseUrl(baseUrl);
@@ -414,6 +418,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         lock_role: response.lock_role,
         is_vendor: response.is_vendor,
         supplier_id: response.supplier_id,
+        designation: response.designation,
       });
       // Store vendor/supplier ID for vendor portal routing
       if (response.supplier_id) {

@@ -124,10 +124,6 @@ async function fetchMsafeTrainingJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -313,12 +309,7 @@ async function fetchMsafeUserDashboardJson(
   const companyId = Number(
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145',
   );
-  const token = localStorage.getItem('token') || '';
   const params = new URLSearchParams({ company_id: String(companyId), ...extraParams });
-  if (token) {
-    params.set('token', token);
-    params.set('access_token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_user_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
 
@@ -352,10 +343,6 @@ async function fetchMsafeKrccJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_krcc_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -419,10 +406,6 @@ async function fetchMsafeLmcJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraQuery });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_lmc_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -579,10 +562,6 @@ async function fetchMsafeSmtJson(
   const companyId =
     localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/msafe_smt_visit_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;

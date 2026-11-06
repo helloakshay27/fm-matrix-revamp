@@ -1,0 +1,159 @@
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, FileText, FilePenLine, Plus, ShieldCheck } from "lucide-react";
+import { DetailCard } from "@/components/ui/detail-card";
+import {
+  hasSubmittedActionTaken,
+  isPlanPendingByActionOwner,
+  viAuditBasePath,
+} from "@/components/vi-audit/viAuditData";
+import {
+  ActionPlanRecord,
+  ActionTakenList,
+  AuditLoadingState,
+  AuditStatusPill,
+  sectionIcon,
+} from "@/components/vi-audit/ViAuditUi";
+import { useViActionPlanDetail } from "@/components/vi-audit/useViActionPlanDetail";
+import { VI_AUDIT_DETAIL_URLS, useViAuditDetail } from "@/components/vi-audit/useViAuditDetail";
+
+const viewMoreClass =
+  "shrink-0 text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-600";
+
+// Action Owner: one corrective / preventive action plan, with "Add Action Taken".
+// Plan from GET /vi_audit_action_plans/:planId.json; parent audit / observation cards from
+// GET /vi_audits/:id.json.
+const ActionOwnerActionPlanDetailPage = () => {
+  const navigate = useNavigate();
+  const { id, observationId, planId } = useParams();
+  const { detail: found, loading: planLoading } = useViActionPlanDetail(planId);
+  const { audit, loading: auditLoading } = useViAuditDetail(id, VI_AUDIT_DETAIL_URLS.actionOwner);
+  const observation = audit?.observations.find((o) => o.id === observationId);
+
+  const basePath = viAuditBasePath("action-owner");
+  const auditPath = `${basePath}/${id}`;
+  const observationPath = `${auditPath}/observations/${observationId}`;
+
+  if (planLoading || auditLoading) return <AuditLoadingState message="Loading action plan..." />;
+
+  if (!found) {
+    return (
+      <div className="p-4 sm:p-6 min-h-screen">
+        <button
+          type="button"
+          onClick={() => navigate(observationPath)}
+          className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <p className="text-sm text-gray-500">Action plan not found.</p>
+      </div>
+    );
+  }
+
+  const { plan, kind } = found;
+  // "Add Action Taken" while the plan is still pending by the action owner, or while the
+  // observation is still "Pending By SPOC" — and only until an action taken has been submitted.
+  const isPending =
+    !hasSubmittedActionTaken(plan) &&
+    (isPlanPendingByActionOwner(plan) || observation?.status === "Pending By SPOC");
+  const actionTaken = plan.capas ?? [];
+  // A CAPA saved with "Save Draft" (not submitted yet) — the button continues it.
+  const hasDraftActionTaken = actionTaken.some((capa) => capa.status && capa.status !== "closed");
+
+  return (
+    <div className="p-4 sm:p-6 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-3 mb-2">
+        <button
+          type="button"
+          onClick={() => navigate(observationPath)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+          aria-label="Back to observation"
+        >
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
+        </button>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Audit</h1>
+        <AuditStatusPill status={plan.status} />
+      </div>
+      <p className="mb-6 pl-11 text-sm text-gray-500">
+        ID: {[audit?.auditCode, observation?.observationNo ?? observation?.id, plan.actionNo ?? plan.id].filter(Boolean).join("/")}
+      </p>
+
+      {/* Parent audit */}
+      {audit && (
+      <DetailCard icon={sectionIcon(ClipboardCheck)} title={audit.auditCode} className="mb-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-sm font-semibold text-gray-900">{audit.auditType} Audit</div>
+            <div className="text-sm text-gray-600">{audit.basic.auditLocation}</div>
+            <div className="flex items-center gap-2 pt-1 text-sm text-gray-500">
+              Status: <AuditStatusPill status={audit.status} />
+            </div>
+          </div>
+          <button type="button" onClick={() => navigate(auditPath)} className={viewMoreClass}>
+            View More
+          </button>
+        </div>
+      </DetailCard>
+      )}
+
+      {/* Parent observation */}
+      {observation && (
+      <DetailCard icon={sectionIcon(FileText)} title={observation.observationNo ?? observation.id} className="mb-5">
+        <div className="flex items-start justify-between gap-4">
+          <p className="line-clamp-2 text-sm text-gray-900">{observation.description}</p>
+          <button type="button" onClick={() => navigate(observationPath)} className={viewMoreClass}>
+            View More
+          </button>
+        </div>
+      </DetailCard>
+      )}
+
+      {/* The action plan */}
+      <DetailCard
+        icon={sectionIcon(ShieldCheck)}
+        title={kind === "corrective" ? "Corrective Action Plan" : "Preventive Action Plan"}
+        className="mb-5"
+      >
+        <div className="overflow-hidden rounded-lg border border-gray-200">
+          <ActionPlanRecord plan={plan} />
+        </div>
+      </DetailCard>
+
+      {/* Actions taken so far (CAPAs) */}
+      {actionTaken.length > 0 && (
+        <DetailCard
+          icon={sectionIcon(CheckCircle2)}
+          title={kind === "corrective" ? "Corrective Action Taken" : "Preventive Action Taken"}
+          className="mb-5"
+        >
+          <ActionTakenList actions={actionTaken} />
+        </DetailCard>
+      )}
+
+      {isPending && (
+        <div className="flex flex-wrap gap-4 justify-center pt-4 sm:pt-6">
+          <button
+            type="button"
+            className="fm-button-fix fm-button-brand inline-flex items-center justify-center gap-2 px-8 py-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={() => navigate(`${observationPath}/plans/${plan.id}/action-taken`)}
+          >
+            {hasDraftActionTaken ? (
+              <>
+                <FilePenLine className="w-4 h-4" />
+                Continue Draft
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add Action Taken
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ActionOwnerActionPlanDetailPage;

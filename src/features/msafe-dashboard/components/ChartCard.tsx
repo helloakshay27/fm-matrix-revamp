@@ -86,10 +86,6 @@ async function downloadReport(
     ...extraParams,
     ...filterParams,
   });
-  if (token) {
-    params.set('access_token', token);
-    params.set('token', token);
-  }
   const url = `${getMsafeBaseUrl()}/${reportPath}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;

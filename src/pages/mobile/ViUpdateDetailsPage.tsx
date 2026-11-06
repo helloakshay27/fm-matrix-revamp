@@ -13,6 +13,27 @@ import { Button } from "@/components/ui/button";
 import { MuiMultiSelect } from "@/components/MuiMultiSelect";
 import { Building2, MapPin, Layers } from "lucide-react";
 
+// Remove `token`/`user_id` from the visible URL once captured, so the
+// credential doesn't linger in browser history, proxy logs, or leak via the
+// Referer header on later navigation.
+const stripViTokenParams = () => {
+  try {
+    const url = new URL(window.location.href);
+    let changed = false;
+    ["token", "user_id"].forEach((key) => {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    });
+    if (changed) {
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  } catch {
+    // Non-fatal - worst case the param stays visible in the address bar.
+  }
+};
+
 const COMPANY_ID = 145;
 const API_BASE = "https://live-api.gophygital.work";
 
@@ -40,8 +61,17 @@ const toList = (data: unknown, ...keys: string[]): LocationItem[] => {
 
 export const ViUpdateDetailsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
-  const userId = searchParams.get("user_id") || "";
+  // Captured once via lazy initializer, not re-read from searchParams on every
+  // render - stripViTokenParams() below removes `token` from the visible
+  // URL, and these two must stay stable afterwards for the rest of this page.
+  const [token] = useState(() => searchParams.get("token") || "");
+  const [userId] = useState(() => searchParams.get("user_id") || "");
+
+  // Credential is captured once above; stop it lingering in the address bar/history.
+  useEffect(() => {
+    if (token) stripViTokenParams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [sites, setSites] = useState<LocationItem[]>([]);
   const [buildings, setBuildings] = useState<LocationItem[]>([]);

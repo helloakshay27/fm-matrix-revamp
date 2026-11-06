@@ -340,10 +340,11 @@ export const FinalClosureModal: React.FC<FinalClosureModalProps> = ({
                 }))
             };
 
-            const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json?access_token=${token}`, {
+            const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });

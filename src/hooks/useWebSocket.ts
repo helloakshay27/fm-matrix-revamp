@@ -4,16 +4,14 @@ import webSocketManager from '../utils/webSocketManager';
 export const useWebSocket = () => {
     const isConnected = useRef(false);
 
-    const connect = useCallback((accessToken, wsUrl) => {
+    const connect = useCallback((wsUrl) => {
         console.log('🎯 useWebSocket.connect called');
-        console.log('   - Token present:', !!accessToken);
-        console.log('   - WS URL:', wsUrl);
+        console.log('   - WebSocket URL present:', !!wsUrl);
         console.log('   - Already connected:', isConnected.current);
 
         if (!isConnected.current) {
             console.log('🔌 Initiating new connection...');
-            webSocketManager.connect(accessToken, wsUrl);
-            isConnected.current = true;
+            isConnected.current = !!webSocketManager.connect(wsUrl);
         } else {
             console.log('ℹ️ Connection already established, skipping');
         }

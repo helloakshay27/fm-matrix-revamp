@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 5173,
+    port: 5174,
   },
   plugins: [
     react(),
@@ -72,6 +72,11 @@ export default defineConfig(({ mode }) => ({
   },
   assetsInclude: ["**/*.xlsx", "**/*.xls"],
   base: "/", // Use absolute paths for proper asset loading
+  // Strip license/version banners from the production bundle so a scanner can't
+  // fingerprint third-party library versions straight out of the shipped JS.
+  esbuild: {
+    legalComments: "none",
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

@@ -103,7 +103,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isEmployeeUser = userType === "pms_occupant";
 
   // Check if non-employee user needs to select project/site
-  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("vi-uat.gophygital.work") ||
+    hostname === "localhost";
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -582,8 +585,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           // No margins in embedded mode
           isEmbedded
             ? "ml-0 pt-4"
-            : // For employee users, only add left margin if on Project Task module
-              isEmployeeUser && isLocalhost
+            : // For employee users, only add left margin if on Project Task module.
+              // Vi sites always render the ViSidebar (even for employees), so they keep the sidebar margin.
+              isEmployeeUser && isLocalhost && !isViSite
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -599,7 +603,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
+        } ${
+          // Employee header only (64px) → pt-16. Vi sites also show the ViDynamicHeader module bar
+          // below it (fixed top-16 h-12), so they need the full pt-28 like the regular layout.
+          isEmbedded
+            ? ""
+            : isEmployeeUser && isLocalhost && !isViSite
+              ? "pt-16"
+              : isActionSidebarVisible
+                ? ""
+                : "pt-28"
+        } transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>
