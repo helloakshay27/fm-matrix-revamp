@@ -833,9 +833,9 @@ export interface ChecklistsComplianceData {
   site_wise_compliance: ChecklistSiteWiseCompliance[];
   top_completed: ChecklistTopCompleted[];
   weightage_scoring: {
-    enabled_forms: number;
-    total_forms: number;
-    adoption_percent: number;
+    achieved_score: number;
+    max_score: number;
+    weightage_score_percent: number;
   };
 }
 
@@ -944,21 +944,25 @@ export interface InventoryOverviewData {
   inventory_health_score: number;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface InventoryCriticalStockRow {
+  pms_inventory_id?: number;
   inventory_id?: number;
   name?: string;
   quantity?: number;
-  reorder_level?: number;
+  min_stock_level?: string | number;
+  criticality?: string;
+  deficit?: number;
   [key: string]: unknown;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface InventoryUrgentRestockRow {
+  pms_inventory_id?: number;
   inventory_id?: number;
   name?: string;
   quantity?: number;
-  expiry_date?: string;
+  min_stock_level?: string | number;
+  criticality?: string;
+  expiry_date?: string | null;
   [key: string]: unknown;
 }
 
@@ -979,17 +983,16 @@ export interface InventoryStockHealthData {
   };
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface InventoryMonthlyCost {
   month?: string;
-  value?: number;
+  total_cost?: number;
   [key: string]: unknown;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface InventoryCategoryConsumption {
   category?: string;
-  value?: number;
+  consumed_quantity?: number;
+  consumed_value?: number;
   [key: string]: unknown;
 }
 
@@ -1229,6 +1232,31 @@ export interface AttendancePatternsData {
   habitual_latecomers: AttendanceHabitualLatecomerRow[];
 }
 
+export interface AttendanceStaffingGapDailyRow {
+  date: string;
+  working_day: boolean;
+  absent_staff: number;
+  present_staff: number;
+  total_tickets: number;
+  breached_tickets: number;
+  breach_percent: number;
+}
+
+export interface AttendanceStaffingGapVsBreachData {
+  absent_staff: {
+    absent_staff_count: number;
+    absent_person_days: number;
+    total_staff: number;
+    working_days: number;
+  };
+  ticket_breach: {
+    total_tickets: number;
+    breached_tickets: number;
+    breach_percent: number;
+  };
+  daily: AttendanceStaffingGapDailyRow[];
+}
+
 interface AttendanceOverviewResponse {
   success: number;
   message: string;
@@ -1281,9 +1309,10 @@ export const fetchAttendancePatterns = (params: FmDashboardParams) =>
   );
 
 export const fetchAttendanceStaffingGapVsBreach = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<{ staffing_gap_vs_breach: unknown }>(ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH, params).then(
-    (res) => res.staffing_gap_vs_breach
-  );
+  fetchFmDashboardJson<{ staffing_gap_vs_breach: AttendanceStaffingGapVsBreachData }>(
+    ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH,
+    params
+  ).then((res) => res.staffing_gap_vs_breach);
 
 // ============================================================================
 // Survey

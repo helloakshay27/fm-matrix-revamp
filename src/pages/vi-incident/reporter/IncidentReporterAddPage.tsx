@@ -183,11 +183,11 @@ const IncidentReporterAddPage = () => {
     }
     if (injuryHappened) {
       const invalid = injuries.findIndex(
-        (i) => !i.name.trim() || !i.age || !i.personTypeId || !i.natureOfInjuryId || !i.bodyPartId,
+        (i) => !i.personTypeId || !i.natureOfInjuryId || !i.bodyPartId,
       );
       if (invalid !== -1) {
         toast.error(
-          `Please complete injury ${invalid + 1}: Impacted Person, Age, Nature of Person Impacted, Nature of Injury and Body Part Affected`,
+          `Please complete injury ${invalid + 1}: Nature of Person Impacted, Nature of Injury and Body Part Affected`,
         );
         return false;
       }
@@ -567,7 +567,7 @@ const IncidentReporterAddPage = () => {
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      <TextField
+                      {/* <TextField
                         fullWidth
                         label={requiredLabel("Impacted Person Name")}
                         placeholder="Enter name"
@@ -584,7 +584,7 @@ const IncidentReporterAddPage = () => {
                         onChange={(e) => updateInjury(index, { age: e.target.value })}
                         inputProps={{ min: 0 }}
                         InputLabelProps={{ shrink: true }}
-                      />
+                      /> */}
                       <IncidentSelectField
                         label="Nature of Person Impacted"
                         required

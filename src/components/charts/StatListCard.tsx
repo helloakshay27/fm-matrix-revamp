@@ -25,21 +25,28 @@ export interface StatListCardProps {
  * aged, Godrej Living distress, By User/Department/Tenant, Repeat
  * extensions, etc). No existing chart card covered this shape.
  */
-export function StatListCard({ title, subtitle, rows, note, className }: StatListCardProps) {
+export function StatListCard({ title, subtitle, rows, note, borderTone, className }: StatListCardProps) {
   return (
-    <Card className={cn("border-brand-border", className)}>
+    <Card
+      className={cn(
+        "border-brand-border",
+        borderTone === "error" && "border-l-4 border-l-brand-error",
+        borderTone === "warning" && "border-l-4 border-l-brand-warning",
+        className
+      )}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className="divide-y divide-brand-border">
           {rows.map((row) => (
             <div
               key={row.label}
               onClick={row.onClick}
               className={cn(
-                "flex items-center justify-between gap-3 text-brand-body-5",
+                "flex items-center justify-between gap-3 py-2 text-brand-body-5 first:pt-0 last:pb-0",
                 row.onClick && "cursor-pointer hover:text-brand"
               )}
             >
