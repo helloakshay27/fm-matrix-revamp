@@ -74,11 +74,19 @@ const toStockBatch = (
 
 // move_type values accepted by inventory_consumption_addition.json.
 const ADD_MOVE_TYPE = "1";
-const CONSUME_TYPE_OPTIONS = [{ value: "2", label: "Consume" }];
+const CONSUME_MOVE_TYPE = "2";
+// consumption_type mirrors the option label: lower case, spaces -> underscores,
+// e.g. "Issue to site" -> "issue_to_site".
+const CONSUME_TYPE_OPTIONS = [
+  { value: "consume", label: "Consume" },
+  { value: "issue_to_site", label: "Issue to site" },
+  { value: "replace_old_item", label: "Replace old item" },
+  { value: "lost", label: "Lost" },
+];
 const DISPOSAL_REASON_OPTIONS = [
-  { value: "3", label: "Breakage" },
-  { value: "4", label: "Spillage" },
-  { value: "5", label: "Lost" },
+  { value: "expired", label: "Expired" },
+  { value: "damaged", label: "Damaged" },
+  { value: "other", label: "Other" },
 ];
 
 const TRANSACTION_TYPES: TransactionType[] = ["Add", "Consume", "Dispose"];
@@ -444,7 +452,7 @@ const InventoryConsumptionAddPage = () => {
 
   // Field errors, shown once the user has tried to submit.
   const errors = {
-    grnNumber: isAdd && !grnNumber.trim() ? "GRN No. is required" : "",
+    grnNumber: "",
     quantity: !quantity
       ? "Quantity is required"
       : quantityNumber <= 0
@@ -502,21 +510,25 @@ const InventoryConsumptionAddPage = () => {
       // Dispose sends the same payload as Consume: the consume move_type, with the
       // disposal reason carried in consumption_type (below).
       const payload: Record<string, unknown> = {
-        move_type: isAdd ? ADD_MOVE_TYPE : CONSUME_TYPE_OPTIONS[0].value,
+        move_type: isAdd ? ADD_MOVE_TYPE : CONSUME_MOVE_TYPE,
         resource_id: Number(id),
         quantity: quantityNumber,
         comments,
       };
 
-      // Selected "Consume Type" (Consume) or "Disposal Reason" (Dispose) goes to the API
-      // as consumption_type, sent as its label in lower case.
-      if (isConsume || isDispose) {
+      // consumption_type: "add" for Add; selected "Consume Type" (Consume) or
+      // "Disposal Reason" (Dispose) label in lower case with spaces -> underscores.
+      if (isAdd) {
+        payload.consumption_type = "add";
+      } else {
         const typeOptions = isDispose
           ? DISPOSAL_REASON_OPTIONS
           : CONSUME_TYPE_OPTIONS;
         payload.consumption_type = (
           typeOptions.find((o) => o.value === moveType)?.label || ""
-        ).toLowerCase();
+        )
+          .toLowerCase()
+          .replace(/\s+/g, "_");
       }
 
       if (isAdd) {
@@ -747,7 +759,7 @@ const InventoryConsumptionAddPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {isAdd && (
               <div>
-                <FieldLabel required>GRN No.</FieldLabel>
+                <FieldLabel>GRN No. (optional)</FieldLabel>
                 <TextField
                   value={grnNumber}
                   onChange={(e) => setGrnNumber(e.target.value)}
