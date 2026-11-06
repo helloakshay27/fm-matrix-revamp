@@ -93,6 +93,7 @@ export interface ViIncidentRecord {
   circle: string;
   personnelArea: string;
   workLocation: string;
+  zone: string;
   facilityType: string;
   incidentLocation: string;
   function: string;
@@ -104,6 +105,7 @@ export interface ViIncidentRecord {
     circle: string;
     personnelArea: string;
     workLocation: string;
+    zone: string;
     function: string;
     facilityType: string;
     classification: string;
@@ -155,6 +157,7 @@ export const INCIDENT_COLUMNS: ColumnConfig[] = [
   { key: "dateOfIncident", label: "Date of Incident", sortable: true, defaultVisible: true },
   { key: "timeOfIncident", label: "Time of Incident", sortable: true, defaultVisible: true },
   { key: "circle", label: "Circle", sortable: true, defaultVisible: true },
+  { key: "zone", label: "Zone", sortable: true, defaultVisible: true },
   { key: "spoc", label: "SPOC", sortable: true, defaultVisible: true },
   { key: "functionalHead", label: "Functional Head", sortable: true, defaultVisible: true },
   { key: "injuriesCount", label: "Injuries", sortable: true, defaultVisible: false },
@@ -168,6 +171,7 @@ export const INCIDENT_CARD_COLUMNS: ColumnConfig[] = [
   { key: "incidentNo", label: "Incident ID", sortable: true, defaultVisible: true },
   { key: "status", label: "Status", sortable: true, defaultVisible: true },
   { key: "classification", label: "Classification", sortable: true, defaultVisible: true },
+  { key: "zone", label: "Zone", sortable: true, defaultVisible: true },
   { key: "incidentLocation", label: "Incident Location", sortable: true, defaultVisible: true },
 ];
 

@@ -130,7 +130,7 @@ export const AUDIT_CARD_COLUMNS: ColumnConfig[] = [
   { key: "auditId", label: "Audit ID", sortable: true, defaultVisible: true },
   { key: "status", label: "Status", sortable: true, defaultVisible: true },
   { key: "auditType", label: "Audit Type", sortable: true, defaultVisible: true },
-  { key: "auditLocation", label: "Work Location", sortable: true, defaultVisible: true },
+  { key: "auditZone", label: "Zone", sortable: true, defaultVisible: true },
 ];
 
 /** Audit-card fields followed by the full audit detail (Auditor list). */
@@ -145,7 +145,6 @@ export const AUDIT_FULL_COLUMNS: ColumnConfig[] = [
   { key: "observationSubCategory", label: "Observation Sub-Category", sortable: true, defaultVisible: true },
   { key: "spoc", label: "SPOC", sortable: true, defaultVisible: true },
   { key: "auditCircle", label: "Audit Circle", sortable: true, defaultVisible: true },
-  { key: "auditZone", label: "Audit Zone", sortable: true, defaultVisible: true },
   { key: "personnelArea", label: "Personnel Area", sortable: true, defaultVisible: true },
   { key: "facilityType", label: "Type of Facility", sortable: true, defaultVisible: true },
   { key: "function", label: "Function", sortable: true, defaultVisible: true },
