@@ -1309,9 +1309,10 @@ export const fetchAttendancePatterns = (params: FmDashboardParams) =>
   );
 
 export const fetchAttendanceStaffingGapVsBreach = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<{ staffing_gap_vs_breach: unknown }>(ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH, params).then(
-    (res) => res.staffing_gap_vs_breach
-  );
+  fetchFmDashboardJson<{ staffing_gap_vs_breach: AttendanceStaffingGapVsBreachData }>(
+    ATTENDANCE_ENDPOINTS.STAFFING_GAP_VS_BREACH,
+    params
+  ).then((res) => res.staffing_gap_vs_breach);
 
 // ============================================================================
 // Survey
