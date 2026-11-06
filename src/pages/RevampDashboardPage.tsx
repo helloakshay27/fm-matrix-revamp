@@ -152,8 +152,10 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "asset-hero-replacement", x: 10, y: 109, w: 2, h: 3, minW: 2, minH: 3 },
   { i: "asset-health-card", x: 0, y: 112, w: 12, h: 7, minW: 6, minH: 5 },
   { i: "asset-breakdown-gauge", x: 0, y: 119, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "asset-value-risk", x: 6, y: 119, w: 6, h: 6, minW: 3, minH: 4 },
   { i: "asset-critical-noncritical", x: 0, y: 125, w: 6, h: 6, minW: 3, minH: 4 },
   { i: "asset-repeat-breakdowns", x: 6, y: 125, w: 6, h: 6, minW: 3, minH: 4 },
+  // { i: "asset-breakdown-allocation", x: 0, y: 131, w: 6, h: 6, minW: 3, minH: 4 },
   { i: "asset-category-breakdown", x: 0, y: 131, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "asset-lifecycle", x: 0, y: 137, w: 12, h: 7, minW: 6, minH: 5 },
   { i: "asset-amc-pair", x: 0, y: 144, w: 12, h: 5, minW: 6, minH: 4 },
@@ -178,6 +180,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "audit-insights", x: 0, y: 206, w: 12, h: 9, minW: 6, minH: 6 },
   { i: "audit-status-repository", x: 0, y: 215, w: 12, h: 7, minW: 6, minH: 5 },
   { i: "audit-completion-bar", x: 0, y: 222, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "audit-stalled", x: 0, y: 228, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "audit-execution-concentration", x: 0, y: 228, w: 12, h: 4, minW: 6, minH: 3 },
 
   // Maintenance › AMC
@@ -188,6 +191,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "amc-expiry-banner", x: 0, y: 253, w: 12, h: 2, minW: 6, minH: 2 },
   { i: "amc-urgency-criticality", x: 0, y: 255, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "amc-vendor-concentration", x: 0, y: 261, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "amc-cost-at-risk", x: 0, y: 267, w: 12, h: 4, minW: 6, minH: 3 },
   { i: "amc-service-asset-split", x: 0, y: 271, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "amc-critical-pending-pair", x: 0, y: 277, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "amc-coverage-by-category", x: 0, y: 282, w: 12, h: 6, minW: 6, minH: 4 },
@@ -203,6 +207,11 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "checklist-top10-completed", x: 0, y: 317, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "checklist-sitewise-compliance", x: 0, y: 323, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "checklist-monthly-trend", x: 0, y: 328, w: 12, h: 6, minW: 6, minH: 4 },
+  // Hidden Checklist cards retained here for easy restoration:
+  // { i: "checklist-red-flags", x: 0, y: 334, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "checklist-smart-insights", x: 0, y: 340, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "checklist-tenant-mismatch", x: 0, y: 346, w: 12, h: 4, minW: 6, minH: 3 },
+
   // Maintenance › Inventory
   { i: "inventory-section-label", x: 0, y: 334, w: 12, h: 1, minW: 6, minH: 1 },
   { i: "inventory-kpi-row", x: 0, y: 351, w: 12, h: 4, minW: 6, minH: 3 },
@@ -241,10 +250,15 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   // Maintenance › Vendor
   { i: "vendor-section-label", x: 0, y: 485, w: 12, h: 1, minW: 6, minH: 1 },
   { i: "vendor-kpi-row", x: 0, y: 486, w: 12, h: 11, minW: 6, minH: 6 },
+  // { i: "vendor-repeat-requests", x: 0, y: 494, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-response-time", x: 0, y: 497, w: 6, h: 7, minW: 4, minH: 5 },
   { i: "vendor-amc-status-table", x: 6, y: 497, w: 6, h: 7, minW: 4, minH: 5 },
+  // { i: "vendor-health", x: 0, y: 506, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "vendor-response-trend", x: 0, y: 504, w: 12, h: 6, minW: 6, minH: 4 },
+  // { i: "vendor-expired-kyc", x: 0, y: 518, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "vendor-data-hygiene-banner", x: 0, y: 510, w: 12, h: 2, minW: 6, minH: 2 },
+  // { i: "vendor-missed-visits", x: 0, y: 525, w: 6, h: 7, minW: 4, minH: 5 },
+  // { i: "vendor-contract-performance", x: 0, y: 532, w: 12, h: 8, minW: 6, minH: 5 },
   { i: "vendor-workflow-bottlenecks", x: 0, y: 512, w: 12, h: 7, minW: 6, minH: 5 },
 ];
 
@@ -4023,6 +4037,21 @@ export default function RevampDashboardPage() {
               </div>
               */}
 
+              {/*
+              <div key="asset-value-risk" chart_code="fm-asset-value-risk" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-value-risk" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="6,119" />
+                <HighlightStatCard
+                  title="Asset value at risk right now"
+                  subtitle="Portion of total asset value sitting in currently-broken equipment"
+                  value="N/A"
+                  valueCaption="Not returned by the assets dashboard API"
+                  tone="error"
+                  description="These 4 endpoints return total portfolio value and cost-by-category, but not the value of specifically the currently-broken subset — that figure isn't computable from what's available here."
+                  className="h-full overflow-auto"
+                />
+              </div>
+              */}
+
               <div key="asset-critical-noncritical" chart_code="fm-asset-critical-noncritical" className="h-full relative">
                 <AddToDashboardButton chartId="fm-asset-critical-noncritical" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="0,125" />
                 <BarChartCard
@@ -4060,6 +4089,33 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
+
+              {/*
+              <div key="asset-breakdown-allocation" chart_code="fm-asset-breakdown-allocation" className="h-full relative">
+                <AddToDashboardButton chartId="fm-asset-breakdown-allocation" moduleKey="maintenance" subTab="Assets" height="6" width="6" position="0,131" />
+                {breakdownByAllocationData.length ? (
+                  <BarChartCard
+                    title="Breakdowns by allocation"
+                    subtitle="Which allocation type is holding the most broken equipment"
+                    data={breakdownByAllocationData}
+                    categoryKey="team"
+                    orientation="horizontal"
+                    series={[{ dataKey: "count", name: "Breakdowns" }]}
+                    showInfoIcon
+                    insightVariant="plain"
+                    insight="A named target for a conversation, not just an aggregate percentage — if breakdowns cluster under one allocation type, that's specific enough to act on today."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Breakdowns by allocation"
+                    subtitle="Which allocation type is holding the most broken equipment"
+                    message="No allocation-level breakdown data for this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
+              </div>
+              */}
 
               <div key="asset-category-breakdown" chart_code="fm-asset-category-breakdown" className="h-full relative">
                 <AddToDashboardButton chartId="fm-asset-category-breakdown" moduleKey="maintenance" subTab="Assets" height="6" width="12" position="0,131" />
@@ -4491,6 +4547,27 @@ export default function RevampDashboardPage() {
                 )}
               </div>
 
+              {/*
+              <div key="audit-stalled" chart_code="fm-audit-stalled" className="h-full relative">
+                <AddToDashboardButton chartId="fm-audit-stalled" moduleKey="maintenance" subTab="Audit" height="5" width="12" position="0,228" />
+                {auditStalledRows.length ? (
+                  <StatListCard
+                    title="Stalled audits"
+                    subtitle="In Progress with no recent activity"
+                    rows={auditStalledRows}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Stalled audits"
+                    subtitle="In Progress with no recent activity"
+                    message="No stalled audits in this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
+              </div>
+              */}
+
               <div key="audit-execution-concentration" chart_code="fm-audit-execution-concentration" className="h-full relative">
                 <AddToDashboardButton chartId="fm-audit-execution-concentration" moduleKey="maintenance" subTab="Audit" height="4" width="12" position="0,228" />
                 {topAuditor ? (
@@ -4667,6 +4744,21 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
+
+              {/*
+              <div key="amc-cost-at-risk" chart_code="fm-amc-cost-at-risk" className="h-full relative">
+                <AddToDashboardButton chartId="fm-amc-cost-at-risk" moduleKey="maintenance" subTab="AMC" height="4" width="12" position="0,267" />
+                <HighlightStatCard
+                  title="AMC cost at risk"
+                  subtitle="Share of total AMC spend sitting in expired or never-serviced contracts"
+                  value={amcOverview ? `${amcOverview.cost.cost_at_risk_percent}%` : "—"}
+                  valueCaption={amcOverview ? `${amcOverview.health.expired.toLocaleString()} of ${amcOverview.total_contracts.toLocaleString()} contracts` : undefined}
+                  tone="error"
+                  description="This isn't a static total cost — it's an active financial leak. Money tied up in expired/never-serviced AMC contracts is paying for coverage that no longer exists."
+                  className="h-full overflow-auto"
+                />
+              </div>
+              */}
 
               <div key="amc-service-asset-split" chart_code="fm-amc-service-asset-split" className="h-full relative">
                 <AddToDashboardButton chartId="fm-amc-service-asset-split" moduleKey="maintenance" subTab="AMC" height="6" width="12" position="0,271" />
@@ -4980,6 +5072,59 @@ export default function RevampDashboardPage() {
                   />
                 )}
               </div>
+
+              {/*
+              <div key="checklist-red-flags" chart_code="fm-checklist-red-flags" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-red-flags" moduleKey="maintenance" subTab="Checklists" height="6" width="12" position="0,334" />
+                {checklistRedFlagRows.length ? (
+                  <StatListCard
+                    title="Checklist Red Flags"
+                    subtitle="Computed live from the checklists API"
+                    borderTone="error"
+                    rows={checklistRedFlagRows}
+                    note="Pass/fail outcome tracking isn't part of the checklists API (only scheduled/open/overdue/closed status), so a Checklist Failure Analysis row isn't shown here."
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Checklist Red Flags"
+                    subtitle="Computed live from the checklists API"
+                    message="No red flags detected for this period."
+                    className="h-full overflow-auto"
+                  />
+                )}
+              </div>
+
+              <div key="checklist-smart-insights" chart_code="fm-checklist-smart-insights" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-smart-insights" moduleKey="maintenance" subTab="Checklists" height="6" width="12" position="0,340" />
+                {checklistInsightRows.length ? (
+                  <StatListCard
+                    title="🤖 Checklist Smart Insights"
+                    subtitle="Computed live from the selected sites and date range"
+                    borderTone="warning"
+                    rows={checklistInsightRows}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="🤖 Checklist Smart Insights"
+                    subtitle="Computed live from the selected sites and date range"
+                    message="Not enough checklist activity in this period to generate insights."
+                    className="h-full overflow-auto"
+                  />
+                )}
+              </div>
+
+              <div key="checklist-tenant-mismatch" chart_code="fm-checklist-tenant-mismatch" className="h-full relative">
+                <AddToDashboardButton chartId="fm-checklist-tenant-mismatch" moduleKey="maintenance" subTab="Checklists" height="4" width="12" position="0,346" />
+                <EmptyStateCard
+                  title="Tenants asking for something that's officially off"
+                  subtitle="Inactive services with matching ticket-category volume still coming in"
+                  message="Not available from the checklists dashboard API — this needs a cross-reference against inactive service definitions and ticket categories, which isn't part of these 4 endpoints."
+                  className="h-full overflow-auto"
+                />
+              </div>
+              */}
 
               <div key="inventory-section-label" chart_code="fm-inventory-section-label" className="h-full flex items-center relative">
                 <AddToDashboardButton chartId="fm-inventory-section-label" moduleKey="maintenance" subTab="Inventory" height="1" width="12" position="0,334" />
@@ -5708,6 +5853,142 @@ export default function RevampDashboardPage() {
                   subtitle={vendorRenewals ? `${vendorRenewals.amc_renewals_due.toLocaleString()} AMC · ${vendorRenewals.kyc_renewals_due} KYC` : undefined}
                 />
               </div>
+
+              {/*
+              <div key="vendor-repeat-requests" chart_code="fm-vendor-repeat-requests" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-repeat-requests" moduleKey="maintenance" subTab="Vendor" height="5" width="12" position="0,494" />
+                {vendorRepeatIssueRows.length ? (
+                  <StatListCard
+                    title="Repeat service requests — same vendor, same issue"
+                    subtitle='Not "is this vendor slow" — "does their fix actually hold?"'
+                    borderTone="error"
+                    rows={vendorRepeatIssueRows}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Repeat service requests"
+                    subtitle='Not "is this vendor slow" — "does their fix actually hold?"'
+                    message="No repeat-issue vendor requests for the selected sites and date range."
+                    className="h-full"
+                  />
+                )}
+              </div>
+              */}
+
+              {/*
+              <div key="vendor-health" chart_code="fm-vendor-health" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-health" moduleKey="maintenance" subTab="Vendor" height="6" width="12" position="0,506" />
+                <StatListCard
+                  title="Vendor Health"
+                  subtitle="Compliance — drill any item"
+                  rows={
+                    vendorOverview
+                      ? [
+                          {
+                            label: "KYC Due ≤ 30 days",
+                            badge: { tone: (vendorOverview.kyc.due_within_30_days > 0 ? "red" : "green") as TableBadgeTone, label: `${vendorOverview.kyc.due_within_30_days}` },
+                          },
+                          {
+                            label: "Onboarding Pending",
+                            badge: { tone: (vendorOverview.onboarding_pending_count > 0 ? "amber" : "green") as TableBadgeTone, label: `${vendorOverview.onboarding_pending_count}` },
+                          },
+                          { label: "Inactive Vendors", badge: { tone: "grey" as TableBadgeTone, label: `${vendorOverview.inactive_count}` } },
+                          {
+                            label: "Contract Renewals Due",
+                            badge: {
+                              tone: (vendorRenewals && vendorRenewals.total_renewals_due > 0 ? "amber" : "green") as TableBadgeTone,
+                              label: vendorRenewals ? `${vendorRenewals.total_renewals_due.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "Missed Visits (all vendors)",
+                            badge: {
+                              tone: (vendorApiData.health && vendorApiData.health.total_missed_visits > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorApiData.health ? `${vendorApiData.health.total_missed_visits.toLocaleString()}` : "–",
+                            },
+                          },
+                          {
+                            label: "KYC Expired / Missing",
+                            badge: {
+                              tone: (vendorKycStatus && vendorKycStatus.total_at_risk_count > 0 ? "red" : "green") as TableBadgeTone,
+                              label: vendorKycStatus ? `${vendorKycStatus.expired_count} / ${vendorKycStatus.missing_count}` : "–",
+                            },
+                          },
+                        ]
+                      : []
+                  }
+                  className="h-full overflow-auto"
+                />
+              </div>
+              */}
+
+              {/*
+              <div key="vendor-expired-kyc" chart_code="fm-vendor-expired-kyc" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-expired-kyc" moduleKey="maintenance" subTab="Vendor" height="5" width="12" position="0,518" />
+                {vendorExpiredKycRows.length ? (
+                  <StatListCard
+                    title="Active vendors with expired or missing KYC"
+                    subtitle="A paperwork gap becomes a legal/payment risk when the vendor holds a live contract"
+                    borderTone="error"
+                    rows={vendorExpiredKycRows}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard
+                    title="Active vendors with expired or missing KYC"
+                    subtitle="A paperwork gap becomes a legal/payment risk when the vendor holds a live contract"
+                    message="No vendors currently flagged with expired KYC on a live contract."
+                    className="h-full"
+                  />
+                )}
+              </div>
+              */}
+
+              {/*
+              <div key="vendor-missed-visits" chart_code="fm-vendor-missed-visits" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-missed-visits" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="0,525" />
+                {vendorMissedVisitData.length ? (
+                  <BarChartCard
+                    title="Missed visits by vendor"
+                    subtitle={vendorHealth ? `${vendorHealth.total_missed_visits.toLocaleString()} missed visits in total` : undefined}
+                    data={vendorMissedVisitData}
+                    categoryKey="vendor"
+                    orientation="horizontal"
+                    showAllCategoryLabels
+                    categoryColors={vendorMissedVisitData.map((_, i) => getVedaColor(i))}
+                    series={[{ dataKey: "missed", name: "Missed visits" }]}
+                    height={Math.max(260, vendorMissedVisitData.length * 28)}
+                    className="h-full overflow-auto"
+                  />
+                ) : (
+                  <EmptyStateCard title="Missed visits by vendor" message="No missed vendor visits for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+              */}
+
+              {/*
+              <div key="vendor-contract-performance" chart_code="fm-vendor-contract-performance" className="h-full relative">
+                <AddToDashboardButton chartId="fm-vendor-contract-performance" moduleKey="maintenance" subTab="Vendor" height="8" width="12" position="0,532" />
+                {vendorPerformanceTableRows.length ? (
+                  <DataTableCard
+                    title="Vendor request & SLA performance"
+                    subtitle={
+                      vendorPerformance
+                        ? `${vendorPerformance.overall.total_requests} requests · ${vendorPerformance.overall.breached} breached · ${vendorPerformance.overall.sla_compliance_percent}% SLA compliance`
+                        : undefined
+                    }
+                    columns={VENDOR_PERFORMANCE_TABLE_COLUMNS}
+                    data={vendorPerformanceTableRows}
+                    getRowKey={(row) => row.vendorName}
+                    insight="AMC contract and visit details are shown in the Vendor Performance summary above."
+                    className="h-full overflow-auto no-drag"
+                  />
+                ) : (
+                  <EmptyStateCard title="Vendor request & SLA performance" message="No per-vendor request/SLA data for the selected sites and date range." className="h-full" />
+                )}
+              </div>
+              */}
 
               <div key="vendor-response-time" chart_code="fm-vendor-response-time" className="h-full relative">
                 <AddToDashboardButton chartId="fm-vendor-response-time" moduleKey="maintenance" subTab="Vendor" height="7" width="6" position="0,497" />
