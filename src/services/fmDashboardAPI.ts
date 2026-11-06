@@ -466,10 +466,10 @@ interface AssetsMaintenanceResponse {
 }
 
 const ASSETS_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/assets/assets_overview",
-  CONDITION: "/fm_dashboard/assets/assets_condition",
-  CATEGORY: "/fm_dashboard/assets/assets_category",
-  MAINTENANCE: "/fm_dashboard/assets/assets_maintenance",
+  OVERVIEW: "/fm_dashboard/assets/assets_overview.json",
+  CONDITION: "/fm_dashboard/assets/assets_condition.json",
+  CATEGORY: "/fm_dashboard/assets/assets_category.json",
+  MAINTENANCE: "/fm_dashboard/assets/assets_maintenance.json",
 } as const;
 
 export const fetchAssetsOverview = (params: FmDashboardParams) =>
@@ -601,10 +601,10 @@ interface AuditsFindingsResponse {
 }
 
 const AUDIT_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/audits/audits_overview",
-  ASSET_COMPLIANCE: "/fm_dashboard/audits/audits_asset_compliance",
-  EXECUTION: "/fm_dashboard/audits/audits_execution",
-  FINDINGS: "/fm_dashboard/audits/audits_findings",
+  OVERVIEW: "/fm_dashboard/audits/audits_overview.json",
+  ASSET_COMPLIANCE: "/fm_dashboard/audits/audits_asset_compliance.json",
+  EXECUTION: "/fm_dashboard/audits/audits_execution.json",
+  FINDINGS: "/fm_dashboard/audits/audits_findings.json",
 } as const;
 
 export const fetchAuditsOverview = (params: FmDashboardParams) =>
@@ -763,10 +763,10 @@ interface AmcCoverageResponse {
 }
 
 const AMC_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/amc/amc_overview",
-  EXPIRY: "/fm_dashboard/amc/amc_expiry",
-  VENDOR: "/fm_dashboard/amc/amc_vendor",
-  COVERAGE: "/fm_dashboard/amc/amc_coverage",
+  OVERVIEW: "/fm_dashboard/amc/amc_overview.json",
+  EXPIRY: "/fm_dashboard/amc/amc_expiry.json",
+  VENDOR: "/fm_dashboard/amc/amc_vendor.json",
+  COVERAGE: "/fm_dashboard/amc/amc_coverage.json",
 } as const;
 
 export const fetchAmcOverview = (params: FmDashboardParams) =>
@@ -900,10 +900,10 @@ interface ChecklistsFindingsResponse {
 }
 
 const CHECKLISTS_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/checklists/checklists_overview",
-  COMPLIANCE: "/fm_dashboard/checklists/checklists_compliance",
-  TRENDS: "/fm_dashboard/checklists/checklists_trends",
-  FINDINGS: "/fm_dashboard/checklists/checklists_findings",
+  OVERVIEW: "/fm_dashboard/checklists/checklists_overview.json",
+  COMPLIANCE: "/fm_dashboard/checklists/checklists_compliance.json",
+  TRENDS: "/fm_dashboard/checklists/checklists_trends.json",
+  FINDINGS: "/fm_dashboard/checklists/checklists_findings.json",
 } as const;
 
 export const fetchChecklistsOverview = (params: FmDashboardParams) =>
@@ -1988,16 +1988,16 @@ async function fetchFinanceValue(
 }
 
 const FINANCE_ENDPOINTS = {
-  PENDING_APPROVALS: "/fm_dashboard/procurement/pending_approvals",
-  DRAFT_PRS: "/fm_dashboard/requisitions/draft_prs",
-  PROCUREMENT_PIPELINE: "/fm_dashboard/procurement/procurement_pipeline",
-  PENDING_VALUE: "/fm_dashboard/requisitions/pending_value",
-  PR_SR_SPLIT: "/fm_dashboard/procurement/pr_sr_split",
+  PENDING_APPROVALS: "/fm_dashboard/procurement/pending_approvals.json",
+  DRAFT_PRS: "/fm_dashboard/requisitions/draft_prs.json",
+  PROCUREMENT_PIPELINE: "/fm_dashboard/procurement/procurement_pipeline.json",
+  PENDING_VALUE: "/fm_dashboard/requisitions/pending_value.json",
+  PR_SR_SPLIT: "/fm_dashboard/procurement/pr_sr_split.json",
   // No site_id param in the reference collection's capture for this one — called the same
   // way as the others anyway for consistency; an unrecognized query param should be harmless.
-  OVERDUE_INVOICES: "/fm_dashboard/invoices/overdue_invoices",
-  APPROVAL_QUEUE: "/fm_dashboard/approvals/approval_queue",
-  TOP_PENDING_RECORDS: "/fm_dashboard/approvals/top_pending_records",
+  OVERDUE_INVOICES: "/fm_dashboard/invoices/overdue_invoices.json",
+  APPROVAL_QUEUE: "/fm_dashboard/approvals/approval_queue.json",
+  TOP_PENDING_RECORDS: "/fm_dashboard/approvals/top_pending_records.json",
 } as const;
 
 export const fetchFinancePendingApprovals = (params: FmDashboardParams) =>

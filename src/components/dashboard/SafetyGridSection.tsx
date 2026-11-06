@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import { RotateCcw } from "lucide-react";
+import { AddToDashboardButton } from "@/components/dashboard/AddToDashboardButton";
+import { useMyDashboardStore } from "@/stores/myDashboardStore";
+import { updateDashboardLayout } from "@/services/dashboardLayoutAPI";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -55,6 +58,20 @@ interface SafetyGridSectionProps {
   static?: boolean;
   /** Stacks cards to full width, one per row, at the sm/xs/xxs breakpoints instead of letting react-grid-layout naively clamp x/w (which leaves items overlapping or clipped off-canvas on narrower laptop screens). Opt-in so existing CRM/Finance grids keep their current behavior. */
   responsive?: boolean;
+  /** Module key passed to each card's AddToDashboardButton, e.g. "safety" | "finance" | "crm". */
+  moduleKey: string;
+  /** Sub-tab label passed to each card's AddToDashboardButton, e.g. "SOHI", "Overview". */
+  subTab: string;
+  /**
+   * When set, only items whose `fm-${key}` is in this set render — shows a filtered "My
+   * Dashboard" preview of just the cards the user has saved, always drag/resize-enabled
+   * regardless of `static`, positioned from each card's saved height/width/position (falling
+   * back to the item's coded default) and persisted per-card via PATCH /dashboard_layouts on
+   * drag/resize stop — never through the source grid's own `storageKey`/localStorage, so a My
+   * Dashboard preview can never overwrite the source grid's saved layout. Renders nothing if no
+   * items match.
+   */
+  visibleKeys?: Set<string>;
 }
 
 // Mac browser windows are frequently opened un-maximized (unlike Windows, which
@@ -126,7 +143,7 @@ export function SafetyGridSection({
   const { ref: measuredRef, width: measuredWidth } = useContainerWidth();
 
   useEffect(() => {
-    if (isStatic) return;
+    if (effectiveStatic || visibleKeys) return;
     const stored = loadStoredLayout(storageKey);
     if (stored) {
       const savedByKey = new Map(stored.map((item) => [item.i, item]));
@@ -139,11 +156,33 @@ export function SafetyGridSection({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey, isStatic]);
+  }, [storageKey, effectiveStatic]);
 
   const persistLayout = (nextLayout: GridLayout.Layout[]) => {
     setLayout(nextLayout);
     localStorage.setItem(storageKey, JSON.stringify(nextLayout));
+  };
+
+  // My Dashboard's own persistence path: each moved/resized card is saved individually against
+  // /dashboard_layouts by its own serverId (via PATCH), completely separate from the source
+  // grid's storageKey/localStorage — dragging a card here must never touch the source layout.
+  const persistMyDashboardLayout = (nextLayout: GridLayout.Layout[]) => {
+    setLayout(nextLayout);
+    nextLayout.forEach((item) => {
+      const chartId = `fm-${item.i}`;
+      const card = myDashboardCards.find((c) => c.chartId === chartId);
+      if (!card) return;
+      const height = String(item.h);
+      const width = String(item.w);
+      const position = `${item.x},${item.y}`;
+      if (height === card.height && width === card.width && position === card.position) return;
+      updateMyDashboardCardLayout(chartId, { height, width, position });
+      if (card.serverId) {
+        updateDashboardLayout(card.serverId, { chart_code: chartId, height, width, position }).catch((error) => {
+          console.error(`Failed to save layout for ${chartId}:`, error);
+        });
+      }
+    });
   };
 
   const resetLayout = () => {
@@ -151,9 +190,11 @@ export function SafetyGridSection({
     setLayout(defaultLayout);
   };
 
+  if (visibleKeys && visibleItems.length === 0) return null;
+
   return (
     <div className="relative w-full">
-      {!isStatic && (
+      {!effectiveStatic && !visibleKeys && (
         <div className="flex justify-end mb-2">
           <button
             type="button"
@@ -173,14 +214,14 @@ export function SafetyGridSection({
               width={measuredWidth}
               className="layout"
               layouts={{
-                lg: isStatic ? defaultLayout : layout,
-                md: isStatic ? defaultLayout : layout,
-                sm: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.sm),
-                xs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xs),
-                xxs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xxs),
+                lg: effectiveStatic ? defaultLayout : layout,
+                md: effectiveStatic ? defaultLayout : layout,
+                sm: stackLayoutFullWidth(effectiveStatic ? defaultLayout : layout, COLS.sm),
+                xs: stackLayoutFullWidth(effectiveStatic ? defaultLayout : layout, COLS.xs),
+                xxs: stackLayoutFullWidth(effectiveStatic ? defaultLayout : layout, COLS.xxs),
               }}
-              onDragStop={isStatic ? undefined : persistLayout}
-              onResizeStop={isStatic ? undefined : persistLayout}
+              onDragStop={effectiveStatic ? undefined : visibleKeys ? persistMyDashboardLayout : persistLayout}
+              onResizeStop={effectiveStatic ? undefined : visibleKeys ? persistMyDashboardLayout : persistLayout}
               breakpoints={BREAKPOINTS}
               cols={COLS}
               rowHeight={48}
@@ -193,8 +234,16 @@ export function SafetyGridSection({
               isDraggable
               isResizable
             >
-              {items.map((item) => (
-                <div key={item.key} chart_id={item.key} className="h-full overflow-auto">
+              {visibleItems.map((item) => (
+                <div key={item.key} chart_code={`fm-${item.key}`} className="h-full overflow-auto relative">
+                  <AddToDashboardButton
+                  chartId={`fm-${item.key}`}
+                  moduleKey={moduleKey}
+                  subTab={subTab}
+                  height={String(item.layout.h)}
+                  width={String(item.layout.w)}
+                  position={`${item.layout.x},${item.layout.y}`}
+                />
                   {item.content}
                 </div>
               ))}
@@ -204,9 +253,9 @@ export function SafetyGridSection({
       ) : (
         <ResponsiveGridLayout
           className="layout"
-          layouts={{ lg: isStatic ? defaultLayout : layout }}
-          onDragStop={isStatic ? undefined : persistLayout}
-          onResizeStop={isStatic ? undefined : persistLayout}
+          layouts={{ lg: effectiveStatic ? defaultLayout : layout }}
+          onDragStop={effectiveStatic ? undefined : visibleKeys ? persistMyDashboardLayout : persistLayout}
+          onResizeStop={effectiveStatic ? undefined : visibleKeys ? persistMyDashboardLayout : persistLayout}
           breakpoints={BREAKPOINTS}
           cols={COLS}
           rowHeight={48}
@@ -219,8 +268,16 @@ export function SafetyGridSection({
           isDraggable
           isResizable
         >
-          {items.map((item) => (
-            <div key={item.key} chart_id={item.key} className="h-full overflow-auto">
+          {visibleItems.map((item) => (
+            <div key={item.key} chart_code={`fm-${item.key}`} className="h-full overflow-auto relative">
+              <AddToDashboardButton
+                  chartId={`fm-${item.key}`}
+                  moduleKey={moduleKey}
+                  subTab={subTab}
+                  height={String(item.layout.h)}
+                  width={String(item.layout.w)}
+                  position={`${item.layout.x},${item.layout.y}`}
+                />
               {item.content}
             </div>
           ))}

@@ -4035,7 +4035,6 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
-              */}
 
               {/*
               <div key="asset-value-risk" chart_code="fm-asset-value-risk" className="h-full relative">

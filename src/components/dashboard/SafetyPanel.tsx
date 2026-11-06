@@ -99,7 +99,6 @@ const INCIDENT_COLUMNS: DataTableColumn<IncidentRow>[] = [
 ];
 
 const PERMIT_LEVEL_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756"];
-const PERMIT_RISK_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"];
 
 interface PermitExceptionTableRow {
   ref: string;
@@ -140,12 +139,8 @@ interface SafetyPanelProps {
   /** Live incidents overview/trend/analysis/hotspots data — null until loaded or if the dashboard's site scope isn't resolved yet. */
   incidents: IncidentsDashboardData | null;
   incidentsLoading: boolean;
-}
-
-function parseDashboardDate(value?: string): Date {
-  if (!value) return new Date();
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, (month || 1) - 1, day || 1);
+  /** When set, renders only the cards the user has saved to My Dashboard, across all sections. */
+  visibleKeys?: Set<string>;
 }
 
 function parseDashboardDate(value?: string): Date {
@@ -851,7 +846,6 @@ export function SafetyPanel({
           data={quietEscalationData}
           categoryKey="location"
           orientation="horizontal"
-          categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"]}
           series={[{ dataKey: "count", name: "Incidents" }]}
           insightVariant="plain"
           insight='Low Risk dominates the raw count and gets ignored in favor of rarer severe incidents. A location that keeps generating "Low Risk" incidents over and over is quietly escalating toward something serious — the severity label resets every time, so nobody aggregates it by place.'
@@ -1165,7 +1159,6 @@ export function SafetyPanel({
           data={permitRiskWeightedData}
           categoryKey="type"
           orientation="horizontal"
-          categoryColors={PERMIT_RISK_COLORS}
           series={[{ dataKey: "count", name: "Permits" }]}
           insightVariant="plain"
           insight="A handful of expired Height Work permits sitting unactioned is a materially bigger exposure than the same count of expired Cold Work permits — a flat volume bar can't tell the two apart."
@@ -1396,7 +1389,14 @@ export function SafetyPanel({
 
       {/* Fire & Emergency Compliance KPI section is not currently data-backed.
       <div ref={registerRef("Emergency")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="safetyEmergencyGridLayout" items={emergencyItems} />
+        <SafetyGridSection
+          storageKey="safetyEmergencyGridLayout"
+          items={emergencyItems}
+          responsive
+          moduleKey="safety"
+          subTab="Emergency"
+          visibleKeys={visibleKeys}
+        />
       </div>
       */}
     </div>
