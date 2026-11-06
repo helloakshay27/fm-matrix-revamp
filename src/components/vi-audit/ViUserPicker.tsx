@@ -9,7 +9,7 @@ import {
 
 // Shared searchable user pickers for the Vi Audit forms (Add Audit people / SPOC / Functional
 // Head, Action Plan responsible person). Users come from
-// /pms/users/vi_fte_non_fte_active_users.json (see useViUserSearch).
+// /pms/users/vi_active_users_minimal.json (see useViUserSearch).
 
 // Label rendered OUTSIDE the Autocomplete (same 12px/600 style as the global field standard).
 // An MUI `label` inside an Autocomplete gets lifted into the field's clickable root by the

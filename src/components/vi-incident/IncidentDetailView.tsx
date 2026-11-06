@@ -37,7 +37,7 @@ export const IncidentInfoCards = ({ incident, showReporter = true }: { incident:
           { label: "Time of Incident", value: incident.timeOfIncident },
           { label: "Circle", value: incident.circle },
           { label: "Personnel Area", value: incident.personnelArea },
-          { label: "Work Location", value: incident.workLocation },
+          { label: "Zone", value: incident.zone },
           { label: "Type of Facility", value: incident.facilityType },
           { label: "Function", value: incident.function },
           { label: "Incident Location", value: incident.incidentLocation, span: true },

@@ -82,7 +82,7 @@ const toListRecord = (r: Raw, index: number): ViAuditListRecord => {
       fromObservations(observations, (o) => text(o.sub_category_name, obj(o.sub_category).name, o.sub_category_other)),
     spoc: text(r.spoc_name, obj(r.spoc).name) || fromObservations(observations, (o) => text(obj(o.spoc).name)),
     auditCircle: text(cluster.cluster_name, r.cluster_name),
-    auditZone: text(circle.name, r.circle_name),
+    auditZone: text(obj(r.zone).name, r.zone_name),
     personnelArea: text(circle.name, r.circle_name),
     facilityType: text(obj(r.visit_business_area).name, r.visit_business_area_name),
     function: text(obj(r.department).department_name, r.department_name),

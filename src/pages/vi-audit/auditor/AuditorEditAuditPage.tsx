@@ -6,6 +6,7 @@ import { TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { useViAuditMasters } from "@/components/vi-audit/useViAuditMasters";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
 import {
@@ -100,11 +101,12 @@ const AuditorEditAuditPage = () => {
     dateOfAudit: "",
     circle: "",
     personnelArea: "",
-    workLocation: "",
+    zone: "",
     facilityType: "",
     location: "",
     function: "",
   });
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(basic.circle);
   const [observations, setObservations] = useState<ObservationEntry[]>(() => [emptyObservation()]);
 
   // Preselect the draft's saved values once it has loaded.
@@ -129,7 +131,7 @@ const AuditorEditAuditPage = () => {
       !basic.circle && "Circle",
       // circle_id is required only for circle audits
       draft?.auditType === "circle" && !basic.personnelArea && "Personnel Area",
-      !basic.workLocation && "Work Location",
+      !basic.zone && "Zone",
       !basic.facilityType && "Type of Facility",
       !basic.location.trim() && "Location",
       !basic.function && "Function",
@@ -171,7 +173,7 @@ const AuditorEditAuditPage = () => {
       audit_date: basic.dateOfAudit,
       cluster_id: toId(basic.circle),
       circle_id: toId(basic.personnelArea),
-      work_location_id: toId(basic.workLocation),
+      zone_id: toId(basic.zone),
       audit_location: basic.location.trim(),
       department_id: toId(basic.function),
       visit_business_area_id: toId(basic.facilityType),
@@ -296,7 +298,7 @@ const AuditorEditAuditPage = () => {
                 label="Circle"
                 required
                 value={basic.circle}
-                onChange={(v) => setBasic((p) => ({ ...p, circle: v }))}
+                onChange={(v) => setBasic((p) => ({ ...p, circle: v, zone: "" }))}
                 options={masters.clusters}
                 loading={mastersLoading}
                 placeholder="Select audit circle"
@@ -311,13 +313,14 @@ const AuditorEditAuditPage = () => {
                 placeholder="Select personnel area"
               />
               <SelectField
-                label="Work Location"
+                label="Zone"
                 required
-                value={basic.workLocation}
-                onChange={(v) => setBasic((p) => ({ ...p, workLocation: v }))}
-                options={masters.workLocations}
-                loading={mastersLoading}
-                placeholder="Select work location"
+                value={basic.zone}
+                onChange={(v) => setBasic((p) => ({ ...p, zone: v }))}
+                options={zones}
+                loading={zonesLoading}
+                disabled={!basic.circle}
+                placeholder={zonePlaceholder}
               />
               <SelectField
                 label="Type of Facility"

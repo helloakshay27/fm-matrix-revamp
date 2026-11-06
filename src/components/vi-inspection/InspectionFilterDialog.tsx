@@ -3,6 +3,7 @@ import { TextField } from "@mui/material";
 import { auditFieldSx } from "@/components/vi-audit/ViAuditUi";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IncidentSelectField } from "@/components/vi-incident/IncidentFormFields";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 import type { ViInspectionMasters } from "./viInspectionApi";
 import { statusFilterOptions, type ViInspectionRole } from "./viInspectionData";
 
@@ -16,7 +17,7 @@ export const INSPECTION_FILTER_KEYS = [
   "status",
   "circle_id",
   "personal_area_id",
-  "work_location_id",
+  "zone_id",
   "facility_type_id",
   "inspection_type_id",
 ] as const;
@@ -56,6 +57,7 @@ export const InspectionFilterDialog = ({
   }, [open]);
 
   const set = (patch: Partial<InspectionFilters>) => setDraft((prev) => ({ ...prev, ...patch }));
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(draft.circle_id);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -99,7 +101,7 @@ export const InspectionFilterDialog = ({
           <IncidentSelectField
             label="Circle"
             value={draft.circle_id}
-            onChange={(v) => set({ circle_id: v })}
+            onChange={(v) => set({ circle_id: v, zone_id: "" })}
             options={masters.circles}
             loading={loading}
             placeholder="Select circle"
@@ -113,12 +115,13 @@ export const InspectionFilterDialog = ({
             placeholder="Select personnel area"
           />
           <IncidentSelectField
-            label="Work Location"
-            value={draft.work_location_id}
-            onChange={(v) => set({ work_location_id: v })}
-            options={masters.workLocations}
-            loading={loading}
-            placeholder="Select work location"
+            label="Zone"
+            value={draft.zone_id}
+            onChange={(v) => set({ zone_id: v })}
+            options={zones}
+            loading={zonesLoading}
+            disabled={!draft.circle_id}
+            placeholder={zonePlaceholder}
           />
           <IncidentSelectField
             label="Type of Facility"

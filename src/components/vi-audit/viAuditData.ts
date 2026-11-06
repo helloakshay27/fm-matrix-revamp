@@ -125,7 +125,7 @@ export interface ViAuditDetail {
     dateOfAudit: string;
     circle: string;
     personnelArea: string;
-    workLocation: string;
+    zone: string;
     facilityType: string;
     auditLocation: string;
     function: string;
@@ -206,7 +206,7 @@ const buildViAuditDetail = (id: string | undefined): ViAuditDetail => ({
     dateOfAudit: "23/03/2026",
     circle: "Birla",
     personnelArea: "Worli",
-    workLocation: "Worli",
+    zone: "Worli",
     facilityType: "Birla",
     auditLocation: "Birla Centurion Pvt. Ltd., Wing B, Floor 3, Room 203, Common Area",
     function: "-",

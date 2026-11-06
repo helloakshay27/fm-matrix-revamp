@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { IncidentSelectField } from "./IncidentFormFields";
 import type { MasterOption } from "@/components/vi-audit/useViAuditMasters";
 import { useViIncidentMasters } from "./viIncidentApi";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 
 // Filter values hold master ids / the workflow status key; the list sends them to the API.
 export interface IncidentFilters {
@@ -17,7 +18,7 @@ export interface IncidentFilters {
   category: string;
   subCategory: string;
   personnelArea: string;
-  workLocation: string;
+  zone: string;
   facilityType: string;
   function: string;
 }
@@ -32,7 +33,7 @@ export const EMPTY_INCIDENT_FILTERS: IncidentFilters = {
   category: "",
   subCategory: "",
   personnelArea: "",
-  workLocation: "",
+  zone: "",
   facilityType: "",
   function: "",
 };
@@ -49,7 +50,7 @@ export const incidentFiltersToQuery = (filters: IncidentFilters): Record<string,
     "q[category_id_eq]": filters.category,
     "q[sub_category_id_eq]": filters.subCategory,
     "q[personal_area_id_eq]": filters.personnelArea,
-    "q[work_location_id_eq]": filters.workLocation,
+    "q[zone_id_eq]": filters.zone,
     "q[facility_type_id_eq]": filters.facilityType,
     "q[department_id_eq]": filters.function,
   };
@@ -79,6 +80,7 @@ export const IncidentFilterDialog = ({
     if (open) setDraft(filters);
   }, [open, filters]);
 
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(draft.circle);
   const set = (patch: Partial<IncidentFilters>) => setDraft((prev) => ({ ...prev, ...patch }));
 
   return (
@@ -131,7 +133,7 @@ export const IncidentFilterDialog = ({
           <IncidentSelectField
             label="Circle"
             value={draft.circle}
-            onChange={(v) => set({ circle: v })}
+            onChange={(v) => set({ circle: v, zone: "" })}
             options={masters.circles}
             loading={loading}
             placeholder="Select incident circle"
@@ -169,12 +171,13 @@ export const IncidentFilterDialog = ({
             placeholder="Select personnel area"
           />
           <IncidentSelectField
-            label="Work Location"
-            value={draft.workLocation}
-            onChange={(v) => set({ workLocation: v })}
-            options={masters.workLocations}
-            loading={loading}
-            placeholder="Select work location"
+            label="Zone"
+            value={draft.zone}
+            onChange={(v) => set({ zone: v })}
+            options={zones}
+            loading={zonesLoading}
+            disabled={!draft.circle}
+            placeholder={zonePlaceholder}
           />
           <IncidentSelectField
             label="Type of Facility"

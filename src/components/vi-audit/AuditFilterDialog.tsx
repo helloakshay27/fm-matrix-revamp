@@ -6,6 +6,7 @@ import {
   auditFieldSx,
   SelectField,
 } from "./AuditFormFields";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 
 /** Filters for an audit list page. Empty strings mean "not filtered". */
 export interface ViAuditFilters {
@@ -15,7 +16,7 @@ export interface ViAuditFilters {
   classification: string; // classification id
   category: string; // category id
   personnelArea: string; // circle id
-  workLocation: string; // work location id
+  zone: string; // zone id
   facilityType: string; // visit business area id
 }
 
@@ -26,7 +27,7 @@ export const EMPTY_AUDIT_FILTERS: ViAuditFilters = {
   classification: "",
   category: "",
   personnelArea: "",
-  workLocation: "",
+  zone: "",
   facilityType: "",
 };
 
@@ -48,7 +49,7 @@ export const auditFiltersToParams = (filters: ViAuditFilters): Record<string, st
     // classification / category are observation fields: audits with at least one matching observation
     ["classification", ["classification_id", "q[observations_classification_id_eq]"]],
     ["category", ["category_id", "q[observations_category_id_eq]"]],
-    ["workLocation", ["q[work_location_id_eq]"]],
+    ["zone", ["q[zone_id_eq]"]],
   ];
   return Object.fromEntries(
     map.filter(([key]) => filters[key]).flatMap(([key, params]) => params.map((param) => [param, filters[key]])),
@@ -118,6 +119,7 @@ export const AuditFilterDialog = ({
   }, [open, filters]);
 
   const set = (key: keyof ViAuditFilters) => (value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(draft.circle);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={false}>
@@ -156,7 +158,7 @@ export const AuditFilterDialog = ({
             menuProps={FILTER_MENU_PROPS}
             label="Circle"
             value={draft.circle}
-            onChange={set("circle")}
+            onChange={(v) => setDraft((prev) => ({ ...prev, circle: v, zone: "" }))}
             options={masters.clusters}
             loading={loading}
             placeholder="Select audit circle"
@@ -190,12 +192,13 @@ export const AuditFilterDialog = ({
           />
           <SelectField
             menuProps={FILTER_MENU_PROPS}
-            label="Work Location"
-            value={draft.workLocation}
-            onChange={set("workLocation")}
-            options={masters.workLocations}
-            loading={loading}
-            placeholder="Select work location"
+            label="Zone"
+            value={draft.zone}
+            onChange={set("zone")}
+            options={zones}
+            loading={zonesLoading}
+            disabled={!draft.circle}
+            placeholder={zonePlaceholder}
           />
           <SelectField
             menuProps={FILTER_MENU_PROPS}

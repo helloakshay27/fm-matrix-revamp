@@ -180,7 +180,7 @@ export const InspectionDetailView = ({
                 },
                 { label: "Circle", value: inspection.circle },
                 { label: "Personnel Area", value: inspection.personalArea },
-                { label: "Work Location", value: inspection.workLocation },
+                { label: "Zone", value: inspection.zone },
                 { label: "Type of Facility", value: inspection.facilityType },
                 { label: "Function", value: inspection.department },
                 { label: "Inspection Type", value: inspection.inspectionType },
