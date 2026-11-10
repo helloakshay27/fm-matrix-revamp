@@ -4035,6 +4035,7 @@ const RideDetail = lazy(() =>
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import { LockatedSsoPage } from "./pages/LockatedSsoPage";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
@@ -5263,6 +5264,17 @@ function App() {
                           <Route
                             path="/visitors/fill_form/:id"
                             element={<VisitorSharingFormWeb />}
+                          />
+
+                          {/* Sign-in handover from Business Genie (as Sales CRM and Helpdesk take it): always signs in afresh. */}
+                          <Route
+                            path="/sso"
+                            element={
+                              <LockatedSsoPage
+                                setBaseUrl={setBaseUrl}
+                                setToken={setToken}
+                              />
+                            }
                           />
 
                           <Route
