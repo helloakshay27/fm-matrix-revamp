@@ -21,10 +21,9 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { apiClient } from "@/utils/apiClient";
 import {
   cancelClassPurchase,
-  classPurchaseInvoicePdfUrl,
+  downloadClassPurchaseInvoice,
   extendClassPurchaseValidity,
   fetchClassPurchase,
   payClassPurchase,
@@ -187,12 +186,10 @@ export const ClassPurchaseDetails = () => {
 
   const handleInvoicePdf = async () => {
     try {
-      const res = await apiClient.get(classPurchaseInvoicePdfUrl(purchase.id), { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      window.open(url, "_blank");
+      await downloadClassPurchaseInvoice(purchase.id, purchase.invoiceNumber);
     } catch (error) {
-      console.error("Failed to open invoice", error);
-      toast.error("Failed to open invoice PDF");
+      console.error("Failed to download invoice", error);
+      toast.error("Failed to download invoice PDF");
     }
   };
 

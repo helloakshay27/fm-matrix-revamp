@@ -148,6 +148,8 @@ export interface ClassPurchaseListItem {
   gst: number;
   total: number;
   paymentStatus: PurchasePaymentStatus;
+  // "manual" | "cash" | "card" | "upi" | "cheque" (set by staff), "wallet" | "easebuzz" | "pay_at_facility" (set by the member), or null until chosen
+  paymentMethod: string | null;
   status: PurchaseStatus;
   invoiceNumber: string | null;
 }
@@ -172,6 +174,7 @@ const mapClassPurchase = (p: any): ClassPurchaseListItem => ({
   gst: Number(p.gst ?? 0),
   total: Number(p.total ?? 0),
   paymentStatus: (p.payment_status ?? "pending") as PurchasePaymentStatus,
+  paymentMethod: p.payment_method ?? null,
   status: (p.status ?? "active") as PurchaseStatus,
   invoiceNumber: p.invoice_number ?? null,
 });
@@ -297,8 +300,16 @@ export async function updateClassPurchase(id: string, payload: UpdateClassPurcha
   return mapClassPurchase(res.data?.class_purchase ?? res.data);
 }
 
-export async function payClassPurchase(id: string) {
-  const res = await apiClient.post(`/pms/admin/class_purchases/${id}/pay.json`);
+// Methods the admin `pay` endpoint accepts (Pms::Admin::ClassPurchasesController::MANUAL_METHODS); anything else,
+// or none, is recorded as "manual".
+export const MANUAL_PAYMENT_METHODS = ["cash", "card", "upi", "cheque", "manual"] as const;
+export type ManualPaymentMethod = (typeof MANUAL_PAYMENT_METHODS)[number];
+
+export async function payClassPurchase(id: string, paymentMethod?: ManualPaymentMethod) {
+  const res = await apiClient.post(
+    `/pms/admin/class_purchases/${id}/pay.json`,
+    paymentMethod ? { payment_method: paymentMethod } : undefined
+  );
   return res.data;
 }
 
@@ -340,6 +351,22 @@ export function classPurchaseInvoicePdfUrl(id: string): string {
   return `/pms/admin/class_purchases/${id}/show_pdf.json`;
 }
 
+// Fetches the purchase invoice and saves it as invoice-<number>.pdf (the name the server uses).
+// Two details keep the download working: the Blob is typed application/pdf (an untyped one is not recognised
+// as a PDF by the browser), and the file is saved through a temporary <a download> -- window.open after an
+// await has lost the click's user gesture, so browsers silently block that pop-up.
+export async function downloadClassPurchaseInvoice(id: string, invoiceNumber?: string | null): Promise<void> {
+  const res = await apiClient.get(classPurchaseInvoicePdfUrl(id), { responseType: "blob" });
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `invoice-${invoiceNumber || id}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+}
+
 // ---------------------------------------------------------------------------
 // Class Bookings
 // ---------------------------------------------------------------------------
@@ -360,9 +387,12 @@ export interface ClassBookingListItem {
   clubClassId: string;
   className: string;
   baseAmount: number;
+  discount: number;
   cgst: number;
   sgst: number;
   landedAmount: number;
+  // The purchase (package) this booking draws a credit from -- payment status, method and the invoice live there.
+  classPurchaseId: string;
 }
 
 const mapClassBooking = (b: any): ClassBookingListItem => ({
@@ -382,9 +412,11 @@ const mapClassBooking = (b: any): ClassBookingListItem => ({
   clubClassId: String(b.club_class_id ?? b.club_class?.id ?? ""),
   className: b.class_name ?? b.club_class?.name ?? "",
   baseAmount: Number(b.base_amount ?? 0),
+  discount: Number(b.discount ?? 0),
   cgst: Number(b.cgst ?? 0),
   sgst: Number(b.sgst ?? 0),
   landedAmount: Number(b.landed_amount ?? 0),
+  classPurchaseId: b.class_purchase_id != null ? String(b.class_purchase_id) : "",
 });
 
 export interface ClassBookingListParams {
@@ -445,6 +477,23 @@ export async function fetchClassBooking(id: string): Promise<ClassBookingDetail>
     cancelledReason: b.cancelled_reason ?? null,
     attendance: b.class_attendance ?? null,
   };
+}
+
+export interface ClassBookingLogEntry {
+  id: string;
+  description: string;
+  timestamp: string;
+}
+
+// Same { logs: [{ date, time, text }] } shape as facility_booking_logs, mapped to what <LogsTimeline> renders.
+export async function fetchClassBookingLogs(id: string): Promise<ClassBookingLogEntry[]> {
+  const res = await apiClient.get(`/pms/admin/class_bookings/${id}/logs.json`);
+  const logs: Array<{ date?: string; time?: string; text?: string }> = res.data?.logs ?? [];
+  return logs.map((log, index) => ({
+    id: String(index),
+    description: log.text ?? "",
+    timestamp: [log.date, log.time].filter(Boolean).join(" "),
+  }));
 }
 
 export interface CreateClassBookingPayload {
