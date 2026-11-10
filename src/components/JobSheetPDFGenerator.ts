@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
 import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
@@ -18,52 +19,21 @@ export class JobSheetPDFGenerator {
     });
   }
 
+  // ---- Layout constants (mm) ----
+  private static readonly PAGE_W = 210;
+  private static readonly PAGE_H = 297;
+  private static readonly MARGIN_X = 12;
+  private static readonly MARGIN_TOP = 12;
+  private static readonly MARGIN_BOTTOM = 16; // leaves room for the page footer
+
   async generateJobSheetPDF(
     taskDetails: any,
     jobSheetData: any,
-
     comments: string = ""
   ): Promise<void> {
     try {
-      // Properly extract job_sheet from the API response
-      const jobSheet =
-        jobSheetData?.data?.job_sheet ||
-        jobSheetData?.job_sheet ||
-        jobSheetData;
-      const checklistResponses = jobSheet?.checklist_responses || [];
-
-      // Debug: Log the data structure
-
-      // Enhanced page break logic for better content distribution
-      const estimatedContentHeight = this.estimateContentHeight(
-        jobSheet,
-        comments
-      );
-      const maxSinglePageHeight = 280; // A4 usable height accounting for margins and optimal layout
-      const maxChecklistItemsPerPage = 20; // Increased to fit more items on single page
-
-      // Determine if content needs multiple pages - more conservative approach
-      const needsPageBreak =
-        estimatedContentHeight > maxSinglePageHeight ||
-        checklistResponses.length > maxChecklistItemsPerPage;
-
-      if (needsPageBreak) {
-        console.log(
-          "✓ Using MULTI-PAGE layout for optimal content distribution"
-        );
-      } else {
-        console.log(
-          "✓ Using SINGLE-PAGE layout - all content fits comfortably"
-        );
-      }
-
-      if (needsPageBreak) {
-        // Generate multi-page PDF with proper content distribution
-        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
-      } else {
-        // Generate single page when content fits
-        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
-      }
+      await this.buildPDF(taskDetails, jobSheetData, comments);
+      this.pdf.save(this.getFileName(taskDetails));
     } catch (error) {
       console.error("Error generating PDF:", error);
       throw error;
@@ -72,10 +42,6 @@ export class JobSheetPDFGenerator {
 
   /**
    * Generate Job Sheet PDF and return as Blob (for mobile webview compatibility)
-   * @param taskDetails Task details object
-   * @param jobSheetData Job sheet data object
-   * @param comments Additional comments
-   * @returns Promise<Blob> PDF as Blob
    */
   async generateJobSheetPDFBlob(
     taskDetails: any,
@@ -83,38 +49,627 @@ export class JobSheetPDFGenerator {
     comments: string = ""
   ): Promise<Blob> {
     try {
-      // Properly extract job_sheet from the API response
-      const jobSheet =
-        jobSheetData?.data?.job_sheet ||
-        jobSheetData?.job_sheet ||
-        jobSheetData;
-      const checklistResponses = jobSheet?.checklist_responses || [];
-
-      // Enhanced page break logic for better content distribution
-      const estimatedContentHeight = this.estimateContentHeight(
-        jobSheet,
-        comments
-      );
-      const maxSinglePageHeight = 280;
-      const maxChecklistItemsPerPage = 20;
-
-      const needsPageBreak =
-        estimatedContentHeight > maxSinglePageHeight ||
-        checklistResponses.length > maxChecklistItemsPerPage;
-
-      if (needsPageBreak) {
-        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
-      } else {
-        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
-      }
-
-      // Return PDF as Blob instead of saving
-      const blob = this.pdf.output("blob");
-      return blob;
+      await this.buildPDF(taskDetails, jobSheetData, comments);
+      return this.pdf.output("blob");
     } catch (error) {
       console.error("Error generating PDF blob:", error);
       throw error;
     }
+  }
+
+  private getFileName(taskDetails: any): string {
+    return `JobSheet_${
+      taskDetails?.task_details?.id || taskDetails?.id || new Date().getTime()
+    }_${new Date().toISOString().slice(0, 10)}.pdf`;
+  }
+
+  /**
+   * Builds the whole document:
+   *  1. Header / client info / location / before-after  -> rendered via html2canvas
+   *     (short, fixed-size block, placed on page 1)
+   *  2. Checklist (question + response) and remarks      -> real text tables via
+   *     jspdf-autotable, so long text wraps, headers repeat on every page and
+   *     rows are never sliced across a page boundary.
+   */
+  private async buildPDF(
+    taskDetails: any,
+    jobSheetData: any,
+    comments: string
+  ): Promise<void> {
+    // Fresh document every time so repeated downloads don't append pages
+    this.pdf = new jsPDF({
+      orientation: "p",
+      unit: "mm",
+      format: "a4",
+      compress: true,
+    });
+
+    const jobSheet =
+      jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet || jobSheetData;
+    // The HTML section helpers expect `{ job_sheet }` / `{ data: { job_sheet } }`
+    const wrapped =
+      jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet
+        ? jobSheetData
+        : { job_sheet: jobSheet };
+
+    const shouldShowBeforeAfter =
+      jobSheet?.basic_info?.before_after_enabled === true ||
+      jobSheet?.basic_info?.before_after_enabled === "true" ||
+      jobSheet?.basic_info?.steps === 3;
+
+    // 1) Top info block (image)
+    const topHtml = `
+      ${this.getScopedPageStyles()}
+      <div class="jobsheet-pdf-root">
+        ${this.generateHeader(wrapped)}
+        ${this.generateClientInfo(taskDetails, wrapped)}
+        ${this.generateLocationDetails(wrapped)}
+        ${shouldShowBeforeAfter ? this.generateBeforeAfterImagesSection(wrapped) : ""}
+      </div>
+    `;
+    let y = await this.addHtmlBlock(topHtml, JobSheetPDFGenerator.MARGIN_TOP);
+
+    // 2) Checklist tables
+    y = await this.addChecklistTables(jobSheet, y + 4);
+
+    // 3) Remarks
+    y = this.addRemarksTable(jobSheet, comments, y + 6);
+
+    // 4) System note + footer on every page
+    this.addClosingNote(y + 6);
+    this.addPageFooters(taskDetails, jobSheet);
+  }
+
+  /** Strip HTML tags/entities and coerce anything into printable text. */
+  private toPlain(value: any): string {
+    if (value === null || value === undefined) return "";
+    if (Array.isArray(value)) {
+      return value.map((v) => this.toPlain(v)).filter(Boolean).join(", ");
+    }
+    if (typeof value === "object") {
+      return this.toPlain(value.label ?? value.value ?? value.name ?? "");
+    }
+    const str = String(value);
+    if (!/[<&]/.test(str)) return str.trim();
+    const doc = new DOMParser().parseFromString(str, "text/html");
+    return (doc.body.textContent || "").trim();
+  }
+
+  /** Same response formatting rules as the on-screen preview (JobSheetModal). */
+  private formatResponse(item: any, hasAnyResponses: boolean): string {
+    const empty = hasAnyResponses ? "-" : "Not Completed";
+    const isBlank = (v: any) =>
+      v === null || v === undefined || v === "" || v === "-";
+
+    if (item?.type === "radio-group") {
+      const selected = !isBlank(item.input_value)
+        ? item.input_value
+        : Array.isArray(item.userData)
+        ? item.userData[0]
+        : item.userData;
+      return isBlank(selected) ? empty : this.toPlain(selected);
+    }
+
+    const raw = !isBlank(item?.input_value) ? item.input_value : item?.userData;
+
+    if (Array.isArray(raw)) {
+      const values = Array.isArray(item?.values) ? item.values : [];
+      const parts = raw
+        .filter((data: any) => !isBlank(data))
+        .map((data: any) => this.toPlain(data));
+      if (!parts.length) return empty;
+
+      // Option-type questions (Yes/No, checkbox, dropdown): `values` is the option
+      // list and the answer is one/more of those options -> print just the answer.
+      const optionTexts = values.map((v: any) =>
+        this.toPlain(typeof v === "string" ? v : v?.label ?? v?.value).toLowerCase()
+      );
+      const isOptionAnswer =
+        !values.length ||
+        parts.every((p) => optionTexts.includes(p.toLowerCase()));
+      if (isOptionAnswer) return parts.join(", ");
+
+      // Multi-field questions: pair each entered value with its field label
+      return raw
+        .map((data: any, index: number) => {
+          if (isBlank(data)) return null;
+          const v = values[index];
+          const key = this.toPlain(
+            typeof v === "string" ? v : v?.label || v?.value || `Item ${index + 1}`
+          );
+          const text = this.toPlain(data);
+          return key && key.toLowerCase() !== text.toLowerCase() ? `${key}: ${text}` : text;
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    return isBlank(raw) ? empty : this.toPlain(raw);
+  }
+
+  private async addChecklistTables(jobSheet: any, startY: number): Promise<number> {
+    const M = JobSheetPDFGenerator.MARGIN_X;
+    const contentW = JobSheetPDFGenerator.PAGE_W - 2 * M;
+    const checklistResponses: any[] = jobSheet?.checklist_responses || [];
+    const taskName = jobSheet?.task_details?.task_name || "";
+    const assetCategory = this.resolveAssetOrService(jobSheet).category;
+    const mainTitle = taskName
+      ? taskName.toUpperCase()
+      : assetCategory
+      ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}`
+      : "CHECKLIST";
+
+    let y = this.ensureSpace(startY, 20);
+
+    // Main title bar
+    autoTable(this.pdf, {
+      startY: y,
+      margin: this.tableMargin(),
+      theme: "plain",
+      body: [[mainTitle]],
+      styles: {
+        fillColor: [200, 168, 130],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 10,
+        halign: "center",
+        cellPadding: 2.5,
+        overflow: "linebreak",
+      },
+    });
+    y = this.lastTableY();
+
+    if (checklistResponses.length === 0) {
+      autoTable(this.pdf, {
+        startY: y,
+        margin: this.tableMargin(),
+        theme: "grid",
+        body: [["No checklist items available"]],
+        styles: { fontSize: 9, halign: "center", textColor: 100, lineColor: [204, 204, 204], lineWidth: 0.2 },
+      });
+      return this.lastTableY();
+    }
+
+    const hasAnyResponses = checklistResponses.some(
+      (item) =>
+        item.input_value !== null &&
+        item.input_value !== undefined &&
+        item.input_value !== ""
+    );
+
+    // Preload attachment thumbnails (small JPEGs) once
+    const thumbCache = new Map<string, string | null>();
+    const urls = new Set<string>();
+    checklistResponses.forEach((item) =>
+      (Array.isArray(item.attachments) ? item.attachments : []).forEach((a: any) => {
+        const url = typeof a === "string" ? a : a?.url || a?.file_url || "";
+        if (url) urls.add(url);
+      })
+    );
+    await Promise.all(
+      Array.from(urls).map(async (url) => {
+        thumbCache.set(url, await this.loadThumbnail(url));
+      })
+    );
+
+    // Group by group / sub-group (same as preview)
+    const grouped = new Map<string, any[]>();
+    checklistResponses.forEach((item) => {
+      const key = `${item.group_id || "ungrouped"}_${item.sub_group_id || "ungrouped"}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(item);
+    });
+
+    const THUMB = 9; // mm
+    const THUMB_GAP = 1.5;
+    const ATTACH_COL_W = 26;
+    const thumbsPerLine = Math.max(
+      1,
+      Math.floor((ATTACH_COL_W - THUMB_GAP) / (THUMB + THUMB_GAP))
+    );
+
+    let sectionIndex = 0;
+    for (const items of grouped.values()) {
+      sectionIndex++;
+      const groupName = this.toPlain(items[0]?.group_name) || "Ungrouped";
+      const subGroupName = this.toPlain(items[0]?.sub_group_name);
+      const sectionTitle = `Section ${sectionIndex}: ${groupName}${
+        subGroupName ? `  -  ${subGroupName}` : ""
+      }`;
+
+      const body = items.map((item: any, index: number) => {
+        const question = this.toPlain(item.activity || item.label) || "-";
+        const helpText = this.toPlain(item.help_text);
+        const remarks = this.toPlain(item.comments || item.comment) || "-";
+
+        const attachments: any[] = Array.isArray(item.attachments) ? item.attachments : [];
+        const thumbs = attachments
+          .map((a) => thumbCache.get(typeof a === "string" ? a : a?.url || a?.file_url || ""))
+          .filter(Boolean) as string[];
+        const missing = attachments.length - thumbs.length;
+        const thumbRows = Math.ceil(thumbs.length / thumbsPerLine);
+
+        return [
+          { content: String(item.index || index + 1) },
+          { content: helpText ? `${question}\n(${helpText})` : question },
+          { content: this.formatResponse(item, hasAnyResponses) },
+          { content: remarks },
+          {
+            // Images are drawn in didDrawCell; text only for files we couldn't load
+            content:
+              attachments.length === 0
+                ? "-"
+                : missing > 0
+                ? `${missing} file(s)`
+                : "",
+            thumbs,
+            styles: {
+              minCellHeight: thumbRows
+                ? thumbRows * (THUMB + THUMB_GAP) + THUMB_GAP + (missing > 0 ? 4 : 0)
+                : 0,
+              // text (if any) sits under the thumbnails
+              valign: thumbs.length ? "bottom" : "middle",
+            },
+          } as any,
+        ];
+      });
+
+      y = this.ensureSpace(this.lastTableY() + (sectionIndex === 1 ? 0 : 5), 25);
+
+      autoTable(this.pdf, {
+        startY: y,
+        margin: this.tableMargin(),
+        theme: "grid",
+        showHead: "everyPage",
+        rowPageBreak: "avoid",
+        head: [
+          [
+            {
+              content: sectionTitle,
+              colSpan: 5,
+              styles: {
+                halign: "left",
+                fillColor: [243, 244, 246],
+                textColor: [31, 41, 55],
+                fontSize: 9,
+              },
+            },
+          ],
+          ["SL NO", "QUESTION", "RESPONSE", "REMARKS", "ATTACHMENTS"],
+        ],
+        body,
+        styles: {
+          font: "helvetica",
+          fontSize: 8.5,
+          cellPadding: 2,
+          overflow: "linebreak",
+          valign: "top",
+          textColor: 20,
+          lineColor: [204, 204, 204],
+          lineWidth: 0.2,
+        },
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: 0,
+          fontStyle: "bold",
+          fontSize: 8,
+          halign: "center",
+          valign: "middle",
+        },
+        alternateRowStyles: { fillColor: [250, 250, 250] },
+        columnStyles: {
+          0: { cellWidth: 12, halign: "center" },
+          1: { cellWidth: contentW - 12 - 46 - 36 - ATTACH_COL_W },
+          2: { cellWidth: 46, fontStyle: "bold" },
+          3: { cellWidth: 36 },
+          4: { cellWidth: ATTACH_COL_W, halign: "center", fontSize: 7 },
+        },
+        didParseCell: (data) => {
+          // Keep the "ATTACHMENTS" heading on one line
+          if (data.section === "head" && data.row.index === 1 && data.column.index === 4) {
+            data.cell.styles.fontSize = 7.5;
+            data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1, right: 1 };
+          }
+        },
+        didDrawCell: (data) => {
+          if (data.section !== "body" || data.column.index !== 4) return;
+          const thumbs: string[] = (data.cell.raw as any)?.thumbs || [];
+          thumbs.forEach((src, i) => {
+            const col = i % thumbsPerLine;
+            const row = Math.floor(i / thumbsPerLine);
+            const usedW = Math.min(thumbs.length, thumbsPerLine) * (THUMB + THUMB_GAP) - THUMB_GAP;
+            const x0 = data.cell.x + (data.cell.width - usedW) / 2;
+            try {
+              this.pdf.addImage(
+                src,
+                "JPEG",
+                x0 + col * (THUMB + THUMB_GAP),
+                data.cell.y + THUMB_GAP + row * (THUMB + THUMB_GAP),
+                THUMB,
+                THUMB
+              );
+            } catch (e) {
+              console.warn("Could not draw attachment thumbnail", e);
+            }
+          });
+        },
+      });
+    }
+
+    // Completion summary
+    y = this.lastTableY();
+    const meta = jobSheet?.metadata;
+    const summary = meta
+      ? `Showing all ${checklistResponses.length} checklist items in ${grouped.size} section(s). Completion: ${
+          meta.completed_items ?? "-"
+        }/${meta.total_checklist_items ?? "-"} items (${Number(
+          meta.completion_percentage || 0
+        ).toFixed(1)}%)`
+      : `Showing all ${checklistResponses.length} checklist items in ${grouped.size} section(s)`;
+    y = this.ensureSpace(y + 4, 8);
+    this.pdf.setFont("helvetica", "italic");
+    this.pdf.setFontSize(8);
+    this.pdf.setTextColor(102);
+    this.pdf.text(summary, JobSheetPDFGenerator.PAGE_W / 2, y + 3, {
+      align: "center",
+      maxWidth: contentW,
+    });
+    return y + 5;
+  }
+
+  private addRemarksTable(jobSheet: any, comments: string, startY: number): number {
+    const taskComments = this.toPlain(jobSheet?.task_details?.task_comments);
+    const userComments = this.toPlain(comments);
+    const basicInfoComments = this.toPlain(jobSheet?.basic_info?.comments);
+    const systemComments: string[] = (jobSheet?.comments || [])
+      .map((c: any) => this.toPlain(c?.comment || c?.text || c))
+      .filter(Boolean);
+
+    const rows: string[][] = [];
+    if (taskComments) rows.push(["Task Comments", taskComments]);
+    if (userComments) rows.push(["Additional Comments", userComments]);
+    if (basicInfoComments) rows.push(["Other Comments", basicInfoComments]);
+    systemComments.forEach((c, i) => rows.push([i === 0 ? "System Comments" : "", c]));
+
+    const y = this.ensureSpace(startY, 20);
+    autoTable(this.pdf, {
+      startY: y,
+      margin: this.tableMargin(),
+      theme: "grid",
+      showHead: "everyPage",
+      rowPageBreak: "avoid",
+      head: [[{ content: "REMARKS", colSpan: 2 }]],
+      body: rows.length
+        ? rows
+        : // Two real cells (not one colSpan=2 cell) so autotable can always size both columns
+          [["-", { content: "No remarks available", styles: { textColor: 150, fontStyle: "italic" } }]],
+      styles: {
+        fontSize: 8.5,
+        cellPadding: 2.5,
+        overflow: "linebreak",
+        valign: "top",
+        textColor: 30,
+        lineColor: [229, 231, 235],
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: [200, 168, 130],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: "bold", fillColor: [243, 244, 246], textColor: [55, 65, 81] },
+        // Explicit width: when every row is a colSpan=2 cell (no remarks), autotable
+        // can't size column 1 itself and passes NaN to jsPDF.rect -> throws.
+        1: {
+          cellWidth:
+            JobSheetPDFGenerator.PAGE_W - 2 * JobSheetPDFGenerator.MARGIN_X - 40,
+        },
+      },
+    });
+    return this.lastTableY();
+  }
+
+  private addClosingNote(startY: number): void {
+    const y = this.ensureSpace(startY, 12);
+    const cx = JobSheetPDFGenerator.PAGE_W / 2;
+    this.pdf.setDrawColor(221);
+    this.pdf.setLineWidth(0.2);
+    this.pdf.line(JobSheetPDFGenerator.MARGIN_X, y, JobSheetPDFGenerator.PAGE_W - JobSheetPDFGenerator.MARGIN_X, y);
+    this.pdf.setFont("helvetica", "italic");
+    this.pdf.setFontSize(8);
+    this.pdf.setTextColor(102);
+    this.pdf.text(
+      "This is a system generated report and does not require any signature.",
+      cx,
+      y + 5,
+      { align: "center" }
+    );
+  }
+
+  private addPageFooters(taskDetails: any, jobSheet: any): void {
+    const total = this.pdf.getNumberOfPages();
+    const jobRef =
+      jobSheet?.basic_info?.job_card_no ||
+      taskDetails?.task_details?.id ||
+      taskDetails?.id ||
+      "";
+    const y = JobSheetPDFGenerator.PAGE_H - 7;
+    for (let i = 1; i <= total; i++) {
+      this.pdf.setPage(i);
+      this.pdf.setFont("helvetica", "normal");
+      this.pdf.setFontSize(7.5);
+      this.pdf.setTextColor(120);
+      this.pdf.text(
+        jobRef ? `Job Sheet - ${jobRef}` : "Job Sheet",
+        JobSheetPDFGenerator.MARGIN_X,
+        y
+      );
+      this.pdf.text("Powered By FMMatrix", JobSheetPDFGenerator.PAGE_W / 2, y, {
+        align: "center",
+      });
+      this.pdf.text(
+        `Page ${i} of ${total}`,
+        JobSheetPDFGenerator.PAGE_W - JobSheetPDFGenerator.MARGIN_X,
+        y,
+        { align: "right" }
+      );
+    }
+  }
+
+  private tableMargin() {
+    return {
+      left: JobSheetPDFGenerator.MARGIN_X,
+      right: JobSheetPDFGenerator.MARGIN_X,
+      top: JobSheetPDFGenerator.MARGIN_TOP,
+      bottom: JobSheetPDFGenerator.MARGIN_BOTTOM,
+    };
+  }
+
+  private lastTableY(): number {
+    return (this.pdf as any).lastAutoTable?.finalY ?? JobSheetPDFGenerator.MARGIN_TOP;
+  }
+
+  /** Start a new page when fewer than `needed` mm remain on the current one. */
+  private ensureSpace(y: number, needed: number): number {
+    const limit = JobSheetPDFGenerator.PAGE_H - JobSheetPDFGenerator.MARGIN_BOTTOM;
+    if (y + needed > limit) {
+      this.pdf.addPage();
+      return JobSheetPDFGenerator.MARGIN_TOP;
+    }
+    return y;
+  }
+
+  /** Page CSS without the global `body` / `*` rules, scoped to the render root. */
+  private getScopedPageStyles(): string {
+    return this.getPageStyles()
+      .replace(/(^|[\s}])body\s*\{[^}]*\}/g, "$1")
+      .replace(/(^|[\s}])\*\s*\{[^}]*\}/g, "$1")
+      // Reset goes FIRST and uses :where() (zero specificity) so it never overrides
+      // the real section paddings (e.g. .figma-location-header) defined after it.
+      .replace(
+        "<style>",
+        `<style>
+         :where(.jobsheet-pdf-root), :where(.jobsheet-pdf-root) * { box-sizing: border-box; margin: 0; padding: 0; }
+         .jobsheet-pdf-root { font-family: 'Work Sans', Arial, Helvetica, sans-serif; font-size: 10px; color: #000; line-height: 1.4; background: #fff; }
+         .jobsheet-pdf-root td, .jobsheet-pdf-root th { word-break: break-word; overflow-wrap: anywhere; }
+         .jobsheet-pdf-root .figma-location-header,
+         .jobsheet-pdf-root .figma-images-header { line-height: 1.4; padding: 10px 15px; }
+         `
+      );
+  }
+
+  /**
+   * Render an HTML snippet with html2canvas and place it at `startY`.
+   * Returns the y position (mm) below the block.
+   */
+  private async addHtmlBlock(html: string, startY: number): Promise<number> {
+    const M = JobSheetPDFGenerator.MARGIN_X;
+    const contentW = JobSheetPDFGenerator.PAGE_W - 2 * M;
+    const RENDER_PX_W = 760;
+
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    container.style.cssText = `position:absolute;left:-10000px;top:0;width:${RENDER_PX_W}px;background:#ffffff;`;
+    document.body.appendChild(container);
+
+    try {
+      const images = Array.from(container.querySelectorAll("img"));
+      await Promise.all(
+        images.map(async (img) => {
+          const src = img.getAttribute("src") || "";
+          if (!src || src.startsWith("data:")) return;
+          try {
+            img.src = await this.imageToBase64(src);
+          } catch {
+            img.src =
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+          }
+        })
+      );
+      await Promise.all(
+        images.map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>((r) => {
+                img.onload = () => r();
+                img.onerror = () => r();
+              })
+        )
+      );
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: false,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        width: RENDER_PX_W,
+        height: container.scrollHeight,
+        windowWidth: Math.max(document.documentElement.clientWidth, RENDER_PX_W + 100),
+        windowHeight: Math.max(window.innerHeight, container.scrollHeight + 100),
+        scrollX: 0,
+        scrollY: 0,
+        logging: false,
+      } as any);
+
+      // Place on the page(s), slicing only if the block is taller than a page
+      const pxPerMm = canvas.width / contentW;
+      let y = startY;
+      let srcY = 0;
+      while (srcY < canvas.height) {
+        const availMm = JobSheetPDFGenerator.PAGE_H - JobSheetPDFGenerator.MARGIN_BOTTOM - y;
+        const slicePx = Math.min(canvas.height - srcY, Math.floor(availMm * pxPerMm));
+        if (slicePx <= 0) {
+          this.pdf.addPage();
+          y = JobSheetPDFGenerator.MARGIN_TOP;
+          continue;
+        }
+        const slice = document.createElement("canvas");
+        slice.width = canvas.width;
+        slice.height = slicePx;
+        slice.getContext("2d")!.drawImage(canvas, 0, srcY, canvas.width, slicePx, 0, 0, canvas.width, slicePx);
+        const hMm = slicePx / pxPerMm;
+        this.pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", M, y, contentW, hMm);
+        srcY += slicePx;
+        y += hMm;
+        if (srcY < canvas.height) {
+          this.pdf.addPage();
+          y = JobSheetPDFGenerator.MARGIN_TOP;
+        }
+      }
+      return y;
+    } finally {
+      document.body.removeChild(container);
+    }
+  }
+
+  /** Load an image and downscale to a small JPEG thumbnail; null if it can't be read (e.g. CORS). */
+  private loadThumbnail(url: string, maxPx: number = 160): Promise<string | null> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const w = img.naturalWidth || img.width;
+          const h = img.naturalHeight || img.height;
+          // Center-crop to a square like the on-screen `object-cover` thumbnail
+          const side = Math.min(w, h);
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = Math.min(maxPx, side);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, (w - side) / 2, (h - side) / 2, side, side, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
   }
 
   private async generateSinglePagePDF(
@@ -122,49 +677,8 @@ export class JobSheetPDFGenerator {
     jobSheetData: any,
     comments: string = ""
   ): Promise<void> {
-    console.log(
-      "Generating PDF matching Figma design structure - Single Page Mode"
-    );
-
-    // Check if before/after section should be shown
-    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
-    const shouldShowBeforeAfter =
-      jobSheet?.basic_info?.before_after_enabled === true ||
-      jobSheet?.basic_info?.before_after_enabled === "true" ||
-      jobSheet?.basic_info?.steps === 3;
-
-    // Single Page: All sections as per Figma design
-    const pageContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          ${this.getPageStyles()}
-        </head>
-        <body>
-          ${this.generateHeader(jobSheetData)}
-          ${this.generateClientInfo(taskDetails, jobSheetData)}
-          ${this.generateLocationDetails(jobSheetData)}
-          ${
-            shouldShowBeforeAfter
-              ? this.generateBeforeAfterImagesSection(jobSheetData)
-              : ""
-          }
-          ${this.generateDailyMaintenanceSection(jobSheetData)}
-          ${this.generateRemarksSection(jobSheetData, comments)}
-          ${this.generateBottomSection()}
-        </body>
-      </html>
-    `;
-
-    // Render the complete page
-    await this.renderPageToPDF(pageContent, taskDetails, true);
-
-    // Save the PDF
-    this.pdf.save(
-      `JobSheet_${
-        taskDetails.task_details?.id || taskDetails.id || new Date().getTime()
-      }_${new Date().toISOString().slice(0, 10)}.pdf`
-    );
+    await this.buildPDF(taskDetails, jobSheetData, comments);
+    this.pdf.save(this.getFileName(taskDetails));
   }
 
   private async generateMultiPagePDF(
