@@ -434,6 +434,11 @@ export const Header = () => {
 
   const canShowMSafeDashboard = canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
+  const viDashboardLinks = [
+    { label: "Audit Dashboard", path: "/vi-audit/management-dashboard" },
+    { label: "Incident Dashboard", path: "/vi-incident/management-dashboard" },
+    { label: "Inspection Dashboard", path: "/vi-inspection/management-dashboard" },
+  ];
 
   const handleMSafeDashboard = () => {
     navigate("/msafedashboard-legacy"); // old MSafe Dashboard UI
@@ -663,6 +668,17 @@ export const Header = () => {
                   MSafe Dashboard
                 </button>
               )}
+              {canShowMSafeDashboard &&
+                viDashboardLinks.map(({ label, path }) => (
+                  <button
+                    key={path}
+                    onClick={() => navigate(path)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  >
+                    <ChartArea className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
               {/* {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
@@ -870,6 +886,13 @@ export const Header = () => {
                     Msafe Dashboard Revamp
                   </DropdownMenuItem>
                 )}
+                {canShowMSafeDashboard &&
+                  viDashboardLinks.map(({ label, path }) => (
+                    <DropdownMenuItem key={path} onClick={() => navigate(path)}>
+                      <ChartArea className="w-4 h-4 mr-2" />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
