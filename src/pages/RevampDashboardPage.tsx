@@ -2716,8 +2716,12 @@ export default function RevampDashboardPage() {
   const attendanceTrendChartData = useMemo(
     () =>
       (attendanceTrend?.monthly_trend ?? [])
-        .filter((m) => typeof m.month === "string" && typeof m.present_percent === "number")
-        .map((m) => ({ month: formatMonthLabel(m.month as string), presentPct: m.present_percent as number })),
+        .filter((month) => typeof month.month === "string")
+        .map((month) => ({
+          month: formatMonthLabel(month.month),
+          presentStaff: month.present_staff,
+          absentStaff: month.absent_staff,
+        })),
     [attendanceTrend]
   );
 
@@ -2737,26 +2741,46 @@ export default function RevampDashboardPage() {
   const attendanceRepeatAbsenceRows = useMemo(
     () =>
       (attendancePatterns?.repeat_absence ?? [])
-        .filter((r) => typeof r.employee_name === "string")
-        .map((r) => ({
-          label: `${r.employee_name}${typeof r.department === "string" ? ` — ${r.department}` : ""}`,
+        .filter((row) => typeof row.name === "string")
+        .map((row) => ({
+          label: `${row.name}${row.department_name ? ` — ${row.department_name}` : ""}`,
           badge: {
             tone: "red" as TableBadgeTone,
-            label: typeof r.absence_count === "number" ? `${r.absence_count} absences` : "Repeat absence",
+            label: `${row.absence_rate_percent}% absent · ${row.present_days}/${row.days_in_scope} present`,
           },
         })),
     [attendancePatterns]
   );
 
   const attendanceHabitualLatecomerRows = useMemo(
-    () =>
-      (attendancePatterns?.habitual_latecomers ?? [])
-        .filter((r) => typeof r.employee_name === "string")
-        .map((r) => ({
-          label: `${r.employee_name}${typeof r.department === "string" ? ` — ${r.department}` : ""}`,
+    () => {
+      return (attendancePatterns?.habitual_latecomers ?? []).flatMap((row) => {
+        const name = row.name ?? row.employee_name;
+        if (typeof name !== "string") return [];
+        const department = row.department_name ?? row.department;
+        return [{
+          label: `${name}${typeof department === "string" ? ` — ${department}` : ""}`,
           badge: {
             tone: "amber" as TableBadgeTone,
-            label: typeof r.late_count === "number" ? `${r.late_count} late check-ins` : "Habitual latecomer",
+            label: typeof row.late_count === "number" ? `${row.late_count} late check-ins` : "Habitual latecomer",
+          },
+        }];
+      });
+    },
+    [attendancePatterns]
+  );
+
+  const attendanceConsecutiveAbsenteeRows = useMemo(
+    () =>
+      (attendancePatterns?.consecutive_absentees ?? [])
+        .filter((row) => typeof row.name === "string")
+        .map((row) => ({
+          label: `${row.name}${row.department_name ? ` — ${row.department_name}` : ""}`,
+          badge: {
+            tone: "red" as TableBadgeTone,
+            label: `${row.consecutive_absent_days} consecutive days absent${
+              row.last_present_date ? ` · last present ${row.last_present_date}` : ""
+            }`,
           },
         })),
     [attendancePatterns]
@@ -5552,14 +5576,16 @@ export default function RevampDashboardPage() {
               <div key="attendance-trend" chart_code="fm-attendance-trend" className="h-full relative">
                 <AddToDashboardButton chartId="fm-attendance-trend" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,433" />
                 {attendanceTrendChartData.length ? (
-                  <AreaTrendChartCard
+                  <MultiAreaTrendChartCard
                     title="Attendance trend"
-                    subtitle="Monthly · is presence stable or slipping?"
+                    subtitle="Monthly present vs absent staff"
                     data={attendanceTrendChartData}
                     categoryKey="month"
-                    valueKey="presentPct"
-                    unit="%"
-                    color={BRAND_HEX.ok}
+                    series={[
+                      { dataKey: "presentStaff", name: "Present staff", color: BRAND_HEX.ok },
+                      { dataKey: "absentStaff", name: "Absent staff", color: BRAND_HEX.err },
+                    ]}
+                    unit=" staff"
                     showInfoIcon
                     className="h-full overflow-auto"
                   />
@@ -5617,17 +5643,23 @@ export default function RevampDashboardPage() {
 
               <div key="attendance-repeat-lateness" chart_code="fm-attendance-repeat-lateness" className="h-full relative">
                 <AddToDashboardButton chartId="fm-attendance-repeat-lateness" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,449" />
-                {attendanceRepeatAbsenceRows.length || attendanceHabitualLatecomerRows.length ? (
+                {attendanceRepeatAbsenceRows.length ||
+                attendanceConsecutiveAbsenteeRows.length ||
+                attendanceHabitualLatecomerRows.length ? (
                   <StatListCard
                     title="Repeat absence & habitual lateness"
-                    subtitle="Same individuals repeatedly out or late vs spread evenly across the team"
-                    rows={[...attendanceRepeatAbsenceRows, ...attendanceHabitualLatecomerRows]}
+                    subtitle="Repeat absence rates, consecutive absences, and habitual late check-ins"
+                    rows={[
+                      ...attendanceRepeatAbsenceRows,
+                      ...attendanceConsecutiveAbsenteeRows,
+                      ...attendanceHabitualLatecomerRows,
+                    ]}
                     className="h-full overflow-auto"
                   />
                 ) : (
                   <EmptyStateCard
                     title="Repeat absence & habitual lateness"
-                    message="No repeat-absence or habitual-latecomer patterns detected for the selected sites and date range."
+                    message="No repeat-absence, consecutive-absence, or habitual-lateness patterns found for the selected sites and date range."
                     className="h-full"
                   />
                 )}
