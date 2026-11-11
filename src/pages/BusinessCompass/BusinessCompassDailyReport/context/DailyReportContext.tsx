@@ -2962,7 +2962,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!sourceId || !sourceType) return;
 
     if (sourceType === "task") {
-      navigate(`/vas/tasks/${sourceId}`);
+      navigate(`/business-compass/tasks/${sourceId}`);
     } else if (sourceType === "issue") {
       navigate(`/vas/issues/${sourceId}`);
     }
