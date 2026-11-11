@@ -5346,7 +5346,7 @@ export const TicketDetailsPage = () => {
                       <CardContent className="pt-6">
                         {[
                           [
-                            { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
+                            { label: 'Ticket Type', value: capitalizeWords(ticketData.ticket_type?.replace(/_/g, ' ')) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
                             { label: 'Source', value: ticketData.asset_service || '-' },
@@ -8833,7 +8833,7 @@ export const TicketDetailsPage = () => {
                   <CardContent className="pt-6">
                     {[
                       [
-                        { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
+                        { label: 'Ticket Type', value: capitalizeWords(ticketData.ticket_type?.replace(/_/g, ' ')) },
                         { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                         { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
                         { label: 'Source', value: ticketData.service_or_asset || '-' },

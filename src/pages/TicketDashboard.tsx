@@ -952,6 +952,37 @@ export const TicketDashboard = () => {
     }
   };
   const handleFilterApply = (newFilters: TicketFilters) => {
+    // Helpdesk Filter Applied — fired on every meaningful Apply/Reset from the filter
+    // dialog, with the structured filter names actually in use.
+    if (isCMHelpdesk) {
+      const filterLabelMap: Record<string, string> = {
+        date_range: 'date_range',
+        category_type_id_eq: 'category',
+        category_type_type_eq: 'ticket_type',
+        sub_category_id_eq: 'sub_category',
+        dept_id_eq: 'department',
+        site_id_eq: 'site',
+        unit_id_eq: 'unit',
+        issue_status_in: 'status',
+        priority_eq: 'priority',
+        assigned_to_in: 'assigned_user',
+        user_firstname_or_user_lastname_cont: 'user_name',
+        is_subticket_eq: 'is_subticket',
+        has_feedback_eq: 'has_feedback',
+        entity_name_con: 'customer_name',
+        complaint_status_fixed_state_eq: 'status',
+      };
+      const activeFilterKeys = Object.keys(newFilters).filter((k) => {
+        const v = (newFilters as Record<string, unknown>)[k];
+        if (Array.isArray(v)) return v.length > 0;
+        return v !== undefined && v !== null && v !== '';
+      });
+      cmHdEvents.onFilterApplied(
+        activeFilterKeys.length,
+        activeFilterKeys.map((k) => filterLabelMap[k] ?? k)
+      );
+    }
+
     setFilters(newFilters);
     goToPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
@@ -1153,7 +1184,7 @@ export const TicketDashboard = () => {
     label: 'Created On',
     sortable: true
   }, {
-    key: 'issue_type',
+    key: 'ticket_type',
     label: 'Ticket Type',
     sortable: true
   }, {
@@ -1464,6 +1495,10 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'escalation_resolution_name') {
       return formatEscalationLevel(item.next_resolution_escalation);
+    }
+    if (columnKey === 'ticket_type') {
+      const t = item.ticket_type;
+      return t ? String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';

@@ -80,6 +80,7 @@ export const TicketsFilterDialog = ({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [category, setCategory] = useState("");
+  const [ticketType, setTicketType] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [department, setDepartment] = useState("");
   const [site, setSite] = useState("");
@@ -224,6 +225,7 @@ export const TicketsFilterDialog = ({
       filters.date_range = `${formatDate(dateFrom)} - ${formatDate(dateTo)}`;
     }
 
+    if (ticketType) filters.category_type_type_eq = ticketType;
     if (category) filters.category_type_id_eq = Number(category);
     if (subCategory) filters.sub_category_id_eq = Number(subCategory);
     if (department) filters.dept_id_eq = Number(department);
@@ -255,6 +257,7 @@ export const TicketsFilterDialog = ({
 
     setDateFrom("");
     setDateTo("");
+    setTicketType("");
     setCategory("");
     setSubCategory("");
     setDepartment("");
@@ -516,6 +519,70 @@ export const TicketsFilterDialog = ({
             label="Search User"
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="ticket-filter-ticket-type-label">Ticket Type</InputLabel>
+            <MuiSelect
+              labelId="ticket-filter-ticket-type-label"
+              label="Ticket Type"
+              value={ticketType}
+              onChange={(e) => setTicketType(e.target.value as string)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="">
+                <em>Select Ticket Type</em>
+              </MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non_technical">Non Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="ticket-filter-subticket-label">Subticket</InputLabel>
+            <MuiSelect
+              labelId="ticket-filter-subticket-label"
+              label="Subticket"
+              value={isSubticket}
+              onChange={(e) => setIsSubticket(e.target.value as string)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="">
+                <em>Select Subticket</em>
+              </MenuItem>
+              <MenuItem value="true">Yes</MenuItem>
+              <MenuItem value="false">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="ticket-filter-feedback-label">Feedback</InputLabel>
+            <MuiSelect
+              labelId="ticket-filter-feedback-label"
+              label="Feedback"
+              value={hasFeedback}
+              onChange={(e) => setHasFeedback(e.target.value as string)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="">
+                <em>Select Feedback</em>
+              </MenuItem>
+              <MenuItem value="true">Yes</MenuItem>
+              <MenuItem value="false">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <TextField
+            label="Customer Name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
             fullWidth
             variant="outlined"
             sx={fieldStyles}
