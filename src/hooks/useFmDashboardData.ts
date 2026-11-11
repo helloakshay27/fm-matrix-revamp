@@ -660,20 +660,36 @@ export function useAttendanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([
+    Promise.allSettled([
       fetchAttendanceOverview(params),
       fetchAttendanceDepartment(params),
       fetchAttendanceTrend(params),
       fetchAttendancePatterns(params),
       fetchAttendanceStaffingGapVsBreach(params),
     ])
-      .then(([overview, department, trend, patterns, staffingGapVsBreach]) => {
+      .then(([overviewResult, departmentResult, trendResult, patternsResult, staffingGapResult]) => {
         if (cancelled) return;
-        setData({ overview, department, trend, patterns, staffingGapVsBreach });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load attendance dashboard data");
+        setData({
+          overview: overviewResult.status === "fulfilled" ? overviewResult.value : null,
+          department: departmentResult.status === "fulfilled" ? departmentResult.value : null,
+          trend: trendResult.status === "fulfilled" ? trendResult.value : null,
+          patterns: patternsResult.status === "fulfilled" ? patternsResult.value : null,
+          staffingGapVsBreach: staffingGapResult.status === "fulfilled" ? staffingGapResult.value : null,
+        });
+
+        const getFailure = (name: string, result: PromiseSettledResult<unknown>) => {
+          if (result.status === "fulfilled") return null;
+          const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+          return `${name}: ${reason}`;
+        };
+        const failures = [
+          getFailure("overview", overviewResult),
+          getFailure("department", departmentResult),
+          getFailure("trend", trendResult),
+          getFailure("patterns", patternsResult),
+          getFailure("staffing gap vs breach", staffingGapResult),
+        ].filter((failure): failure is string => failure !== null);
+        setError(failures.length ? `Some attendance data failed to load: ${failures.join("; ")}` : null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
