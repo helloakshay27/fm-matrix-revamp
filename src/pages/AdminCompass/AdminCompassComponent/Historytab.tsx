@@ -16,7 +16,36 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBaseUrl, getAuthHeaders } from "./Shared";
+import { checkIsNonWorkingDay } from "./Dailylogtab";
 import { toast } from "sonner";
+
+// Same non-working day banner as the Daily Log tab (driven by config.meeting_days)
+const NonWorkingDayBanner = ({ selectedDate, meetingDays }: { selectedDate: string; meetingDays: string[] }) => {
+  const [y, m, d] = selectedDate.split("-").map(Number);
+  const dateLabel = new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-5 flex items-center gap-4">
+      <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+        <AlertTriangle className="w-5 h-5 text-amber-600" />
+      </div>
+      <div>
+        <p className="text-sm font-black text-amber-800">Non-working day</p>
+        <p className="text-xs font-semibold text-amber-600 mt-0.5">
+          {dateLabel} is not a scheduled meeting day. This meeting runs on{" "}
+          {meetingDays.join(", ")} — no reports are expected.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const getMeetingDays = (data: any): string[] =>
+  Array.isArray(data?.config?.meeting_days) ? data.config.meeting_days : [];
 
 const cleanDiscussionPoints = (rawText: string) => {
   if (!rawText) return "";
@@ -1118,6 +1147,8 @@ const AllMeetingsView = ({
         if (isDeleted) return null;
 
         const hasData = hasMeetingDataForDate(data, selectedDate);
+        const meetingDays = getMeetingDays(data);
+        const isNonWorkingDay = checkIsNonWorkingDay(selectedDate, meetingDays);
 
         return (
           <div key={id}>
@@ -1134,6 +1165,8 @@ const AllMeetingsView = ({
               <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden py-16 flex items-center justify-center">
                 <Loader2 className="animate-spin w-6 h-6 text-[#CE7A5A]" />
               </div>
+            ) : !hasData && isNonWorkingDay ? (
+              <NonWorkingDayBanner selectedDate={selectedDate} meetingDays={meetingDays} />
             ) : !hasData ? (
               <div className="bg-white border-2 border-dashed border-[#E0D8F0] rounded-[24px] py-10 flex flex-col items-center justify-center gap-2">
                 <AlertTriangle className="w-6 h-6 text-orange-300" />
@@ -1274,6 +1307,8 @@ const HistoryTab = ({
       "Meeting");
 
   const hasSubmissions = hasMeetingDataForDate(historyData, selectedDate);
+  const meetingDays = getMeetingDays(historyData);
+  const isNonWorkingDay = checkIsNonWorkingDay(selectedDate, meetingDays);
 
   const meetingOptions = [
     { value: "all", label: "All Meetings" },
@@ -1386,7 +1421,11 @@ const HistoryTab = ({
             </div>
           )}
 
-          {!isLoading && (!historyData || !hasSubmissions) && (
+          {!isLoading && isNonWorkingDay && (
+            <NonWorkingDayBanner selectedDate={selectedDate} meetingDays={meetingDays} />
+          )}
+
+          {!isLoading && !isNonWorkingDay && (!historyData || !hasSubmissions) && (
             <div className="text-center py-24 bg-white border-2 border-dashed border-[#E0D8F0] rounded-[32px]">
               <HistoryIcon className="w-10 h-10 text-[#CE7A5A] opacity-30 mx-auto mb-4" />
               <p className="text-[#8C8580] font-bold text-sm">
