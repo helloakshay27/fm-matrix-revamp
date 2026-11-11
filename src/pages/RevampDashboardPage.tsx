@@ -2699,6 +2699,18 @@ export default function RevampDashboardPage() {
   const attendanceTrend = attendanceApiData.trend;
   const attendancePatterns = attendanceApiData.patterns;
   const attendanceStaffingGapSummary = attendanceApiData.staffingGapVsBreach;
+  const absentStaffSummary = attendanceStaffingGapSummary?.absent_staff;
+  const ticketBreachSummary = attendanceStaffingGapSummary?.ticket_breach;
+  const attendanceStaffingGapInsight =
+    absentStaffSummary &&
+    ticketBreachSummary &&
+    typeof absentStaffSummary.absent_staff_count === "number" &&
+    typeof absentStaffSummary.working_days === "number" &&
+    typeof ticketBreachSummary.breached_tickets === "number" &&
+    typeof ticketBreachSummary.total_tickets === "number" &&
+    typeof ticketBreachSummary.breach_percent === "number"
+      ? `Period summary: ${absentStaffSummary.absent_staff_count.toLocaleString()} absent staff across ${absentStaffSummary.working_days.toLocaleString()} working days · ${ticketBreachSummary.breached_tickets.toLocaleString()} of ${ticketBreachSummary.total_tickets.toLocaleString()} tickets breached (${ticketBreachSummary.breach_percent}%).`
+      : undefined;
   const attendanceStaffingGapChartData = useMemo(
     () =>
       (attendanceApiData.staffingGapVsBreach?.daily ?? [])
@@ -5623,11 +5635,7 @@ export default function RevampDashboardPage() {
                     bar={{ dataKey: "absentStaff", name: "AC Staff Absent", unit: "staff" }}
                     line={{ dataKey: "breachPercent", name: "AC Ticket Breach %", unit: "%" }}
                     showInfoIcon
-                    insight={
-                      attendanceStaffingGapSummary
-                        ? `Period summary: ${attendanceStaffingGapSummary.absent_staff.absent_staff_count.toLocaleString()} absent staff across ${attendanceStaffingGapSummary.absent_staff.working_days.toLocaleString()} working days · ${attendanceStaffingGapSummary.ticket_breach.breached_tickets.toLocaleString()} of ${attendanceStaffingGapSummary.ticket_breach.total_tickets.toLocaleString()} tickets breached (${attendanceStaffingGapSummary.ticket_breach.breach_percent}%).`
-                        : undefined
-                    }
+                    insight={attendanceStaffingGapInsight}
                     insightVariant="plain"
                     className="h-full overflow-auto"
                   />

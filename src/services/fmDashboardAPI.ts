@@ -1264,18 +1264,18 @@ export interface AttendanceStaffingGapDailyRow {
 }
 
 export interface AttendanceStaffingGapVsBreachData {
-  absent_staff: {
+  absent_staff?: {
     absent_staff_count: number;
     absent_person_days: number;
     total_staff: number;
     working_days: number;
   };
-  ticket_breach: {
+  ticket_breach?: {
     total_tickets: number;
     breached_tickets: number;
     breach_percent: number;
   };
-  daily: AttendanceStaffingGapDailyRow[];
+  daily?: AttendanceStaffingGapDailyRow[];
 }
 
 interface AttendanceOverviewResponse {
