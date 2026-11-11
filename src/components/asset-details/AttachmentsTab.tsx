@@ -163,138 +163,88 @@
 //       </div>
 //     </div>;
 // };
-import React, { useState } from "react";
-import { FileText, File, Image, FileSpreadsheet, Paperclip } from "lucide-react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { FileText, File, FileSpreadsheet, Upload } from "lucide-react";
 
-interface AttachmentsTab {
-  asset: Asset;
+type Doc = { id: number; document: string; document_name: string };
+
+interface AttachmentsTabProps {
+  asset: {
+    id: number;
+    asset_image?: { document: string; document_name: string } | null;
+    asset_manuals?: Doc[];
+    asset_insurances?: Doc[];
+    asset_purchases?: Doc[];
+    asset_other_uploads?: Doc[];
+  };
   assetId?: string | number;
 }
-interface Asset {
-  id: number;
-  name: string;
-  asset_manuals?: { id: number; document: string; document_name: string }[];
-  asset_other_uploads?: {
-    id: number;
-    document: string;
-    document_name: string;
-  }[];
-  asset_insurances?: { id: number; document: string; document_name: string }[];
-  asset_purchases?: { id: number; document: string; document_name: string }[];
-}
 
-const attachmentTypes = [
-  { name: "Manuals Upload", key: "asset_manuals" },
-  { name: "Insurance Details", key: "asset_insurances" },
-  { name: "Purchase Invoice", key: "asset_purchases" },
-  { name: "Other Uploads", key: "asset_other_uploads" },
-];
+export const AttachmentsTab: React.FC<AttachmentsTabProps> = ({ asset, assetId }) => {
+  const navigate = useNavigate();
 
-export const AttachmentsTab: React.FC<AttachmentsTab> = ({ asset }) => {
-  const defaultType =
-    attachmentTypes.find((type) => (asset as any)[type.key]?.length > 0)
-      ?.name || attachmentTypes[0].name;
-  const [activeType, setActiveType] = useState(defaultType);
+  const sections: { name: string; files: Doc[] }[] = [
+    {
+      name: "Asset Image",
+      files: asset.asset_image?.document
+        ? [{ id: 0, document: asset.asset_image.document, document_name: asset.asset_image.document_name || "Asset Image" }]
+        : [],
+    },
+    { name: "Manuals", files: asset.asset_manuals || [] },
+    { name: "Insurance Details", files: asset.asset_insurances || [] },
+    { name: "Purchase Invoice", files: asset.asset_purchases || [] },
+    { name: "Other Documents", files: asset.asset_other_uploads || [] },
+  ];
 
-  const filesMap: Record<
-    string,
-    { id: number; document: string; document_name: string }[]
-  > = {
-    "Manuals Upload": asset.asset_manuals || [],
-    "Insurance Details": asset.asset_insurances || [],
-    "Purchase Invoice": asset.asset_purchases || [],
-    "Other Uploads": asset.asset_other_uploads || [],
-  };
-
-  const getFileIcon = (name: string, url: string) => {
-    const ext = name.split(".").pop()?.toLowerCase();
-    if (["jpg", "jpeg", "png"].includes(ext || "")) {
-      return (
-        <img
-          src={url}
-          alt={name}
-          className="object-contain w-full h-full rounded"
-        />
-      );
-    }
-    if (ext === "pdf") {
-      return <File className="w-8 h-8 text-red-600" />;
-    }
-    if (["xlsx", "xls", "csv"].includes(ext || "")) {
-      return <FileSpreadsheet className="w-8 h-8 text-green-600" />;
-    }
-    return <FileText className="w-8 h-8 text-gray-600" />;
+  const FileIcon = ({ name }: { name: string }) => {
+    const ext = name.split(".").pop()?.toLowerCase() || "";
+    if (ext === "pdf") return <File className="w-4 h-4 shrink-0 text-red-600" />;
+    if (["xlsx", "xls", "csv"].includes(ext)) return <FileSpreadsheet className="w-4 h-4 shrink-0 text-green-600" />;
+    return <FileText className="w-4 h-4 shrink-0 text-[rgba(26,26,24,0.68)]" />;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Attachment Type Buttons */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 overflow-x-auto pb-2">
-        {attachmentTypes.map((type, index) => {
-          const isActive = type.name === activeType;
-          return (
-            // Neutral selection chip: selected = soft surface + ink border/text,
-            // unselected = white + hairline border. No status colour for selection.
+    <div className="bg-white rounded-2xl border border-[rgba(26,26,24,0.12)] p-6">
+      <h3 className="text-base font-semibold text-[#1A1A18] mb-4">Attachments</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {sections.map((sec) => (
+          <div
+            key={sec.name}
+            className="attachment-dropzone flex flex-col items-center gap-2 text-center rounded-xl bg-white border-2 border-dashed border-[rgba(26,26,24,0.12)] p-[18px] transition-colors hover:border-[rgba(26,26,24,0.28)]"
+          >
+            <FileText className="w-[18px] h-[18px] text-[#1A1A18]" />
+            <div className="text-[12.5px] font-semibold text-[#1A1A18]">{sec.name}</div>
+            {sec.files.length === 0 ? (
+              <div className="text-[11px] text-[rgba(26,26,24,0.48)]">Nothing uploaded</div>
+            ) : (
+              <ul className="w-full space-y-1">
+                {sec.files.map((f, i) => (
+                  <li key={f.id || i}>
+                    <a
+                      href={f.document}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={f.document_name}
+                      className="flex items-center justify-center gap-1.5 text-[11px] text-[#1A1A18] hover:underline"
+                    >
+                      <FileIcon name={f.document_name || ""} />
+                      <span className="truncate max-w-[140px]">{f.document_name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             <button
-              key={index}
               type="button"
-              aria-pressed={isActive}
-              className={`inline-flex items-center gap-2 whitespace-nowrap min-w-fit h-11 px-4 rounded-[10px] border transition-colors ${
-                isActive
-                  ? "bg-[#F5F4F0] border-[#1A1A18] text-[#1A1A18]"
-                  : "bg-white border-[rgba(26,26,24,0.12)] text-[rgba(26,26,24,0.68)] hover:bg-[#F7F6F2] hover:border-[rgba(26,26,24,0.28)]"
-              }`}
-              onClick={() => setActiveType(type.name)}
+              onClick={() => navigate(`/maintenance/asset/edit/${assetId ?? asset.id}`)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#1A1A18] bg-transparent hover:bg-transparent hover:underline transition-colors"
             >
-              <Paperclip
-                className={`w-4 h-4 shrink-0 ${
-                  isActive ? "text-[#1A1A18]" : "text-[rgba(26,26,24,0.48)]"
-                }`}
-              />
-              <span className="text-sm font-semibold">{type.name}</span>
-              <span
-                className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  isActive ? "bg-white text-[#1A1A18]" : "bg-[#F5F4F0] text-[rgba(26,26,24,0.68)]"
-                }`}
-              >
-                {filesMap[type.name].length} Files
-              </span>
+              <Upload className="w-3.5 h-3.5" />
+              Upload
             </button>
-          );
-        })}
-      </div>
-
-      {/* Files Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Files</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filesMap[activeType].length === 0 ? (
-            <div className="col-span-full text-center text-gray-400 py-8">
-              No files available.
-            </div>
-          ) : (
-            filesMap[activeType].map((file, index) => (
-              <div
-                key={file.id || index}
-                className="flex flex-col items-center p-4 border rounded-lg hover:shadow-md transition-shadow bg-white"
-              >
-                {/* File Preview */}
-                <a
-                  href={file.document}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-32 bg-gray-100 rounded mb-3 flex items-center justify-center border overflow-hidden"
-                >
-                  {getFileIcon(file.document_name, file.document)}
-                </a>
-                {/* File Name */}
-                <p className="text-sm text-gray-700 text-center font-medium break-all">
-                  {file.document_name}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

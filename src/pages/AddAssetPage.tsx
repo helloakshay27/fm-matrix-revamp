@@ -71,6 +71,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { AddCustomFieldModal } from "@/components/AddCustomFieldModal";
+import { AssetCategorySelector } from "@/components/AssetCategorySelector";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationData } from "@/hooks/useLocationData";
@@ -4490,9 +4491,9 @@ const AddAssetPage = () => {
               ASSET CATEGORY
             </div>
             <div className="w-full">
-              <RadioGroup
+              <AssetCategorySelector
                 value={selectedAssetCategory}
-                onValueChange={(category) => {
+                onChange={(category) => {
                   setSelectedAssetCategory(category);
                   // handleFieldChange('asset_category', category);
                   handleExtraFieldChange(
@@ -4534,37 +4535,7 @@ const AddAssetPage = () => {
                         : "",
                   }));
                 }}
-                className="flex flex-wrap gap-2 lg:gap-3"
-              >
-                {[
-                  "Land",
-                  "Building",
-                  "Leasehold Improvement",
-                  "Vehicle",
-                  "Furniture & Fixtures",
-                  "IT Equipment",
-                  "Machinery & Equipment",
-                  "Tools & Instruments",
-                  "Meter",
-                ].map((category) => (
-                  <div
-                    key={category}
-                    className="flex flex-col items-center space-y-1 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[90px] flex-1"
-                  >
-                    <RadioGroupItem
-                      value={category}
-                      id={category}
-                      className="mx-auto"
-                    />
-                    <label
-                      htmlFor={category}
-                      className="text-xs font-medium cursor-pointer text-center leading-tight"
-                    >
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </RadioGroup>
+              />
             </div>
 
             {/* Validation Requirements Info - Show when category is selected */}

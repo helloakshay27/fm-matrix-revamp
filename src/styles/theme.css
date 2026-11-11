@@ -7546,7 +7546,7 @@ html body table.task-status-table td:not(:first-child) {
 /* 5. Neutral 2px Dashed Drop Zones (ST37, ST42, ST44) */
 html body div.border-dashed[class*="border-yellow"],
 html body div.border-dashed[class*="border-amber"],
-html body div.border-dashed:not([class*="border-gray"]):not([class*="border-neutral"]) {
+html body div.border-dashed:not([class*="border-gray"]):not([class*="border-neutral"]):not(.attachment-dropzone) {
   border: 2px dashed rgba(26, 26, 24, 0.2) !important;
   border-radius: 12px !important;
   background-color: #faf9f6 !important;
