@@ -557,6 +557,32 @@ export class JobSheetPDFGenerator {
          .jobsheet-pdf-root .figma-location-header,
          .jobsheet-pdf-root .figma-images-header { line-height: 1.4; padding: 10px 15px; }
          `
+      )
+      // Guards go LAST with !important: the app's global CSS (index.css /
+      // enhanced-select.css) also hits this off-screen render. Without them a long
+      // value (e.g. 6 assignees) doesn't wrap, the table grows past the 760px capture
+      // width and the right-hand columns (Job Code, Completed By, ...) are cut off.
+      .replace(
+        "</style>",
+        `
+         .jobsheet-pdf-root table {
+           table-layout: fixed !important;
+           width: 100% !important;
+           max-width: 100% !important;
+           display: table !important;
+         }
+         .jobsheet-pdf-root td, .jobsheet-pdf-root th {
+           white-space: normal !important;
+           word-break: break-word !important;
+           overflow-wrap: anywhere !important;
+         }
+         /* Info table keeps the original 4 equal columns */
+         .jobsheet-pdf-root .figma-label-cell,
+         .jobsheet-pdf-root .figma-value-cell { width: 25% !important; }
+         /* Global rule removes the last column's right border — restore it */
+         .jobsheet-pdf-root td:last-child,
+         .jobsheet-pdf-root th:last-child { border-right: 0.5px solid #CCCCCC !important; }
+         </style>`
       );
   }
 
@@ -1008,12 +1034,38 @@ export class JobSheetPDFGenerator {
     const checkInTime = jobSheet?.summary?.time_tracking?.start_time || "";
     const checkOutTime = jobSheet?.summary?.time_tracking?.end_time || "";
 
-    // Personnel information
-    const assignee =
-      jobSheet?.personnel?.performed_by?.full_name ||
-      jobSheet?.basic_info?.backup_assigned_user ||
-      "";
-    const completedBy = jobSheet?.personnel?.performed_by?.full_name || "";
+    // Personnel information.
+    // Prefer the task details API (/pms/asset_task_occurrences/:id.json ->
+    // task_details.assigned_to = assigned_to_name, task_details.performed_by = performed_by),
+    // which is what the details page shows. The job sheet API often sends the
+    // placeholder "Unknown" for these, so such placeholders are skipped.
+    const realName = (...candidates: any[]): string => {
+      for (const c of candidates) {
+        const v =
+          c && typeof c === "object"
+            ? c.full_name || c.name || [c.firstname, c.lastname].filter(Boolean).join(" ")
+            : c;
+        const s = typeof v === "string" ? v.trim() : v != null ? String(v).trim() : "";
+        if (s && !["unknown", "n/a", "na", "null", "undefined", "-"].includes(s.toLowerCase())) {
+          return s;
+        }
+      }
+      return "";
+    };
+    const td = taskDetails?.task_details || {};
+    const assignee = realName(
+      td.assigned_to,
+      taskDetails?.assigned_to_name,
+      td.backup_assigned_user,
+      taskDetails?.backup_assigned_user,
+      jobSheet?.basic_info?.backup_assigned_user,
+      jobSheet?.personnel?.performed_by
+    );
+    const completedBy = realName(
+      td.performed_by,
+      taskDetails?.performed_by,
+      jobSheet?.personnel?.performed_by
+    );
     const verifiedBy = ""; // Not available in current API structure
     const schedule = jobSheet?.basic_info?.scheduled_date || "";
     const completedDate = jobSheet?.basic_info?.completed_date || "";

@@ -31,6 +31,17 @@ type CountryRow = {
 };
 type RegionRow = { id?: number; country: string; region: string; status: boolean };
 type ZoneRow = { id?: number; country: string; region: string; zone: string; status: boolean; icon: string };
+type SiteRow = {
+  id?: number;
+  country: string;
+  region: string;
+  zone: string;
+  site: string;
+  latitude: string;
+  longitude: string;
+  status: boolean;
+  qrCode: string;
+};
 
 // API responses come either as a bare array or wrapped ({ headquarters: [...] } / { data: [...] })
 const toList = (data: any, key: string): any[] => {
@@ -110,10 +121,11 @@ export const LocationAccountPage = () => {
   const [countries, setCountries] = useState<CountryRow[]>([]);
   const [regions, setRegions] = useState<RegionRow[]>([]);
   const [zones, setZones] = useState<ZoneRow[]>([]);
-  const [loadingList, setLoadingList] = useState({ country: false, region: false, zone: false });
+  const [sites, setSites] = useState<SiteRow[]>([]);
+  const [loadingList, setLoadingList] = useState({ country: false, region: false, zone: false, site: false });
 
   const fetchList = async (
-    key: 'country' | 'region' | 'zone',
+    key: 'country' | 'region' | 'zone' | 'site',
     path: string,
     onData: (data: any) => void
   ) => {
@@ -135,8 +147,19 @@ export const LocationAccountPage = () => {
     }
   };
 
-  const fetchCountries = () =>
-    fetchList('country', '/headquarters.json', (data) =>
+  // Current organization — set at login as "org_id" (other keys are older fallbacks)
+  const getCurrentOrgId = () =>
+    localStorage.getItem('org_id') ||
+    localStorage.getItem('organization_id') ||
+    localStorage.getItem('organisation_id') ||
+    '';
+
+  const fetchCountries = () => {
+    const orgId = getCurrentOrgId();
+    const path = orgId
+      ? `/headquarters.json?q[organization_id_eq]=${encodeURIComponent(orgId)}`
+      : '/headquarters.json';
+    return fetchList('country', path, (data) =>
       setCountries(
         toList(data, 'headquarters').map((hq: any) => ({
           id: hq.id,
@@ -149,9 +172,21 @@ export const LocationAccountPage = () => {
         }))
       )
     );
+  };
 
-  const fetchRegions = () =>
-    fetchList('region', '/regions.json', (data) =>
+  // Current company — set by Layout/ProtectedRoute as "selectedCompanyId" (others are older fallbacks)
+  const getCurrentCompanyId = () =>
+    localStorage.getItem('selectedCompanyId') ||
+    localStorage.getItem('selected_company_id') ||
+    localStorage.getItem('company_id') ||
+    '';
+
+  const fetchRegions = () => {
+    const companyId = getCurrentCompanyId();
+    const path = companyId
+      ? `/regions.json?q[company_id_eq]=${encodeURIComponent(companyId)}`
+      : '/regions.json';
+    return fetchList('region', path, (data) =>
       setRegions(
         toList(data, 'regions').map((r: any) => ({
           id: r.id,
@@ -161,6 +196,7 @@ export const LocationAccountPage = () => {
         }))
       )
     );
+  };
 
   const fetchZones = () =>
     fetchList('zone', '/pms/zones.json', (data) =>
@@ -176,9 +212,29 @@ export const LocationAccountPage = () => {
       )
     );
 
+  // Sites of the logged-in user (API is scoped by the auth token, no extra filter needed)
+  // Response: { status, message, sites: [{ id, headquarter, region, zone, name, latitude, longitude, active, qr_code_url }] }
+  const fetchSites = () =>
+    fetchList('site', '/pms/account_setups/get_user_site_details.json', (data) =>
+      setSites(
+        toList(data, 'sites').map((s: any) => ({
+          id: s.id,
+          country: s.headquarter || '',
+          region: s.region || '',
+          zone: s.zone || '',
+          site: s.name || '',
+          latitude: s.latitude !== null && s.latitude !== undefined ? String(s.latitude) : '',
+          longitude: s.longitude !== null && s.longitude !== undefined ? String(s.longitude) : '',
+          status: !!s.active,
+          qrCode: s.qr_code_url || '',
+        }))
+      )
+    );
+
   // Load the list when its tab opens (Region/Zone dialogs also need countries/regions)
   useEffect(() => {
     if (activeTab === 'country') fetchCountries();
+    if (activeTab === 'site') fetchSites();
     if (activeTab === 'region') {
       fetchRegions();
       if (countries.length === 0) fetchCountries();
@@ -191,20 +247,54 @@ export const LocationAccountPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const [sites] = useState([
-    { country: 'India', region: 'West', zone: 'Mumbai', site: 'Lockated', latitude: '19.0760', longitude: '72.8777', status: true, qrCode: '/placeholder.svg' },
-  ]);
+  const [entities, setEntities] = useState<{ id?: number; entity: string; status: boolean }[]>([]);
+  const [loadingEntities, setLoadingEntities] = useState(false);
 
-  const [entities] = useState([
-    { entity: 'GoPhygital', status: true },
-    { entity: 'TCS', status: true },
-    { entity: 'Andheri', status: false },
-    { entity: 'Noid 62', status: true },
-    { entity: 'HSBC', status: true },
-    { entity: 'lockated', status: true },
-    { entity: 'demo', status: false },
-    { entity: 'Sohail Ansari', status: true },
-  ]);
+  // Entities API is server-paginated (15 per page):
+  // { entities: [{ id, name, active }], pagination: { current_page, total_pages, ... } }
+  // Load every page so the table's own search / pagination covers all entities.
+  const fetchEntities = async () => {
+    setLoadingEntities(true);
+    try {
+      const all: any[] = [];
+      let page = 1;
+      let totalPages = 1;
+      do {
+        const response = await fetch(
+          getFullUrl(`/pms/account_setups/get_entities.json?page=${page}`),
+          {
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        all.push(...toList(data, 'entities'));
+        totalPages = Number(data?.pagination?.total_pages) || 1;
+        page++;
+      } while (page <= totalPages && page <= 100); // hard cap as a safety net
+
+      setEntities(
+        all.map((e: any) => ({
+          id: e.id,
+          entity: e.name || '',
+          status: !!e.active,
+        }))
+      );
+    } catch (error) {
+      console.error('Error fetching entity list:', error);
+      toast.error('Failed to fetch entity list');
+    } finally {
+      setLoadingEntities(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'entity') fetchEntities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const [userCategories, setUserCategories] = useState<any[]>([]);
 
@@ -463,6 +553,7 @@ export const LocationAccountPage = () => {
             columns={siteColumns}
             getItemId={(item) => String(item._index)}
             storageKey="account-site-table"
+            loading={loadingList.site}
             renderCell={(item, columnKey) => {
               if (columnKey === 'status') {
                 return (
@@ -470,13 +561,14 @@ export const LocationAccountPage = () => {
                 );
               }
               if (columnKey === 'qrCode') {
+                if (!item.qrCode) return '-';
                 return (
-                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                    <img src={item.qrCode} alt="QR Code" className="w-6 h-6" />
-                  </div>
+                  <a href={item.qrCode} target="_blank" rel="noopener noreferrer" title="Open QR code">
+                    <img src={item.qrCode} alt="QR Code" className="w-10 h-10 object-contain border rounded bg-white" />
+                  </a>
                 );
               }
-              return item[columnKey as keyof typeof item] as React.ReactNode;
+              return (item[columnKey as keyof typeof item] as React.ReactNode) || '-';
             }}
             enableSearch={true}
             searchTerm={tableSearch.site}
@@ -496,13 +588,14 @@ export const LocationAccountPage = () => {
             columns={entityColumns}
             getItemId={(item) => String(item._index)}
             storageKey="account-entity-table"
+            loading={loadingEntities}
             renderCell={(item, columnKey) => {
               if (columnKey === 'status') {
                 return (
                   <StatusBadge status={item.status ? 'active' : 'inactive'} size="sm">{item.status ? 'Active' : 'Inactive'}</StatusBadge>
                 );
               }
-              return item[columnKey as keyof typeof item] as React.ReactNode;
+              return (item[columnKey as keyof typeof item] as React.ReactNode) || '-';
             }}
             enableSearch={true}
             searchTerm={tableSearch.entity}
