@@ -558,7 +558,7 @@ const fetchItemDetail = async (
   let url: string | null = null;
   if (type === "task") url = `${getBaseUrl()}/business_compass/tasks/${id}.json`;
   else if (type === "todo") url = `${getBaseUrl()}/business_compass/todos/${id}.json`;
-  else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
+  else if (type === "issue") url = `${getBaseUrl()}/business_compass/issues/${id}.json`;
   if (!url) return null;
 
   const p = (async () => {
@@ -1554,7 +1554,7 @@ const DailyTab = ({
       console.log("Navigating to task path:", navPath);
       navigate(navPath);
     } else if (sourceType === "issue") {
-      const navPath = sourceId ? `/vas/issues/${sourceId}` : '/vas/issues';
+      const navPath = sourceId ? `/business-compass/issues/${sourceId}` : '/business-compass/issues';
       console.log("Navigating to issue path:", navPath);
       navigate(navPath);
     }
@@ -1601,7 +1601,7 @@ const DailyTab = ({
         toast.error("Issue details not found for this item.");
         return;
       }
-      navigate(`/vas/issues/${sourceId}`);
+      navigate(`/business-compass/issues/${sourceId}`);
     }
   };
 

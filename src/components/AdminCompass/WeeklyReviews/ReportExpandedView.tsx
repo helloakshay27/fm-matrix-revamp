@@ -298,7 +298,7 @@ export const ReportExpandedView = ({
             return;
         }
 
-        navigate(type === 'task' ? `/business-compass/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+        navigate(type === 'task' ? `/business-compass/tasks/${sourceId}` : `/business-compass/issues/${sourceId}`);
     };
 
     const tabs = [

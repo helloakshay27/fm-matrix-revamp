@@ -194,7 +194,7 @@ export const PlanningCard = () => {
                                       navigate(
                                         item.source_type === "task"
                                           ? `/business-compass/tasks/${item.source_id}`
-                                          : `/vas/issues/${item.source_id}`
+                                          : `/business-compass/issues/${item.source_id}`
                                       );
                                     }
                                   }}

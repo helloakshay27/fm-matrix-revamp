@@ -701,7 +701,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       return;
     }
 
-    navigate(sourceType === "task" ? `/business-compass/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+    navigate(sourceType === "task" ? `/business-compass/tasks/${sourceId}` : `/business-compass/issues/${sourceId}`);
   };
 
   const [quickActionOpen, setQuickActionOpen] = useState(false);
