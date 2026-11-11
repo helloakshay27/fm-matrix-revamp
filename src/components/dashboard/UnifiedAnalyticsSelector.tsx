@@ -62,7 +62,7 @@ interface UnifiedAnalyticsSelectorProps {
 }
 
 // Analytics for regular dashboard (/dashboard)
-export const dashboardAnalyticsOptions = {
+const baseDashboardAnalyticsOptions = {
   tickets: {
     icon: Activity,
     label: "Tickets",
@@ -843,6 +843,26 @@ export const executiveAnalyticsOptions = {
   //     { id: 'top_surveys', endpoint: 'top_surveys', label: 'Top Surveys' },
   //   ]
   // },
+} as const;
+
+// Regular dashboard (/dashboard): the base modules plus the modules shared with the
+// executive catalog. Utility Consumption leaves out the two "Top Management" cards.
+const EXCLUDED_REGULAR_UTILITY_IDS = new Set([
+  "utility_power_consumption_top_management",
+  "utility_water_consumption_top_management",
+]);
+
+export const dashboardAnalyticsOptions = {
+  ...baseDashboardAnalyticsOptions,
+  incident_management: executiveAnalyticsOptions.incident_management,
+  quickgate_management: executiveAnalyticsOptions.quickgate_management,
+  utility: {
+    ...executiveAnalyticsOptions.utility,
+    options: executiveAnalyticsOptions.utility.options.filter(
+      (option) => !EXCLUDED_REGULAR_UTILITY_IDS.has(option.id)
+    ),
+  },
+  permit_to_work: executiveAnalyticsOptions.permit_to_work,
 } as const;
 
 /**
