@@ -537,7 +537,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     if (rosterWorkingDays) {
       return !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString());
     }
-    // No roster assigned — only Sunday is off; Saturday is a working day.
+    // No roster: only Sunday is a holiday (Saturday reports can be filled)
     return jsDay === 0;
   };
 
