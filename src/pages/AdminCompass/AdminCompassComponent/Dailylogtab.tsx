@@ -687,7 +687,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       setIsDetailsModalOpen(true);
 
       try {
-        const res = await fetch(`${getBaseUrl()}/todos/${sourceId}.json`, {
+        const res = await fetch(`${getBaseUrl()}/business_compass/todos/${sourceId}.json`, {
           headers: getAuthHeaders(),
         });
         if (res.ok) {

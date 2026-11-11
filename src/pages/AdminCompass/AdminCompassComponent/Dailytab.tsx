@@ -557,7 +557,7 @@ const fetchItemDetail = async (
 
   let url: string | null = null;
   if (type === "task") url = `${getBaseUrl()}/business_compass/tasks/${id}.json`;
-  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  else if (type === "todo") url = `${getBaseUrl()}/business_compass/todos/${id}.json`;
   else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
   if (!url) return null;
 
@@ -1572,7 +1572,7 @@ const DailyTab = ({
 
       if (todoId) {
         try {
-          const res = await fetch(`${getBaseUrl()}/todos/${todoId}.json`, {
+          const res = await fetch(`${getBaseUrl()}/business_compass/todos/${todoId}.json`, {
             headers: getAuthHeaders(),
           });
           if (res.ok) {

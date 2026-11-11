@@ -276,7 +276,7 @@ export const ReportExpandedView = ({
         const baseUrl = getBaseUrl();
         if (!baseUrl || !todoId) return null;
         try {
-            const response = await fetch(`${baseUrl}/todos/${todoId}.json`, { headers: getAuthHeaders() });
+            const response = await fetch(`${baseUrl}/business_compass/todos/${todoId}.json`, { headers: getAuthHeaders() });
             if (!response.ok) return null;
             const json = await response.json();
             return json?.todo || json?.data?.todo || json?.data || json;

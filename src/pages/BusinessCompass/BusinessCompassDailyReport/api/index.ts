@@ -15,7 +15,7 @@ export const fetchTodoDetails = async (
   { baseUrl, token }: ApiContext,
   sourceId: number | string
 ) => {
-  const res = await axios.get(`${urlBase(baseUrl)}/todos/${sourceId}.json`, {
+  const res = await axios.get(`${urlBase(baseUrl)}/business_compass/todos/${sourceId}.json`, {
     headers: bearer(token),
   });
   return res.data?.todo ?? res.data;
