@@ -556,7 +556,7 @@ const fetchItemDetail = async (
   if (itemDetailInflight[key]) return itemDetailInflight[key];
 
   let url: string | null = null;
-  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
+  if (type === "task") url = `${getBaseUrl()}/business_compass/tasks/${id}.json`;
   else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
   else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
   if (!url) return null;
@@ -1550,7 +1550,7 @@ const DailyTab = ({
     if (!sourceType) return;
 
     if (sourceType === "task") {
-      const navPath = sourceId ? `/vas/tasks/${sourceId}` : '/vas/tasks';
+      const navPath = sourceId ? `/business-compass/tasks/${sourceId}` : '/business-compass/tasks';
       console.log("Navigating to task path:", navPath);
       navigate(navPath);
     } else if (sourceType === "issue") {
@@ -1592,7 +1592,7 @@ const DailyTab = ({
         toast.error("Task details not found for this item.");
         return;
       }
-      navigate(`/vas/tasks/${sourceId}`);
+      navigate(`/business-compass/tasks/${sourceId}`);
       return;
     }
 
