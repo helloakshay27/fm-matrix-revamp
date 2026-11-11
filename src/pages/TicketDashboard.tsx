@@ -1001,6 +1001,7 @@ export const TicketDashboard = () => {
       const filterLabelMap: Record<string, string> = {
         date_range: 'date_range',
         category_type_id_eq: 'category',
+        category_type_type_eq: 'ticket_type',
         sub_category_id_eq: 'sub_category',
         dept_id_eq: 'department',
         site_id_eq: 'site',
@@ -1226,7 +1227,7 @@ export const TicketDashboard = () => {
     label: 'Created On',
     sortable: true
   }, {
-    key: 'issue_type',
+    key: 'ticket_type',
     label: 'Ticket Type',
     sortable: true
   }, {
@@ -1541,6 +1542,10 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'escalation_resolution_name') {
       return formatEscalationLevel(item.next_resolution_escalation);
+    }
+    if (columnKey === 'ticket_type') {
+      const t = item.ticket_type;
+      return t ? String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';
