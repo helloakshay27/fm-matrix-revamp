@@ -93,8 +93,8 @@ export const IncidentInfoCards = ({ incident, showReporter = true }: { incident:
         <FieldGrid
           columns={4}
           fields={[
-            { label: "Impacted Person", value: injury.name },
-            { label: "Impacted Person's Age", value: injury.age },
+            // { label: "Impacted Person", value: injury.name },
+            // { label: "Impacted Person's Age", value: injury.age },
             { label: "Nature of Person Impacted", value: injury.personType },
             { label: "Nature of Injury", value: injury.natureOfInjury },
             { label: "Body Part Affected", value: injury.bodyPart },
