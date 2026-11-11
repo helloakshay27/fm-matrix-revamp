@@ -538,7 +538,8 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     if (rosterWorkingDays) {
       return !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString());
     }
-    return jsDay === 0 || jsDay === 6;
+    // No roster: only Sunday is a holiday (Saturday reports can be filled)
+    return jsDay === 0;
   };
 
   const getNextWorkingDay = (dateStr: string): string => {
@@ -1989,7 +1990,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       const weekOfMonth = Math.ceil(date.getDate() / 7).toString();
       const isNonWorkingDay = rosterWorkingDays
         ? !rosterWorkingDays[weekOfMonth]?.includes(rosterDay.toString())
-        : jsDay === 0 || jsDay === 6;
+        : jsDay === 0;
       const report = reportsList.find(
         (r) =>
           getReportDateKey(r.start_date) === dateStr &&

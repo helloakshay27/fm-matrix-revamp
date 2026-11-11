@@ -270,7 +270,7 @@ export const logoutUser = async (): Promise<void> => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    });
+    });   `   qq`
   } catch {
     // Silently fail - client-side state is cleared regardless via clearAuth()
   }

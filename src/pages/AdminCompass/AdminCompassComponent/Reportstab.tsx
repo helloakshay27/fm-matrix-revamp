@@ -325,7 +325,7 @@ const ReportsTab = ({
         const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
         const dateNum = d.getDate().toString();
-        daysToFetch.push({ day: dayName, date: dateNum, dateStr, full_date: dateStr, isWeekend: dayName === "Sat" || dayName === "Sun", is_today: dateStr === todayStr });
+        daysToFetch.push({ day: dayName, date: dateNum, dateStr, full_date: dateStr, isWeekend: dayName === "Sun", is_today: dateStr === todayStr });
       }
 
       const weekResults = await Promise.all(

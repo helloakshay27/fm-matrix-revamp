@@ -108,6 +108,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("vi-uat.gophygital.work") ||
     hostname === "localhost";
 
+  // On localhost, isViSite is always true, which forced the Vi sidebar/header onto
+  // Business Compass, Admin Compass and Project Task. Let those sections use their own layout there.
+  const useOwnModuleLayout =
+    hostname === "localhost" &&
+    (currentSection === "Business Compass" ||
+      currentSection === "Admin Compass" ||
+      currentSection === "Project Task" ||
+      location.pathname.startsWith("/business-compass") ||
+      location.pathname.startsWith("/admin-compass"));
+
   // Removed project selection modal logic - now handled by view selection
 
   // Handle token-based authentication from URL parameters
@@ -183,7 +193,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorSidebar />;
     }
 
-    if (isViSite) {
+    if (isViSite && !useOwnModuleLayout) {
       console.warn("✅ Rendering ViSidebar");
       return <ViSidebar />;
     }
@@ -302,7 +312,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Check for VI site with token parameter or stored token
-    if (isViSite && hasToken) {
+    if (isViSite && hasToken && !useOwnModuleLayout) {
       console.log("✅ Rendering ViSidebarWithToken");
       return <ViSidebarWithToken />;
     }
@@ -353,7 +363,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <VendorDynamicHeader />;
     }
 
-    if (isViSite) {
+    if (isViSite && !useOwnModuleLayout) {
       return <ViDynamicHeader />;
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
@@ -587,7 +597,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module.
               // Vi sites always render the ViSidebar (even for employees), so they keep the sidebar margin.
-              isEmployeeUser && isLocalhost && !isViSite
+              isEmployeeUser && isLocalhost && (!isViSite || useOwnModuleLayout)
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -608,7 +618,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           // below it (fixed top-16 h-12), so they need the full pt-28 like the regular layout.
           isEmbedded
             ? ""
-            : isEmployeeUser && isLocalhost && !isViSite
+            : isEmployeeUser && isLocalhost && (!isViSite || useOwnModuleLayout)
               ? "pt-16"
               : isActionSidebarVisible
                 ? ""

@@ -29,7 +29,22 @@ export const fetchRosterWorkingDays = async (
     `${urlBase(baseUrl)}/pms/admin/user_roasters/${rosterId}.json`,
     { headers: bearer(token) }
   );
-  return res.data?.no_of_days?.[0] as Record<string, string[]> | undefined;
+  // no_of_days comes in two shapes (same as CustomCalender):
+  //  - Recurring:         [{ "1": ["1","2",...], "2": [...] }]  → working days per week of month
+  //  - Weekdays/Weekends: ["1","2","3","4","5","6"]              → same working days every week
+  // Normalize both to the per-week shape the daily report uses (1=Mon ... 7=Sun).
+  const raw = res.data?.no_of_days;
+  if (Array.isArray(raw) && raw[0] && typeof raw[0] === "object") {
+    return raw[0] as Record<string, string[]>;
+  }
+  if (raw && !Array.isArray(raw) && typeof raw === "object") {
+    return raw as Record<string, string[]>;
+  }
+  if (Array.isArray(raw) && raw.length > 0) {
+    const days = raw.map(String);
+    return { "1": days, "2": days, "3": days, "4": days, "5": days };
+  }
+  return undefined;
 };
 
 export const fetchTomorrowScheduled = async (
