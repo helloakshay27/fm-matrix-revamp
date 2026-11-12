@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { TrainerSetupForm, emptyTrainerSetupForm } from "./TrainerSetupForm";
-import { buildTrainerFormData, buildTrainerRequest } from "./trainerSetupApi";
+import { buildTrainerFormData, buildTrainerRequest, getApiErrorMessage } from "./trainerSetupApi";
 import { apiClient } from "@/utils/apiClient";
 
 export const TrainerSetupAdd = () => {
@@ -29,7 +29,7 @@ export const TrainerSetupAdd = () => {
           navigate("/club-management/trainer-setup");
         } catch (error) {
           console.error("Failed to create trainer", error);
-          toast.error("Failed to create trainer");
+          toast.error(getApiErrorMessage(error, "Failed to create trainer"));
         }
       }}
     />

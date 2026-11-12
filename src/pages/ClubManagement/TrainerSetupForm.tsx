@@ -12,6 +12,7 @@ import {
   type TrainerSetup,
 } from "./trainerSetupMockData";
 import { ClassFormSection, RequiredLabel, classFieldStyles } from "./ClassFormSection";
+import { validateAvailabilitySlots } from "./trainerSetupApi";
 
 const blankDuration = (): DurationValue => ({ day: "", hour: "", minute: "" });
 
@@ -269,6 +270,9 @@ export const TrainerSetupForm = ({
   const [certFile, setCertFile] = useState<File | null>(null);
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Ids of saved slot rows removed with the X button. They are sent as { id, _destroy: true } on submit; a row
+  // that was never saved has no id and is simply dropped.
+  const [removedSlotIds, setRemovedSlotIds] = useState<string[]>([]);
   const [roasterOptions, setRoasterOptions] = useState<SetupOption[]>([]);
   const [shiftOptions, setShiftOptions] = useState<SetupOption[]>([]);
 
@@ -314,8 +318,11 @@ export const TrainerSetupForm = ({
   const addAvailabilitySlot = () =>
     setForm((f) => ({ ...f, availabilitySlots: [...(f.availabilitySlots ?? []), blankAvailabilitySlot()] }));
 
-  const removeAvailabilitySlot = (index: number) =>
+  const removeAvailabilitySlot = (index: number) => {
+    const removedId = form.availabilitySlots?.[index]?.id;
+    if (removedId) setRemovedSlotIds((ids) => (ids.includes(removedId) ? ids : [...ids, removedId]));
     setForm((f) => ({ ...f, availabilitySlots: (f.availabilitySlots ?? []).filter((_, i) => i !== index) }));
+  };
 
   const patchAvailabilitySlot = (index: number, patch: Partial<TrainerAvailabilitySlot>) =>
     setForm((f) => ({
@@ -323,7 +330,7 @@ export const TrainerSetupForm = ({
       availabilitySlots: (f.availabilitySlots ?? []).map((slot, i) => (i === index ? { ...slot, ...patch } : slot)),
     }));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !form.firstName.trim() ||
       !form.lastName.trim() ||
@@ -353,29 +360,42 @@ export const TrainerSetupForm = ({
       return;
     }
 
+    const slotError = validateAvailabilitySlots(form.availabilitySlots ?? []);
+    if (slotError) {
+      toast.error(slotError);
+      return;
+    }
+
     setIsSubmitting(true);
-    onSubmit({
-      name: `${form.firstName.trim()} ${form.lastName.trim()}`,
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      email: form.email.trim(),
-      specialization: form.specialization.trim(),
-      experience: form.experience.trim(),
-      ratePerSession: form.ratePerSession.trim(),
-      contactNumber: form.contactNumber.trim(),
-      emergencyContact: form.emergencyContact.trim(),
-      status: form.status,
-      bio: form.bio.trim(),
-      imageUrl: imageFile ? imageFile.name : "",
-      shift: form.shift,
-      roster: form.roster,
-      availabilitySlots: form.availabilitySlots,
-      bookableSlotsPerDay: form.bookableSlotsPerDay,
-      bookingAllowedBefore: form.bookingAllowedBefore,
-      advanceBooking: form.advanceBooking,
-      canCancelBefore: form.canCancelBefore,
-      facilityBookedTimes: form.facilityBookedTimes,
-    }, { image: imageFile, certificate: certFile, contract: contractFile });
+    // The pages report their own errors; the button has to come back either way so the user can correct the
+    // form and submit again (on success the page navigates away).
+    try {
+      await onSubmit({
+        name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        specialization: form.specialization.trim(),
+        experience: form.experience.trim(),
+        ratePerSession: form.ratePerSession.trim(),
+        contactNumber: form.contactNumber.trim(),
+        emergencyContact: form.emergencyContact.trim(),
+        status: form.status,
+        bio: form.bio.trim(),
+        imageUrl: imageFile ? imageFile.name : "",
+        shift: form.shift,
+        roster: form.roster,
+        availabilitySlots: form.availabilitySlots,
+        removedAvailabilitySlotIds: removedSlotIds,
+        bookableSlotsPerDay: form.bookableSlotsPerDay,
+        bookingAllowedBefore: form.bookingAllowedBefore,
+        advanceBooking: form.advanceBooking,
+        canCancelBefore: form.canCancelBefore,
+        facilityBookedTimes: form.facilityBookedTimes,
+      }, { image: imageFile, certificate: certFile, contract: contractFile });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

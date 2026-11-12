@@ -24,6 +24,9 @@ export interface DurationValue {
 }
 
 export interface TrainerAvailabilitySlot {
+  // Id of the stored slot row (facility_slots[].id). Absent on a row that has not been saved yet;
+  // it is what lets an update edit or remove this row instead of creating a new one.
+  id?: string;
   startTime: TimeValue;
   breakTimeStart?: TimeValue;
   breakTimeEnd?: TimeValue;
@@ -56,6 +59,8 @@ export interface TrainerSetup {
   shift?: string;
   roster?: string;
   availabilitySlots?: TrainerAvailabilitySlot[];
+  // Ids of saved rows the user removed with the X button; sent as { id, _destroy: true }.
+  removedAvailabilitySlotIds?: string[];
   bookableSlotsPerDay?: string;
   bookingAllowedBefore?: DurationValue;
   advanceBooking?: DurationValue;
@@ -69,9 +74,16 @@ export function mapTrainerApiData(raw: any): TrainerSetup {
   const nameParts = fullName.split(/\s+/).filter(Boolean);
   const firstName = String(trainer?.first_name ?? nameParts[0] ?? "");
   const lastName = String(trainer?.last_name ?? nameParts.slice(1).join(" ") ?? "");
-  const facilitySlot = trainer?.facility_slot ?? (Array.isArray(trainer?.facility_slot_attributes)
-    ? trainer.facility_slot_attributes[0]
-    : trainer?.facility_slot_attributes);
+  // A trainer can have several slot rows (facility_slots). Older responses only carry facility_slot,
+  // which is the first row, so fall back to it.
+  const slotRows: any[] = Array.isArray(trainer?.facility_slots) && trainer.facility_slots.length > 0
+    ? trainer.facility_slots
+    : [trainer?.facility_slot ?? (Array.isArray(trainer?.facility_slot_attributes)
+        ? trainer.facility_slot_attributes[0]
+        : trainer?.facility_slot_attributes)].filter(Boolean);
+  // The booking rules are one set on the form; every row carries them, so the first row is read.
+  const facilitySlot = slotRows[0];
+  const timePart = (value: unknown) => String(value ?? 0).padStart(2, "0");
   const credentials = [
     ...(Array.isArray(trainer?.attachments) ? trainer.attachments : []),
     ...(Array.isArray(trainer?.certificates) ? trainer.certificates : []),
@@ -125,27 +137,16 @@ export function mapTrainerApiData(raw: any): TrainerSetup {
       : [],
     shift: String(trainer?.user_shift_id ?? trainer?.shift_id ?? trainer?.shift ?? ""),
     roster: String(trainer?.user_roaster_id ?? trainer?.roster_id ?? trainer?.roster ?? ""),
-    availabilitySlots: facilitySlot
-      ? [{
-          startTime: {
-            hour: String(facilitySlot.start_hour ?? 0).padStart(2, "0"),
-            minute: String(facilitySlot.start_min ?? 0).padStart(2, "0"),
-          },
-          breakTimeStart: {
-            hour: String(facilitySlot.break_start_hour ?? 0).padStart(2, "0"),
-            minute: String(facilitySlot.break_start_min ?? 0).padStart(2, "0"),
-          },
-          breakTimeEnd: {
-            hour: String(facilitySlot.break_end_hour ?? 0).padStart(2, "0"),
-            minute: String(facilitySlot.break_end_min ?? 0).padStart(2, "0"),
-          },
-          endTime: {
-            hour: String(facilitySlot.end_hour ?? 0).padStart(2, "0"),
-            minute: String(facilitySlot.end_min ?? 0).padStart(2, "0"),
-          },
-          concurrentSlots: String(facilitySlot.concurrent_slots ?? facilitySlot.max_bookings ?? ""),
-          slotBy: Number(facilitySlot.slot_by ?? facilitySlot.breakminutes ?? 15),
-        }]
+    availabilitySlots: slotRows.length > 0
+      ? slotRows.map((row: any): TrainerAvailabilitySlot => ({
+          id: row.id != null ? String(row.id) : undefined,
+          startTime: { hour: timePart(row.start_hour), minute: timePart(row.start_min) },
+          breakTimeStart: { hour: timePart(row.break_start_hour), minute: timePart(row.break_start_min) },
+          breakTimeEnd: { hour: timePart(row.break_end_hour), minute: timePart(row.break_end_min) },
+          endTime: { hour: timePart(row.end_hour), minute: timePart(row.end_min) },
+          concurrentSlots: String(row.concurrent_slots ?? row.max_bookings ?? ""),
+          slotBy: Number(row.slot_by ?? row.breakminutes ?? 15),
+        }))
       : undefined,
     facilitySlotId: facilitySlot?.id != null ? String(facilitySlot.id) : "",
     bookableSlotsPerDay: String(facilitySlot?.bookable_slot_count ?? trainer?.bookable_slots_per_day ?? ""),

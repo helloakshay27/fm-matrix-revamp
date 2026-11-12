@@ -279,14 +279,23 @@ export const TrainerSetupDetails = () => {
         </ClassFormSection>
 
         <ClassFormSection title="Facility Operational Timings & Booking" icon={<CalendarDays />}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <ReadOnlyField label="Facility Slot ID" value={trainer.facilitySlotId} />
-            <ReadOnlyField label="Start Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].startTime.hour}:${trainer.availabilitySlots[0].startTime.minute}` : ""} />
-            <ReadOnlyField label="Break Time Start" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].breakTimeStart?.hour ?? "00"}:${trainer.availabilitySlots[0].breakTimeStart?.minute ?? "00"}` : ""} />
-            <ReadOnlyField label="Break Time End" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].breakTimeEnd?.hour ?? "00"}:${trainer.availabilitySlots[0].breakTimeEnd?.minute ?? "00"}` : ""} />
-            <ReadOnlyField label="End Time" value={trainer.availabilitySlots?.[0] ? `${trainer.availabilitySlots[0].endTime.hour}:${trainer.availabilitySlots[0].endTime.minute}` : ""} />
-            <ReadOnlyField label="Concurrent Slots" value={trainer.availabilitySlots?.[0]?.concurrentSlots} />
-            <ReadOnlyField label="Slot Duration (Minutes)" value={trainer.availabilitySlots?.[0]?.slotBy} />
+          {/* One group of fields per slot row; a trainer without rows still shows one empty group. */}
+          {(trainer.availabilitySlots?.length ? trainer.availabilitySlots : [undefined]).map((slot, index, rows) => (
+            <div key={slot?.id ?? index} className={index > 0 ? "mt-6 pt-6 border-t border-gray-200" : ""}>
+              {rows.length > 1 && <h3 className="text-sm font-medium text-gray-700 mb-3">Slot {index + 1}</h3>}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <ReadOnlyField label="Facility Slot ID" value={slot?.id ?? trainer.facilitySlotId} />
+                <ReadOnlyField label="Start Time" value={slot ? `${slot.startTime.hour}:${slot.startTime.minute}` : ""} />
+                <ReadOnlyField label="Break Time Start" value={slot ? `${slot.breakTimeStart?.hour ?? "00"}:${slot.breakTimeStart?.minute ?? "00"}` : ""} />
+                <ReadOnlyField label="Break Time End" value={slot ? `${slot.breakTimeEnd?.hour ?? "00"}:${slot.breakTimeEnd?.minute ?? "00"}` : ""} />
+                <ReadOnlyField label="End Time" value={slot ? `${slot.endTime.hour}:${slot.endTime.minute}` : ""} />
+                <ReadOnlyField label="Concurrent Slots" value={slot?.concurrentSlots} />
+                <ReadOnlyField label="Slot Duration (Minutes)" value={slot?.slotBy} />
+              </div>
+            </div>
+          ))}
+          {/* The booking rules are one set for the trainer (the backend stores them on every row). */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mt-6 pt-6 border-t border-gray-200">
             <ReadOnlyField label="Bookable Slots Per Day" value={trainer.bookableSlotsPerDay} />
             <ReadOnlyField label="Booking Allowed Before" value={formatDuration(trainer.bookingAllowedBefore)} />
             <ReadOnlyField label="Advance Booking" value={formatDuration(trainer.advanceBooking)} />

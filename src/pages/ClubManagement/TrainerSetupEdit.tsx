@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { mapTrainerApiData } from "./trainerSetupMockData";
 import { TrainerSetupForm, emptyTrainerSetupForm, type TrainerSetupFormState } from "./TrainerSetupForm";
-import { buildTrainerFormData, buildTrainerRequest } from "./trainerSetupApi";
+import { buildTrainerFormData, buildTrainerRequest, getApiErrorMessage } from "./trainerSetupApi";
 import { apiClient } from "@/utils/apiClient";
 
 // Existing mock records predate the availability/slot/roster fields, so fall back to the
@@ -75,7 +75,7 @@ export const TrainerSetupEdit = () => {
           navigate("/club-management/trainer-setup");
         } catch (error) {
           console.error("Failed to update trainer", error);
-          toast.error("Failed to update trainer");
+          toast.error(getApiErrorMessage(error, "Failed to update trainer"));
         }
       }}
     />
