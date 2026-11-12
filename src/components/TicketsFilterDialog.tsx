@@ -89,6 +89,9 @@ export const TicketsFilterDialog = ({
   const [priority, setPriority] = useState("");
   const [assignedUser, setAssignedUser] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const [isSubticket, setIsSubticket] = useState("");
+  const [hasFeedback, setHasFeedback] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [filtersCleared, setFiltersCleared] = useState(false);
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -118,7 +121,10 @@ export const TicketsFilterDialog = ({
       !status &&
       !priority &&
       !assignedUser &&
-      !userSearch;
+      !userSearch &&
+      !isSubticket &&
+      !hasFeedback &&
+      !customerName;
 
     setFiltersCleared(allFiltersEmpty);
   }, [
@@ -133,6 +139,9 @@ export const TicketsFilterDialog = ({
     priority,
     assignedUser,
     userSearch,
+    isSubticket,
+    hasFeedback,
+    customerName,
   ]);
 
   useEffect(() => {
@@ -235,6 +244,9 @@ export const TicketsFilterDialog = ({
     if (priority) filters.priority_eq = priority;
     if (assignedUser) filters.assigned_to_in = [Number(assignedUser)];
     if (userSearch) filters.user_firstname_or_user_lastname_cont = userSearch;
+    if (isSubticket) filters.is_subticket_eq = isSubticket;
+    if (hasFeedback) filters.has_feedback_eq = hasFeedback;
+    if (customerName) filters.entity_name_con = customerName;
 
     onApplyFilters(filters);
     toast({
@@ -267,6 +279,9 @@ export const TicketsFilterDialog = ({
     setPriority("");
     setAssignedUser("");
     setUserSearch("");
+    setIsSubticket("");
+    setHasFeedback("");
+    setCustomerName("");
     onApplyFilters({});
 
     toast({
