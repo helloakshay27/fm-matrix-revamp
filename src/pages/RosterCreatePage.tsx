@@ -1056,6 +1056,37 @@ export const RosterCreatePage: React.FC = () => {
             {/* Recurring Selection - Compact */}
             {formData.dayType === "Recurring" && (
               <div className="space-y-4 p-4 bg-[#f6f4ee] border border-[#D5DbDB] rounded-lg">
+                {/* Global theme CSS repaints these toggle buttons (they rendered as solid
+                    black bars with no visible text), so they use their own class with
+                    high-specificity !important styles instead of Tailwind bg/text classes. */}
+                <style>{`
+                  html body button.roster-day-toggle {
+                    background-color: #F3F4F6 !important;
+                    color: #4B5563 !important;
+                    border: 1px solid #E5E7EB !important;
+                    background-image: none !important;
+                  }
+                  html body button.roster-day-toggle:hover:not(:disabled) {
+                    background-color: var(--color-primary-light, rgba(218,119,86,0.15)) !important;
+                    color: var(--color-primary, #DA7756) !important;
+                    border-color: var(--color-primary, #DA7756) !important;
+                  }
+                  html body div button.roster-day-toggle.is-selected.is-selected,
+                  html body div button.roster-day-toggle.is-selected.is-selected:hover:not(:disabled) {
+                    background-color: var(--color-primary, #DA7756) !important;
+                    color: #FFFFFF !important;
+                    -webkit-text-fill-color: #FFFFFF !important;
+                    border-color: var(--color-primary, #DA7756) !important;
+                  }
+                  html body div button.roster-day-toggle.is-selected.is-selected * {
+                    color: #FFFFFF !important;
+                    -webkit-text-fill-color: #FFFFFF !important;
+                  }
+                  html body button.roster-day-toggle:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                  }
+                `}</style>
                 <div className="text-sm font-medium text-[#C72030] mb-3">
                   Custom Weekly Pattern
                 </div>
@@ -1119,14 +1150,9 @@ export const RosterCreatePage: React.FC = () => {
                             });
                           }}
                           disabled={isSubmitting}
-                          className={`
-                            px-2 py-1 text-xs rounded transition-all duration-200
-                            ${
-                              hasAllDays
-                                ? "bg-[#C72030] text-white"
-                                : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
-                            }
-                          `}
+                          className={`roster-day-toggle px-2 py-1 text-xs rounded transition-all duration-200 ${
+                            hasAllDays ? "is-selected" : ""
+                          }`}
                         >
                           All
                         </button>
@@ -1157,14 +1183,10 @@ export const RosterCreatePage: React.FC = () => {
                                 )
                               }
                               disabled={isSubmitting}
-                              className={`
-                                w-full h-8 rounded text-xs font-medium transition-all duration-200
-                                ${
-                                  isSelected
-                                    ? "bg-[#C72030] text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white"
-                                }
-                              `}
+                              aria-pressed={isSelected}
+                              className={`roster-day-toggle w-full h-8 rounded text-xs font-medium transition-all duration-200 ${
+                                isSelected ? "is-selected" : ""
+                              }`}
                               title={`${day.full} - Week ${weekNum}`}
                             >
                               {day.short}

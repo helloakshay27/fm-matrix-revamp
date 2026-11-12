@@ -290,16 +290,13 @@ const hostname = window.location.hostname;
 
 const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
-
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work") 
-
-
+  hostname.includes("community.gophygital.work") || hostname === "localhost"
 
 const isViUatSite = hostname === "vi-uat.gophygital.work";
 
-const isViLiveSite =  hostname === ("vi-web.gophygital.work")
+const isViLiveSite = hostname === ("vi-web.gophygital.work")
 
 // OTP verify / resend: Vi UAT has its own API host; every other site uses live-api.
 export const getViOtpApiBase = () =>
@@ -308,7 +305,7 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"  || hostname === "localhost"
+  hostname === "fm-matrix.lockated.com"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -339,7 +336,7 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
-  
+
   if (isViSite) {
     const response = await fetch(
       `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
@@ -366,7 +363,7 @@ export const getOrganizationsByEmail = async (
     return data.organizations || [];
   }
 
-   if (isViLiveSite) {
+  if (isViLiveSite) {
     const response = await fetch(
       `https://vi-prod-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );

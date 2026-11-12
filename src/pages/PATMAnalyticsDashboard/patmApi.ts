@@ -5,7 +5,7 @@
  * Mobile requests include app_id=37; other devices may supply an optional app_id.
  *
  * Base URL : VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
- * Endpoints: /fm/adoption/* (same ClickHouse-backed endpoints as FM/Pulse dashboards)
+ * Endpoints: /commercial/patm/adoption/* (PATM's own API; same calculations as FM/Pulse)
  */
 
 import axios from 'axios';
@@ -14,14 +14,20 @@ import type { RecentActiveUsersResponse } from '@/features/posthog-dashboard/api
 export const PATM_MOBILE_APP_ID = '37';
 export const PATM_RECENT_ACTIVITY_DEVICE = 'mobile';
 
+// The PATM API fixes the scope (project_code PTM-01, web and app). The 10 newest events, all platforms.
 export const fetchPatmRecentActiveUsers = (f: Pick<PATMRangeFilters, 'from' | 'to'>) =>
   get<RecentActiveUsersResponse>('recent_active_users', [
-    ['app_id', PATM_MOBILE_APP_ID],
-    ['device_type', PATM_RECENT_ACTIVITY_DEVICE],
     ['from', f.from],
     ['to', f.to],
     ['limit', 10],
   ]);
+
+/** Every event in the range as the server-built .xlsx (the same download as the other dashboards). */
+export async function downloadPatmActiveUsers(f: Pick<PATMRangeFilters, 'from' | 'to'>): Promise<Blob> {
+  const qs = buildQuery([['from', f.from], ['to', f.to]]);
+  const { data } = await client.get<Blob>(`/commercial/patm/adoption/active_users_export?${qs}`, { responseType: 'blob' });
+  return data;
+}
 
 // Re-export all response types from the shared adoptionApi so callers only import from here.
 export type {
@@ -101,7 +107,7 @@ function buildQuery(pairs: Pair[]): string {
 async function get<T>(endpoint: string, pairs: Pair[]): Promise<T> {
   const qs = buildQuery(pairs);
   const { data } = await client.get<T>(
-    `/fm/adoption/${endpoint}${qs ? `?${qs}` : ''}`,
+    `/commercial/patm/adoption/${endpoint}${qs ? `?${qs}` : ''}`, // PATM's own API (project_code PTM-01, fixed on the server)
   );
   return data;
 }
@@ -119,6 +125,8 @@ export interface PATMRangeFilters {
 export interface PATMWeeklyFilters {
   to: string;
   weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   appId?: string;
   baseUrl?: string;
   device?: string;
@@ -192,7 +200,7 @@ export const fetchPatmAdoptionTrend = (f: PATMWeeklyFilters) =>
 
 import type { GrowthResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 export const fetchPatmGrowth = (f: PATMWeeklyFilters) =>
-  get<GrowthResponse>('growth', weeklyParams(f));
+  get<GrowthResponse>('growth', [...weeklyParams(f), ...(f.from ? [['from', f.from] as Pair] : [])]);
 
 import type { RetentionResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 export const fetchPatmRetention = (f: PATMWeeklyFilters) =>

@@ -14,6 +14,7 @@ export const TrainerSetupAdd = () => {
       initialValues={emptyTrainerSetupForm}
       submitLabel="Submit"
       submittingLabel="Submitting..."
+      preselectFirstShiftAndRoster
       onBack={() => navigate("/club-management/trainer-setup")}
       onSubmit={async (payload, files) => {
         const trainer = buildTrainerRequest(payload);

@@ -38,7 +38,7 @@ export function WorkflowSection() {
             <Card
               infoKey="chart.funnel"
               aiKey="chart.funnel"
-              head={<CardHead cr="F-step · flow drop-off" ct={flows.flagshipFunnelName} cd="Sessions reaching each step: module root → create form → detail/edit. Biggest drop is highlighted." />}
+              head={<CardHead cr="F-step · flow drop-off" ct={flows.flagshipFunnelName} cd="Users reaching each step, in order within 30 minutes. Steps are the module's own events, ordered by when they happen in a session. Biggest drop is highlighted." />}
             >
               <Guard status={status.flows} empty={flows.funnel.steps.length === 0}>
                 <Funnel funnel={flows.funnel} />

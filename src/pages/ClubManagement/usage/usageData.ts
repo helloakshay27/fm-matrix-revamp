@@ -1,23 +1,13 @@
 /**
  * Club Management — Usage Dashboard data layer.
  *
- * DATA DISCLOSURE
- * ---------------
- * Club Management is an internal FM/society-staff back-office console (desktop-only
- * web app), not a resident-facing product. There is no confirmed user-identity
- * property anywhere in the instrumentation catalogue (no user_id / staff_id /
- * account_id / distinct_id on any event row), so every "Active Staff" and session
- * figure below stands on PostHog's auto-assigned distinct_id as a *proposed*,
- * unconfirmed join key.
- *
- * Every volume, rate and trend value here is deterministic illustrative sample data
- * (see rngFor / seeded arrays). Nothing is pulled from a live query. The MODULE
- * NAMES, BUCKET GROUPING and EVENT NAMES used in Workflow Usage are real, taken
- * verbatim from Club_Management_PostHog_Instrumentation.xlsx (156 custom events
- * across 16 modules; project_code "CM-01", project_id "P-238").
- *
- * This module is intentionally presentation-free so the sample data can be replaced
- * by a real API feed later without touching any component.
+ * DATA SOURCE
+ * -----------
+ * The dashboard's numbers come from the Club usage-analytics API (/commercial/club/adoption/*, project_code
+ * CM-01) through usageQueries.ts. What the page uses from here is presentation: filter defaults, range
+ * labels, chart colours and the (i) texts. The seeded sample helpers below are no longer used by the page.
+ * The module names, bucket grouping and event names are taken from
+ * Club_Management_PostHog_Instrumentation.xlsx (project_code "CM-01", project_id "P-238").
  */
 
 /* ---------- seeded RNG (deterministic sample data) ---------- */
