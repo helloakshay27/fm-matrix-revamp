@@ -21,8 +21,12 @@ import {
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { usePermissions } from "@/contexts/PermissionsContext";
-import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
+import { permissionService } from "@/services/permissionService";
+import {
+  DEFAULT_FALLBACK_ROUTE,
+  findFirstAccessibleRoute,
+  isSafePath,
+} from "@/utils/dynamicNavigation";
 
 const muiFieldStyles = {
   width: "100%",
@@ -63,7 +67,6 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
   const { executeRecaptcha } = useGoogleReCaptcha();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userRole } = usePermissions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedOrganization, setSelectedOrganization] =
@@ -454,7 +457,9 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
         localStorage.setItem("vendor_id", response.supplier_id.toString());
       }
       saveToken(response.access_token);
-      setToken(response.access_token);
+      // setToken() (app auth state) is deferred to redirectTo() below. Setting it
+      // now makes the /login route's <Navigate to="/"> fire before the role
+      // API answers, racing the role-based redirect.
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
@@ -499,78 +504,75 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       //     (location.state as { from?: Location })?.from?.search ||
       //   "/maintenance/asset";
 
-      toast.success(`Welcome back, ${response.firstname}! Login successful.`);
+      // Show the welcome toast, then set auth state and navigate together, so
+      // the /login route's <Navigate to="/"> can't fire first.
+      const redirectTo = (path: string) => {
+        toast.success(`Welcome back, ${response.firstname}! Login successful.`);
+        setTimeout(() => {
+          setToken(response.access_token);
+          navigate(path, { replace: true });
+        }, 500);
+      };
 
-      // Add a slight delay for better UX, then redirect to dashboard
-      setTimeout(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const isFMAdminLogin =
-          searchParams.get("fm_admin_login") !== null ||
-          location.pathname.includes("login-page");
+      // PRE-CHECKS (run before the role lookup)
+      const searchParams = new URLSearchParams(location.search);
+      const isFMAdminLogin =
+        searchParams.get("fm_admin_login") !== null ||
+        location.pathname.includes("login-page");
 
-        // PRIORITY 0: FM Admin Login - redirect to ops-console user list
-        if (isFMAdminLogin) {
-          navigate("/ops-console/settings/account/user-list-otp", {
-            replace: true,
-          });
-          return;
-        }
+      // FM Admin Login -> ops-console user list
+      if (isFMAdminLogin) {
+        redirectTo("/ops-console/settings/account/user-list-otp");
+        return;
+      }
 
-        const userType = localStorage.getItem("userType");
-        const isLocalhost =
-          hostname.includes("lockated.gophygital.work") ||
-          hostname.includes("fm-matrix.lockated.com") ||
-          userEmail === "deveshjain928@gmail.com" ||
-          userEmail === "abdul.ghaffar@lockated.com" ||
-          userEmail === "mailroom2@zs.com" ||
-          userEmail === "abdul.g@gophygital.work";
-        const isPulseSite =
-          hostname.includes("localhost") ||
-          hostname.includes("pulse.lockated.com") ||
-          hostname.includes("pulse.gophygital.work") ||
-          hostname.includes("pulse-uat.panchshil.com") ||
-          hostname.includes("pulse.panchshil.com");
+      // Vendors -> vendor dashboard
+      if (response.is_vendor && response.supplier_id) {
+        redirectTo("/vendor/dashboard");
+        return;
+      }
 
-        // PRIORITY 1: Localhost - always navigate to Index for view selection handling
-        if (isLocalhost) {
-          navigate("/", { replace: true });
-          return;
-        }
+      // View-selection hosts -> Index, which shows the view-selection modal
+      const loggedInEmail = response.email || "";
+      const isViewSelectionHost =
+        hostname.includes("lockated.gophygital.work") ||
+        hostname.includes("fm-matrix.lockated.com") ||
+        loggedInEmail === "deveshjain928@gmail.com" ||
+        loggedInEmail === "abdul.ghaffar@lockated.com" ||
+        loggedInEmail === "mailroom2@zs.com" ||
+        loggedInEmail === "abdul.g@gophygital.work";
+      if (isViewSelectionHost) {
+        redirectTo("/");
+        return;
+      }
 
-        if (isPulseSite) {
-          navigate("/", { replace: true });
-          return;
-        }
+      // ROLE-BASED: land on the first active react_link from the role API
+      const freshRole = await permissionService
+        .getUserRole()
+        .catch(() => null);
+      const firstRoute = findFirstAccessibleRoute(freshRole);
+      if (isSafePath(firstRoute)) {
+        redirectTo(firstRoute);
+        return;
+      }
 
-        // PRIORITY 3: Company ID-based routing for specific companies
-        if (
-          response.company_id === 300 ||
-          response.company_id === 295 ||
-          response.company_id === 298 ||
-          response.company_id === 199
-        ) {
-          // For these companies, use dynamic routing from permissions
-          if (userRole) {
-            const firstRoute = findFirstAccessibleRoute(userRole);
-            if (firstRoute) {
-              navigate(firstRoute, { replace: true });
-              return;
-            }
-          }
-          // Fallback to default admin route for these companies
-          navigate("/admin/dashboard", { replace: true });
-          return;
-        }
-
-        // PRIORITY 4: Domain-specific and user-specific fallback routing
-        if (response.id === 189005) {
-          navigate("/dashboard");
-        } else if (isViSite) {
-          navigate("/safety/m-safe/internal");
-        } else {
-          navigate(from, { replace: true });
-        }
-      }, 500);
+      // FALLBACKS (role gave no usable route)
+      if (
+        response.company_id === 300 ||
+        response.company_id === 295 ||
+        response.company_id === 298 ||
+        response.company_id === 199
+      ) {
+        redirectTo("/admin/dashboard");
+      } else if (response.id === 189005) {
+        redirectTo("/dashboard");
+      } else if (isViSite) {
+        redirectTo("/safety/m-safe/internal");
+      } else if (isClubSite) {
+        redirectTo("/club-management/membership");
+      } else {
+        redirectTo(DEFAULT_FALLBACK_ROUTE);
+      }
     } catch (error: any) {
       console.error("Login error:", error);
 
