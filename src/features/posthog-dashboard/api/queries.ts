@@ -187,9 +187,9 @@ export function useAdoptionTrend(f: QueryFilters) {
 
 export function useGrowth(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'growth', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
+    queryKey: ['fm-adoption', 'growth', f.from, f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
-      fetchGrowth({ to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
+      fetchGrowth({ from: f.from, to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -220,6 +220,9 @@ export function useRecentActiveUsers(f: QueryFilters) {
     queryFn: () => fetchRecentActiveUsers(range(f)),
     enabled: f.enabled && (f.allowEmptySites === true || f.siteIds.length > 0),
     ...CACHE,
+    // A live log: the 10 newest events (not distinct users), refreshed every 15 s.
+    staleTime: 0,
+    refetchInterval: 15 * 1000,
   });
 }
 

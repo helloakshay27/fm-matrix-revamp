@@ -618,13 +618,16 @@ const isCompletedStatus = (status) =>
 // ─────────────────────────────────────────────
 const DAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const checkIsNonWorkingDay = (dateStr, meetingDays) => {
+export const checkIsNonWorkingDay = (dateStr, meetingDays) => {
   if (!dateStr || !Array.isArray(meetingDays) || meetingDays.length === 0)
     return false;
   const [y, m, d] = dateStr.split("-").map(Number);
   const dateObj = new Date(y, m - 1, d);
   if (isNaN(dateObj)) return false;
-  return !meetingDays.includes(DAY_MAP[dateObj.getDay()]);
+  // Configs may store days as "Mon", "Mo" or "Monday" — compare by the first two letters.
+  const dayKey = (day) => String(day).trim().slice(0, 2).toLowerCase();
+  const target = dayKey(DAY_MAP[dateObj.getDay()]);
+  return !meetingDays.some((day) => dayKey(day) === target);
 };
 
 // ─────────────────────────────────────────────
@@ -698,7 +701,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       return;
     }
 
-    navigate(sourceType === "task" ? `/vas/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
+    navigate(sourceType === "task" ? `/business-compass/tasks/${sourceId}` : `/vas/issues/${sourceId}`);
   };
 
   const [quickActionOpen, setQuickActionOpen] = useState(false);

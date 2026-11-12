@@ -6,6 +6,7 @@ import { Switch, TextField } from "@mui/material";
 import { DetailCard } from "@/components/ui/detail-card";
 import { type ViActiveUserOption } from "@/components/vi-audit/useViActiveUsers";
 import { UserSelectField } from "@/components/vi-audit/ViUserPicker";
+import { useCircleZones } from "@/features/vi-zone/master/api/queries";
 import { AuditLoadingState, sectionIcon } from "@/components/vi-audit/ViAuditUi";
 import {
   AddMoreButton,
@@ -74,11 +75,12 @@ const IncidentReporterAddPage = () => {
     timeOfIncident: "",
     circle: "",
     personnelArea: "",
-    workLocation: "",
+    zone: "",
     facilityType: "",
     location: "",
     function: "",
   });
+  const { zones, loading: zonesLoading, placeholder: zonePlaceholder } = useCircleZones(basic.circle);
   const [classification, setClassification] = useState({ classification: "", category: "", subCategory: "" });
   const [otherValues, setOtherValues] = useState({ classification: "", category: "", subCategory: "", facilityType: "" });
   const [details, setDetails] = useState("");
@@ -101,7 +103,7 @@ const IncidentReporterAddPage = () => {
       timeOfIncident: incident.incidentTime24,
       circle: incident.ids.circle,
       personnelArea: incident.ids.personnelArea,
-      workLocation: incident.ids.workLocation,
+      zone: incident.ids.zone,
       facilityType: incident.ids.facilityType,
       location: incident.incidentLocation,
       function: incident.ids.function,
@@ -151,7 +153,7 @@ const IncidentReporterAddPage = () => {
       !basic.timeOfIncident && "Time of Incident",
       !basic.circle && "Circle",
       !basic.personnelArea && "Personnel Area",
-      !basic.workLocation && "Work Location",
+      !basic.zone && "Zone",
       !basic.facilityType && "Type of Facility",
       others.facilityType && !otherValues.facilityType.trim() && "Other Type of Facility",
       !basic.location.trim() && "Location",
@@ -181,11 +183,11 @@ const IncidentReporterAddPage = () => {
     }
     if (injuryHappened) {
       const invalid = injuries.findIndex(
-        (i) => !i.name.trim() || !i.age || !i.personTypeId || !i.natureOfInjuryId || !i.bodyPartId,
+        (i) => !i.personTypeId || !i.natureOfInjuryId || !i.bodyPartId,
       );
       if (invalid !== -1) {
         toast.error(
-          `Please complete injury ${invalid + 1}: Impacted Person, Age, Nature of Person Impacted, Nature of Injury and Body Part Affected`,
+          `Please complete injury ${invalid + 1}: Nature of Person Impacted, Nature of Injury and Body Part Affected`,
         );
         return false;
       }
@@ -201,7 +203,7 @@ const IncidentReporterAddPage = () => {
       incident_time: basic.timeOfIncident || null,
       circle_id: toId(basic.circle),
       personal_area_id: toId(basic.personnelArea),
-      work_location_id: toId(basic.workLocation),
+      zone_id: toId(basic.zone),
       location: basic.location.trim(),
       department_id: toId(basic.function),
       facility_type_id: toId(basic.facilityType),
@@ -364,7 +366,7 @@ const IncidentReporterAddPage = () => {
                 label="Circle"
                 required
                 value={basic.circle}
-                onChange={(v) => setBasic((p) => ({ ...p, circle: v }))}
+                onChange={(v) => setBasic((p) => ({ ...p, circle: v, zone: "" }))}
                 options={masters.circles}
                 loading={mastersLoading}
                 placeholder="Select incident circle"
@@ -379,13 +381,14 @@ const IncidentReporterAddPage = () => {
                 placeholder="Select personnel area"
               />
               <IncidentSelectField
-                label="Work Location"
+                label="Zone"
                 required
-                value={basic.workLocation}
-                onChange={(v) => setBasic((p) => ({ ...p, workLocation: v }))}
-                options={masters.workLocations}
-                loading={mastersLoading}
-                placeholder="Select work location"
+                value={basic.zone}
+                onChange={(v) => setBasic((p) => ({ ...p, zone: v }))}
+                options={zones}
+                loading={zonesLoading}
+                disabled={!basic.circle}
+                placeholder={zonePlaceholder}
               />
               <IncidentSelectField
                 label="Type of Facility"
@@ -564,7 +567,7 @@ const IncidentReporterAddPage = () => {
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      <TextField
+                      {/* <TextField
                         fullWidth
                         label={requiredLabel("Impacted Person Name")}
                         placeholder="Enter name"
@@ -581,7 +584,7 @@ const IncidentReporterAddPage = () => {
                         onChange={(e) => updateInjury(index, { age: e.target.value })}
                         inputProps={{ min: 0 }}
                         InputLabelProps={{ shrink: true }}
-                      />
+                      /> */}
                       <IncidentSelectField
                         label="Nature of Person Impacted"
                         required

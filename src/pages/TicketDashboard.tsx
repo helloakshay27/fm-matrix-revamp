@@ -12,6 +12,12 @@ import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterD
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  Tooltip as UITooltip,
+  TooltipContent as UITooltipContent,
+  TooltipProvider as UITooltipProvider,
+  TooltipTrigger as UITooltipTrigger,
+} from '@/components/ui/tooltip';
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
 import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
@@ -1001,6 +1007,7 @@ export const TicketDashboard = () => {
       const filterLabelMap: Record<string, string> = {
         date_range: 'date_range',
         category_type_id_eq: 'category',
+        category_type_type_eq: 'ticket_type',
         sub_category_id_eq: 'sub_category',
         dept_id_eq: 'department',
         site_id_eq: 'site',
@@ -1166,7 +1173,8 @@ export const TicketDashboard = () => {
   {
     key: 'heading',
     label: 'Description',
-    sortable: true
+    sortable: true,
+    width: 320 // shows truncated on first load; user can still drag to resize
   }, {
     key: 'category_type',
     label: 'Category',
@@ -1226,7 +1234,7 @@ export const TicketDashboard = () => {
     label: 'Created On',
     sortable: true
   }, {
-    key: 'issue_type',
+    key: 'ticket_type',
     label: 'Ticket Type',
     sortable: true
   }, {
@@ -1424,25 +1432,22 @@ export const TicketDashboard = () => {
     const formatted = formatEscalationData(escalation);
     return formatted?.escalationName || '--';
   };
-  const TruncatedDescription = ({
-    text,
-    maxCharacters = 15
-  }: {
-    text: string;
-    maxCharacters?: number;
-  }) => {
+  // Ellipsis follows the column width (same as Task Title in ProjectTasksPage)
+  const TruncatedDescription = ({ text }: { text: string }) => {
     if (!text) return <span>--</span>;
 
-    if (text.length <= maxCharacters) {
-      return <span className="ml-2">{text}</span>;
-    }
-
-    const truncated = text.substring(0, maxCharacters);
     return (
-      <div className="w-32 max-w-[150px]" title={text}>
-        <span className="block truncate">
-          {`${truncated}...`}
-        </span>
+      <div className="flex items-center w-full min-w-0">
+        <UITooltipProvider>
+          <UITooltip>
+            <UITooltipTrigger asChild>
+              <span className="min-w-0 flex-1 truncate">{text}</span>
+            </UITooltipTrigger>
+            <UITooltipContent className="rounded-[5px] max-w-[400px] break-words">
+              <p>{text}</p>
+            </UITooltipContent>
+          </UITooltip>
+        </UITooltipProvider>
       </div>
     );
   };
@@ -1541,6 +1546,10 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'escalation_resolution_name') {
       return formatEscalationLevel(item.next_resolution_escalation);
+    }
+    if (columnKey === 'ticket_type') {
+      const t = item.ticket_type;
+      return t ? String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';

@@ -66,7 +66,7 @@ interface AoAudit {
   auditorDesignation: string;
   cluster: string;
   circle: string;
-  workLocation: string;
+  zone: string;
   facilityType: string;
   department: string;
   auditLocation: string;
@@ -131,7 +131,7 @@ const toAudit = (a: Raw): AoAudit => {
     auditorDesignation: text(a.auditor_designation),
     cluster: text(a.cluster_name),
     circle: text(a.circle_name),
-    workLocation: text(a.work_location_name),
+    zone: text(a.zone_name, obj(a.zone).name),
     facilityType: text(a.visit_business_area_name),
     department: text(a.department_name),
     auditLocation: text(a.audit_location),
@@ -237,7 +237,7 @@ const ActionOwnerAuditDetailPage = () => {
                 { label: "Date of Audit", value: audit.auditDate },
                 { label: "Circle", value: audit.cluster },
                 { label: "Personnel Area", value: audit.circle },
-                { label: "Work Location", value: audit.workLocation },
+                { label: "Zone", value: audit.zone },
                 { label: "Type of Facility", value: audit.facilityType },
                 { label: "Function", value: audit.department },
                 { label: "Audit Location", value: audit.auditLocation, span: true },

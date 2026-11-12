@@ -83,6 +83,7 @@ export const AuditListView = ({
       a.mailId.toLowerCase().includes(term) ||
       a.vendorName.toLowerCase().includes(term) ||
       a.auditLocation.toLowerCase().includes(term) ||
+      a.auditZone.toLowerCase().includes(term) ||
       String(a.auditId).includes(term)
     );
   });
@@ -93,9 +94,6 @@ export const AuditListView = ({
         return <AuditStatusPill status={item.status} />;
       case "auditType":
         return <span>{item.auditType} Audit</span>;
-      case "auditLocation":
-        // Long addresses wrap inside the column instead of stretching the table.
-        return <span className="block min-w-[180px] max-w-[280px] whitespace-normal break-words">{item.auditLocation}</span>;
       default:
         return <span>{String(item[columnKey as keyof ViAuditListRecord] ?? "")}</span>;
     }

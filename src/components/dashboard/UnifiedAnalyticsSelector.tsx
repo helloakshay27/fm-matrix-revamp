@@ -62,7 +62,7 @@ interface UnifiedAnalyticsSelectorProps {
 }
 
 // Analytics for regular dashboard (/dashboard)
-export const dashboardAnalyticsOptions = {
+const baseDashboardAnalyticsOptions = {
   tickets: {
     icon: Activity,
     label: "Tickets",
@@ -845,6 +845,62 @@ export const executiveAnalyticsOptions = {
   // },
 } as const;
 
+// Regular dashboard (/dashboard): the base modules plus the modules shared with the
+// executive catalog. Utility Consumption leaves out the two "Top Management" cards.
+const EXCLUDED_REGULAR_UTILITY_IDS = new Set([
+  "utility_power_consumption_top_management",
+  "utility_water_consumption_top_management",
+]);
+
+export const dashboardAnalyticsOptions = {
+  ...baseDashboardAnalyticsOptions,
+  incident_management: executiveAnalyticsOptions.incident_management,
+  quickgate_management: executiveAnalyticsOptions.quickgate_management,
+  utility: {
+    ...executiveAnalyticsOptions.utility,
+    options: executiveAnalyticsOptions.utility.options.filter(
+      (option) => !EXCLUDED_REGULAR_UTILITY_IDS.has(option.id)
+    ),
+  },
+  permit_to_work: executiveAnalyticsOptions.permit_to_work,
+} as const;
+
+/**
+ * "Ticket Type Wise Distribution" is not a selectable option: it's a companion card that shows
+ * automatically while at least one Helpdesk Management chart is selected (executive dashboard)
+ * and disappears once none are.
+ */
+export const TICKET_TYPE_WISE_ID = "helpdesk_ticket_type_wise";
+export const TICKET_TYPE_WISE_ANALYTIC = {
+  id: TICKET_TYPE_WISE_ID,
+  module: "helpdesk" as const,
+  endpoint: "chart_ticket_type_wise",
+  title: "Ticket Type Wise Distribution",
+};
+
+const HELPDESK_OPTION_IDS = new Set<string>(
+  executiveAnalyticsOptions.helpdesk.options.map((option) => option.id)
+);
+
+/**
+ * Adds or removes the derived Ticket Type Wise card so it tracks the Helpdesk selection.
+ * Returns the same array reference when nothing needs to change.
+ */
+export function syncTicketTypeWiseCard<T extends { id: string }>(analytics: T[]): T[] {
+  const hasHelpdeskChart = analytics.some(
+    (analytic) => analytic.id !== TICKET_TYPE_WISE_ID && HELPDESK_OPTION_IDS.has(analytic.id)
+  );
+  const hasCard = analytics.some((analytic) => analytic.id === TICKET_TYPE_WISE_ID);
+  const card = TICKET_TYPE_WISE_ANALYTIC as unknown as T;
+  // It leads the Helpdesk charts, so it goes first rather than being appended to the end.
+  if (hasHelpdeskChart && !hasCard) return [card, ...analytics];
+  if (!hasHelpdeskChart && hasCard) return analytics.filter((analytic) => analytic.id !== TICKET_TYPE_WISE_ID);
+  if (hasHelpdeskChart && analytics[0]?.id !== TICKET_TYPE_WISE_ID) {
+    return [analytics.find((analytic) => analytic.id === TICKET_TYPE_WISE_ID) as T, ...analytics.filter((analytic) => analytic.id !== TICKET_TYPE_WISE_ID)];
+  }
+  return analytics;
+}
+
 export const UnifiedAnalyticsSelector: React.FC<
   UnifiedAnalyticsSelectorProps
 > = ({ selectedAnalytics, onSelectionChange }) => {
@@ -919,7 +975,9 @@ export const UnifiedAnalyticsSelector: React.FC<
     return "partial";
   };
 
-  const getTotalSelectedCount = () => selectedAnalytics.length;
+  // The derived Ticket Type Wise card isn't something the user picked, so don't count it.
+  const getTotalSelectedCount = () =>
+    selectedAnalytics.filter((analytic) => analytic.id !== TICKET_TYPE_WISE_ID).length;
 
   const selectAllAnalytics = () => {
     const allAnalytics: SelectedAnalytic[] = Object.entries(analyticsOptions).flatMap(

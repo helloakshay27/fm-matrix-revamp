@@ -3,6 +3,13 @@ import { usePulseDashboard } from "../../contexts/PulseDashboardContext";
 import { dateRangeFor } from "../../../posthog-dashboard/api/queries";
 import { fmtC } from "../../utils/calculations";
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 export const FilterBar: React.FC = () => {
   const {
     dev, setDev,
@@ -125,16 +132,18 @@ export const FilterBar: React.FC = () => {
             <div className="dr-custom-row">
               <input
                 type="date"
+                max={todayYmd()}
                 id="dateFrom"
                 value={customFrom}
-                onChange={(event) => setCustomFrom(event.target.value)}
+                onChange={(event) => setCustomFrom(clampToToday(event.target.value))}
               />
               <span className="dr-to">&ndash;</span>
               <input
                 type="date"
+                max={todayYmd()}
                 id="dateTo"
                 value={customTo}
-                onChange={(event) => setCustomTo(event.target.value)}
+                onChange={(event) => setCustomTo(clampToToday(event.target.value))}
               />
             </div>
             <button className="dr-apply" id="dateApplyBtn" onClick={handleCustomApply}>

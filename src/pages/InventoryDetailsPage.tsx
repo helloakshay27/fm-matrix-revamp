@@ -1,28 +1,165 @@
-import React, { useState, useEffect } from 'react';
-import moment from 'moment';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
-import { apiClient } from '@/utils/apiClient';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { toast } from 'sonner';
-import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import React, { useState, useEffect } from "react";
+import moment from "moment";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowLeft,
+  QrCode,
+  Edit,
+  Loader2,
+  Box,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+} from "lucide-react";
+import { apiClient } from "@/utils/apiClient";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const expiryStatusPillStyle: React.CSSProperties = {
-  borderRadius: '999px',
-  padding: '3px 10px',
-  fontSize: '11px',
+  borderRadius: "999px",
+  padding: "3px 10px",
+  fontSize: "11px",
   fontWeight: 500,
 };
 
 const historyColumns: ColumnConfig[] = [
-  { key: 'dateTime', label: 'Date / Time', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'changedBy', label: 'Changed By', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'logType', label: 'Log Type', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'changes', label: 'Changes', sortable: false, hideable: true, defaultVisible: true },
+  {
+    key: "dateTime",
+    label: "Date / Time",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "changedBy",
+    label: "Changed By",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "logType",
+    label: "Log Type",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "changes",
+    label: "Changes",
+    sortable: false,
+    hideable: true,
+    defaultVisible: true,
+  },
 ];
+
+const EXPIRING_SOON_DAYS = 90;
+
+// GRN batch from GET /pms/grns/get_grn_for_consumption.json
+// { id: 6162, grn_number: "100021", quantity: "99.0", expiry_date: "01/01/2026" }
+interface StockBatch {
+  key: string;
+  id: number; // GRN id
+  grn_number: string;
+  expiry_date: string; // YYYY-MM-DD, '' when the GRN has none
+  date_added: string; // YYYY-MM-DD when the API returns a date, '' otherwise
+  available: number; // quantity remaining
+  received: number | null; // quantity received when the API returns it
+}
+
+const toNumber = (...values: unknown[]) => {
+  for (const value of values) {
+    const n = typeof value === "string" ? parseFloat(value) : value;
+    if (typeof n === "number" && Number.isFinite(n)) return n;
+  }
+  return 0;
+};
+
+// "18/12/2025" (DD/MM/YYYY, as the API sends it) → "2025-12-18"; an ISO date passes through.
+const toIsoDate = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  const dmy = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy)
+    return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+  return /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : "";
+};
+
+const toStockBatch = (
+  raw: Record<string, unknown>,
+  index: number
+): StockBatch | null => {
+  const id = toNumber(raw.id);
+  if (!id) return null;
+  const available = toNumber(raw.quantity);
+  // Qty received is not part of the documented response; use it only if present.
+  const receivedRaw =
+    raw.quantity_received ??
+    raw.received_quantity ??
+    raw.original_quantity ??
+    raw.total_quantity;
+  const received =
+    receivedRaw === undefined || receivedRaw === null || receivedRaw === ""
+      ? null
+      : toNumber(receivedRaw);
+  const dateRaw = raw.date_added ?? raw.created_at ?? raw.grn_date ?? raw.date;
+  return {
+    key: `${id}-${index}`,
+    id,
+    grn_number: String(raw.grn_number ?? `GRN-${id}`),
+    expiry_date: toIsoDate(raw.expiry_date),
+    date_added: dateRaw ? toIsoDate(dateRaw) : "",
+    available,
+    received: received || null,
+  };
+};
+
+const daysUntil = (ymd: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round(
+    (new Date(`${ymd}T00:00:00`).getTime() - today.getTime()) / 86400000
+  );
+};
+
+const hasValidDate = (ymd: string) =>
+  Boolean(ymd) && !Number.isNaN(new Date(`${ymd}T00:00:00`).getTime());
+
+const formatBatchDate = (ymd: string) =>
+  hasValidDate(ymd)
+    ? new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(new Date(`${ymd}T00:00:00`))
+    : "—";
+
+const ExpiryPill = ({ expiryDate }: { expiryDate: string }) => {
+  if (!hasValidDate(expiryDate)) return null;
+  const days = daysUntil(expiryDate);
+  if (days < 0) {
+    return (
+      <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-[var(--color-error-bg)] text-[var(--color-error)]">
+        Expired
+      </span>
+    );
+  }
+  if (days <= EXPIRING_SOON_DAYS) {
+    return (
+      <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-[var(--color-warning-light)] text-amber-700">
+        Expiring in {days} days
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-[var(--color-success-bg)] text-[var(--color-success-solid)]">
+      Valid
+    </span>
+  );
+};
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
@@ -31,17 +168,22 @@ export const InventoryDetailsPage = () => {
   const [inventoryData, setInventoryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('inventory-detail');
+  const [activeTab, setActiveTab] = useState("inventory-detail");
   const [downloading, setDownloading] = useState(false);
   const [feeds, setFeeds] = useState<any[]>([]);
   const [feedsLoading, setFeedsLoading] = useState(false);
   const [feedsError, setFeedsError] = useState<string | null>(null);
+  const [batches, setBatches] = useState<StockBatch[]>([]);
+  const [batchesLoading, setBatchesLoading] = useState(false);
+  const [batchesError, setBatchesError] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
-  const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>('');
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
+  const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>("");
   // Maps for displaying master names instead of IDs in history
   const [invTypeMap, setInvTypeMap] = useState<Record<string, string>>({});
-  const [invSubTypeMap, setInvSubTypeMap] = useState<Record<string, string>>({});
+  const [invSubTypeMap, setInvSubTypeMap] = useState<Record<string, string>>(
+    {}
+  );
 
   useEffect(() => {
     const fetchInventoryDetails = async () => {
@@ -52,7 +194,7 @@ export const InventoryDetailsPage = () => {
         setInventoryData(response.data);
         setError(null);
       } catch (err) {
-        setError('Failed to load inventory details');
+        setError("Failed to load inventory details");
       } finally {
         setLoading(false);
       }
@@ -65,12 +207,18 @@ export const InventoryDetailsPage = () => {
     let aborted = false;
     const load = async () => {
       try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) return;
-        const res = await fetch(`https://${baseUrl}/pms/inventory_types/autocomplete.json`, {
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          `https://${baseUrl}/pms/inventory_types/autocomplete.json`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         if (!res.ok) return;
         const data = await res.json();
         if (aborted) return;
@@ -92,31 +240,44 @@ export const InventoryDetailsPage = () => {
         const map: Record<string, string> = {};
         arr.forEach((it: any) => {
           const id = it?.id != null ? String(it.id) : undefined;
-          const name = it?.name || it?.title || it?.label || '';
+          const name = it?.name || it?.title || it?.label || "";
           if (id && name) map[id] = String(name);
         });
         setInvTypeMap(map);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     };
     load();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, []);
 
   // Fetch sub types for the current inventory type to map IDs -> Names for history display
   useEffect(() => {
     let aborted = false;
-    const typeId = (inventoryData as any)?.pms_inventory_type_id
-      ?? (inventoryData as any)?.inventory_type_master_id
-      ?? (inventoryData as any)?.inventory_type_id
-      ?? (inventoryData as any)?.item_type_id;
-    if (!typeId) { setInvSubTypeMap({}); return; }
+    const typeId =
+      (inventoryData as any)?.pms_inventory_type_id ??
+      (inventoryData as any)?.inventory_type_master_id ??
+      (inventoryData as any)?.inventory_type_id ??
+      (inventoryData as any)?.item_type_id;
+    if (!typeId) {
+      setInvSubTypeMap({});
+      return;
+    }
     const load = async () => {
       try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) return;
         const url = `https://${baseUrl}/pms/inventory_types/get_subtype.json?inventory_type_id=${encodeURIComponent(String(typeId))}`;
-        const res = await fetch(url, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+        const res = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (aborted) return;
@@ -144,32 +305,47 @@ export const InventoryDetailsPage = () => {
         const map: Record<string, string> = {};
         arr.forEach((it: any) => {
           const id = it?.id != null ? String(it.id) : undefined;
-          const name = it?.name || it?.title || it?.label || '';
+          const name = it?.name || it?.title || it?.label || "";
           if (id && name) map[id] = String(name);
         });
         setInvSubTypeMap(map);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     };
     load();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [inventoryData]);
 
   // Derive or fetch human readable HSN/SAC code
   useEffect(() => {
     if (!inventoryData) return;
     // Try common fields first
-    const direct = (inventoryData as any)?.hsc_hsn_code || (inventoryData as any)?.hsn_code || (inventoryData as any)?.hsn?.code;
-    if (direct) { setHsnCodeDisplay(direct); return; }
+    const direct =
+      (inventoryData as any)?.hsc_hsn_code ||
+      (inventoryData as any)?.hsn_code ||
+      (inventoryData as any)?.hsn?.code;
+    if (direct) {
+      setHsnCodeDisplay(direct);
+      return;
+    }
     // If we only have an id, attempt fetch list and map
     const hsnId = (inventoryData as any)?.hsn_id;
-    if (!hsnId) { setHsnCodeDisplay(''); return; }
+    if (!hsnId) {
+      setHsnCodeDisplay("");
+      return;
+    }
     let aborted = false;
     const load = async () => {
       try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) return;
-        const resp = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, { headers: { Authorization: `Bearer ${token}` } });
+        const resp = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (!resp.ok) return;
         const data = await resp.json();
         if (aborted) return;
@@ -177,10 +353,14 @@ export const InventoryDetailsPage = () => {
           const match = data.find((d: any) => String(d.id) === String(hsnId));
           if (match?.code) setHsnCodeDisplay(match.code);
         }
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     };
     load();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
   }, [inventoryData]);
 
   // Fetch feeds immediately on page load (once per id) instead of waiting for history tab
@@ -190,34 +370,98 @@ export const InventoryDetailsPage = () => {
     const fetchFeeds = async () => {
       try {
         setFeedsLoading(true);
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) {
-          setFeedsError('Missing base URL or token');
+          setFeedsError("Missing base URL or token");
           return;
         }
-        const resp = await fetch(`https://${baseUrl}/pms/inventories/${id}/feeds.json`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!resp.ok) throw new Error('Failed to fetch history');
+        const resp = await fetch(
+          `https://${baseUrl}/pms/inventories/${id}/feeds.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!resp.ok) throw new Error("Failed to fetch history");
         const data = await resp.json();
         if (aborted) return;
         setFeeds(Array.isArray(data) ? data : []);
       } catch (e: any) {
         if (!aborted) {
-          console.error('Feeds fetch error', e);
-          setFeedsError('Failed to load history');
+          console.error("Feeds fetch error", e);
+          setFeedsError("Failed to load history");
         }
       } finally {
         if (!aborted) setFeedsLoading(false);
       }
     };
     fetchFeeds();
-    return () => { aborted = true; };
+    return () => {
+      aborted = true;
+    };
+  }, [id]);
+
+  // Same batches endpoint as InventoryConsumptionAddPage (Consume / Dispose allocation).
+  useEffect(() => {
+    if (!id) return;
+    let aborted = false;
+    const fetchBatches = async () => {
+      try {
+        setBatchesLoading(true);
+        setBatchesError(false);
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        if (!baseUrl || !token) {
+          setBatchesError(true);
+          return;
+        }
+        const resp = await fetch(
+          `https://${baseUrl}/pms/grns/get_grn_for_consumption.json?resource_id=${encodeURIComponent(id)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!resp.ok) throw new Error("Failed to fetch batches");
+        const data = await resp.json();
+        if (aborted) return;
+        const rows: Record<string, unknown>[] = Array.isArray(data?.grns)
+          ? data.grns
+          : Array.isArray(data)
+            ? data
+            : [];
+        setBatches(
+          rows
+            .map(toStockBatch)
+            .filter((b): b is StockBatch => b !== null)
+            // Oldest expiry first; batches without an expiry date go last, then by GRN number.
+            .sort(
+              (a, b) =>
+                (a.expiry_date || "9999-12-31").localeCompare(
+                  b.expiry_date || "9999-12-31"
+                ) ||
+                a.grn_number.localeCompare(b.grn_number, undefined, {
+                  numeric: true,
+                })
+            )
+        );
+      } catch (e) {
+        if (!aborted) {
+          console.error("Batches fetch error", e);
+          setBatches([]);
+          setBatchesError(true);
+        }
+      } finally {
+        if (!aborted) setBatchesLoading(false);
+      }
+    };
+    fetchBatches();
+    return () => {
+      aborted = true;
+    };
   }, [id]);
 
   const handleBack = () => {
-    navigate('/maintenance/inventory');
+    navigate("/maintenance/inventory");
   };
 
   const handleFeeds = () => {
@@ -228,200 +472,226 @@ export const InventoryDetailsPage = () => {
     navigate(`/maintenance/inventory/edit/${id}`);
   };
 
+  const handleAddConsume = () => {
+    navigate(`/maintenance/inventory-consumption/view/${id}/add`);
+  };
+
   const getInventoryType = (type) => {
-    return type === 1 ? 'Spares' : 'Consumable';
+    return type === 1 ? "Spares" : "Consumable";
   };
 
   const getCriticality = (criticality) => {
-    return criticality === 1 ? 'Critical' : 'Non-Critical';
+    return criticality === 1 ? "Critical" : "Non-Critical";
   };
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return '—';
+    if (!dateString) return "—";
     try {
       let s = String(dateString).trim();
-      s = s.replace(/\.\d{3,}/, '');
-      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+      s = s.replace(/\.\d{3,}/, "");
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, " $1");
       const formats = [
-        'ddd, DD MMM YYYY HH:mm:ss ZZ',
-        'ddd DD MMM YYYY HH:mm:ss ZZ',
-        'YYYY-MM-DDTHH:mm:ssZ',
-        'YYYY-MM-DD HH:mm:ss',
-        'YYYY-MM-DD',
+        "ddd, DD MMM YYYY HH:mm:ss ZZ",
+        "ddd DD MMM YYYY HH:mm:ss ZZ",
+        "YYYY-MM-DDTHH:mm:ssZ",
+        "YYYY-MM-DD HH:mm:ss",
+        "YYYY-MM-DD",
       ];
       let m = moment(s, formats, true);
       if (!m.isValid()) m = moment(s);
-      if (!m.isValid()) return '—';
-      return m.format('DD/MM/YYYY HH:mm');
+      if (!m.isValid()) return "—";
+      return m.format("DD/MM/YYYY HH:mm");
     } catch {
-      return '—';
+      return "—";
     }
   };
 
   // Sanitize and parse Ruby-style or RFC-like datetimes, then return DD/MM/YYYY
   const formatDateOnly = (dateString) => {
-    if (!dateString) return '—';
+    if (!dateString) return "—";
     try {
       let s = String(dateString).trim();
       // Remove nanoseconds like .000000000
-      s = s.replace(/\.\d{3,}/, '');
+      s = s.replace(/\.\d{3,}/, "");
       // Remove timezone abbreviation tokens (e.g., IST) while keeping numeric offset
-      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, " $1");
       // Accept common forms explicitly
       const formats = [
-        'ddd, DD MMM YYYY HH:mm:ss ZZ',
-        'ddd DD MMM YYYY HH:mm:ss ZZ',
-        'YYYY-MM-DD',
-        'YYYY-MM-DDTHH:mm:ssZ',
-        'YYYY-MM-DD HH:mm:ss',
+        "ddd, DD MMM YYYY HH:mm:ss ZZ",
+        "ddd DD MMM YYYY HH:mm:ss ZZ",
+        "YYYY-MM-DD",
+        "YYYY-MM-DDTHH:mm:ssZ",
+        "YYYY-MM-DD HH:mm:ss",
       ];
       let m = moment(s, formats, true);
       if (!m.isValid()) m = moment(s); // best-effort fallback
-      if (!m.isValid()) return '—';
-      return m.format('DD/MM/YYYY');
+      if (!m.isValid()) return "—";
+      return m.format("DD/MM/YYYY");
     } catch {
-      return '—';
+      return "—";
     }
   };
 
   // Parse backend provided changed_attr which may now be an object { key: [old, new] } or legacy Ruby string
-  const parseChangedAttr = (raw: any): { key: string; from: string; to: string }[] => {
+  const parseChangedAttr = (
+    raw: any
+  ): { key: string; from: string; to: string }[] => {
     if (!raw) return [];
     const rows: { key: string; from: string; to: string }[] = [];
 
     // New format: object with arrays
-    if (typeof raw === 'object' && !Array.isArray(raw)) {
+    if (typeof raw === "object" && !Array.isArray(raw)) {
       Object.entries(raw).forEach(([key, val]) => {
         if (Array.isArray(val) && val.length === 2) {
           const [from, to] = val as any[];
-          rows.push({ key, from: sanitizeChangedValue(from), to: sanitizeChangedValue(to) });
+          rows.push({
+            key,
+            from: sanitizeChangedValue(from),
+            to: sanitizeChangedValue(to),
+          });
         }
       });
       return rows;
     }
 
     // Legacy string format fallback
-    if (typeof raw === 'string') {
+    if (typeof raw === "string") {
       try {
         const regex = /"([^\"]+)"=>\[(.*?)\]/g;
         let match;
         while ((match = regex.exec(raw)) !== null) {
           const key = match[1];
           const content = match[2];
-          const idx = content.lastIndexOf(',');
+          const idx = content.lastIndexOf(",");
           let from = content;
-          let to = '';
+          let to = "";
           if (idx !== -1) {
             from = content.slice(0, idx).trim();
             to = content.slice(idx + 1).trim();
           }
-          const clean = (v: string) => v.replace(/^\"|\"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
+          const clean = (v: string) =>
+            v
+              .replace(/^\"|\"$/g, "")
+              .replace(/ nil$/i, "—")
+              .replace(/^nil$/i, "—");
           rows.push({ key, from: clean(from), to: clean(to) });
         }
       } catch (e) {
-        console.warn('Failed to parse legacy changed_attr', e);
+        console.warn("Failed to parse legacy changed_attr", e);
       }
     }
     return rows;
   };
 
   const sanitizeChangedValue = (v: any): string => {
-    if (v === null || v === undefined) return '—';
-    if (typeof v === 'string') return v === '' ? '—' : v;
-    if (typeof v === 'number') return String(v);
-    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (v === null || v === undefined) return "—";
+    if (typeof v === "string") return v === "" ? "—" : v;
+    if (typeof v === "number") return String(v);
+    if (typeof v === "boolean") return v ? "true" : "false";
     // If object attempt common keys like name / code
     try {
-      if (typeof v === 'object') {
+      if (typeof v === "object") {
         if ((v as any).name) return String((v as any).name);
         if ((v as any).code) return String((v as any).code);
         return JSON.stringify(v);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return String(v);
   };
 
   // Human-friendly labels for keys
   const LABELS: Record<string, string> = {
-    name: 'Name',
-    inventory_type: 'Type',
-    pms_inventory_type_id: 'Inventory Type',
-    inventory_type_master_id: 'Inventory Type',
-    inventory_type_id: 'Inventory Type',
-    item_type_id: 'Inventory Type',
-    pms_inventory_sub_type_id: 'Inventory Sub Type',
-    inventory_sub_type_id: 'Inventory Sub Type',
-    item_sub_type_id: 'Inventory Sub Type',
-    item_category_id: 'Inventory Sub Type',
-    criticality: 'Criticality',
-    asset_id: 'Asset',
-    code: 'Code',
-    serial_number: 'Serial Number',
-    quantity: 'Quantity',
-    min_stock_level: 'Min Stock Level',
-    max_stock_level: 'Max Stock Level',
-    min_order_level: 'Min Order Level',
-    cgst_rate: 'CGST Rate',
-    sgst_rate: 'SGST Rate',
-    igst_rate: 'IGST Rate',
-    hsn_id: 'SAC/HSN',
-    expiry_date: 'Expiry Date',
-    unit: 'Unit',
-    category: 'Category',
-    green_product: 'Eco Friendly',
-    eco_friendly: 'Eco Friendly',
-    category_id: 'Category',
-    category_name: 'Category',
-    inventory_category_id: 'Category',
-    pms_inventory_category_id: 'Category',
-    pms_inventory_category: 'Category',
-    cost: 'Cost',
-    rate_contract_vendor_code: 'Rate Contract Vendor',
+    name: "Name",
+    inventory_type: "Type",
+    pms_inventory_type_id: "Inventory Type",
+    inventory_type_master_id: "Inventory Type",
+    inventory_type_id: "Inventory Type",
+    item_type_id: "Inventory Type",
+    pms_inventory_sub_type_id: "Inventory Sub Type",
+    inventory_sub_type_id: "Inventory Sub Type",
+    item_sub_type_id: "Inventory Sub Type",
+    item_category_id: "Inventory Sub Type",
+    criticality: "Criticality",
+    asset_id: "Asset",
+    code: "Code",
+    serial_number: "Serial Number",
+    quantity: "Quantity",
+    min_stock_level: "Min Stock Level",
+    max_stock_level: "Max Stock Level",
+    min_order_level: "Min Order Level",
+    cgst_rate: "CGST Rate",
+    sgst_rate: "SGST Rate",
+    igst_rate: "IGST Rate",
+    hsn_id: "SAC/HSN",
+    expiry_date: "Expiry Date",
+    unit: "Unit",
+    category: "Category",
+    green_product: "Eco Friendly",
+    eco_friendly: "Eco Friendly",
+    category_id: "Category",
+    category_name: "Category",
+    inventory_category_id: "Category",
+    pms_inventory_category_id: "Category",
+    pms_inventory_category: "Category",
+    cost: "Cost",
+    rate_contract_vendor_code: "Rate Contract Vendor",
   };
 
   const HIDDEN_KEYS = new Set<string>([
-    'id', 'created_at', 'updated_at', 'company_id', 'pms_site_id', 'user_id'
+    "id",
+    "created_at",
+    "updated_at",
+    "company_id",
+    "pms_site_id",
+    "user_id",
   ]);
 
-  const startCase = (s: string) => s.replace(/_/g, ' ')?.replace(/\w\S*/g, (t) => t.charAt(0).toUpperCase() + t.slice(1));
+  const startCase = (s: string) =>
+    s
+      .replace(/_/g, " ")
+      ?.replace(/\w\S*/g, (t) => t.charAt(0).toUpperCase() + t.slice(1));
 
   const formatEnum = (key: string, val: string): string => {
     const num = Number(val);
-    if (key === 'inventory_type') {
-      if (num === 1) return 'Spares';
-      if (num === 2) return 'Consumable';
+    if (key === "inventory_type") {
+      if (num === 1) return "Spares";
+      if (num === 2) return "Consumable";
     }
-    if (key === 'criticality') {
-      if (num === 1) return 'Critical';
-      if (num === 0 || num === 2) return 'Non-Critical';
+    if (key === "criticality") {
+      if (num === 1) return "Critical";
+      if (num === 0 || num === 2) return "Non-Critical";
     }
     return val;
   };
 
   const formatMaybeDate = (key: string, val: string): string => {
-    if (!val || val === '—') return '—';
+    if (!val || val === "—") return "—";
     // Apply for expiry-like keys
-    if (key === 'expiry_date' || /expire|expiry|date/i.test(key)) {
-      let s = String(val).trim().replace(/^\"|\"$/g, '');
-      s = s.replace(/\.\d{3,}/, '');
-      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+    if (key === "expiry_date" || /expire|expiry|date/i.test(key)) {
+      let s = String(val)
+        .trim()
+        .replace(/^\"|\"$/g, "");
+      s = s.replace(/\.\d{3,}/, "");
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, " $1");
       const formats = [
-        'ddd, DD MMM YYYY HH:mm:ss ZZ',
-        'ddd DD MMM YYYY HH:mm:ss ZZ',
-        'YYYY-MM-DD',
-        'YYYY-MM-DDTHH:mm:ssZ',
-        'YYYY-MM-DD HH:mm:ss',
+        "ddd, DD MMM YYYY HH:mm:ss ZZ",
+        "ddd DD MMM YYYY HH:mm:ss ZZ",
+        "YYYY-MM-DD",
+        "YYYY-MM-DDTHH:mm:ssZ",
+        "YYYY-MM-DD HH:mm:ss",
       ];
       let m = moment(s, formats, true);
       if (!m.isValid()) m = moment(s);
-      if (m.isValid()) return m.format('DD/MM/YYYY');
+      if (m.isValid()) return m.format("DD/MM/YYYY");
       return val;
     }
     return val;
   };
 
   const formatNumberLike = (key: string, val: string): string => {
-    if (!val || val === '—') return '—';
+    if (!val || val === "—") return "—";
     const n = Number(val);
     if (!Number.isNaN(n)) {
       // Preserve decimals if present, strip trailing .0
@@ -432,69 +702,113 @@ export const InventoryDetailsPage = () => {
 
   // Normalize and map backend unit to a friendly label from a fixed list
   const formatUnit = (unit: any): string => {
-    if (!unit) return '—';
-    const normalize = (s: string) => s.trim().toLowerCase().replace(/[\s\._-]/g, '').replace(/\.+/g, '');
+    if (!unit) return "—";
+    const normalize = (s: string) =>
+      s
+        .trim()
+        .toLowerCase()
+        .replace(/[\s\._-]/g, "")
+        .replace(/\.+/g, "");
     const options = [
-      { value: 'Ea', label: 'Each' },
-      { value: 'Piece', label: 'Piece' },
-      { value: 'Kg', label: 'Kilogram' },
-      { value: 'Litre', label: 'Litre' },
-      { value: 'Box', label: 'Box' },
-      { value: 'Bottle', label: 'Bottle' },
-      { value: 'Packet', label: 'Packet' },
-      { value: 'Bag', label: 'Bag' },
-      { value: 'Qty', label: 'Quantity' },
-      { value: 'Meter', label: 'Meter' },
-      { value: 'Sq.Mtr', label: 'Square Meter' },
-      { value: 'Cu.Mtr', label: 'Cubic Meter' },
-      { value: 'Feet', label: 'Feet' },
-      { value: 'Sq.Ft', label: 'Square Feet' },
-      { value: 'Cu.Ft', label: 'Cubic Feet' },
-      { value: 'Inches', label: 'Inches' },
-      { value: 'Sq.Inches', label: 'Square Inches' },
-      { value: 'Nos', label: 'Numbers' },
-      { value: 'Pcs', label: 'Pieces' },
-      { value: 'Mm', label: 'Millimeter' },
-      { value: 'Size', label: 'Size' },
-      { value: 'Yards', label: 'Yards' },
-      { value: 'Sq.Yards', label: 'Square Yards' },
-      { value: 'Rs', label: 'Rupees' },
-      { value: 'Acre', label: 'Acre' },
-      { value: 'Kilometer', label: 'Kilometer' },
-      { value: 'Miles', label: 'Miles' },
-      { value: 'Grams', label: 'Grams' },
-      { value: 'Brass', label: 'Brass' },
-      { value: 'Tonnes', label: 'Tonnes' },
+      { value: "Ea", label: "Each" },
+      { value: "Piece", label: "Piece" },
+      { value: "Kg", label: "Kilogram" },
+      { value: "Litre", label: "Litre" },
+      { value: "Box", label: "Box" },
+      { value: "Bottle", label: "Bottle" },
+      { value: "Packet", label: "Packet" },
+      { value: "Bag", label: "Bag" },
+      { value: "Qty", label: "Quantity" },
+      { value: "Meter", label: "Meter" },
+      { value: "Sq.Mtr", label: "Square Meter" },
+      { value: "Cu.Mtr", label: "Cubic Meter" },
+      { value: "Feet", label: "Feet" },
+      { value: "Sq.Ft", label: "Square Feet" },
+      { value: "Cu.Ft", label: "Cubic Feet" },
+      { value: "Inches", label: "Inches" },
+      { value: "Sq.Inches", label: "Square Inches" },
+      { value: "Nos", label: "Numbers" },
+      { value: "Pcs", label: "Pieces" },
+      { value: "Mm", label: "Millimeter" },
+      { value: "Size", label: "Size" },
+      { value: "Yards", label: "Yards" },
+      { value: "Sq.Yards", label: "Square Yards" },
+      { value: "Rs", label: "Rupees" },
+      { value: "Acre", label: "Acre" },
+      { value: "Kilometer", label: "Kilometer" },
+      { value: "Miles", label: "Miles" },
+      { value: "Grams", label: "Grams" },
+      { value: "Brass", label: "Brass" },
+      { value: "Tonnes", label: "Tonnes" },
     ];
 
     const map = new Map<string, string>();
-    options.forEach(o => {
+    options.forEach((o) => {
       map.set(normalize(o.value), o.label);
       map.set(normalize(o.label), o.label);
     });
 
     // Common synonyms from backend
     const synonyms: Record<string, string> = {
-      ltr: 'Litre', liter: 'Litre', liters: 'Litre', litre: 'Litre', l: 'Litre',
-      qty: 'Quantity', quantity: 'Quantity',
-      m: 'Meter', metre: 'Meter',
-      sqm: 'Square Meter', squaremeter: 'Square Meter', sqmtr: 'Square Meter', sqmeter: 'Square Meter',
-      cumm: 'Cubic Meter', cubicmeter: 'Cubic Meter', cumtr: 'Cubic Meter',
-      ft: 'Feet', foot: 'Feet',
-      sqft: 'Square Feet', squarefeet: 'Square Feet', sqfeet: 'Square Feet',
-      cft: 'Cubic Feet', cubicfeet: 'Cubic Feet',
-      inch: 'Inches', in: 'Inches',
-      sqinch: 'Square Inches', squareinches: 'Square Inches', sqinches: 'Square Inches',
-      nos: 'Numbers', numbers: 'Numbers', no: 'Numbers',
-      pcs: 'Pieces', pieces: 'Pieces', piece: 'Piece',
-      mm: 'Millimeter', millimeter: 'Millimeter', millimetre: 'Millimeter',
-      yd: 'Yards', yard: 'Yards', yards: 'Yards',
-      sqyard: 'Square Yards', sqyards: 'Square Yards', squareyards: 'Square Yards',
-      rs: 'Rupees', inr: 'Rupees', rupees: 'Rupees',
-      km: 'Kilometer', kilometre: 'Kilometer', kilometres: 'Kilometer',
-      mile: 'Miles',
-      g: 'Grams', gm: 'Grams', gms: 'Grams', gram: 'Grams', grams: 'Grams',
-      ton: 'Tonnes', tons: 'Tonnes', tonne: 'Tonnes', mt: 'Tonnes',
+      ltr: "Litre",
+      liter: "Litre",
+      liters: "Litre",
+      litre: "Litre",
+      l: "Litre",
+      qty: "Quantity",
+      quantity: "Quantity",
+      m: "Meter",
+      metre: "Meter",
+      sqm: "Square Meter",
+      squaremeter: "Square Meter",
+      sqmtr: "Square Meter",
+      sqmeter: "Square Meter",
+      cumm: "Cubic Meter",
+      cubicmeter: "Cubic Meter",
+      cumtr: "Cubic Meter",
+      ft: "Feet",
+      foot: "Feet",
+      sqft: "Square Feet",
+      squarefeet: "Square Feet",
+      sqfeet: "Square Feet",
+      cft: "Cubic Feet",
+      cubicfeet: "Cubic Feet",
+      inch: "Inches",
+      in: "Inches",
+      sqinch: "Square Inches",
+      squareinches: "Square Inches",
+      sqinches: "Square Inches",
+      nos: "Numbers",
+      numbers: "Numbers",
+      no: "Numbers",
+      pcs: "Pieces",
+      pieces: "Pieces",
+      piece: "Piece",
+      mm: "Millimeter",
+      millimeter: "Millimeter",
+      millimetre: "Millimeter",
+      yd: "Yards",
+      yard: "Yards",
+      yards: "Yards",
+      sqyard: "Square Yards",
+      sqyards: "Square Yards",
+      squareyards: "Square Yards",
+      rs: "Rupees",
+      inr: "Rupees",
+      rupees: "Rupees",
+      km: "Kilometer",
+      kilometre: "Kilometer",
+      kilometres: "Kilometer",
+      mile: "Miles",
+      g: "Grams",
+      gm: "Grams",
+      gms: "Grams",
+      gram: "Grams",
+      grams: "Grams",
+      ton: "Tonnes",
+      tons: "Tonnes",
+      tonne: "Tonnes",
+      mt: "Tonnes",
     };
 
     const key = normalize(String(unit));
@@ -504,26 +818,36 @@ export const InventoryDetailsPage = () => {
   };
 
   const formatValue = (key: string, val: string): string => {
-    if (!val || val === '—') return '—';
+    if (!val || val === "—") return "—";
     // Strip surrounding quotes
-    const v = val.replace(/^\"|\"$/g, '');
+    const v = val.replace(/^\"|\"$/g, "");
     // Booleans: show Yes/No for known boolean flags
     const BOOLEAN_KEYS = new Set([
-      'green_product',
-      'eco_friendly',
-      'active',
-      'expired',
-      'is_active',
+      "green_product",
+      "eco_friendly",
+      "active",
+      "expired",
+      "is_active",
     ]);
     if (BOOLEAN_KEYS.has(key)) {
       const lower = v.toLowerCase();
-      if (['true', '1', 'yes'].includes(lower)) return 'Yes';
-      if (['false', '0', 'no'].includes(lower)) return 'No';
+      if (["true", "1", "yes"].includes(lower)) return "Yes";
+      if (["false", "0", "no"].includes(lower)) return "No";
       return v;
     }
     // Map master IDs to names for type and sub type if available
-    const TYPE_ID_KEYS = new Set(['pms_inventory_type_id', 'inventory_type_master_id', 'inventory_type_id', 'item_type_id']);
-    const SUBTYPE_ID_KEYS = new Set(['pms_inventory_sub_type_id', 'inventory_sub_type_id', 'item_sub_type_id', 'item_category_id']);
+    const TYPE_ID_KEYS = new Set([
+      "pms_inventory_type_id",
+      "inventory_type_master_id",
+      "inventory_type_id",
+      "item_type_id",
+    ]);
+    const SUBTYPE_ID_KEYS = new Set([
+      "pms_inventory_sub_type_id",
+      "inventory_sub_type_id",
+      "item_sub_type_id",
+      "item_category_id",
+    ]);
     if (TYPE_ID_KEYS.has(key)) {
       if (/^\d+$/.test(v) && invTypeMap[v]) return invTypeMap[v];
       return v;
@@ -539,19 +863,41 @@ export const InventoryDetailsPage = () => {
     const dated = formatMaybeDate(key, enumd);
     if (dated !== enumd) return dated;
     // Category-like keys: show as-is (name) or numeric id when no mapping available
-    if (['category', 'category_id', 'category_name', 'inventory_category_id', 'pms_inventory_category_id', 'pms_inventory_category'].includes(key)) {
+    if (
+      [
+        "category",
+        "category_id",
+        "category_name",
+        "inventory_category_id",
+        "pms_inventory_category_id",
+        "pms_inventory_category",
+      ].includes(key)
+    ) {
       try {
         // If it looks like a JSON object/string, try to parse out name
         const trimmed = enumd.trim();
-        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
           const obj = JSON.parse(trimmed);
           if (obj?.name) return String(obj.name);
         }
-      } catch {/* ignore */ }
+      } catch {
+        /* ignore */
+      }
       return enumd;
     }
     // Numbers for common numeric fields
-    if (['quantity', 'min_stock_level', 'max_stock_level', 'min_order_level', 'cgst_rate', 'sgst_rate', 'igst_rate', 'cost'].includes(key)) {
+    if (
+      [
+        "quantity",
+        "min_stock_level",
+        "max_stock_level",
+        "min_order_level",
+        "cgst_rate",
+        "sgst_rate",
+        "igst_rate",
+        "cost",
+      ].includes(key)
+    ) {
       return formatNumberLike(key, enumd);
     }
     return enumd;
@@ -559,7 +905,7 @@ export const InventoryDetailsPage = () => {
 
   // Generic display helper: format numbers and known keys consistently
   const display = (key: string, val: any): string => {
-    if (val === null || val === undefined || val === '') return '—';
+    if (val === null || val === undefined || val === "") return "—";
     // For numbers, keep commas (formatValue handles common numeric keys)
     try {
       return formatValue(key, String(val));
@@ -569,7 +915,7 @@ export const InventoryDetailsPage = () => {
   };
 
   const toggleRow = (rowId: number) => {
-    setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
+    setExpandedRows((prev) => ({ ...prev, [rowId]: !prev[rowId] }));
   };
 
   const relativeTime = (dateString: string) => {
@@ -577,25 +923,27 @@ export const InventoryDetailsPage = () => {
       const date = new Date(dateString);
       const diffMs = Date.now() - date.getTime();
       const sec = Math.floor(diffMs / 1000);
-      if (sec < 60) return sec + 's ago';
+      if (sec < 60) return sec + "s ago";
       const min = Math.floor(sec / 60);
-      if (min < 60) return min + 'm ago';
+      if (min < 60) return min + "m ago";
       const hr = Math.floor(min / 60);
-      if (hr < 24) return hr + 'h ago';
+      if (hr < 24) return hr + "h ago";
       const day = Math.floor(hr / 24);
-      if (day < 30) return day + 'd ago';
+      if (day < 30) return day + "d ago";
       const mon = Math.floor(day / 30);
-      if (mon < 12) return mon + 'mo ago';
+      if (mon < 12) return mon + "mo ago";
       const yr = Math.floor(mon / 12);
-      return yr + 'y ago';
-    } catch { return ''; }
+      return yr + "y ago";
+    } catch {
+      return "";
+    }
   };
 
   const handleDownload = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
     if (!baseUrl || !token) {
-      toast.error('Missing baseUrl or token');
+      toast.error("Missing baseUrl or token");
       return;
     }
     try {
@@ -604,16 +952,16 @@ export const InventoryDetailsPage = () => {
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to download QR PDF');
+      if (!response.ok) throw new Error("Failed to download QR PDF");
       const blob = await response.blob();
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
       link.download = `qr-code-${id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      toast.error('Failed to download QR PDF');
+      toast.error("Failed to download QR PDF");
     } finally {
       setDownloading(false);
     }
@@ -642,7 +990,6 @@ export const InventoryDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
-
       <div className="flex flex-col gap-2 mb-4">
         <button
           onClick={handleBack}
@@ -653,7 +1000,9 @@ export const InventoryDetailsPage = () => {
         </button>
 
         <div className="flex flex-row items-center justify-between">
-          <span className="text-2xl font-bold text-[#1a1a1a]">{inventoryData?.name || '—'}</span>
+          <span className="text-2xl font-bold text-[#1a1a1a]">
+            {inventoryData?.name || "—"}
+          </span>
           {/* <Button
             onClick={handleEdit}
             variant="outline"
@@ -663,62 +1012,82 @@ export const InventoryDetailsPage = () => {
             Edit
           </Button> */}
           {shouldShow("Inventory", "update") && (
-          <Button
-            onClick={handleEdit}
-            variant="outline"
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-          >
-            <svg
-              width="21"
-              height="21"
-              viewBox="0 0 21 21"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+            <Button
+              onClick={handleEdit}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
             >
-              <mask
-                id="mask0_107_2076"
-                style={{ maskType: "alpha" }}
-                maskUnits="userSpaceOnUse"
-                x="0"
-                y="0"
+              <svg
                 width="21"
                 height="21"
+                viewBox="0 0 21 21"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <rect width="21" height="21" fill="#DA7756" />
-              </mask>
-              <g mask="url(#mask0_107_2076)">
-                <path
-                  d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
-                  fill="#DA7756"
-                />
-              </g>
-            </svg>
-          </Button>
+                <mask
+                  id="mask0_107_2076"
+                  style={{ maskType: "alpha" }}
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width="21"
+                  height="21"
+                >
+                  <rect width="21" height="21" fill="#DA7756" />
+                </mask>
+                <g mask="url(#mask0_107_2076)">
+                  <path
+                    d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                    fill="#DA7756"
+                  />
+                </g>
+              </svg>
+            </Button>
           )}
         </div>
-
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="inventory-detail" className="w-full">
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
-            {[
-              { label: 'Inventory Detail', value: 'inventory-detail' },
-              { label: 'QR Code', value: 'qr-code' },
-              { label: 'Asset Information', value: 'asset-information' },
-              { label: 'History', value: 'history' },
-            ].map((tab) => (
+            {(
+              [
+                {
+                  label: "Inventory Detail",
+                  value: "inventory-detail",
+                  badge: undefined,
+                },
+                { label: "Batch & Expiry", value: "batch-expiry", badge: "" },
+                { label: "QR Code", value: "qr-code", badge: undefined },
+                {
+                  label: "Asset Information",
+                  value: "asset-information",
+                  badge: undefined,
+                },
+                { label: "History", value: "history", badge: undefined },
+              ] as { label: string; value: string; badge?: string }[]
+            ).map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0 text-sm"
               >
-                {tab.label}
+                <span className="flex items-center justify-center gap-1.5">
+                  {tab.label}
+                  {tab.badge && (
+                    <span className="rounded-full bg-[#DA7756]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#DA7756] leading-none">
+                      {tab.badge}
+                    </span>
+                  )}
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <TabsContent value="inventory-detail" className="p-4 sm:p-6 space-y-6">
+          <TabsContent
+            value="inventory-detail"
+            className="p-4 sm:p-6 space-y-6"
+          >
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -731,28 +1100,33 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Site</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.site || '—'}
+                    {inventoryData?.site || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Name</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.name || '—'}
+                    {inventoryData?.name || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Min Stock Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('min_stock_level', (inventoryData as any)?.min_stock_level)}
+                    {display(
+                      "min_stock_level",
+                      (inventoryData as any)?.min_stock_level
+                    )}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Type</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '—'}
+                    {inventoryData?.inventory_type
+                      ? getInventoryType(inventoryData.inventory_type)
+                      : "—"}
                   </span>
                 </div>
                 {/* <div className="flex text-sm">
@@ -773,126 +1147,142 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Criticality</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.criticality ? getCriticality(inventoryData.criticality) : '—'}
+                    {inventoryData?.criticality
+                      ? getCriticality(inventoryData.criticality)
+                      : "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Code</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.code || '—'}
+                    {inventoryData?.code || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Serial Number</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.serial_number || '—'}
+                    {inventoryData?.serial_number || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Quantity</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('quantity', (inventoryData as any)?.quantity)}
+                    {display("quantity", (inventoryData as any)?.quantity)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">SGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('sgst_rate', (inventoryData as any)?.sgst_rate)}
+                    {display("sgst_rate", (inventoryData as any)?.sgst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">IGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('igst_rate', (inventoryData as any)?.igst_rate)}
+                    {display("igst_rate", (inventoryData as any)?.igst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Site</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.site || '—'}
+                    {inventoryData?.site || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Active</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.active ? 'Active' : 'Inactive'}
+                    {inventoryData?.active ? "Active" : "Inactive"}
                   </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-500 w-24">Rate Contract Vendor</span>
+                  <span className="text-gray-500 w-24">
+                    Rate Contract Vendor
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.rate_contract_vendor_code || '—'}
+                    {inventoryData?.rate_contract_vendor_code || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Max Stock Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('max_stock_level', (inventoryData as any)?.max_stock_level)}
+                    {display(
+                      "max_stock_level",
+                      (inventoryData as any)?.max_stock_level
+                    )}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Min. Order Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('min_order_level', (inventoryData as any)?.min_order_level)}
+                    {display(
+                      "min_order_level",
+                      (inventoryData as any)?.min_order_level
+                    )}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">SAC/HSN</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {hsnCodeDisplay || (inventoryData?.hsn_id ? String((inventoryData as any).hsn_id) : '—')}
+                    {hsnCodeDisplay ||
+                      (inventoryData?.hsn_id
+                        ? String((inventoryData as any).hsn_id)
+                        : "—")}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Cost</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {((inventoryData as any)?.cost === null || (inventoryData as any)?.cost === undefined) ? 'NA' : display('cost', (inventoryData as any)?.cost)}
+                    {(inventoryData as any)?.cost === null ||
+                    (inventoryData as any)?.cost === undefined
+                      ? "NA"
+                      : display("cost", (inventoryData as any)?.cost)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Tax Category</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {(inventoryData as any)?.tax_category ?? '—'}
+                    {(inventoryData as any)?.tax_category ?? "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Category Code</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {(inventoryData as any)?.category_code ?? '—'}
+                    {(inventoryData as any)?.category_code ?? "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">SAP Plant Code</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {(inventoryData as any)?.sap_plant_code ?? '—'}
+                    {(inventoryData as any)?.sap_plant_code ?? "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">CGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('cgst_rate', (inventoryData as any)?.cgst_rate)}
+                    {display("cgst_rate", (inventoryData as any)?.cgst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Eco-friendly</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.green_product ? 'Yes' : 'No'}
+                    {inventoryData?.green_product ? "Yes" : "No"}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -906,7 +1296,7 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Category</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.category || '—'}
+                    {inventoryData?.category || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -920,23 +1310,39 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Expired</span>
                   <span className="flex items-center gap-2">
                     <span className="text-gray-500">:</span>
-                    {((inventoryData as any)?.expired === true || String((inventoryData as any)?.expired).toLowerCase() === 'true') ? (
-                      <span className="inline-flex items-center bg-[#DA7756]/10 text-[#DA7756]" style={expiryStatusPillStyle}>Expired</span>
+                    {(inventoryData as any)?.expired === true ||
+                    String((inventoryData as any)?.expired).toLowerCase() ===
+                      "true" ? (
+                      <span
+                        className="inline-flex items-center bg-[#DA7756]/10 text-[#DA7756]"
+                        style={expiryStatusPillStyle}
+                      >
+                        Expired
+                      </span>
                     ) : (
-                      <span className="inline-flex items-center bg-green-100 text-green-700" style={expiryStatusPillStyle}>Valid</span>
+                      <span
+                        className="inline-flex items-center bg-green-100 text-green-700"
+                        style={expiryStatusPillStyle}
+                      >
+                        Valid
+                      </span>
                     )}
                   </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-500 w-24">Total (Including Tax)</span>
+                  <span className="text-gray-500 w-24">
+                    Total (Including Tax)
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {display('total_including_tax', (inventoryData as any)?.total_including_tax)}
+                    {display(
+                      "total_including_tax",
+                      (inventoryData as any)?.total_including_tax
+                    )}
                   </span>
                 </div>
               </div>
             </div>
-
 
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
@@ -950,14 +1356,15 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Site</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.site || '—'}
+                    {inventoryData?.site || "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Vendor</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {(inventoryData as any)?.supplier_detail?.company_name || '—'}
+                    {(inventoryData as any)?.supplier_detail?.company_name ||
+                      "—"}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -971,7 +1378,7 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Email ID</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {(inventoryData as any)?.supplier_detail?.email || '—'}
+                    {(inventoryData as any)?.supplier_detail?.email || "—"}
                   </span>
                 </div>
               </div>
@@ -988,51 +1395,56 @@ export const InventoryDetailsPage = () => {
               </div>
               <div className="p-4">
                 {feedsError && (
-                  <div className="text-brand-error text-sm mb-3">{feedsError}</div>
+                  <div className="text-brand-error text-sm mb-3">
+                    {feedsError}
+                  </div>
                 )}
                 <div className="w-full min-w-0 max-w-full">
                   <EnhancedTable
                     data={feeds.map((feed) => {
-                      const changes = parseChangedAttr(feed.changed_attr).filter(
-                        (c) => !HIDDEN_KEYS.has(c.key)
-                      );
+                      const changes = parseChangedAttr(
+                        feed.changed_attr
+                      ).filter((c) => !HIDDEN_KEYS.has(c.key));
                       return {
                         ...feed,
                         id: feed.id,
                         dateTime: formatDateTime(feed.created_at),
                         relative: relativeTime(feed.created_at),
-                        changedBy: feed.changed_by || '',
-                        logType: feed.log_type?.replace('Pms::', '') || '',
+                        changedBy: feed.changed_by || "",
+                        logType: feed.log_type?.replace("Pms::", "") || "",
                         changesList: changes,
                         changesSearch: changes
                           .map(
                             (c) =>
                               `${LABELS[c.key] || startCase(c.key)} ${formatValue(c.key, c.from)} ${formatValue(c.key, c.to)}`
                           )
-                          .join(' '),
+                          .join(" "),
                       };
                     })}
                     columns={historyColumns}
                     renderCell={(item: any, columnKey: string) => {
                       switch (columnKey) {
-                        case 'dateTime':
+                        case "dateTime":
                           return (
                             <div className="flex flex-col gap-0.5 whitespace-nowrap">
-                              <span className="text-sm font-medium text-gray-900" title={item.created_at}>
-                                {item.dateTime || '—'}
+                              <span
+                                className="text-sm font-medium text-gray-900"
+                                title={item.created_at}
+                              >
+                                {item.dateTime || "—"}
                               </span>
                               <span className="text-[11px] text-gray-500 leading-none">
-                                {item.relative || ''}
+                                {item.relative || ""}
                               </span>
                             </div>
                           );
-                        case 'changedBy':
+                        case "changedBy":
                           return (
                             <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
-                              {item.changedBy || '—'}
+                              {item.changedBy || "—"}
                             </span>
                           );
-                        case 'logType':
+                        case "logType":
                           return item.logType ? (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-light text-brand whitespace-nowrap leading-none">
                               {item.logType}
@@ -1040,13 +1452,15 @@ export const InventoryDetailsPage = () => {
                           ) : (
                             <span className="text-gray-400">—</span>
                           );
-                        case 'changes': {
+                        case "changes": {
                           const changes = item.changesList || [];
                           const expanded = !!expandedRows[item.id];
                           if (changes.length === 0) {
                             return <span className="text-gray-400">—</span>;
                           }
-                          const visible = expanded ? changes : changes.slice(0, 3);
+                          const visible = expanded
+                            ? changes
+                            : changes.slice(0, 3);
                           return (
                             <div className="flex flex-col gap-1.5 min-w-[280px] max-w-xl">
                               {visible.map((c: any) => (
@@ -1081,7 +1495,7 @@ export const InventoryDetailsPage = () => {
                                     <ChevronDown className="w-3 h-3" />
                                   )}
                                   {expanded
-                                    ? 'Show less'
+                                    ? "Show less"
                                     : `Show ${changes.length - 3} more`}
                                 </button>
                               )}
@@ -1089,7 +1503,7 @@ export const InventoryDetailsPage = () => {
                           );
                         }
                         default:
-                          return '—';
+                          return "—";
                       }
                     }}
                     storageKey="inventory-details-history-table"
@@ -1109,6 +1523,145 @@ export const InventoryDetailsPage = () => {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="batch-expiry" className="p-4 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-[700]">Batch & Expiry</h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Each stock receipt is tracked as its own batch with its own
+                  expiry date.
+                </p>
+              </div>
+              <Button
+                onClick={handleAddConsume}
+                className="bg-[#DA7756] hover:bg-[#C86A4D] text-white px-4"
+              >
+                Add/Consume
+              </Button>
+            </div>
+            {batchesLoading ? (
+              <div
+                className="space-y-3"
+                aria-busy="true"
+                aria-label="Loading batches"
+              >
+                {[0, 1, 2].map((row) => (
+                  <div
+                    key={row}
+                    className="h-[52px] animate-pulse rounded-lg border border-gray-200 bg-gray-100"
+                  />
+                ))}
+                <p className="text-sm text-gray-500">Loading batches…</p>
+              </div>
+            ) : batches.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 py-8 text-center text-sm text-gray-500">
+                {batchesError
+                  ? "Could not load batches for this item"
+                  : "No batches available for this item"}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F1EB] text-left text-[11px] uppercase tracking-wide text-gray-600">
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Batch No.
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Date Added
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        GRN / Reference
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                        Qty Received
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                        Qty Remaining
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Unit
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Expiry Date
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Days Left
+                      </th>
+                      <th className="px-4 py-3 font-semibold whitespace-nowrap">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batches.map((batch, idx) => {
+                      const days = hasValidDate(batch.expiry_date)
+                        ? daysUntil(batch.expiry_date)
+                        : null;
+                      return (
+                        <tr
+                          key={batch.key}
+                          className="border-t border-gray-100"
+                        >
+                          <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">
+                            B-{String(idx + 1).padStart(3, "0")}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {batch.date_added
+                              ? formatBatchDate(batch.date_added)
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                            {batch.grn_number}
+                          </td>
+                          <td className="px-4 py-3 text-center text-gray-700">
+                            {batch.received ?? batch.available}
+                          </td>
+                          <td className="px-4 py-3 text-center font-semibold text-gray-900">
+                            {batch.available}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {formatUnit((inventoryData as any)?.unit)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {formatBatchDate(batch.expiry_date)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {days === null
+                              ? "—"
+                              : days < 0
+                                ? `${Math.abs(days)} overdue`
+                                : days}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <ExpiryPill expiryDate={batch.expiry_date} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-[#F5F1EB] font-bold text-gray-900">
+                      <td colSpan={3} className="px-4 py-3">
+                        Total
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {batches.reduce(
+                          (sum, b) => sum + (b.received ?? b.available),
+                          0
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {batches.reduce((sum, b) => sum + b.available, 0)}
+                      </td>
+                      <td colSpan={4}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="qr-code" className="p-4 sm:p-6">
@@ -1141,7 +1694,7 @@ export const InventoryDetailsPage = () => {
                           Downloading...
                         </>
                       ) : (
-                        'Download QR Code'
+                        "Download QR Code"
                       )}
                     </button>
                   </div>
@@ -1167,7 +1720,12 @@ export const InventoryDetailsPage = () => {
                     <span className="text-gray-500 w-24  ">Name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      <span>: {inventoryData?.asset_name || inventoryData?.name || '—'}</span>
+                      <span>
+                        :{" "}
+                        {inventoryData?.asset_name ||
+                          inventoryData?.name ||
+                          "—"}
+                      </span>
                     </span>
                   </div>
 
@@ -1175,21 +1733,25 @@ export const InventoryDetailsPage = () => {
                     <span className="text-gray-500 w-24">Group</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.pms_asset_group || inventoryData?.group || '—'}
+                      {inventoryData?.pms_asset_group ||
+                        inventoryData?.group ||
+                        "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">SubGroup</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.pms_asset_sub_group || inventoryData?.sub_group || '—'}
+                      {inventoryData?.pms_asset_sub_group ||
+                        inventoryData?.sub_group ||
+                        "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Site</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.site || '—'}
+                      {inventoryData?.site || "—"}
                     </span>
                   </div>
                 </div>
@@ -1198,35 +1760,35 @@ export const InventoryDetailsPage = () => {
                     <span className="text-gray-500 w-24">Building</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.building || '—'}
+                      {inventoryData?.building || "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Wing</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.wing || '—'}
+                      {inventoryData?.wing || "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Floor</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.floor || '—'}
+                      {inventoryData?.floor || "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Area</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.area || '—'}
+                      {inventoryData?.area || "—"}
                     </span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Room</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {inventoryData?.room || '—'}
+                      {inventoryData?.room || "—"}
                     </span>
                   </div>
                 </div>

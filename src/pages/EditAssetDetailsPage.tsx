@@ -74,6 +74,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { AddCustomFieldModal } from "@/components/AddCustomFieldModal";
+import { AssetCategorySelector } from "@/components/AssetCategorySelector";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationData } from "@/hooks/useLocationData";
@@ -5932,42 +5933,7 @@ export const EditAssetDetailsPage = () => {
               ASSET CATEGORY
             </div>
             <div className="w-full">
-              <RadioGroup
-                value={selectedAssetCategory}
-                onValueChange={() => { }}
-                aria-readonly
-                className="flex flex-wrap gap-2 lg:gap-3 pointer-events-none opacity-60"
-              >
-                {[
-                  "Land",
-                  "Building",
-                  "Leasehold Improvement",
-                  "Vehicle",
-                  "Furniture & Fixtures",
-                  "IT Equipment",
-                  "Machinery & Equipment",
-                  "Tools & Instruments",
-                  "Meter",
-                ].map((category) => (
-                  <div
-                    key={category}
-                    className="flex flex-col items-center space-y-1 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[90px] flex-1"
-                  >
-                    <RadioGroupItem
-                      value={category}
-                      id={category}
-                      className="mx-auto"
-                      disabled
-                    />
-                    <label
-                      htmlFor={category}
-                      className="text-xs font-medium cursor-pointer text-center leading-tight"
-                    >
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <AssetCategorySelector value={selectedAssetCategory} disabled />
             </div>
 
             {/* Validation Requirements Info - Show when category is selected */}

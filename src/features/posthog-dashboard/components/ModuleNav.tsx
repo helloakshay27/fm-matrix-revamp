@@ -1,8 +1,8 @@
 import { useDashboard } from '../context/DashboardContext';
 import { fmtC } from '../data/format';
 
-/** How many modules / sub-modules get their own button before the "more" select takes over. */
-const VISIBLE = 8;
+/** Every module / sub-module gets its own button; the row scrolls sideways (see .mnav-buckets). */
+const VISIBLE = Infinity;
 
 export function ModuleNav() {
   const { vm, setModule, setSubModule } = useDashboard();

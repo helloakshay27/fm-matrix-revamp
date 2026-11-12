@@ -1,11 +1,11 @@
 import { usePostHog } from "@posthog/react";
-import { captureCMEvent } from "@/utils/posthogHelpers";
+import { capturePostHogEvent, resolveCMProjectContext } from "@/utils/posthogHelpers";
 
 /**
  * Central Club Management product-analytics event catalogue.
  *
  * Use this hook on every Club Management screen instead of calling the capture
- * helpers directly — it keeps event names and the CM-01/P-238 context consistent
+ * helpers directly — it keeps event names and the project context (CM-01/P-238 on Club screens) consistent
  * across all ~15 Club Management modules. Module labels are the catalogue names
  * ("Membership", "Staff", "Occupant", "Guest", "Class Setup", "Amenity Booking",
  * "Notice", "Event", "Payment", "Vendor", "Community", "Invoice", "Credit Note",
@@ -17,9 +17,13 @@ import { captureCMEvent } from "@/utils/posthogHelpers";
 export function useClubManagementEvents() {
   const posthog = usePostHog();
 
+  // The same project context as this screen's page views (resolveCMProjectContext): Club Management
+  // routes, and shared screens reached from a Club flow, report CM-01/P-238; a direct FM visit to a
+  // shared screen (ticket-management settings, roles, …) reports FM-01. Always stamping CM-01 put FM's
+  // own settings activity into Club's analytics, as custom events with no matching page views.
   const capture = (event: string, props: Record<string, unknown> = {}) => {
     if (!posthog) return;
-    captureCMEvent(event, props);
+    capturePostHogEvent(event, { ...resolveCMProjectContext(), ...props });
   };
 
   return {

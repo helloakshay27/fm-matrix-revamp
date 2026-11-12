@@ -42,9 +42,14 @@ export interface CalendarRangeFilters {
 export interface CalendarWeeklyFilters {
   to: string; // YYYY-MM-DD
   weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   os?: CalendarOsType[];
   provider?: string;
 }
+
+/** Calendar's own usage-analytics API. */
+const CALENDAR_ADOPTION_PATH = '/commercial/calendar/adoption';
 
 const client = axios.create({
   baseURL: ANALYTICS_BASE_URL,
@@ -66,9 +71,8 @@ client.interceptors.request.use((config) => {
 });
 
 function baseParams(os?: CalendarOsType[], provider?: string): Record<string, string> {
-  const p: Record<string, string> = {
-    app_id: CALENDAR_APP_ID,
-  };
+  // The Calendar API (Commercial::CalendarController) fixes the app on the server, so no app_id is sent.
+  const p: Record<string, string> = {};
   if (os?.length) {
     // Specific platform selected → send lowercase os param (ios / android)
     p.os = os.map((o) => o.toLowerCase()).join(',');
@@ -96,7 +100,7 @@ const weeklyParams = (f: CalendarWeeklyFilters): Record<string, string> => ({
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
   const qs = new URLSearchParams(params).toString();
-  const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
+  const res = await client.get<T>(`${CALENDAR_ADOPTION_PATH}/${path}?${qs}`);
   return res.data;
 }
 
@@ -117,7 +121,7 @@ export const fetchAdoptionTrend = (f: CalendarWeeklyFilters) =>
   get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
 
 export const fetchGrowth = (f: CalendarWeeklyFilters) =>
-  get<GrowthResponse>('growth', weeklyParams(f));
+  get<GrowthResponse>('growth', { ...weeklyParams(f), ...(f.from ? { from: f.from } : {}) });
 
 export const fetchRetention = (f: CalendarWeeklyFilters) =>
   get<RetentionResponse>('retention', weeklyParams(f));
@@ -157,7 +161,11 @@ export type {
 
 export interface RecentActiveUser {
   user_id: string;
-  display_name: string;
+  /** "First Last" as the API sends it (the person's name). */
+  user_name?: string | null;
+  email?: string | null;
+  /** Older API field; the API now sends user_name. */
+  display_name?: string | null;
   path: string | null;
   last_event: string | null;
   minutes_ago: number | null;
@@ -168,7 +176,7 @@ export interface RecentActiveUsersResponse {
   users: RecentActiveUser[];
 }
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = `${CALENDAR_ADOPTION_PATH}/active_users_export`;
 
 export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', {
@@ -179,7 +187,6 @@ export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
 export async function downloadRecentActiveUsers(f: CalendarRangeFilters): Promise<Blob> {
   const qs = new URLSearchParams({
     ...rangeParams(f),
-    limit: '10',
   });
   const response = await client.get<Blob>(
     `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,

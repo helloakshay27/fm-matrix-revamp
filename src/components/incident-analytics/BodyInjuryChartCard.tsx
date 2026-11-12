@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import humanBodyImg from "@/assets/human_body.png";
 import incidentAnalyticsAPI from "@/services/incidentAnalyticsAPI";
+import type { BodyInjuryChartResponse } from "@/services/incidentAnalyticsAPI";
+
+export interface BodyInjuryChartApiState {
+  response: BodyInjuryChartResponse | null;
+  loading: boolean;
+  error: string | null;
+}
 
 interface BodyInjuryChartCardProps {
   /** YYYY-MM-DD */
@@ -9,6 +16,7 @@ interface BodyInjuryChartCardProps {
   endDate?: string;
   /** Comma-separated site ids from the dashboard filter (all sites, or the single selected one). */
   siteIds?: string;
+  apiState?: BodyInjuryChartApiState;
 }
 
 /** "2025-01-01" -> local Date (new Date("2025-01-01") would parse as UTC). */
@@ -16,6 +24,16 @@ const parseYMD = (s?: string): Date => {
   if (!s) return new Date();
   const [y, m, d] = s.split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
+};
+
+const parsePercentages = (response: BodyInjuryChartResponse | null): Record<string, number> => {
+  const raw = response?.percentage ?? response?.data?.percentage ?? {};
+  const mapped: Record<string, number> = {};
+  Object.entries(raw).forEach(([part, value]) => {
+    const n = Number(value);
+    if (Number.isFinite(n)) mapped[part] = n;
+  });
+  return mapped;
 };
 
 // ── Coordinate space ──────────────────────────────────────────────────────────
@@ -113,39 +131,39 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
   startDate,
   endDate,
   siteIds,
+  apiState,
 }) => {
-  const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [response, setResponse] = useState<BodyInjuryChartResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // GET /incident_dashboard/body_injury_chart.json -> { response: <image url>, percentage: { Head: 14.29, ... } }
+  // GET /incident_dashboard/body_injury_chart.json -> image URL, percentages and category/body-part breakdown.
   useEffect(() => {
+    if (apiState) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
     incidentAnalyticsAPI
       .getBodyInjuryChart(parseYMD(startDate), parseYMD(endDate), siteIds)
-      .then((res: any) => {
+      .then((res) => {
         if (cancelled) return;
-        const raw = res?.percentage ?? res?.data?.percentage ?? {};
-        const mapped: Record<string, number> = {};
-        Object.entries(raw).forEach(([part, value]) => {
-          const n = Number(value);
-          if (Number.isFinite(n)) mapped[part] = n;
-        });
-        setPercentages(mapped);
+        setResponse(res);
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setPercentages({});
+        setResponse(null);
         setError(e instanceof Error ? e.message : "Failed to load body injury data");
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [startDate, endDate, siteIds]);
+  }, [startDate, endDate, siteIds, apiState]);
 
+  const effectiveResponse = apiState ? apiState.response : response;
+  const effectiveLoading = apiState ? apiState.loading : loading;
+  const effectiveError = apiState ? apiState.error : error;
+  const percentages = parsePercentages(effectiveResponse);
   const sortedEntries = Object.entries(percentages).sort((a, b) => b[1] - a[1]);
 
   return (
@@ -168,14 +186,12 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
       </div>
 
       <div className="p-5">
-        {/* ── Body diagram with overlaid injury markers ── */}
         <div className="flex justify-center">
               <svg
                 viewBox="-200 0 1293 873"
                 style={{ width: "100%", maxWidth: "460px" }}
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Real PNG body image anchored at origin */}
                 <image
                   href={humanBodyImg}
                   x="0"
@@ -258,8 +274,7 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
               </svg>
             </div>
 
-            {/* ── Legend ── */}
-            {sortedEntries.length > 0 && (
+        {sortedEntries.length > 0 && (
               <div className="mt-4 pt-4">
                 <p
                   className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3"
@@ -289,19 +304,19 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
 
 
               </div>
-            )}
+        )}
 
-        {loading && (
+        {effectiveLoading && (
           <div className="flex items-center justify-center h-16 text-sm text-gray-400">
             Loading body injury data…
           </div>
         )}
-        {!loading && error && (
+        {!effectiveLoading && effectiveError && (
           <div className="flex items-center justify-center h-16 text-sm text-red-500">
-            {error}
+            {effectiveError}
           </div>
         )}
-        {!loading && !error && sortedEntries.length === 0 && (
+        {!effectiveLoading && !effectiveError && sortedEntries.length === 0 && (
           <div className="flex items-center justify-center h-16 text-sm text-gray-400">
             No injury data available
           </div>

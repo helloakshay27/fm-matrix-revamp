@@ -12,7 +12,6 @@ import type {
 } from '../api/adoptionApi';
 import type { SiteLeagueEntry } from '../api/queries';
 import {
-  GROWTH_WEEKS,
   RETENTION_WEEKS,
   ROLE_COLORS,
   TREND_WEEKS,
@@ -271,7 +270,7 @@ export function buildTraffic(
       disp: t ? fmtC(t.screen_views) : '—',
       delta: deltaOf(dp?.screen_views),
       goodUp: true,
-      sub: 'total pageviews',
+      sub: 'page views + app screen views',
       raw: t?.screen_views ?? 0,
     },
     {
@@ -299,7 +298,7 @@ export function buildTraffic(
       disp: pctVal(t?.bounce_rate),
       delta: deltaOf(dp?.bounce_rate),
       goodUp: false,
-      sub: '≤ 1 pageview · lower is better',
+      sub: 'never past sign-in · lower is better',
       raw: round1(t?.bounce_rate ?? 0),
       unit: '%',
     },
@@ -413,13 +412,13 @@ export function buildAdopt(
       disp: a3?.value == null ? '—' : `${a3.value > 0 ? '+' : ''}${round1(a3.value)}%`,
       delta: null,
       goodUp: true,
-      sub: a3 ? `WAU ${fmtC(a3.wau_now)} vs ${fmtC(a3.wau_4wk_ago)} 4 wks ago` : 'WAU vs 4 wks ago',
+      sub: a3 ? `WAU ${fmtC(a3.wau_now)} vs ${fmtC(a3.baseline_avg ?? 0)} 8-wk avg` : 'WAU vs 8-wk avg',
       raw: round1(a3?.value ?? 0),
       unit: '%',
     },
     {
       id: 'A5',
-      label: '14-Day Activation (A5)',
+      label: '14-Day Activation (A4)',
       disp: pctVal(act?.value),
       delta: deltaOf(act?.delta_pct),
       goodUp: true,
@@ -429,7 +428,7 @@ export function buildAdopt(
     },
     {
       id: 'A6',
-      label: 'Module Breadth (A6)',
+      label: 'Module Breadth (A5)',
       disp: breadth ? `${breadth.in_use} / ${breadth.total}` : '—',
       delta: null,
       goodUp: true,
@@ -444,7 +443,8 @@ export function buildAdopt(
   const curMap = new Map((trend?.weekly?.current ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
   const prevMap = new Map((trend?.weekly?.previous ?? []).map((w) => [w.week.slice(0, 10), w.wau]));
 
-  const growthWeeks: GrowthWeek[] = (growth?.weeks ?? []).slice(-GROWTH_WEEKS).map((w) => ({
+  // Every week of the selected range (the API caps it at 26), like the other dashboards.
+  const growthWeeks: GrowthWeek[] = (growth?.weeks ?? []).map((w) => ({
     label: mdLabel(w.week),
     nw: w.new,
     ret: w.returning,
@@ -645,7 +645,7 @@ export function buildFlows(
       disp: k?.f_vol?.value == null ? '—' : fmtC(k.f_vol.value),
       delta: deltaOf(k?.f_vol?.delta_pct),
       goodUp: true,
-      sub: 'sessions entering the flow',
+      sub: 'users who completed',
       raw: k?.f_vol?.value ?? 0,
     },
   ];

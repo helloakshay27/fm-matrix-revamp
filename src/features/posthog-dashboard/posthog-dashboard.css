@@ -904,3 +904,13 @@ select.mmore:hover{color:var(--ink);background:var(--surface-2)}
 @keyframes fm-pulse{50%{opacity:.45}}
 @media(max-width:1100px){.fm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.fm-grid{grid-template-columns:1fr}.fm-section-head{display:block}.fm-section-head span{display:block;margin-top:4px}}
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.mnav{min-width:0;max-width:100%}
+.mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.mnav-buckets > *{flex:0 0 auto}
+.mnav-buckets button{margin-bottom:0}
+.mnav-mods{min-width:0}
+.mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.mnav-mods .segbar > *{flex:0 0 auto}

@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { LineChart as LineChartIcon, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+import { VEDA_PALETTE } from "@/styles/vedaTheme";
 import { cn } from "@/lib/utils";
 import type { ChartInsightTone } from "./PieChartCard";
 
@@ -106,8 +106,8 @@ export function ComboBarLineChartCard({
   height = 240,
   className,
 }: ComboBarLineChartCardProps) {
-  const barColor = ANALYTICS_PALETTE[2];
-  const lineColor = ANALYTICS_PALETTE[6];
+  const barColor = VEDA_PALETTE[0];
+  const lineColor = VEDA_PALETTE[1];
 
   return (
     <Card className={cn("border-brand-border relative", className)}>

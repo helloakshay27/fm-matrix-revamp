@@ -163,6 +163,7 @@ export interface TicketResponse {
   site_name: string;
   created_at: string;
   issue_type: string;
+  ticket_type?: string | null;
   complaint_mode: string;
   service_or_asset: string | null;
   asset_task_occurrence_id: string | null;
@@ -257,6 +258,7 @@ export interface TicketFilters {
   date_range?: string;
   'q[date_range]'?: string; // Add support for q[date_range] parameter format
   category_type_id_eq?: number;
+  category_type_type_eq?: string;
   sub_category_id_eq?: number;
   dept_id_eq?: number;
   site_id_eq?: number;

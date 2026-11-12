@@ -6,6 +6,13 @@ import { PROVIDERS } from '../data/sampleData';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
 import { CALENDAR_APP_ID } from '../api/adoptionApi';
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 const PRESETS: DateRange[] = [7, 30, 90];
 
 /** Calendar App ships on iOS and Android, so the platform toggle is those two. */
@@ -93,8 +100,8 @@ export function ControlBar() {
                   type="date"
                   id="dateFrom"
                   value={draft.from}
-                  max={draft.to || undefined}
-                  onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                  max={draft.to && draft.to < todayYmd() ? draft.to : todayYmd()}
+                  onChange={(e) => setDraft((d) => ({ ...d, from: clampToToday(e.target.value) }))}
                 />
               </label>
               <label className="dr-field" htmlFor="dateTo">
@@ -104,7 +111,8 @@ export function ControlBar() {
                   id="dateTo"
                   value={draft.to}
                   min={draft.from || undefined}
-                  onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                  max={todayYmd()}
+                  onChange={(e) => setDraft((d) => ({ ...d, to: clampToToday(e.target.value) }))}
                 />
               </label>
             </div>

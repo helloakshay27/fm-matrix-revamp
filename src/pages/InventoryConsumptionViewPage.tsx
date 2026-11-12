@@ -1,42 +1,19 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, PlusCircle, Download, MapPin } from 'lucide-react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { RootState, AppDispatch } from '@/store/store';
-import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import {
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
-  CircularProgress,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-} from '@mui/material';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
-import { useLocationData } from '@/hooks/useLocationData';
-import { getAuthHeader } from '@/config/apiConfig';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Download } from "lucide-react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchInventoryConsumptionDetails } from "@/store/slices/inventoryConsumptionDetailsSlice";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { CircularProgress } from "@mui/material";
+import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
-const BRAND = '#DA7756';
-const ledgerCellClass = 'block w-full text-[12.5px] text-[var(--color-ink-68)]';
+const ledgerCellClass = "block w-full text-[12.5px] text-[var(--color-ink-68)]";
 const ledgerNumericCellClass = `${ledgerCellClass} text-right tabular-nums`;
-const ledgerIdentifierCellClass = 'block w-full text-[12.5px] font-medium text-[var(--color-text)]';
-
-interface HandoverUser {
-  id: number;
-  full_name: string;
-}
+const ledgerIdentifierCellClass =
+  "block w-full text-[12.5px] font-medium text-[var(--color-text)]";
 
 const InventoryConsumptionViewPage = () => {
   const { id } = useParams();
@@ -46,131 +23,37 @@ const InventoryConsumptionViewPage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const searchParams = new URLSearchParams(location.search);
-  const startDate = searchParams.get('start_date') || '';
-  const endDate = searchParams.get('end_date') || '';
+  const startDate = searchParams.get("start_date") || "";
+  const endDate = searchParams.get("end_date") || "";
 
   const { inventory, consumptions, loading, error } = useSelector(
     (state: RootState) => state.inventoryConsumptionDetails
   );
 
-  const [dateRange, setDateRange] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateRange, setDateRange] = useState("");
   const [isExporting, setIsExporting] = useState(false);
-  const [formData, setFormData] = useState({
-    type: 'Add',
-    quantity: '',
-    comments: '',
-  });
-  const [errors, setErrors] = useState<{ quantity: string }>({ quantity: '' });
-
-  // Handover Details
-  const [handoverTo, setHandoverTo] = useState('');
-  const [handoverUsers, setHandoverUsers] = useState<HandoverUser[]>([]);
-  const [buildingId, setBuildingId] = useState<number | ''>('');
-  const [wingId, setWingId] = useState<number | ''>('');
-  const [floorId, setFloorId] = useState<number | ''>('');
-  const [areaId, setAreaId] = useState<number | ''>('');
-
-  const {
-    buildings,
-    wings,
-    areas,
-    floors,
-    loading: locationLoading,
-    fetchBuildings,
-    fetchWings,
-    fetchAreas,
-    fetchFloors,
-  } = useLocationData();
-
-  // Resolve the current site the same way MovementToSection does — there's no
-  // per-page site selector here, so fall back to the globally selected site.
-  const currentSiteId = useMemo(() => {
-    const raw = localStorage.getItem('selectedSiteId');
-    if (!raw) return null;
-    const match = raw.match(/-?\d+/);
-    return match ? Number(match[0]) : null;
-  }, []);
-
-  useEffect(() => {
-    if (isModalOpen && currentSiteId) {
-      fetchBuildings(currentSiteId);
-    }
-  }, [isModalOpen, currentSiteId]);
-
-  useEffect(() => {
-    if (buildingId) {
-      fetchWings(Number(buildingId));
-      fetchAreas(0, Number(buildingId));
-      fetchFloors(0, Number(buildingId));
-      setWingId('');
-      setAreaId('');
-      setFloorId('');
-    }
-  }, [buildingId]);
-
-  useEffect(() => {
-    if (wingId && buildingId) {
-      fetchAreas(Number(wingId), Number(buildingId));
-      fetchFloors(0, Number(buildingId), Number(wingId));
-      setAreaId('');
-      setFloorId('');
-    }
-  }, [wingId]);
-
-  // Fetch the "Handover To" users list once, when the modal first opens.
-  useEffect(() => {
-    if (!isModalOpen) return;
-    const baseUrl = localStorage.getItem('baseUrl');
-    axios
-      .get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
-        headers: { Authorization: getAuthHeader() },
-      })
-      .then((res) => setHandoverUsers(res.data?.users || []))
-      .catch((err) => console.error('Error fetching handover users', err));
-  }, [isModalOpen]);
-
-  // Map backend error verbiage to friendly messages
-  const mapBackendError = (raw: any): string => {
-    let msg = '';
-    if (!raw) return msg;
-    if (Array.isArray(raw)) msg = raw.join(', ');
-    else if (typeof raw === 'object') {
-      try { msg = (Object.values(raw) as any[]).flat().join(', '); }
-      catch { msg = JSON.stringify(raw); }
-    } else if (typeof raw === 'string') {
-      msg = raw;
-    }
-    const normalized = msg.replace(/\s+/g, ' ').trim();
-    // Specific remap requested by product
-    if (/difference\s+quantity\s+is\s+invalid/i.test(normalized)) {
-      return 'Quantity exceeds available stock';
-    }
-    return normalized || '';
-  };
 
   const handleExport = async () => {
     try {
       if (!id) {
-        toast.error('Invalid inventory id');
+        toast.error("Invalid inventory id");
         return;
       }
       setIsExporting(true);
       // Use query range if provided, else fallback to current month-to-date
       const now = new Date();
       const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
       const fallbackStart = `${yyyy}-${mm}-01`;
       const fallbackEnd = `${yyyy}-${mm}-${dd}`;
       const effectiveStart = startDate || fallbackStart;
       const effectiveEnd = endDate || fallbackEnd;
 
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
       if (!baseUrl || !token) {
-        toast.error('Missing base URL or auth token');
+        toast.error("Missing base URL or auth token");
         setIsExporting(false);
         return;
       }
@@ -183,14 +66,14 @@ const InventoryConsumptionViewPage = () => {
 
       const resp = await fetch(exportUrl, {
         // token is passed in query as required by export endpoint
-        method: 'GET',
+        method: "GET",
       });
       if (!resp.ok) {
         throw new Error(`Export failed (${resp.status})`);
       }
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       // filename hint
       link.download = `inventory_consumption_${id}_${effectiveStart}_to_${effectiveEnd}.xlsx`;
@@ -198,10 +81,10 @@ const InventoryConsumptionViewPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Export started');
+      toast.success("Export started");
     } catch (e: any) {
-      console.error('Export error:', e);
-      toast.error(e?.message || 'Failed to export');
+      console.error("Export error:", e);
+      toast.error(e?.message || "Failed to export");
     } finally {
       setIsExporting(false);
     }
@@ -210,249 +93,155 @@ const InventoryConsumptionViewPage = () => {
   // EnhancedTable: columns config
   const columns = useMemo(
     () => [
-      { key: 'date', label: 'Date', sortable: true },
-      { key: 'opening', label: 'Opening', sortable: true },
-      { key: 'add_or_consume', label: 'Add / Consume', sortable: true },
-      { key: 'closing', label: 'Closing', sortable: true },
-      { key: 'consumption_type', label: 'Consumption Type', sortable: true },
-      { key: 'building', label: 'Building', sortable: true },
-      { key: 'wing', label: 'Wing', sortable: true },
-      { key: 'floor', label: 'Floor', sortable: true },
-      { key: 'area', label: 'Area', sortable: true },
-      { key: 'handover_to', label: 'Handover To', sortable: true },
-      { key: 'comments', label: 'Comments', sortable: false },
-      { key: 'consumed_by', label: 'Consumed By', sortable: true },
+      { key: "date", label: "Date", sortable: true },
+      { key: "opening", label: "Opening", sortable: true },
+      { key: "add_or_consume", label: "Add / Consume", sortable: true },
+      { key: "closing", label: "Closing", sortable: true },
+      { key: "consumption_type", label: "Consumption Type", sortable: true },
+      { key: "building", label: "Building", sortable: true },
+      { key: "wing", label: "Wing", sortable: true },
+      { key: "floor", label: "Floor", sortable: true },
+      { key: "area", label: "Area", sortable: true },
+      { key: "handover_to", label: "Handover To", sortable: true },
+      { key: "comments", label: "Comments", sortable: false },
+      { key: "consumed_by", label: "Consumed By", sortable: true },
     ],
     []
   );
 
-  // Helpers: sanitize and validate integer-only quantity
-  const sanitizeIntegerInput = (val: string) => val.replace(/[^0-9]/g, '');
-  const validateQuantity = (raw: string): string => {
-    if (raw === '') return '';
-    const n = parseInt(raw, 10);
-    if (!Number.isFinite(n)) return 'Invalid quantity';
-    if (n < 0) return 'Invalid quantity';
-    if (n === 0) return 'Quantity must be greater than 0';
-    const availableQuantity = inventory?.quantity;
-    if (typeof availableQuantity !== 'number' || !Number.isFinite(availableQuantity)) {
-      return 'Unable to verify available stock. Please reload and try again.';
-    }
-    if (n > availableQuantity) {
-      return `Quantity cannot exceed the available stock (${availableQuantity}).`;
-    }
-    return '';
-  };
-
-  // Check if all required fields are filled and valid
-  const isFormValid =
-    formData.quantity !== '' &&
-    errors.quantity === '';
-
   useEffect(() => {
     if (id && startDate && endDate) {
-      dispatch(fetchInventoryConsumptionDetails({
-        id,
-        start_date: startDate,
-        end_date: endDate,
-      }));
+      dispatch(
+        fetchInventoryConsumptionDetails({
+          id,
+          start_date: startDate,
+          end_date: endDate,
+        })
+      );
     }
   }, [dispatch, id, startDate, endDate]);
 
   const handleSubmit = () => {
-    console.log('Submitted with date range:', dateRange);
+    console.log("Submitted with date range:", dateRange);
   };
 
   const handleReset = () => {
-    setDateRange('');
+    setDateRange("");
   };
 
+  // Add / Consume is its own page; carry the date range so it can return here.
   const handleAddConsume = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setFormData({ type: 'Add', quantity: '', comments: '' });
-    setIsSubmitting(false);
-    setErrors({ quantity: '' });
-    setHandoverTo('');
-    setBuildingId('');
-    setWingId('');
-    setFloorId('');
-    setAreaId('');
-  };
-
-  const handleFormSubmit = async () => {
-    if (!id) return;
-
-    const quantityError = validateQuantity(formData.quantity);
-    if (quantityError) {
-      setErrors((prev) => ({ ...prev, quantity: quantityError }));
-      return;
-    }
-    if (!isFormValid) return;
-
-    setIsSubmitting(true);
-
-    // Ensure we have a valid date range (fallback: current month start -> today)
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const fallbackStart = `${yyyy}-${mm}-01`;
-    const fallbackEnd = `${yyyy}-${mm}-${dd}`;
-    const effectiveStart = startDate || fallbackStart;
-    const effectiveEnd = endDate || fallbackEnd;
-
-    // Final defensive validation
-    const qtyInt = parseInt(formData.quantity, 10);
-    if (!Number.isFinite(qtyInt) || qtyInt < 0) {
-      setErrors((prev) => ({ ...prev, quantity: 'Invalid quantity' }));
-      setIsSubmitting(false);
-      return;
-    }
-    if (qtyInt === 0) {
-      setErrors((prev) => ({ ...prev, quantity: 'Quantity must be greater than 0' }));
-      setIsSubmitting(false);
-      return;
-    }
-    const payload: Record<string, unknown> = {
-      resource_id: Number(id),
-      quantity: qtyInt,
-      comments: formData.comments,
-    };
-    if (buildingId !== '') payload.building_id = Number(buildingId);
-    if (wingId !== '') payload.wing_id = Number(wingId);
-    if (floorId !== '') payload.floor_id = Number(floorId);
-    if (areaId !== '') payload.area_id = Number(areaId);
-    if (handoverTo !== '') payload.handover_to_id = Number(handoverTo);
-
-    console.log('Payload (POST direct):', payload);
-
-    try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      if (!baseUrl || !token) throw new Error('Missing baseUrl/token');
-
-      const resp = await axios.post(`https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        }
-      });
-
-      // Backend may return 200 with success:false and an errors field
-      if (resp?.data && resp.data.success === false) {
-        const rawErrors = resp.data.errors || resp.data.message || resp.data.error;
-        const msg = mapBackendError(rawErrors);
-        toast.error(msg || 'Submission failed');
-        // Keep modal open so user can adjust values
-        setIsSubmitting(false);
-        return;
-      }
-
-      console.log('Refetching details with range:', { effectiveStart, effectiveEnd });
-      await dispatch(
-        fetchInventoryConsumptionDetails({ id, start_date: effectiveStart, end_date: effectiveEnd })
-      ).unwrap();
-      toast.success('Successfully submitted');
-      handleCloseModal();
-    } catch (err: any) {
-      console.error('Submit error:', {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-      });
-
-      if (err.response?.status === 500) {
-        toast.error('Server error occurred. Please try again later or contact support.');
-      } else if (err.response?.status === 404) {
-        toast.error('Resource not found. Please check the request and try again.');
-      } else {
-        const apiMsg = mapBackendError(
-          err.response?.data?.errors || err.response?.data?.message || err.response?.data?.error || err.message
-        );
-        toast.error(apiMsg || 'An unexpected error occurred. Please try again.');
-      }
-      handleCloseModal();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleInputChange = (field: string) => (event: any) => {
-    let value = event.target.value;
-    // Special handling for quantity: enforce integer-only input
-    if (field === 'quantity') {
-      value = sanitizeIntegerInput(String(value));
-      const err = validateQuantity(String(value));
-      setErrors((prev) => ({ ...prev, quantity: err }));
-    }
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    navigate(
+      `/maintenance/inventory-consumption/view/${id}/add${location.search}`
+    );
   };
 
   const handleBack = () => {
-    navigate('/maintenance/inventory-consumption');
+    navigate("/maintenance/inventory-consumption");
   };
 
   // Building/Wing/Floor/Area/Handover To can come back as a plain string,
   // a nested { id, name } object, or be absent entirely — normalize all
   // three to a renderable string instead of handing React a raw object.
   const displayName = (value: unknown): string => {
-    if (value === null || value === undefined || value === '') return '';
-    if (typeof value === 'string' || typeof value === 'number') return String(value);
-    if (typeof value === 'object' && 'name' in (value as Record<string, unknown>)) {
+    if (value === null || value === undefined || value === "") return "";
+    if (typeof value === "string" || typeof value === "number")
+      return String(value);
+    if (
+      typeof value === "object" &&
+      "name" in (value as Record<string, unknown>)
+    ) {
       const name = (value as Record<string, unknown>).name;
-      if (typeof name === 'string' || typeof name === 'number') return String(name);
+      if (typeof name === "string" || typeof name === "number")
+        return String(name);
     }
-    return '';
+    return "";
+  };
+
+  // Backend sends consumption_type as lower-case snake_case (e.g. "issue_to_site");
+  // show it title-cased without underscores ("Issue to Site").
+  const formatConsumptionType = (value: unknown): string => {
+    if (value === null || value === undefined || value === "") return "-";
+    const text = String(value).replace(/_/g, " ").replace(/\s+/g, " ").trim();
+    if (!text) return "-";
+    return text.replace(/\b\w/g, (ch) => ch.toUpperCase());
   };
 
   // Render cell content for EnhancedTable
-  const renderCell = useCallback(
-    (item: any, columnKey: string) => {
-      switch (columnKey) {
-        case 'date':
-          return <span className={ledgerIdentifierCellClass}>{item?.date || '-'}</span>;
-        case 'opening':
-          return <span className={ledgerNumericCellClass}>{item?.opening ?? '-'}</span>;
-        case 'add_or_consume': {
-          const type = String(item?.consumption_type || '').toLowerCase();
-          const isNegative = ['consume', 'lost', 'breakage', 'spillage'].includes(type);
-          return (
-            <span className={`${ledgerNumericCellClass} font-medium ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
-              {item?.add_or_consume ?? '-'}
-            </span>
-          );
-        }
-        case 'closing':
-          return <span className={ledgerNumericCellClass}>{item?.closing ?? '-'}</span>;
-        case 'consumption_type':
-          return <span className={ledgerIdentifierCellClass}>{item?.consumption_type || '-'}</span>;
-        case 'building':
-          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.building) || '-'}</span>;
-        case 'wing':
-          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.wing) || '-'}</span>;
-        case 'floor':
-          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.floor) || '-'}</span>;
-        case 'area':
-          return <span className={ledgerIdentifierCellClass}>{displayName(item?.location?.area) || '-'}</span>;
-        case 'handover_to':
-          return <span className={ledgerIdentifierCellClass}>{displayName(item?.handover_to) || '-'}</span>;
-        case 'comments':
-          return <span className={ledgerCellClass}>{item?.comments || '-'}</span>;
-        case 'consumed_by':
-          return <span className={ledgerIdentifierCellClass}>{item?.consumed_by || '-'}</span>;
-        default:
-          return <span className={ledgerCellClass}>-</span>;
+  const renderCell = useCallback((item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "date":
+        return (
+          <span className={ledgerIdentifierCellClass}>{item?.date || "-"}</span>
+        );
+      case "opening":
+        return (
+          <span className={ledgerNumericCellClass}>{item?.opening ?? "-"}</span>
+        );
+      case "add_or_consume": {
+        const type = String(item?.consumption_type || "").toLowerCase();
+        // Everything except Add (and rows with no type) is stock going out.
+        const isNegative = Boolean(type) && type !== "add";
+        return (
+          <span
+            className={`${ledgerNumericCellClass} font-medium ${isNegative ? "text-red-500" : "text-green-500"}`}
+          >
+            {item?.add_or_consume ?? "-"}
+          </span>
+        );
       }
-    },
-    []
-  );
+      case "closing":
+        return (
+          <span className={ledgerNumericCellClass}>{item?.closing ?? "-"}</span>
+        );
+      case "consumption_type":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {formatConsumptionType(item?.consumption_type)}
+          </span>
+        );
+      case "building":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {displayName(item?.location?.building) || "-"}
+          </span>
+        );
+      case "wing":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {displayName(item?.location?.wing) || "-"}
+          </span>
+        );
+      case "floor":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {displayName(item?.location?.floor) || "-"}
+          </span>
+        );
+      case "area":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {displayName(item?.location?.area) || "-"}
+          </span>
+        );
+      case "handover_to":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {displayName(item?.handover_to) || "-"}
+          </span>
+        );
+      case "comments":
+        return <span className={ledgerCellClass}>{item?.comments || "-"}</span>;
+      case "consumed_by":
+        return (
+          <span className={ledgerIdentifierCellClass}>
+            {item?.consumed_by || "-"}
+          </span>
+        );
+      default:
+        return <span className={ledgerCellClass}>-</span>;
+    }
+  }, []);
 
   return (
     <div className="p-6 space-y-4">
@@ -474,7 +263,9 @@ const InventoryConsumptionViewPage = () => {
       </div>
 
       {error ? (
-        <div className="text-center py-8 text-red-500">Error loading data: {error}</div>
+        <div className="text-center py-8 text-red-500">
+          Error loading data: {error}
+        </div>
       ) : (
         <EnhancedTable
           data={consumptions}
@@ -487,18 +278,18 @@ const InventoryConsumptionViewPage = () => {
           hideTableSearch
           hideColumnsButton
           pagination={false}
-          getItemId={(item) => (item as any)?.id?.toString?.() ?? ''}
+          getItemId={(item) => (item as any)?.id?.toString?.() ?? ""}
           emptyMessage="No consumption data available"
           leftActions={
             <div className="flex items-center gap-2">
               {shouldShow("Inventory Consumption", "create") && (
-              <Button
-                onClick={handleAddConsume}
-                variant="ghost"
-                className="fm-button-fix fm-button-brand gap-1"
-              >
-                Add / Consume
-              </Button>
+                <Button
+                  onClick={handleAddConsume}
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand gap-1"
+                >
+                  Add / Consume
+                </Button>
               )}
               <Button
                 onClick={handleExport}
@@ -522,297 +313,6 @@ const InventoryConsumptionViewPage = () => {
           }
         />
       )}
-
-      <Dialog
-        open={isModalOpen}
-        onClose={(event, reason) => {
-          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
-          handleCloseModal();
-        }}
-        disableEscapeKeyDown
-        maxWidth="md"
-        fullWidth
-      >
-        <div style={{ minHeight: '500px' }}>
-          <DialogTitle
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2 }}
-          >
-            Add / Consume
-            <IconButton onClick={handleCloseModal}>
-              <X className="w-5 h-5" />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent sx={{ pt: 1, minHeight: '400px', pb: 4 }}>
-            <div className="space-y-4 py-4">
-              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
-                <div className="border-l-4 border-l-brand p-4 bg-white">
-                  <div className="flex items-center gap-2 text-brand text-sm font-semibold mb-2">
-                    <span className="bg-brand text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                      <PlusCircle className="w-3 h-3" />
-                    </span>
-                    TYPE <span className="text-brand">*</span>
-                  </div>
-                  <RadioGroup
-                    row
-                    value={formData.type}
-                    onChange={(e) => {
-                      const type = e.target.value;
-                      setFormData((prev) => ({ ...prev, type }));
-                      setErrors((prev) => ({
-                        ...prev,
-                        quantity: validateQuantity(formData.quantity),
-                      }));
-                    }}
-                  >
-                    {['Add', 'Consume', 'Dispose'].map((opt) => (
-                      <FormControlLabel
-                        key={opt}
-                        value={opt}
-                        control={<Radio sx={{ '&.Mui-checked': { color: BRAND }, color: '#9CA3AF' }} />}
-                        label={opt}
-                      />
-                    ))}
-                  </RadioGroup>
-                </div>
-              </div>
-
-              <TextField
-                label="Enter Quantity"
-                placeholder="Enter Quantity"
-                value={formData.quantity}
-                onChange={handleInputChange('quantity')}
-                variant="outlined"
-                fullWidth
-                required
-                InputLabelProps={{
-                  shrink: true,
-                  sx: {
-                    '& .MuiFormLabel-asterisk': {
-                      color: '#DA7756',
-                    },
-                  },
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: '56px',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: '#9CA3AF',
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    '&.Mui-focused': { color: '#DA7756' },
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    fontSize: '16px',
-                    padding: '16px 14px',
-                  },
-                }}
-                type="text"
-                inputMode="numeric"
-                inputProps={{ pattern: '[0-9]*', inputMode: 'numeric' }}
-                onKeyDown={(e) => {
-                  const invalid = ['e', 'E', '+', '-', '.'];
-                  if (invalid.includes(e.key)) e.preventDefault();
-                }}
-                error={Boolean(errors.quantity)}
-                helperText={
-                  errors.quantity ||
-                  `${formData.type === 'Add' ? 'Current stock' : `Available to ${formData.type.toLowerCase()}`}: ${
-                    inventory?.quantity ?? 'unavailable'
-                  }`
-                }
-              />
-
-              <TextField
-                label={
-                  <span style={{ fontSize: '16px' }}>
-                    Comments <span style={{ color: 'red' }}>*</span>
-                  </span>
-                }
-                placeholder="Enter Comments"
-                value={formData.comments}
-                onChange={handleInputChange('comments')}
-                variant="outlined"
-                fullWidth
-                multiline
-                minRows={4}
-                InputLabelProps={{ shrink: true }}
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: '#9CA3AF',
-                    fontSize: '16px',
-                    '&.Mui-focused': { color: '#DA7756' },
-                  },
-                  // Match provided behavior: directly style the inner textarea
-                  '& textarea': {
-                    width: '100% !important',
-                    resize: 'both',
-                    overflow: 'auto',
-                    boxSizing: 'border-box',
-                    border: '1px solid #c4c4c4',
-                    display: 'block',
-                    bgcolor: 'transparent',
-                  },
-                  // Hide the hidden autosize textarea (if present)
-                  "& textarea[aria-hidden='true']": {
-                    display: 'none !important',
-                  },
-                }}
-              />
-
-              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
-                <div className="border-l-4 border-l-brand p-4 sm:p-6 bg-white">
-                  <div className="flex items-center gap-2 text-brand text-sm sm:text-base font-semibold mb-4">
-                    <span className="bg-brand text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </span>
-                    HANDOVER DETAILS
-                  </div>
-
-                <div className="space-y-4">
-                  <FormControl fullWidth size="small" variant="outlined">
-                    <InputLabel shrink>
-                      Handover To
-                    </InputLabel>
-                    <Select
-                      value={handoverTo}
-                      onChange={(e) => setHandoverTo(e.target.value as string)}
-                      label="Handover To"
-                      displayEmpty
-                      renderValue={(selected) => {
-                        if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Handover To</span>;
-                        return handoverUsers.find((u) => String(u.id) === String(selected))?.full_name || '';
-                      }}
-                    >
-                      <MenuItem value="">Select Handover To</MenuItem>
-                      {handoverUsers.map((u) => (
-                        <MenuItem key={u.id} value={u.id}>
-                          {u.full_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <FormControl fullWidth size="small" variant="outlined">
-                      <InputLabel shrink>Building</InputLabel>
-                      <Select
-                        value={buildingId}
-                        onChange={(e) => setBuildingId(e.target.value ? Number(e.target.value) : '')}
-                        label="Building"
-                        displayEmpty
-                        disabled={!currentSiteId || locationLoading.buildings}
-                        renderValue={(selected) => {
-                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
-                          return buildings.find((b) => b.id === Number(selected))?.name || '';
-                        }}
-                      >
-                        <MenuItem value="">Select Building</MenuItem>
-                        {buildings.map((b) => (
-                          <MenuItem key={b.id} value={b.id}>
-                            {b.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth size="small" variant="outlined">
-                      <InputLabel shrink>Wing</InputLabel>
-                      <Select
-                        value={wingId}
-                        onChange={(e) => setWingId(e.target.value ? Number(e.target.value) : '')}
-                        label="Wing"
-                        displayEmpty
-                        disabled={!buildingId || locationLoading.wings}
-                        renderValue={(selected) => {
-                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
-                          return wings.find((w) => w.id === Number(selected))?.name || '';
-                        }}
-                      >
-                        <MenuItem value="">Select Wing</MenuItem>
-                        {wings.map((w) => (
-                          <MenuItem key={w.id} value={w.id}>
-                            {w.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl fullWidth size="small" variant="outlined">
-                      <InputLabel shrink>Floor</InputLabel>
-                      <Select
-                        value={floorId}
-                        onChange={(e) => setFloorId(e.target.value ? Number(e.target.value) : '')}
-                        label="Floor"
-                        displayEmpty
-                        disabled={!buildingId || locationLoading.floors}
-                        renderValue={(selected) => {
-                          if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Floor</span>;
-                          return floors.find((f) => f.id === Number(selected))?.name || '';
-                        }}
-                      >
-                        <MenuItem value="">Select Floor</MenuItem>
-                        {floors.map((f) => (
-                          <MenuItem key={f.id} value={f.id}>
-                            {f.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-
-                  <FormControl fullWidth size="small" variant="outlined">
-                    <InputLabel shrink>Area</InputLabel>
-                    <Select
-                      value={areaId}
-                      onChange={(e) => setAreaId(e.target.value ? Number(e.target.value) : '')}
-                      label="Area"
-                      displayEmpty
-                      disabled={!buildingId || locationLoading.areas}
-                      renderValue={(selected) => {
-                        if (!selected) return <span style={{ color: '#9CA3AF' }}>Select Area</span>;
-                        return areas.find((a) => a.id === Number(selected))?.name || '';
-                      }}
-                    >
-                      <MenuItem value="">Select Area</MenuItem>
-                      {areas.map((a) => (
-                        <MenuItem key={a.id} value={a.id}>
-                          {a.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button
-                  onClick={handleFormSubmit}
-                  disabled={!isFormValid || isSubmitting}
-                  variant="ghost"
-                  className="fm-button-fix fm-button-brand px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-2">
-                      <CircularProgress size={20} className="text-white" />
-                      Submitting...
-                    </div>
-                  ) : (
-                    'Submit'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </div>
-      </Dialog>
     </div>
   );
 };

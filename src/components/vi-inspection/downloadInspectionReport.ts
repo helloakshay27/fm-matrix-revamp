@@ -17,7 +17,7 @@ export function downloadInspectionReport(inspection: ViInspectionRecord) {
       ["Status", inspection.workflowLabel],
       ["Date of Inspection", date(inspection.inspectionDate)], ["Inspection Type", inspection.inspectionType],
       ["Inspection Location", inspection.inspectorLocation], ["Circle", inspection.circle],
-      ["Personnel Area", inspection.personalArea], ["Work Location", inspection.workLocation],
+      ["Personnel Area", inspection.personalArea], ["Zone", inspection.zone],
       ["Type of Facility", inspection.facilityType], ["Function", inspection.department],
       ["Inspector", inspection.inspector?.name], ["Inspector Email", inspection.inspector?.email],
       ["SPOC", inspection.spoc?.name], ["Functional Head", inspection.functionalHead?.name],

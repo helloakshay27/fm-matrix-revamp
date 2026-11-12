@@ -6,21 +6,28 @@ import {
   type RecentActiveUser,
 } from '../api/adoptionApi';
 import { formatRelativeActivityTime } from '@/features/posthog-dashboard/data/format';
+import { activityUserLabel } from '@/features/posthog-dashboard/api/adoptionApi';
 
-function downloadBlob(blob: Blob): void {
+function downloadBlob(blob: Blob | null): void {
+  // The API client turns a failed (non-JSON) response into `null`.
+  if (!blob) throw new Error('The activity export came back empty');
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = 'recent-active-users.xlsx';
+  // Firefox only follows a click on a link that is in the page, and Safari can
+  // cancel the download if the URL is revoked straight away.
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function ActivityUser({ user }: { user: RecentActiveUser }) {
   return (
     <li className="recent-activity-user">
       <div className="recent-activity-user-main">
-        <strong>{user.display_name}</strong>
+        <strong title={user.email || undefined}>{activityUserLabel(user)}</strong>
         <span>{user.path || user.last_event || 'Activity recorded'}</span>
       </div>
       <div className="recent-activity-meta">
@@ -76,7 +83,8 @@ export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
         <p className="recent-activity-state">No recent activity yet.</p>
       ) : (
         <ul className="recent-activity-list">
-          {users.map((user) => <ActivityUser key={user.user_id} user={user} />)}
+          {/* One row per event, so a user appears many times: key by position, not user_id. */}
+          {users.map((user, index) => <ActivityUser key={`${index}-${user.user_id}`} user={user} />)}
         </ul>
       )}
     </section>

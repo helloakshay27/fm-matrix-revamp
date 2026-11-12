@@ -37,7 +37,7 @@ export interface ViAuditDraft {
     dateOfAudit: string;
     circle: string;
     personnelArea: string;
-    workLocation: string;
+    zone: string;
     facilityType: string;
     location: string;
     function: string;
@@ -99,7 +99,7 @@ const toDraft = (json: unknown, fallbackId: string): ViAuditDraft => {
       dateOfAudit: text(r.audit_date, r.date_of_audit).slice(0, 10),
       circle: masterId(r, "cluster"),
       personnelArea: masterId(r, "circle"),
-      workLocation: masterId(r, "work_location"),
+      zone: masterId(r, "zone"),
       facilityType: masterId(r, "visit_business_area"),
       location: text(r.audit_location),
       function: masterId(r, "department"),

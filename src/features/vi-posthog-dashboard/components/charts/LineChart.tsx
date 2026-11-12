@@ -79,6 +79,8 @@ export function LineChart({
   const Y = (v: number) => pt + (H - pt - pb) * (1 - (v - mn) / span);
   const base = H - pb;
   const vfmt = pctScale ? (v: number) => `${v.toFixed(1)}%` : fmtC;
+  // Axis ticks are fractions of the range (387.59999999999997); counts on the axis are whole numbers.
+  const axisFmt = pctScale ? vfmt : (v: number) => fmtC(Math.round(v));
   const path = (arr: number[]) => arr.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
 
   const step = Math.max(1, Math.ceil(n / 6));
@@ -148,7 +150,7 @@ export function LineChart({
           fill={palette.faint}
           fontFamily={axisFont}
         >
-          {vfmt(mn + span * (1 - g / 2))}
+          {axisFmt(mn + span * (1 - g / 2))}
         </text>
       ))}
       {ticks.map((t) => (

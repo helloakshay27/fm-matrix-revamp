@@ -138,7 +138,8 @@ export const Header = () => {
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
-    org_id === "90" ||
+    org_id === "90" 
+    ||
     hostname.includes("localhost");
 
   const isLocalhost =
@@ -218,6 +219,9 @@ export const Header = () => {
       // app's login response carries neither, so they are omitted rather than faked.
       user_name:
         [u?.firstname, u?.lastname].filter(Boolean).join(" ") || undefined,
+      // Read by the usage-analytics download's first_name / last_name columns.
+      first_name: u?.firstname || undefined,
+      last_name: u?.lastname || undefined,
       contact_number: u?.mobile ?? u?.phone ?? undefined,
       role: u?.lock_role?.name ?? undefined,
       is_logged_in: true,
@@ -461,6 +465,11 @@ export const Header = () => {
 
   const canShowMSafeDashboard = canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
+  const viDashboardLinks = [
+    { label: "Audit Dashboard", path: "/vi-audit/management-dashboard" },
+    { label: "Incident Dashboard", path: "/vi-incident/management-dashboard" },
+    { label: "Inspection Dashboard", path: "/vi-inspection/management-dashboard" },
+  ];
 
   const handleMSafeDashboard = () => {
     navigate("/msafedashboard-legacy"); // old MSafe Dashboard UI
@@ -588,6 +597,12 @@ export const Header = () => {
                 src="https://lockated-public.s3.ap-south-1.amazonaws.com/attachfiles/documents/12954122/original/zycus.jpeg"
                 alt=""
               />
+            ) : org_id === "124" ? (
+              <img
+                className={logoClassName}
+                src="/servu_logo.jpeg"
+                alt="ServU Logo"
+              />
             ) : org_id === "116" ? (
               <img
                 className={logoClassName}
@@ -707,6 +722,17 @@ export const Header = () => {
                   MSafe Dashboard
                 </button>
               )}
+              {canShowMSafeDashboard &&
+                viDashboardLinks.map(({ label, path }) => (
+                  <button
+                    key={path}
+                    onClick={() => navigate(path)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  >
+                    <ChartArea className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
               {/* {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
@@ -934,6 +960,13 @@ export const Header = () => {
                     Msafe Dashboard Revamp
                   </DropdownMenuItem>
                 )}
+                {canShowMSafeDashboard &&
+                  viDashboardLinks.map(({ label, path }) => (
+                    <DropdownMenuItem key={path} onClick={() => navigate(path)}>
+                      <ChartArea className="w-4 h-4 mr-2" />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

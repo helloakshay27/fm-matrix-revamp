@@ -331,7 +331,7 @@ const navigationStructure = {
   },
 };
 
-const modulesByPackage = {
+export const modulesByPackage = {
   Master: [
     {
       name: "Location Master",

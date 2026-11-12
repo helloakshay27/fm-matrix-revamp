@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
-const VI_ACTIVE_USERS_ENDPOINT = "/pms/users/vi_fte_non_fte_active_users.json";
+const VI_ACTIVE_USERS_ENDPOINT = "/pms/users/vi_active_users_minimal.json";
 export const VI_USER_SEARCH_MIN_CHARS = 3;
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -101,7 +101,7 @@ const matchesTerm = (user: ViActiveUserOption, q: string) =>
 
 /**
  * FTE / Non-FTE active users for the Vi Audit pickers
- * (GET /pms/users/vi_fte_non_fte_active_users.json). Pass `employeeType` (e.g. "internal" for
+ * (GET /pms/users/vi_active_users_minimal.json). Pass `employeeType` (e.g. "internal" for
  * SPOC / Functional Head / Responsible Person) to add q[employee_type_cont].
  * - Server search (q[email_or_mobile_cont]) once the term has VI_USER_SEARCH_MIN_CHARS
  *   characters, debounced.

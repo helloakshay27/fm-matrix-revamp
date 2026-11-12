@@ -151,7 +151,7 @@ const toAuditDetail = (json: unknown, fallbackId: string): ViAuditDetail => {
       dateOfAudit: text(r.audit_date, r.date_of_audit),
       circle: text(obj(r.cluster).cluster_name, r.cluster_name),
       personnelArea: text(obj(r.circle).name, r.circle_name),
-      workLocation: text(obj(r.work_location).work_location_name, r.work_location_name),
+      zone: text(obj(r.zone).name, r.zone_name),
       facilityType: text(obj(r.visit_business_area).name, r.visit_business_area_name),
       auditLocation: text(r.audit_location),
       function: text(obj(r.department).department_name, r.department_name),

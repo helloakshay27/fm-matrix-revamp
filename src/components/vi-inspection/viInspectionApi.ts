@@ -177,6 +177,8 @@ export const toInspectionRecord = (r: Raw): ViInspectionRecord => {
     personalAreaId: masterId(r, "personal_area"),
     personalArea: masterName(r, "personal_area"),
     workLocationId: masterId(r, "work_location"),
+    zoneId: masterId(r, "zone"),
+    zone: masterName(r, "zone"),
     workLocation: masterName(r, "work_location"),
     inspectionTypeId: masterId(r, "inspection_type"),
     inspectionType: masterName(r, "inspection_type"),
@@ -403,7 +405,7 @@ export interface InspectionFormInput {
   inspection_date: string;
   circle_id: string;
   personal_area_id: string;
-  work_location_id: string;
+  zone_id: string;
   inspection_type_id: string;
   inspector_location: string;
   /** Lat/long-required types only: the inspector's coordinates and the nearby site picked. */

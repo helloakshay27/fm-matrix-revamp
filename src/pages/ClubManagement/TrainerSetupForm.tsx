@@ -177,6 +177,8 @@ interface TrainerSetupFormProps {
   initialValues: TrainerSetupFormState;
   submitLabel: string;
   submittingLabel: string;
+  /** Add page: preselect the first Shift / Roster from the API when the field is empty */
+  preselectFirstShiftAndRoster?: boolean;
   onBack: () => void;
   onSubmit: (payload: Omit<TrainerSetup, "id" | "credentials"> & { email: string }, files: {
     image: File | null;
@@ -239,6 +241,7 @@ export const TrainerSetupForm = ({
   initialValues,
   submitLabel,
   submittingLabel,
+  preselectFirstShiftAndRoster = false,
   onBack,
   onSubmit,
 }: TrainerSetupFormProps) => {
@@ -288,18 +291,24 @@ export const TrainerSetupForm = ({
       if (!isMounted) return;
 
       if (roastersResult.status === "fulfilled") {
-        setRoasterOptions(
-          mapSetupOptions(roastersResult.value.data, ["user_roasters", "roasters", "data"], ["name", "template", "template_name", "roaster_name", "title", "user_roaster_name"])
-        );
+        const roasters = mapSetupOptions(roastersResult.value.data, ["user_roasters", "roasters", "data"], ["name", "template", "template_name", "roaster_name", "title", "user_roaster_name"]);
+        setRoasterOptions(roasters);
+        // Add page: default to the first roster record (never overrides a user/edit value)
+        if (preselectFirstShiftAndRoster && roasters.length > 0) {
+          setForm((f) => (f.roster ? f : { ...f, roster: roasters[0].id }));
+        }
       } else {
         console.error("Failed to load trainer roasters", roastersResult.reason);
         toast.error("Failed to load roasters");
       }
 
       if (shiftsResult.status === "fulfilled") {
-        setShiftOptions(
-          mapSetupOptions(shiftsResult.value.data, ["user_shifts", "shifts", "data"], ["timings", "name", "shift_name", "title"])
-        );
+        const shifts = mapSetupOptions(shiftsResult.value.data, ["user_shifts", "shifts", "data"], ["timings", "name", "shift_name", "title"]);
+        setShiftOptions(shifts);
+        // Add page: default to the first shift record (never overrides a user/edit value)
+        if (preselectFirstShiftAndRoster && shifts.length > 0) {
+          setForm((f) => (f.shift ? f : { ...f, shift: shifts[0].id }));
+        }
       } else {
         console.error("Failed to load trainer shifts", shiftsResult.reason);
         toast.error("Failed to load shifts");

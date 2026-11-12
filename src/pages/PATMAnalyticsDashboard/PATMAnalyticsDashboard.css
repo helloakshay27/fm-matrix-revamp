@@ -1189,3 +1189,13 @@
   .patm-analytics .ctrl select { min-width: 0; }
   .patm-analytics .chip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 }
+
+/* Module and sub-module rows: one line each, scrolling sideways when they don't fit,
+   so every module stays one click away and its sub-modules appear on the line below. */
+.patm-analytics .mnav{min-width:0;max-width:100%}
+.patm-analytics .mnav-buckets{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.patm-analytics .mnav-buckets > *{flex:0 0 auto}
+.patm-analytics .mnav-buckets button{margin-bottom:0}
+.patm-analytics .mnav-mods{min-width:0}
+.patm-analytics .mnav-mods .segbar{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.patm-analytics .mnav-mods .segbar > *{flex:0 0 auto}

@@ -404,7 +404,7 @@ export const AssetDetailsPage = () => {
           <TabsContent value="e-bom" className="p-4 sm:p-6">
             <EBOMTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
-          <TabsContent value="attachments" className="p-4 sm:p-6">
+          <TabsContent value="attachments" className="p-4 sm:p-6 bg-white">
             <AttachmentsTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="readings" className="p-4 sm:p-6">

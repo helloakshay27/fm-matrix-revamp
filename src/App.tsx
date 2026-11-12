@@ -331,6 +331,9 @@ const InventoryConsumptionDashboard = lazy(
 const InventoryConsumptionViewPage = lazy(
   () => import("./pages/InventoryConsumptionViewPage")
 );
+const InventoryConsumptionAddPage = lazy(
+  () => import("./pages/InventoryConsumptionAddPage")
+);
 const EcoFriendlyListPage = lazy(() => import("./pages/EcoFriendlyListPage"));
 const NewInboundPage = lazy(() =>
   import("./pages/NewInboundPage").then((m) => ({ default: m.NewInboundPage }))
@@ -2068,6 +2071,7 @@ const ViTrainingCategoryMasterPage = lazy(
 const ViTrainingChecklistMasterPage = lazy(
   () => import("./features/vi-training/master/TrainingChecklistPage")
 );
+const ViZoneMasterPage = lazy(() => import("./features/vi-zone/master/ZonePage"));
 const InspectionSpocListPage = lazy(() =>
   import("./pages/vi-inspection/InspectionRolePlaceholderPage").then((m) => ({
     default: m.InspectionSpocListPage,
@@ -8580,6 +8584,10 @@ function App() {
                               element={<InventoryConsumptionViewPage />}
                             />
                             <Route
+                              path="/maintenance/inventory-consumption/view/:id/add"
+                              element={<InventoryConsumptionAddPage />}
+                            />
+                            <Route
                               path="/maintenance/eco-friendly-list"
                               element={<EcoFriendlyListPage />}
                             />
@@ -9526,6 +9534,10 @@ function App() {
                             <Route
                               path="/settings/training/checklist"
                               element={<ViTrainingChecklistMasterPage />}
+                            />
+                            <Route
+                              path="/settings/zone"
+                              element={<ViZoneMasterPage />}
                             />
                             <Route
                               path="/safety/audit-list"

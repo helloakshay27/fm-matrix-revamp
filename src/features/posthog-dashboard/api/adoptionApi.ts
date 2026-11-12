@@ -144,12 +144,20 @@ export interface RangeFilters {
 
 export interface RecentActiveUser {
   user_id: string;
-  display_name: string;
+  /** "First Last" as the API sends it (the person's name). */
+  user_name?: string | null;
+  email?: string | null;
+  /** Older API field; the API now sends user_name. */
+  display_name?: string | null;
   path: string | null;
   last_event: string | null;
   minutes_ago: number | null;
   site_name: string | null;
 }
+
+/** What to call a user in Recent Activity: their name, else their email's local part, else their id. */
+export const activityUserLabel = (u: Pick<RecentActiveUser, 'user_name' | 'display_name' | 'email' | 'user_id'>): string =>
+  u.user_name?.trim() || u.display_name?.trim() || u.email?.split('@')[0] || (u.user_id ? `User ${u.user_id}` : 'Unknown user');
 
 export interface RecentActiveUsersResponse {
   users: RecentActiveUser[];
@@ -159,6 +167,8 @@ export interface RecentActiveUsersResponse {
 export interface WeeklyFilters {
   to: string; // YYYY-MM-DD
   weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
   /** Optional product scoping for dashboards that share these endpoints. */
   projectCode?: string;
   /** Optional analytics tenant override; the tenant is independent of projectCode. */
@@ -200,14 +210,32 @@ const buildQuery = (pairs: Array<[string, string | string[] | number | undefined
  * GET helper: appends a manually built query string (raw commas preserved for
  * site_id) to the endpoint and returns the parsed response.
  */
+/**
+ * Each dashboard on this client has its own usage-analytics API in the backend, which fixes which
+ * app's events it reads. FM (Commercial::FmController) needs site_id; a request without one gets a 422
+ * instead of every app's data. Panchshil Pulse (project_code TEP-01) and Club Management (CM-01) share
+ * this client, so the project code they send picks their API.
+ */
+export const FM_ADOPTION_PATH = '/commercial/fm/adoption';
+const ADOPTION_PATH_BY_PROJECT_CODE: Record<string, string> = {
+  'TEP-01': '/commercial/pulse/adoption',
+  'CM-01': '/commercial/club/adoption',
+};
+
+const adoptionPath = (pairs: Array<[string, string | string[] | number | undefined | null]>): string => {
+  const code = pairs.find(([key]) => key === 'project_code')?.[1];
+  return (typeof code === 'string' && ADOPTION_PATH_BY_PROJECT_CODE[code]) || FM_ADOPTION_PATH;
+};
+
 const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] | number | undefined | null]>, signal?: AbortSignal): Promise<T> => {
   const qs = buildQuery(pairs);
-  const url = `/fm/adoption/${endpoint}${qs ? `?${qs}` : ''}`;
+  const url = `${adoptionPath(pairs)}/${endpoint}${qs ? `?${qs}` : ''}`;
   const { data } = await analyticsClient.get<T>(url, { signal });
   return data;
 };
 
-export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = '/fm/adoption/active_users_export.json';
+/** FM's download; Pulse and Club download from their own API (see adoptionPath). */
+export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = `${FM_ADOPTION_PATH}/active_users_export`;
 
 export const fetchRecentActiveUsers = (f: RangeFilters) =>
   get<RecentActiveUsersResponse>('recent_active_users', [
@@ -223,9 +251,10 @@ export const fetchRecentActiveUsers = (f: RangeFilters) =>
   ], f.signal);
 
 export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
-  const qs = buildQuery([...rangeParams(f), ['limit', 10]]);
+  const pairs = rangeParams(f);
+  const qs = buildQuery(pairs);
   const response = await analyticsClient.get<Blob>(
-    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}${qs ? `?${qs}` : ''}`,
+    `${adoptionPath(pairs)}/active_users_export${qs ? `?${qs}` : ''}`,
     { responseType: 'blob' },
   );
   return response.data;
@@ -362,7 +391,8 @@ export interface AdoptionEngagementResponse {
     delta_pct: number | null;
   };
   stickiness: { value: number; avg_dau: number; mau: number; delta_pct: number | null };
-  adoption_trend: { value: number | null; wau_now: number; wau_4wk_ago: number };
+  /** value = this week's WAU vs the average of the 8 weeks before it (baseline_avg), in %. */
+  adoption_trend: { value: number | null; wau_now: number; wau_4wk_ago: number; baseline_avg?: number | null };
   activation: { value: number; joiners: number; delta_pct: number | null };
   module_breadth: { in_use: number; total: number };
   dormant_users: { value: number; band: string };
@@ -414,7 +444,8 @@ export interface GrowthResponse {
   info?: AdoptionInfo;
 }
 
-export const fetchGrowth = (f: WeeklyFilters) => get<GrowthResponse>('growth', weeklyParams(f), f.signal);
+export const fetchGrowth = (f: WeeklyFilters) =>
+  get<GrowthResponse>('growth', [...weeklyParams(f), ['from', f.from]], f.signal);
 
 /* ---------------------------------------------------- Layer 2 · retention */
 

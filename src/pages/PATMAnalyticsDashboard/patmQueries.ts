@@ -32,13 +32,16 @@ const CACHE = {
 
 export const TREND_WEEKS = 8;
 export const GROWTH_WEEKS = 6;
-export const RETENTION_WEEKS = 6;
+export const RETENTION_WEEKS = 8;
 
 export function usePatmRecentActiveUsers(f: Pick<PATMRangeFilters, 'from' | 'to'>) {
   return useQuery({
     queryKey: ['patm', 'recent_active_users', PATM_MOBILE_APP_ID, PATM_RECENT_ACTIVITY_DEVICE, f.from, f.to, 10],
     queryFn: () => fetchPatmRecentActiveUsers(f),
     ...CACHE,
+    // A live log: refreshed every 15 s.
+    staleTime: 0,
+    refetchInterval: 15 * 1000,
   });
 }
 
@@ -129,6 +132,7 @@ export function usePatmGrowth(f: PATMWeeklyFilters & { enabled?: boolean }) {
       'patm',
       'growth',
       f.baseUrl ?? 'fm-matrix.lockated.com',
+      f.from ?? '',
       f.to,
       getPatmAppId(f) ?? '',
       f.weeks,

@@ -42,7 +42,7 @@ html body .veda-theme .veda-topbar {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--v-line) !important;
   min-height: 60px;
-  padding: 10px 32px !important;
+  padding: 10px 24px !important;
 }
 html body .veda-theme .veda-topbar h1 {
   font-size: 22px !important;
@@ -53,6 +53,337 @@ html body .veda-theme .veda-topbar h1 {
 html body .veda-theme .veda-topbar > div > span {
   color: var(--ink-muted) !important;
 }
+
+/* Top bar: logo · site pill · search · Day/Month/Range · filters */
+html body .veda-theme .veda-topbar .vt-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ink);
+  /* the generic ".veda-topbar > div > span" rule greys every span in the bar; keep the icon white */
+  color: #fff !important;
+}
+html body .veda-theme .veda-topbar .vt-logo svg { color: #fff !important; stroke: #fff; }
+html body .veda-theme .veda-topbar .vt-brand .vt-brand-name {
+  font-size: 17px !important;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink) !important;
+}
+html body .veda-theme .veda-topbar .vt-site {
+  width: auto !important;
+  min-width: 190px;
+  height: 46px !important;
+  gap: 14px;
+  padding: 6px 12px !important;
+  background: var(--v-card) !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  text-align: left;
+}
+html body .veda-theme .veda-topbar .vt-site:hover {
+  background: var(--v-card-hover) !important;
+}
+/* hide the stock chevron; the pill carries its own up/down icon */
+html body .veda-theme .veda-topbar .vt-site > svg { display: none !important; }
+html body .veda-theme .veda-topbar .vt-site .vt-site-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.2;
+}
+html body .veda-theme .veda-topbar .vt-site .vt-site-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+html body .veda-theme .veda-topbar .vt-site .vt-site-sub {
+  font-size: 12px;
+  color: var(--ink-muted);
+  max-width: 150px;
+}
+html body .veda-theme .veda-topbar .vt-site .vt-site-sub > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html body .veda-theme .veda-topbar .vt-site .vt-site-icon {
+  display: flex;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+html body .veda-theme .veda-topbar .vt-search {
+  display: flex;
+  align-items: center;
+  width: clamp(200px, 24vw, 340px);
+  max-width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  gap: 10px;
+  background: var(--v-white);
+  border: 1px solid var(--v-control-border);
+  border-radius: 14px;
+}
+html body .veda-theme .veda-topbar .vt-search:focus-within {
+  border-color: var(--v-c0);
+}
+html body .veda-theme .veda-topbar .vt-search .vt-search-icon { color: var(--ink-muted); flex-shrink: 0; }
+html body .veda-theme .veda-topbar .vt-search .vt-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+html body .veda-theme .veda-topbar .vt-search .vt-search-input::placeholder { color: var(--ink-muted); }
+html body .veda-theme .veda-topbar .vt-search .vt-search-results {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--v-white);
+  border: 1px solid var(--v-line);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(26, 26, 24, 0.14);
+}
+html body .veda-theme .veda-topbar .vt-search .vt-search-result {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+html body .veda-theme .veda-topbar .vt-search .vt-search-result:hover { background: var(--v-card); }
+
+html body .veda-theme .veda-topbar .vt-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px;
+  min-height: 42px !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  /* The theme has many global !important button-radius rules; a circular clip can't be overridden by
+     them, so it's applied alongside border-radius to guarantee a circle. */
+  border-radius: 50% !important;
+  clip-path: circle(50% at 50% 50%);
+  overflow: hidden;
+  background: var(--ink) !important;
+  color: #fff !important;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.16s;
+}
+html body .veda-theme .veda-topbar .vt-avatar:hover {
+  transform: scale(1.06);
+}
+
+html body .veda-theme .veda-topbar .vt-period-label {
+  font-size: 12px;
+  color: var(--ink-muted) !important;
+  white-space: nowrap;
+}
+html body .veda-theme .veda-topbar .vt-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--v-card);
+  border-radius: 14px;
+}
+html body .veda-theme .veda-topbar .vt-seg .vt-seg-btn {
+  padding: 7px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  transition: background 0.16s, color 0.16s;
+}
+html body .veda-theme .veda-topbar .vt-seg .vt-seg-btn:hover { color: var(--ink); }
+html body .veda-theme .veda-topbar .vt-seg .vt-seg-btn.on {
+  background: var(--v-white);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(26, 26, 24, 0.12);
+}
+html body .veda-theme .veda-topbar .veda-icon-btn { border-radius: 12px !important; }
+
+/* Period + filters popovers: white card, dark selected state, soft grey controls */
+html body .veda-theme .pc-pop {
+  width: 316px;
+  padding: 16px;
+  background: var(--v-white);
+  border: 1px solid var(--v-line);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(26, 26, 24, 0.16), 0 2px 6px rgba(26, 26, 24, 0.06);
+  color: var(--ink);
+}
+html body .veda-theme .pc-pop .pc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+html body .veda-theme .pc-pop .pc-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+html body .veda-theme .pc-pop .pc-title.pc-title-left { text-align: left; }
+html body .veda-theme .pc-pop .pc-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--v-card);
+  border: 1px solid var(--v-line);
+  color: var(--ink);
+  transition: background 0.16s;
+}
+html body .veda-theme .pc-pop .pc-nav:hover { background: var(--v-card-hover); }
+html body .veda-theme .pc-pop .pc-hint {
+  margin: 10px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+html body .veda-theme .pc-pop .pc-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 4px;
+}
+html body .veda-theme .pc-pop .pc-weekdays {
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+html body .veda-theme .pc-pop .pc-cell,
+html body .veda-theme .pc-pop .pc-month {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background 0.12s;
+}
+html body .veda-theme .pc-pop .pc-cell:hover:not(:disabled):not(.edge),
+html body .veda-theme .pc-pop .pc-month:hover:not(:disabled):not(.edge) { background: var(--v-card); }
+html body .veda-theme .pc-pop .pc-cell.out { color: var(--ink-faint); }
+html body .veda-theme .pc-pop .pc-cell:disabled,
+html body .veda-theme .pc-pop .pc-month:disabled { color: var(--ink-faint); cursor: default; }
+html body .veda-theme .pc-pop .pc-cell.band { background: var(--v-card); border-radius: 0; }
+html body .veda-theme .pc-pop .pc-cell.today { background: var(--v-card-hover); }
+html body .veda-theme .pc-pop .pc-cell.edge,
+html body .veda-theme .pc-pop .pc-month.edge {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+}
+html body .veda-theme .pc-pop .pc-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+html body .veda-theme .pc-pop .pc-month { height: 44px; }
+html body .veda-theme .pc-pop .pc-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+html body .veda-theme .pc-pop .pc-reset {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+html body .veda-theme .pc-pop .pc-reset:hover { background: var(--v-card); color: var(--ink); }
+
+/* Filters form */
+html body .veda-theme .pc-pop.pc-filters { width: 300px; }
+html body .veda-theme .pc-pop .pc-label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+html body .veda-theme .pc-pop .pc-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--v-card);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none;
+  outline: none;
+}
+html body .veda-theme .pc-pop .pc-select:hover { background: var(--v-card-hover); }
+html body .veda-theme .pc-pop .pc-select[data-state="open"] {
+  background: var(--v-white);
+  border-color: rgba(26, 26, 24, 0.28);
+}
+html body .veda-theme .pc-pop .pc-select svg { color: var(--ink-muted); opacity: 1; }
+html body .veda-theme .pc-pop .pc-note {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+html body .veda-theme .pc-pop .pc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+html body .veda-theme .pc-pop .pc-primary {
+  flex: 1;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+html body .veda-theme .pc-pop .pc-primary:hover { background: #000; }
+html body .veda-theme .pc-pop .pc-ghost {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--v-card);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+html body .veda-theme .pc-pop .pc-ghost:hover { background: var(--v-card-hover); }
 
 /* Period selector → soft segmented-style pill */
 html body .veda-theme .veda-period {
@@ -93,7 +424,8 @@ html body .veda-theme .veda-icon-btn svg {
 html body .veda-theme .veda-modtabs {
   background: var(--v-page) !important;
   border-bottom: 0 !important;
-  padding: 16px 32px 0 !important;
+  /* 24px = the page body's px-6, so tabs, chips and cards share one left edge */
+  padding: 16px 24px 0 !important;
 }
 html body .veda-theme .veda-modtabs > button {
   color: var(--ink-muted);
@@ -212,6 +544,18 @@ html body .veda-theme div.rounded-xl.p-4[style*="background"] {
   border-radius: 16px !important;
   padding: 18px 18px 16px !important;
   box-shadow: none !important;
+}
+/* Status tiles sitting inside another card (e.g. Incident Status Breakdown): a grey tile on a grey
+   card disappears, so these pop — white, softly raised, lifting on hover. */
+html body .veda-theme div.status-tile.rounded-xl.p-4[style*="background"] {
+  background: var(--v-white) !important;
+  border: 1px solid var(--v-line) !important;
+  box-shadow: 0 6px 18px rgba(26, 26, 24, 0.08), 0 1px 3px rgba(26, 26, 24, 0.06) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+html body .veda-theme div.status-tile.rounded-xl.p-4[style*="background"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(26, 26, 24, 0.14), 0 2px 6px rgba(26, 26, 24, 0.08) !important;
 }
 html body .veda-theme div.rounded-xl.p-4[style*="background"] > div:first-of-type + div {
   font-size: 24px !important;
@@ -439,18 +783,62 @@ html body .veda-theme .recharts-tooltip-cursor { fill: rgba(26, 26, 24, 0.04) !i
 html body .veda-theme .recharts-bar-rectangle path { transition: opacity 0.16s; }
 html body .veda-theme .recharts-bar-rectangle:hover path { opacity: 0.85; }
 
+/* Vertical bar charts: the four bar colours (primary, secondary, third, fourth), cycled by category
+   for a single series, or by series when there are several. */
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(4n+1) path { fill: var(--v-b0) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(4n+2) path { fill: var(--v-b1) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(4n+3) path { fill: var(--v-b2) !important; }
+html body .veda-theme .veda-cols .recharts-bar .recharts-bar-rectangle:nth-child(4n+4) path { fill: var(--v-b3) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(1 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b0) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(2 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b1) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(3 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b2) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(4 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b3) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(5 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b0) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(6 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b1) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(7 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b2) !important; }
+html body .veda-theme .veda-cols:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(8 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b3) !important; }
+
+/* Horizontal bar charts: every bar #F2A312 (matches .htrack > i). Several series (grouped/stacked)
+   take the four bar colours by series so the legend stays readable. */
+html body .veda-theme .veda-hbars .recharts-bar .recharts-bar-rectangle path { fill: #F2A312 !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(1 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b0) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(2 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b1) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(3 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b2) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(4 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b3) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(5 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b0) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(6 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b1) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(7 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b2) !important; }
+html body .veda-theme .veda-hbars:has(.recharts-bar:nth-child(2 of .recharts-bar)) .recharts-bar:nth-child(8 of .recharts-bar) .recharts-bar-rectangle path { fill: var(--v-b3) !important; }
+
+/* Lines and area trends: series i takes palette i */
+html body .veda-theme .recharts-line:nth-child(1 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(1 of .recharts-area) .recharts-area-curve { stroke: var(--v-c0) !important; }
+html body .veda-theme .recharts-line:nth-child(2 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(2 of .recharts-area) .recharts-area-curve { stroke: var(--v-c1) !important; }
+html body .veda-theme .recharts-line:nth-child(3 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(3 of .recharts-area) .recharts-area-curve { stroke: var(--v-c2) !important; }
+html body .veda-theme .recharts-line:nth-child(4 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(4 of .recharts-area) .recharts-area-curve { stroke: var(--v-c3) !important; }
+html body .veda-theme .recharts-line:nth-child(5 of .recharts-line) .recharts-line-curve,
+html body .veda-theme .recharts-area:nth-child(5 of .recharts-area) .recharts-area-curve { stroke: var(--v-c4) !important; }
+html body .veda-theme .recharts-line:nth-child(6 of .recharts-line) .recharts-line-curve { stroke: var(--v-c5) !important; }
+html body .veda-theme .recharts-line:nth-child(7 of .recharts-line) .recharts-line-curve { stroke: var(--v-c6) !important; }
+html body .veda-theme .recharts-line:nth-child(8 of .recharts-line) .recharts-line-curve { stroke: var(--v-c7) !important; }
+html body .veda-theme .recharts-line:nth-child(1 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(1 of .recharts-area) .recharts-dot { fill: var(--v-c0) !important; stroke: var(--v-c0) !important; }
+html body .veda-theme .recharts-line:nth-child(2 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(2 of .recharts-area) .recharts-dot { fill: var(--v-c1) !important; stroke: var(--v-c1) !important; }
+html body .veda-theme .recharts-line:nth-child(3 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(3 of .recharts-area) .recharts-dot { fill: var(--v-c2) !important; stroke: var(--v-c2) !important; }
+html body .veda-theme .recharts-line:nth-child(4 of .recharts-line) .recharts-dot,
+html body .veda-theme .recharts-area:nth-child(4 of .recharts-area) .recharts-dot { fill: var(--v-c3) !important; stroke: var(--v-c3) !important; }
 
 /* ═══ Pie / donut cards (wireframe .donut-wrap + .dl) ═══════════════════ */
-/* Slice colours by index from the Veda palette, whatever colour the card passed */
-html body .veda-theme .recharts-pie-sector:nth-child(8n+1) path { fill: var(--v-c0) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+2) path { fill: var(--v-c1) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+3) path { fill: var(--v-c2) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+4) path { fill: var(--v-c3) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+5) path { fill: var(--v-c4) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+6) path { fill: var(--v-c5) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+7) path { fill: var(--v-c6) !important; }
-html body .veda-theme .recharts-pie-sector:nth-child(8n+8) path { fill: var(--v-c7) !important; }
-html body .veda-theme .recharts-pie-sector path { stroke: none !important; }
+/* Slice colours repeat purple, blue, green — the Cases by tower donut */
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+1) path { fill: var(--v-pie0) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+2) path { fill: var(--v-pie1) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector:nth-child(3n+3) path { fill: var(--v-pie2) !important; }
+html body .veda-theme .veda-donut .recharts-pie-sector path { stroke: #F5F4F0 !important; stroke-width: 3px !important; }
 /* slice % labels are not part of the wireframe ring */
 html body .veda-theme .recharts-pie-labels { display: none; }
 
@@ -483,6 +871,11 @@ html body .veda-theme .grid.grid-cols-\[auto_1fr\] > div:last-child span.font-bo
   font-variant-numeric: tabular-nums;
 }
 html body .veda-theme .grid.grid-cols-\[auto_1fr\] .w-2.h-2 { width: 8px; height: 8px; border-radius: 2px; }
+html body .veda-theme .veda-dl-pct {
+  color: var(--ink-muted) !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+}
 /* Bottom legend variant */
 html body .veda-theme .flex.flex-wrap.justify-center span { color: var(--ink-soft) !important; font-size: 11.5px; }
 
@@ -519,7 +912,7 @@ html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="h-[3
   margin: 4px 0 !important;
 }
 html body .veda-theme div.rounded-xl.p-4[style*="background"] > div[class*="h-[3px]"] > div {
-  background-color: var(--v-c0) !important;
+  background-color: #F2A312 !important;
 }
 /* info button becomes the white icon tile */
 html body .veda-theme div.rounded-xl.p-4[style*="background"] > button[aria-label="How this is calculated"] {
@@ -549,6 +942,45 @@ html body .veda-theme .react-grid-item [class*="text-brand-h1"][class*="font-bol
   letter-spacing: -0.015em;
 }
 html body .veda-theme .react-grid-item .h-1\.5.bg-brand-bg { background: var(--v-white) !important; height: 6px; }
+
+/* Resize grip — a 6px hairline corner tick, same weight as the Hi Society cards */
+html body .veda-theme .react-grid-item > .react-resizable-handle {
+  width: 12px !important;
+  height: 12px !important;
+  z-index: 15;
+  padding: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .react-grid-item > .react-resizable-handle.react-resizable-handle-se {
+  right: 1px !important;
+  bottom: 1px !important;
+}
+html body .veda-theme .react-grid-item > .react-resizable-handle::after {
+  content: "" !important;
+  right: 2px !important;
+  bottom: 2px !important;
+  width: 6px !important;
+  height: 6px !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(26, 26, 24, 0.45) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.45) !important;
+  border-radius: 0 !important;
+  opacity: 1;
+  background: none !important;
+}
+html body .veda-theme .react-grid-item:hover > .react-resizable-handle::after {
+  border-right: 1px solid rgba(26, 26, 24, 0.85) !important;
+  border-bottom: 1px solid rgba(26, 26, 24, 0.85) !important;
+}
+html body .veda-theme .react-grid-placeholder {
+  background: rgba(26, 26, 24, 0.06) !important;
+  border: 1.5px dashed var(--ink-faint) !important;
+  border-radius: 16px !important;
+  opacity: 1 !important;
+}
 
 /* "Add to My Dashboard" button → white icon tile (same slot as the wireframe .stat .ic) */
 html body .veda-theme .react-grid-item > button[aria-label$="My Dashboard"] {
@@ -583,3 +1015,131 @@ html body .veda-theme .react-grid-item > [class*="rounded-2xl"] [class*="text-2x
   letter-spacing: 0 !important;
   color: var(--ink) !important;
 }
+
+
+/* ── Loading skeleton ────────────────────────────────────────
+   While a section is loading, each grid card is replaced by a soft shimmering block (no "—",
+   "Loading…" or "No data" text flashing). Card content stays mounted, just hidden, so the layout
+   doesn't jump when the data arrives. */
+@keyframes veda-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+html body .veda-theme .veda-loading .react-grid-item > * {
+  visibility: hidden !important;
+}
+html body .veda-theme .veda-loading .react-grid-item {
+  pointer-events: none;
+}
+html body .veda-theme .veda-loading .react-grid-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #f0efeb 0%, #f8f7f3 50%, #f0efeb 100%);
+  background-size: 200% 100%;
+  animation: veda-shimmer 1.4s ease-in-out infinite;
+}
+
+
+/* ── Safety alerts strip → same card surface as every other card ─────────── */
+html body .veda-theme .veda-alert-strip {
+  background: var(--v-card) !important;
+  border-radius: 16px !important;
+  padding: 18px 20px !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .veda-alert-strip .veda-alert-title {
+  color: var(--ink) !important;
+  font-size: 12px;
+}
+html body .veda-theme .veda-alert-strip .veda-alert-title svg { color: var(--ink) !important; }
+html body .veda-theme .veda-alert-strip .veda-alert-pill {
+  background: var(--v-white) !important;
+  border: 1px solid var(--v-line) !important;
+  color: var(--ink) !important;
+  font-size: 12.5px;
+}
+
+
+/* ── Body Injury Map → same surface, padding and heading style as every other card ───────────────
+   The component is shared with other pages (white card, grey border, Work Sans heading), so it's
+   re-skinned here rather than edited. */
+html body .veda-theme .veda-injury-card > div {
+  height: 100%;
+  overflow: auto;
+  background: var(--v-card) !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+html body .veda-theme .veda-injury-card > div > div:first-child {
+  padding: 20px 20px 8px !important;
+  border-bottom: 0 !important;
+}
+html body .veda-theme .veda-injury-card h3 {
+  font-family: inherit !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.005em;
+  color: var(--ink) !important;
+}
+html body .veda-theme .veda-injury-card h3 + p {
+  font-family: inherit !important;
+  margin-top: 2px !important;
+  font-size: 12px !important;
+  color: var(--ink-muted) !important;
+}
+html body .veda-theme .veda-injury-card > div > div:last-child {
+  padding: 8px 20px 20px !important;
+}
+/* per-body-part tiles and status text sit on the grey card */
+html body .veda-theme .veda-injury-card .grid > div {
+  background: var(--v-white) !important;
+  border-radius: 12px !important;
+}
+html body .veda-theme .veda-injury-card [class*="text-gray-"]:not(h3) {
+  color: var(--ink-muted) !important;
+}
+
+
+/* ── Responsive top bar + tabs ───────────────────────────────────────────────
+   ≥1024  one row: logo · site · search · period · filters · avatar
+   768–1023  brand name hides, search narrows; actions wrap to a right-aligned second row if needed
+   <768   stacked: [logo · site · avatar] / [search] / [period · filters]
+   <640   tighter side padding (matches the page body's px-4) */
+@media (max-width: 1023px) {
+  html body .veda-theme .veda-topbar .vt-site { min-width: 160px; }
+}
+
+@media (max-width: 767px) {
+  html body .veda-theme .veda-topbar { padding: 10px 16px !important; row-gap: 10px; }
+  /* let the action group's children join the bar's own wrapping so they can be re-ordered */
+  html body .veda-theme .veda-topbar .vt-actions { display: contents; }
+  html body .veda-theme .veda-topbar .vt-brand { order: 1; }
+  html body .veda-theme .veda-topbar .vt-site { order: 2; flex: 1 1 0; min-width: 0; width: auto !important; }
+  html body .veda-theme .veda-topbar .vt-site .vt-site-sub { max-width: none; }
+  html body .veda-theme .veda-topbar .vt-avatar { order: 3; }
+  html body .veda-theme .veda-topbar .vt-search { order: 4; flex: 1 1 100%; width: 100%; }
+  html body .veda-theme .veda-topbar .vt-period-wrap { order: 5; flex: 1 1 0; min-width: 0; }
+  html body .veda-theme .veda-topbar .vt-filters-wrap { order: 6; }
+  html body .veda-theme .veda-topbar .vt-seg { display: flex; width: 100%; }
+  html body .veda-theme .veda-topbar .vt-seg .vt-seg-btn { flex: 1; padding: 7px 8px; text-align: center; }
+
+  /* popovers stay on screen: period opens from its left edge, both fit the viewport */
+  html body .veda-theme .vt-period-wrap > .absolute { left: 0 !important; right: auto !important; }
+  html body .veda-theme .pc-pop,
+  html body .veda-theme .pc-pop.pc-filters { width: min(316px, calc(100vw - 32px)); }
+}
+
+@media (max-width: 639px) {
+  html body .veda-theme .veda-modtabs { padding: 12px 16px 0 !important; }
+}
+
+/* module tabs scroll sideways smoothly on touch screens when they don't all fit */
+html body .veda-theme .veda-seg {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+html body .veda-theme .veda-seg::-webkit-scrollbar { display: none; }

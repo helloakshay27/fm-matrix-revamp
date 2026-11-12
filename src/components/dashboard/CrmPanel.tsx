@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SafetyGridSection, type SafetyGridItem } from "@/components/dashboard/SafetyGridSection";
 import { CrmCalendarCard } from "@/components/dashboard/CrmCalendarCard";
 import { cn } from "@/lib/utils";
+import { VEDA_COLORS, VEDA_PALETTE } from "@/styles/vedaTheme";
 import type { CrmDashboardData } from "@/hooks/useFmDashboardData";
 import { extractAiInsights } from "@/services/fmDashboardAPI";
 
@@ -177,7 +178,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
       label: String(r["label"] || r["name"] || r["stage"] || `Stage ${idx + 1}`),
       value: String(r["value"] || r["count"] || 0),
       percent: typeof r["percent"] === "number" ? r["percent"] : Number(r["percent"] || 0),
-      color: String(r["color"] || ["#6B9BCC", "#108C72", "#DA7756", "#CECBF6"][idx % 4]),
+      color: String(r["color"] || VEDA_PALETTE[idx % VEDA_PALETTE.length]),
     }));
   }, [leaseOverviewValue]);
 
@@ -213,7 +214,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
   // Pipeline by stage extraction
   const pipelineStageRows = useMemo(() => {
     const raw = crmArray(leaseOverviewValue, ["stages", "pipeline_stages", "by_stage", "pipeline_by_stage"]);
-    const colors = ["#CECBF6", "#9EC8BA", "#6B9BCC", "#EDC488", "#DA7756"];
+    const colors = VEDA_PALETTE;
     return raw.map((r, idx) => ({
       label: String(r["stage"] || r["name"] || r["label"] || `Stage ${idx + 1}`),
       value: String(r["count"] || r["value"] || 0),
@@ -325,14 +326,14 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
             <button
               type="button"
               onClick={() => setTrendMode("line")}
-              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md ${trendMode === "line" ? "bg-brand text-white" : "bg-brand-bg text-brand-text-light"}`}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md ${trendMode === "line" ? "bg-[#1A1A18] text-white" : "bg-white text-[rgba(26,26,24,0.48)]"}`}
             >
               Line
             </button>
             <button
               type="button"
               onClick={() => setTrendMode("bar")}
-              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md ${trendMode === "bar" ? "bg-brand text-white" : "bg-brand-bg text-brand-text-light"}`}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md ${trendMode === "bar" ? "bg-[#1A1A18] text-white" : "bg-white text-[rgba(26,26,24,0.48)]"}`}
             >
               Bar
             </button>
@@ -346,7 +347,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
                 categoryKey="month"
                 valueKey="revenue"
                 unit="L"
-                color="#108C72"
+                color={VEDA_COLORS.purple}
                 height={160}
                 className="h-full"
               />
@@ -357,7 +358,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
                 data={liveRevenueTrend}
                 categoryKey="month"
                 series={[{ dataKey: "revenue", name: "Revenue (₹L)" }]}
-                categoryColors={["#108C72"]}
+                categoryColors={[VEDA_COLORS.purple]}
                 className="h-full"
               />
             )
@@ -371,13 +372,13 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
           )}
           <div className="grid grid-cols-3 gap-3 px-4 pb-4 mt-4">
             {[
-              { label: "Revenue", value: liveRevenue != null ? formatCrmLakhs(liveRevenue) ?? `₹${liveRevenue}` : "—", color: "#108C72" },
-              { label: "Pipeline", value: livePipeline != null ? formatCrmLakhs(livePipeline) ?? `₹${livePipeline}` : "—", color: "#6B9BCC" },
-              { label: "Avg Deal", value: liveAvgDeal != null ? formatCrmLakhs(liveAvgDeal) ?? `₹${liveAvgDeal}` : "—", color: "#2C2C2C" },
+              { label: "Revenue", value: liveRevenue != null ? formatCrmLakhs(liveRevenue) ?? `₹${liveRevenue}` : "—" },
+              { label: "Pipeline", value: livePipeline != null ? formatCrmLakhs(livePipeline) ?? `₹${livePipeline}` : "—" },
+              { label: "Avg Deal", value: liveAvgDeal != null ? formatCrmLakhs(liveAvgDeal) ?? `₹${liveAvgDeal}` : "—" },
             ].map((box) => (
               <div key={box.label} className="rounded-lg bg-brand-bg border border-brand-border text-center py-2.5">
                 <div className="text-brand-body-5 text-brand-text-light">{box.label}</div>
-                <div className="text-base font-bold mt-0.5" style={{ color: box.color }}>
+                <div className="text-base font-semibold mt-0.5 text-[#1A1A18]">
                   {box.value}
                 </div>
               </div>
@@ -398,12 +399,12 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="rounded-lg bg-brand-bg border border-brand-border text-center py-4">
                 <div className="text-brand-body-5 text-brand-text-light">Won</div>
-                <div className="text-2xl font-bold text-brand-success mt-1">{liveDealsWon != null ? liveDealsWon : "—"}</div>
+                <div className="text-2xl font-semibold text-[#1A1A18] mt-1">{liveDealsWon != null ? liveDealsWon : "—"}</div>
                 <div className="text-brand-body-5 text-brand-text-light mt-0.5">{formatCrmLakhs(liveWonValue) ?? (liveWonValue != null ? `₹${liveWonValue}` : "—")}</div>
               </div>
               <div className="rounded-lg bg-brand-bg border border-brand-border text-center py-4">
                 <div className="text-brand-body-5 text-brand-text-light">Lost</div>
-                <div className="text-2xl font-bold text-[#E7848E] mt-1">{liveDealsLost != null ? liveDealsLost : "—"}</div>
+                <div className="text-2xl font-semibold text-[#1A1A18] mt-1">{liveDealsLost != null ? liveDealsLost : "—"}</div>
                 <div className="text-brand-body-5 text-brand-text-light mt-0.5">{formatCrmLakhs(liveLostValue) ?? (liveLostValue != null ? `₹${liveLostValue}` : "—")}</div>
               </div>
             </div>
@@ -463,7 +464,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
             categoryKey="module"
             orientation="horizontal"
             series={[{ dataKey: "pct", name: "Adoption %" }]}
-            categoryColors={["#108C72", "#6B9BCC", "#9EC8BA", "#DA7756"]}
+            categoryColors={[...VEDA_PALETTE]}
             showInfoIcon
             className="h-full"
           />
@@ -692,7 +693,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
         <SafetyGridSection
           storageKey="crmOverviewGridLayout"
           items={overviewItems}
-          static
+          responsive
           moduleKey="crm"
           subTab="Overview"
           visibleKeys={visibleKeys}
@@ -703,7 +704,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
         <SafetyGridSection
           storageKey="crmPipelineGridLayout_v2"
           items={pipelineItems}
-          static
+          responsive
           moduleKey="crm"
           subTab="My Pipeline"
           visibleKeys={visibleKeys}
@@ -714,7 +715,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
         <SafetyGridSection
           storageKey="crmCalendarGridLayout"
           items={calendarItems}
-          static
+          responsive
           moduleKey="crm"
           subTab="Calendar"
           visibleKeys={visibleKeys}
@@ -725,7 +726,7 @@ export function CrmPanel({ activeSection, data, loading = false, visibleKeys }: 
         <SafetyGridSection
           storageKey="crmTasksGridLayout"
           items={tasksItems}
-          static
+          responsive
           moduleKey="crm"
           subTab="My Tasks"
           visibleKeys={visibleKeys}

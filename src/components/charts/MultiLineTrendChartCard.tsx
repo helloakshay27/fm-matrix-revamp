@@ -14,6 +14,7 @@ import {
 import { Info, LineChart as LineChartIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { VEDA_PALETTE } from "@/styles/vedaTheme";
 import type { ChartInsightTone } from "./PieChartCard";
 
 export interface LineSeriesConfig {
@@ -158,17 +159,20 @@ export function MultiLineTrendChartCard({
                   label={{ value: referenceLabel, position: "insideTopRight", fontSize: 10, fill: "var(--color-text)" }}
                 />
               )}
-              {series.map((s) => (
+              {series.map((s, index) => {
+                const color = VEDA_PALETTE[index % VEDA_PALETTE.length];
+                return (
                 <Line
                   key={s.dataKey}
                   type="monotone"
                   dataKey={s.dataKey}
                   name={s.name}
-                  stroke={s.color}
+                  stroke={color}
                   strokeWidth={2}
-                  dot={{ r: 3, fill: s.color }}
+                  dot={{ r: 3, fill: color }}
                 />
-              ))}
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         )}
