@@ -29,16 +29,24 @@ export interface FmDashboardParams {
   toDate?: string;
 }
 
-function buildFmDashboardQuery({ siteIds, fromDate, toDate }: FmDashboardParams): string {
+function buildFmDashboardQuery(
+  { siteIds, fromDate, toDate }: FmDashboardParams,
+  additionalParams: Record<string, string | number> = {}
+): string {
   const params = new URLSearchParams();
   if (siteIds.length) params.set("site_id", siteIds.join(","));
   if (fromDate) params.set("from_date", fromDate);
   if (toDate) params.set("to_date", toDate);
+  Object.entries(additionalParams).forEach(([key, value]) => params.set(key, String(value)));
   return params.toString();
 }
 
-export async function fetchFmDashboardJson<T>(endpoint: string, params: FmDashboardParams): Promise<T> {
-  const qs = buildFmDashboardQuery(params);
+export async function fetchFmDashboardJson<T>(
+  endpoint: string,
+  params: FmDashboardParams,
+  additionalParams?: Record<string, string | number>
+): Promise<T> {
+  const qs = buildFmDashboardQuery(params, additionalParams);
   const url = `${getFullUrl(endpoint)}${qs ? `?${qs}` : ""}`;
   const response = await fetch(url, getAuthenticatedFetchOptions("GET"));
   if (!response.ok) {
@@ -1198,38 +1206,51 @@ export interface AttendanceDepartmentData {
   department_breakdown: AttendanceDepartmentRow[];
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface AttendanceTrendMonth {
-  month?: string;
-  present_percent?: number;
-  present_count?: number;
-  absent_count?: number;
-  [key: string]: unknown;
+  month: string;
+  distinct_staff: number;
+  distinct_days_active: number;
+  total_check_ins: number;
+  present_staff: number;
+  absent_staff: number;
 }
 
 export interface AttendanceTrendData {
+  granularity: string;
   monthly_trend: AttendanceTrendMonth[];
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface AttendanceRepeatAbsenceRow {
-  employee_name?: string;
-  department?: string;
-  absence_count?: number;
-  [key: string]: unknown;
+  user_id: number;
+  name: string;
+  department_name: string;
+  present_days: number;
+  days_in_scope: number;
+  absence_rate_percent: number;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface AttendanceHabitualLatecomerRow {
+  user_id?: number;
+  name?: string;
+  department_name?: string;
   employee_name?: string;
   department?: string;
   late_count?: number;
   [key: string]: unknown;
 }
 
+export interface AttendanceConsecutiveAbsenteeRow {
+  user_id: number;
+  name: string;
+  department_name: string;
+  last_present_date: string | null;
+  consecutive_absent_days: number;
+}
+
 export interface AttendancePatternsData {
   repeat_absence: AttendanceRepeatAbsenceRow[];
   habitual_latecomers: AttendanceHabitualLatecomerRow[];
+  consecutive_absentees: AttendanceConsecutiveAbsenteeRow[];
 }
 
 export interface AttendanceStaffingGapDailyRow {
@@ -1243,18 +1264,18 @@ export interface AttendanceStaffingGapDailyRow {
 }
 
 export interface AttendanceStaffingGapVsBreachData {
-  absent_staff: {
+  absent_staff?: {
     absent_staff_count: number;
     absent_person_days: number;
     total_staff: number;
     working_days: number;
   };
-  ticket_breach: {
+  ticket_breach?: {
     total_tickets: number;
     breached_tickets: number;
     breach_percent: number;
   };
-  daily: AttendanceStaffingGapDailyRow[];
+  daily?: AttendanceStaffingGapDailyRow[];
 }
 
 interface AttendanceOverviewResponse {
@@ -1283,10 +1304,10 @@ interface AttendancePatternsResponse {
 }
 
 const ATTENDANCE_ENDPOINTS = {
-  OVERVIEW: "/fm_dashboard/attendance/attendance_overview.json",
-  DEPARTMENT: "/fm_dashboard/attendance/attendance_department.json",
-  TREND: "/fm_dashboard/attendance/attendance_trend.json",
-  PATTERNS: "/fm_dashboard/attendance/attendance_patterns.json",
+  OVERVIEW: "/fm_dashboard/attendance/attendance_overview",
+  DEPARTMENT: "/fm_dashboard/attendance/attendance_department",
+  TREND: "/fm_dashboard/attendance/attendance_trend",
+  PATTERNS: "/fm_dashboard/attendance/attendance_patterns",
   STAFFING_GAP_VS_BREACH: "/fm_dashboard/attendance/staffing_gap_vs_breach",
 } as const;
 
@@ -1301,7 +1322,9 @@ export const fetchAttendanceDepartment = (params: FmDashboardParams) =>
   );
 
 export const fetchAttendanceTrend = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<AttendanceTrendResponse>(ATTENDANCE_ENDPOINTS.TREND, params).then((res) => res.attendance_trend);
+  fetchFmDashboardJson<AttendanceTrendResponse>(ATTENDANCE_ENDPOINTS.TREND, params).then(
+    (res) => res.attendance_trend
+  );
 
 export const fetchAttendancePatterns = (params: FmDashboardParams) =>
   fetchFmDashboardJson<AttendancePatternsResponse>(ATTENDANCE_ENDPOINTS.PATTERNS, params).then(

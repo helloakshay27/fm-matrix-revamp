@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Asset Status Update modal (repair from breakdown, and Cost on Owner Cost) — labels above
@@ -236,91 +236,104 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
     }
   };
 
+  const payPill = (status?: string) => {
+    const key = (status || "").toLowerCase();
+    const label = key ? key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "N/A";
+    const cls =
+      key === "paid"
+        ? "bg-[rgba(18,161,80,0.12)] text-[#0E7F3F]"
+        : key === "not_paid"
+        ? "bg-[rgba(229,72,77,0.12)] text-[#B42318]"
+        : "bg-[#F5F4F0] text-[rgba(26,26,24,0.68)]";
+    return (
+      <span className={`inline-flex items-center px-2.5 py-[3px] rounded-full text-[11px] font-medium whitespace-nowrap ${cls}`}>
+        {label}
+      </span>
+    );
+  };
+
+  const thClass =
+    "h-12 px-4 text-[11px] font-semibold uppercase tracking-wider text-[rgba(26,26,24,0.68)]";
+  const tdClass = "px-4 py-4 text-[13px] text-[#1A1A18]";
+
   return (
     <div className="space-y-6">
-      <div className="w-full bg-white rounded-lg shadow-sm  mt-3">
+      <div className="w-full bg-white rounded-2xl border border-[rgba(26,26,24,0.12)] p-6">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border border-[#D9D9D9]">
-          {/* <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <CreditCard className="w-6 h-6" style={{ color: "#C72030" }} />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Owner Cost Details
-            </h3>
-          </div> */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-              <CreditCard className="w-4 h-4" style={{ color: "#C72030" }} />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Owner Cost Details
-            </h3>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">
-              {isInUse ? 'IN USE' : 'BREAKDOWN'}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-semibold text-[#1A1A18]">Owner Cost Details</h3>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-2 text-xs font-semibold text-[rgba(26,26,24,0.68)]">
+              Breakdown
+              <Switch
+                checked={!isInUse}
+                onCheckedChange={handleToggle}
+                aria-label="Breakdown"
+                className="h-5 w-9 data-[state=checked]:!bg-[#1A1A18] data-[state=unchecked]:!bg-[rgba(26,26,24,0.16)]"
+              />
             </span>
-            <Switch
-              checked={isInUse}
-              onCheckedChange={handleToggle}
-            />
-
+            <button
+              type="button"
+              onClick={() => setShowAssetStatusModal(true)}
+              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[10px] bg-[#1A1A18] hover:bg-[#12100E] text-white text-sm font-semibold transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Cost
+            </button>
           </div>
         </div>
 
-        {/* Body */}
-        <div className=" border border-t-0  " >
-          <Button
-            onClick={() => setShowAssetStatusModal(true)}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 m-4"
-          >
-            + Cost
-          </Button>
+        {/* Table */}
+        <div className="rounded-2xl border border-[rgba(26,26,24,0.12)] overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="text-gray-600 font-medium">Sr.no</TableHead>
-                <TableHead className="text-gray-600 font-medium">Date</TableHead>
-                <TableHead className="text-gray-600 font-medium">Repaired</TableHead>
-                <TableHead className="text-gray-600 font-medium text-right">Cost</TableHead>
-                <TableHead className="text-gray-600 font-medium">Warranty</TableHead>
-                <TableHead className="text-gray-600 font-medium">Warranty Type</TableHead>
-                <TableHead className="text-gray-600 font-medium">Payment Status</TableHead>
-                <TableHead className="text-gray-600 font-medium">Asset Name</TableHead>
+              <TableRow className="bg-[#F5F4F0] hover:bg-[#F5F4F0] border-b border-[rgba(26,26,24,0.08)]">
+                <TableHead className={thClass}>Sr. No.</TableHead>
+                <TableHead className={thClass}>Date</TableHead>
+                <TableHead className={thClass}>Repaired</TableHead>
+                <TableHead className={`${thClass} text-right`}>Cost</TableHead>
+                <TableHead className={thClass}>Warranty</TableHead>
+                <TableHead className={thClass}>Warranty Type</TableHead>
+                <TableHead className={thClass}>Payment Status</TableHead>
+                <TableHead className={thClass}>Asset Name</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {asset?.ownership_costs && asset.ownership_costs.length > 0 ? (
                 asset.ownership_costs.map((item, index) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.status}</TableCell>
-                    <TableCell className="text-right tabular-nums">{currencySymbol}{item.cost}</TableCell>
-                    <TableCell>{item.warranty_in_month} months</TableCell>
-                    <TableCell>{(item.warranty_type || "N/A").toUpperCase()}</TableCell>
-                    <TableCell>{(item.payment_status || "N/A").replace(/_/g, ' ').toUpperCase()}</TableCell>
-                    <TableCell>{asset.name || "N/A"}</TableCell>
+                  <TableRow key={item.id} className="border-b border-[rgba(26,26,24,0.08)] hover:bg-transparent">
+                    <TableCell className={tdClass}>{index + 1}</TableCell>
+                    <TableCell className={`${tdClass} tabular-nums`}>{item.date}</TableCell>
+                    <TableCell className={`${tdClass} capitalize`}>{item.status}</TableCell>
+                    <TableCell className={`${tdClass} text-right tabular-nums`}>{currencySymbol}{item.cost}</TableCell>
+                    <TableCell className={tdClass}>
+                      {item.warranty_in_month ? `${item.warranty_in_month} ${Number(item.warranty_in_month) === 1 ? "month" : "months"}` : "-"}
+                    </TableCell>
+                    <TableCell className={`${tdClass} capitalize`}>
+                      {(item.warranty_type || "N/A").replace(/_/g, " ")}
+                    </TableCell>
+                    <TableCell className={tdClass}>{payPill(item.payment_status)}</TableCell>
+                    <TableCell className={tdClass}>{asset.name || "N/A"}</TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center ">
-                    No owner cost data available.
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={8} className="text-center py-8 text-[13px] text-[rgba(26,26,24,0.48)]">
+                    No owner cost logged yet
                   </TableCell>
                 </TableRow>
               )}
+              <TableRow className="bg-[#F5F4F0] hover:bg-[#F5F4F0] border-0">
+                <TableCell className={`${tdClass} font-semibold`}>Total</TableCell>
+                <TableCell className={tdClass}></TableCell>
+                <TableCell className={tdClass}></TableCell>
+                <TableCell className={`${tdClass} font-semibold text-right tabular-nums`}>
+                  {currencySymbol}{totalCost.toLocaleString()}
+                </TableCell>
+                <TableCell colSpan={4} className={tdClass}></TableCell>
+              </TableRow>
             </TableBody>
           </Table>
-
-          {/* Footer */}
-          <div className=" p-4 border-t text-right">
-            <span className="text-lg font-semibold text-[#1A1A1A]">
-              Total Cost: {currencySymbol}{totalCost.toLocaleString()}
-            </span>
-          </div>
         </div>
       </div>
 
