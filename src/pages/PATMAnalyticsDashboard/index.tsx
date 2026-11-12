@@ -20,20 +20,27 @@ import {
   RETENTION_WEEKS,
 } from './patmQueries';
 
+/** Today as YYYY-MM-DD in local time. Usage data stops at today, so no date range may end after it. */
+const todayYmd = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const clampToToday = (v: string) => (v && v > todayYmd() ? todayYmd() : v);
+
 /* Analytics metrics are sourced exclusively from API responses. */
 
 /* ---------- KPI info dictionary ---------- */
 const KPI_INFO: Record<string, { f: string; m: string }> = {
  "Active Users":{f:"Unique team members (user_id) who fired at least one event during the selected period, across all connected organizations.",m:"Shows the reach of PATM among the team members with access — pulled directly from PostHog's person-level activity."},
  "Screen Views":{f:"Count of all View-typed events across the modules reported by the API (e.g. dashboard_viewed, task_details_viewed, project_details_viewed).",m:"Overall content consumption across the app."},
- "Sessions":{f:"Count of distinct app sessions started in the period, from the first event of every session (app_opened / app_foregrounded).",m:"Usage volume across all team members."},
+ "Sessions":{f:"Count of distinct sessions (visits) with activity in the selected period.",m:"Usage volume across all team members."},
  "Session Duration":{f:"Total session time ÷ total sessions.",m:"Engagement depth per visit — how long team members stay in PATM once they open it."},
- "Bounce Rate":{f:"% of sessions with only a session-start event and dashboard_viewed, and no further interaction.",m:"Immediate exits or a poor first impression of the home dashboard."},
+ "Bounce Rate":{f:"Sessions that never get past the launch, sign-in, home or dashboard screen ÷ all sessions × 100.",m:"Immediate exits or a poor first impression of the home dashboard."},
  "Recently Online":{f:"Distinct team members with an event in the last 30 minutes.",m:"A live pulse of who is actively working in PATM right now."},
  "Seat Utilisation":{f:"Active team members this period ÷ total licensed/onboarded team members across all organizations.",m:"How much of the licensed team base is actually opening the app."},
  "Stickiness":{f:"Average daily active users ÷ monthly active users (DAU/MAU) over the period.",m:"Whether PATM use is a daily habit or an occasional check-in."},
  "Adoption Trend":{f:"% change in weekly active users versus the prior 8-week average.",m:"Whether adoption is accelerating or plateauing across organizations."},
- "14-Day Activation":{f:"% of newly onboarded team members who fired an Action-typed event (e.g. task_created, todo_created) within 14 days of first login_success.",m:"Whether new team members actually start creating and managing work, not just logging in."},
+ "14-Day Activation":{f:"New team members (first seen in the period) who did a first real action (e.g. task_created, todo_created — not just sign-in or home) within 14 days of first appearing ÷ all new team members × 100.",m:"Whether new team members actually start creating and managing work, not just logging in."},
  "Module Breadth":{f:"Count of distinct modules used at least once out of the total modules reported by the API.",m:"How much of the platform a team has actually adopted, not just Tasks and Home."},
  "Workflow Adoption":{f:"% of active users who fired the workflow's first event (e.g. task_create_opened, project_create_opened).",m:"Shows how many team members attempt this process."},
  "Completion Rate":{f:"% of users who reached the workflow's terminal event after starting it.",m:"How effectively the workflow converts an attempt into a completed action."},
@@ -820,6 +827,7 @@ function AdoptionPage({
     device: dev,
   });
   const growthQ = usePatmGrowth({
+    from,
     to,
     weeks: GROWTH_WEEKS,
     appId,
@@ -856,11 +864,7 @@ function AdoptionPage({
       <div className="tiles cols-3">
         <Metric
           label="Stickiness"
-          value={
-            eng?.stickiness?.value == null
-              ? undefined
-              : eng.stickiness.value * 100
-          }
+          value={eng?.stickiness?.value ?? undefined /* already a percentage (3.3), not a ratio */}
           delta={eng?.stickiness?.delta_pct}
           percent
           loading={engagementQ.isFetching}
@@ -1672,14 +1676,16 @@ export default function PATMAnalyticsDashboard() {
                   <div className="dr-custom-row">
                     <input
                       type="date"
+                      max={todayYmd()}
                       value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
+                      onChange={(e) => setDateFrom(clampToToday(e.target.value))}
                     />
                     <span className="dr-to">&ndash;</span>
                     <input
                       type="date"
+                      max={todayYmd()}
                       value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
+                      onChange={(e) => setDateTo(clampToToday(e.target.value))}
                     />
                   </div>
                   <button className="dr-apply" onClick={handleApplyCustom}>

@@ -270,7 +270,7 @@ export function buildTraffic(
       disp: t ? fmtC(t.screen_views) : '—',
       delta: deltaOf(dp?.screen_views),
       goodUp: true,
-      sub: 'total pageviews',
+      sub: 'page views + app screen views',
       raw: t?.screen_views ?? 0,
     },
     {
@@ -298,7 +298,7 @@ export function buildTraffic(
       disp: pctVal(t?.bounce_rate),
       delta: deltaOf(dp?.bounce_rate),
       goodUp: false,
-      sub: '≤ 1 pageview · lower is better',
+      sub: 'never past sign-in · lower is better',
       raw: round1(t?.bounce_rate ?? 0),
       unit: '%',
     },
@@ -418,7 +418,7 @@ export function buildAdopt(
     },
     {
       id: 'A5',
-      label: '14-Day Activation (A5)',
+      label: '14-Day Activation (A4)',
       disp: pctVal(act?.value),
       delta: deltaOf(act?.delta_pct),
       goodUp: true,
@@ -428,7 +428,7 @@ export function buildAdopt(
     },
     {
       id: 'A6',
-      label: 'Module Breadth (A6)',
+      label: 'Module Breadth (A5)',
       disp: breadth ? `${breadth.in_use} / ${breadth.total}` : '—',
       delta: null,
       goodUp: true,
@@ -645,7 +645,7 @@ export function buildFlows(
       disp: k?.f_vol?.value == null ? '—' : fmtC(k.f_vol.value),
       delta: deltaOf(k?.f_vol?.delta_pct),
       goodUp: true,
-      sub: 'sessions entering the flow',
+      sub: 'users who completed',
       raw: k?.f_vol?.value ?? 0,
     },
   ];

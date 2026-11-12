@@ -377,7 +377,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
               ? `▲ ${d.sessions.toFixed(1)}%`
               : `▼ ${Math.abs(d.sessions).toFixed(1)}%`
             : undefined,
-        sub: 'app sessions started',
+        sub: 'sessions in period',
         infoKey: 'totalSessions',
         infoLabel: 'Total Sessions',
         goodUp: true,
@@ -478,7 +478,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         disp: a ? `${Math.round(actVal)}%` : '—',
         raw: actVal,
         delta: a?.activation?.delta_pct ?? null,
-        sub: 'new users active day 14',
+        sub: 'did a real action within 14 days',
         unit: '%',
         goodUp: true,
         infoKey: 'activation14',
@@ -486,7 +486,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
       },
       {
         id: 'moduleBreadth2',
-        label: 'Module Breadth (≥2)',
+        label: 'Module Breadth',
         disp: a ? `${breadthInUse} / ${breadthTotal}` : '—',
         raw: breadthInUse,
         delta: null,
@@ -494,7 +494,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         goodUp: true,
         noTarget: true,
         infoKey: 'moduleBreadth2',
-        infoLabel: 'Module Breadth (≥2)',
+        infoLabel: 'Module Breadth',
       },
     ];
 
@@ -631,7 +631,7 @@ export function CalendarDashboardProvider({ children }: { children: ReactNode })
         disp: k?.f_vol?.value != null ? k.f_vol.value.toLocaleString() : '—',
         raw: k?.f_vol?.value ?? 0,
         delta: k?.f_vol?.delta_pct ?? null,
-        sub: 'workflow completions',
+        sub: 'users who completed',
         goodUp: true,
         noTarget: true,
         infoKey: 'wfVolume',
