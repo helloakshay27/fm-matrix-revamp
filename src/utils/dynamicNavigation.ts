@@ -197,54 +197,65 @@ const hasActiveDescendant = (func: any, allFunctions: any[]): boolean => {
   return false;
 };
 
+/** Landing page when the role API gives no usable route. */
+export const DEFAULT_FALLBACK_ROUTE = "/maintenance/asset";
+
+/** Only same-origin app paths; blocks "//evil.com" protocol-relative links. */
+export const isSafePath = (p?: string | null): p is string =>
+  !!p && p.startsWith("/") && !p.startsWith("//");
+
 /**
- * Find the first accessible route for the user based on active permissions
+ * Children-first: a parent's link is often just a menu group header, so land
+ * on a real page under it. Children match on the parent's action_name OR
+ * function_id. `visited` guards against parent/child cycles.
+ */
+const findFirstActiveLink = (
+  func: any,
+  allFuncs: any[],
+  visited: Set<any>
+): string | null => {
+  if (visited.has(func)) return null;
+  visited.add(func);
+
+  const children = allFuncs.filter(
+    (child: any) =>
+      child !== func &&
+      child.parent_function != null &&
+      ((func.action_name != null &&
+        child.parent_function === func.action_name) ||
+        String(child.parent_function) === String(func.function_id))
+  );
+
+  for (const child of children) {
+    const link = findFirstActiveLink(child, allFuncs, visited);
+    if (link) return link;
+  }
+
+  if (func.function_active === 1 && isSafePath(func.react_link)) {
+    return func.react_link;
+  }
+
+  return null;
+};
+
+/**
+ * Find the first accessible route for the user, walking lock_modules in API
+ * order. Returns null when the role gives no usable link.
  */
 export const findFirstAccessibleRoute = (
   userRole: UserRoleResponse | null
 ): string | null => {
   if (!userRole || !userRole.lock_modules) return null;
 
-  // Find the first module with active functions (including descendants)
   for (const module of userRole.lock_modules) {
-    if (!module.lock_functions || module.lock_functions.length === 0) {
-      continue;
-    }
+    const funcs = module.lock_functions;
+    if (!funcs || funcs.length === 0) continue;
 
-    // Find the first function with active descendants
-    for (const func of module.lock_functions) {
-      if (hasActiveDescendant(func, module.lock_functions)) {
-        // If this function has a react_link and is active, use it
-        if (func.function_active === 1 && func.react_link) {
-          return func.react_link;
-        }
-
-        // Otherwise, find the first active descendant with a react_link
-        const findFirstActiveLink = (
-          currentFunc: any,
-          allFuncs: any[]
-        ): string | null => {
-          // Check if current function is active and has a link
-          if (currentFunc.function_active === 1 && currentFunc.react_link) {
-            return currentFunc.react_link;
-          }
-
-          // Check child functions
-          const children = allFuncs.filter(
-            (f: any) => f.parent_function === currentFunc.action_name
-          );
-
-          for (const child of children) {
-            const link = findFirstActiveLink(child, allFuncs);
-            if (link) return link;
-          }
-
-          return null;
-        };
-
-        const link = findFirstActiveLink(func, module.lock_functions);
-        if (link) return link;
-      }
+    const visited = new Set<any>();
+    for (const func of funcs) {
+      if (!hasActiveDescendant(func, funcs)) continue;
+      const link = findFirstActiveLink(func, funcs, visited);
+      if (link) return link;
     }
   }
 

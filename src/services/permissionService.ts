@@ -15,6 +15,8 @@ export interface LockFunction {
   action_name?: string; // Optional action_name field
   function_active: number;
   sub_functions: SubFunction[];
+  parent_function?: string | number | null; // parent's action_name OR function_id
+  react_link?: string | null; // frontend route for this function
 }
 
 export interface LockModule {
