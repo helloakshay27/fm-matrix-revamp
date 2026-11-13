@@ -1290,7 +1290,7 @@ export const AddEventPage = () => {
                   {attachments.map((attachment, index) => (
                     <div
                       key={index}
-                      className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center"
+                      className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center border border-gray-200 rounded-xl bg-white"
                     >
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {attachment.file.name}
@@ -1317,7 +1317,7 @@ export const AddEventPage = () => {
                   {/* Add new attachment box */}
                   <div
                     onClick={triggerFileInput}
-                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
+                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px] min-h-40 p-6 border border-dashed border-gray-300 rounded-xl bg-white hover:bg-gray-50"
                   >
 <PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                     <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
@@ -1359,11 +1359,11 @@ export const AddEventPage = () => {
           
 </PulseFormSection>
 
-        <div className="pulse-form-actions"><Button
+        <div className="pulse-form-actions flex flex-wrap justify-end gap-3 pt-6"><Button
             type="button"
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="pulse-form-secondary"
+            className="pulse-form-secondary min-h-[42px] px-[22px] rounded-lg text-[13px] font-semibold"
           >
             Cancel
           </Button>
@@ -1371,7 +1371,7 @@ export const AddEventPage = () => {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="pulse-form-primary"
+            className="pulse-form-primary min-h-[42px] px-[22px] rounded-lg text-[13px] font-semibold"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button></div>
