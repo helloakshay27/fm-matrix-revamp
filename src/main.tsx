@@ -20,7 +20,7 @@ import { installNetworkMonitor } from "./utils/networkMonitor.ts";
 
 // App-wide toasts for slow requests, unreachable server and offline/online —
 // see utils/networkMonitor.ts for why this patches fetch/XHR globally.
-installNetworkMonitor();
+// installNetworkMonitor();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
@@ -57,7 +57,9 @@ function removeLegacyPostHogCookie(token: string) {
     if (existing) {
       try {
         if (!localStorage.getItem(cookieName)) {
-          const value = decodeURIComponent(existing.slice(cookieName.length + 1));
+          const value = decodeURIComponent(
+            existing.slice(cookieName.length + 1)
+          );
           JSON.parse(value); // only migrate a well-formed PostHog payload
           localStorage.setItem(cookieName, value);
         }
@@ -72,7 +74,9 @@ function removeLegacyPostHogCookie(token: string) {
     const hostParts = window.location.hostname.split(".");
     const domains = [
       "", // host-only cookie
-      ...hostParts.slice(0, -1).map((_, i) => `; domain=.${hostParts.slice(i).join(".")}`),
+      ...hostParts
+        .slice(0, -1)
+        .map((_, i) => `; domain=.${hostParts.slice(i).join(".")}`),
     ];
     domains.forEach((domain) => {
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`;
