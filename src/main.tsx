@@ -45,24 +45,24 @@ setTimeout(() => sessionStorage.removeItem(RELOAD_ONCE_KEY), 10_000);
 
 // App-wide toasts for slow requests, unreachable server and offline/online —
 // see utils/networkMonitor.ts for why this patches fetch/XHR globally.
-installNetworkMonitor();
+// installNetworkMonitor();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 if (
   window.location.hostname === "fm-matrix.lockated.com" ||
   // window.location.hostname === "lockated.gophygital.work" ||
-  window.location.hostname === "localhost"
-  || window.location.hostname === "club.lockated.com"
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "club.lockated.com" ||
   // Shown inside a host product's page (Business Genie): the brand theme is what colours the buttons (fm-button-brand reads
   // --color-primary, which only theme.css defines), so it loads whatever address serves the app — without it every "Add" is
   // white text on nothing.
-  || isEmbeddedMode()
-  || hasEmbeddedSession()
+  isEmbeddedMode() ||
+  hasEmbeddedSession()
 ) {
-import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
-// Initialise runtime color patcher — overrides MUI inline styles and any
-// legacy #C72030 / #C62828 colors injected via sx props or inline styles.
-initColorPatch();
+  import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
+  // Initialise runtime color patcher — overrides MUI inline styles and any
+  // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
+  initColorPatch();
 }
 
 // Initialize posthog BEFORE React renders so posthog.capture() calls inside
@@ -88,7 +88,9 @@ function removeLegacyPostHogCookie(token: string) {
     if (existing) {
       try {
         if (!localStorage.getItem(cookieName)) {
-          const value = decodeURIComponent(existing.slice(cookieName.length + 1));
+          const value = decodeURIComponent(
+            existing.slice(cookieName.length + 1)
+          );
           JSON.parse(value); // only migrate a well-formed PostHog payload
           localStorage.setItem(cookieName, value);
         }
@@ -103,7 +105,9 @@ function removeLegacyPostHogCookie(token: string) {
     const hostParts = window.location.hostname.split(".");
     const domains = [
       "", // host-only cookie
-      ...hostParts.slice(0, -1).map((_, i) => `; domain=.${hostParts.slice(i).join(".")}`),
+      ...hostParts
+        .slice(0, -1)
+        .map((_, i) => `; domain=.${hostParts.slice(i).join(".")}`),
     ];
     domains.forEach((domain) => {
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`;
