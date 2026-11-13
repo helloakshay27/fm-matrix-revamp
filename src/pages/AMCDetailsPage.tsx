@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -304,6 +304,14 @@ export const AMCDetailsPage = () => {
     names: string[];
     coveredIds: string[];
     attachments: VisitAttachment[];
+    assets: Array<{
+      asset_id: number | string | null;
+      name?: string | null;
+      code?: string | null;
+      documents: VisitAttachment[];
+    }>;
+    totalAssetCount: number;
+    loading: boolean;
   } | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
   const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
@@ -314,6 +322,12 @@ export const AMCDetailsPage = () => {
   const [visitEditStatus, setVisitEditStatus] = useState("");
   const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
   const [visitEditDocuments, setVisitEditDocuments] = useState<File[]>([]);
+  const [assetDocumentsById, setAssetDocumentsById] = useState<Record<number, File[]>>({});
+  // Already-uploaded files for the visit being edited (from get_amc_history).
+  const [visitEditExistingAssetDocs, setVisitEditExistingAssetDocs] = useState<Record<number, VisitAttachment[]>>({});
+  const [visitEditExistingDocs, setVisitEditExistingDocs] = useState<VisitAttachment[]>([]);
+  const [visitEditHistoryLoading, setVisitEditHistoryLoading] = useState(false);
+  const visitEditRequestRef = useRef(0);
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
@@ -322,19 +336,82 @@ export const AMCDetailsPage = () => {
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
+  // The visit-log APIs are not consistent about where covered assets live:
+  // flat logs send asset_ids / amc_asset_ids, frequency logs send
+  // assets_covered (array or comma string), some send an `assets` array.
+  // visit_logs_by_frequency rows are slim (no asset_ids / attachments); the
+  // full record for the same visit id lives in amc_visit_logs.
+  const withFullVisitLog = (visit: any): any => {
+    if (!visit?.id) return visit;
+    const full = amcVisitData.find((log: any) => log.id === visit.id);
+    return full ? { ...full, ...visit, asset_ids: (full as any).asset_ids ?? visit.asset_ids, attachments: visit.attachments ?? (full as any).attachments } : visit;
+  };
+
+  // API sends `technician: { id, name, email }`; older payloads used technician_name.
+  const getVisitTechnicianName = (rawVisit: any): string => {
+    const visit = withFullVisitLog(rawVisit);
+    const tech = visit?.technician;
+    return (
+      visit?.technician_name ||
+      (typeof tech === "string" ? tech : tech?.name || tech?.full_name) ||
+      "—"
+    );
+  };
+
+  const getVisitCoveredIds = (rawVisit: any): string[] => {
+    if (!rawVisit) return [];
+    const visit = withFullVisitLog(rawVisit);
+    const toList = (value: unknown): unknown[] | null => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string" && value.includes(",")) return value.split(",");
+      return null;
+    };
+    const list =
+      toList(visit.assets_covered) ??
+      toList(visit.asset_ids) ??
+      toList(visit.amc_asset_ids) ??
+      toList(visit.covered_asset_ids) ??
+      (Array.isArray(visit.assets) ? visit.assets : null) ??
+      [];
+    return list
+      .map((entry: any) =>
+        entry && typeof entry === "object" ? entry.asset_id ?? entry.id : entry
+      )
+      .filter((id) => id !== null && id !== undefined && String(id).trim() !== "")
+      .map((id) => String(id).trim());
+  };
+
+  const getVisitAssetCount = (visit: any): number => {
+    const ids = getVisitCoveredIds(visit);
+    if (ids.length) {
+      // Count distinct AMC assets the ids point to (by asset_id or amc row id),
+      // so duplicates / mixed id kinds can't push the count past the total.
+      const amcAssets: any[] = (amcData as any)?.amc_assets ?? [];
+      const idSet = new Set(ids);
+      const matched = amcAssets.filter((a) =>
+        [a.asset_id, a.id].some((alias) => alias != null && idSet.has(String(alias)))
+      ).length;
+      return matched > 0 ? matched : idSet.size;
+    }
+    if (typeof visit?.asset_names === "string") {
+      const names = visit.asset_names.split(",").map((n: string) => n.trim()).filter(Boolean);
+      if (names.length) return names.length;
+    }
+    // Count-only fields (number or numeric string), e.g. no_of_assets.
+    for (const value of [visit?.no_of_assets, visit?.assets_count, visit?.asset_count, visit?.assets_covered]) {
+      const n = Number(value);
+      if (value !== null && value !== undefined && value !== "" && Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  };
+
   const getVisitAssetNames = (visit: any): string[] => {
     const names = typeof visit.asset_names === "string"
       ? visit.asset_names.split(",").map((name: string) => name.trim()).filter(Boolean)
       : [];
     if (names.length > 0) return names;
 
-    const coveredIds: unknown[] = Array.isArray(visit.assets_covered)
-      ? visit.assets_covered
-      : Array.isArray(visit.asset_ids)
-        ? visit.asset_ids
-        : Array.isArray(visit.amc_asset_ids)
-          ? visit.amc_asset_ids
-          : [];
+    const coveredIds: unknown[] = getVisitCoveredIds(visit);
     const amcAssets = (amcData as any)?.amc_assets ?? [];
 
     return coveredIds.map((id) => {
@@ -368,14 +445,18 @@ export const AMCDetailsPage = () => {
   };
 
   const getFileNameFromUrl = (url: string) => {
+    let segment: string | undefined;
     try {
       const path = new URL(url).pathname;
-      const segment = path.substring(path.lastIndexOf("/") + 1);
-      return decodeURIComponent(segment) || null;
+      segment = path.substring(path.lastIndexOf("/") + 1);
     } catch {
-      const segment = url.split("?")[0].split("/").pop();
-      return segment ? decodeURIComponent(segment) : null;
+      segment = url.split("?")[0].split("/").pop();
     }
+    if (!segment) return null;
+    const name = decodeURIComponent(segment);
+    // attachfiles/<token>/download URLs carry no real filename — let callers
+    // fall back to "File N" instead of showing "download" for every file.
+    return name && name.toLowerCase() !== "download" ? name : null;
   };
 
   const renderAttachmentItems = (
@@ -421,7 +502,8 @@ export const AMCDetailsPage = () => {
     );
   };
 
-  const renderVisitAttachments = (visit: any) => {
+  const renderVisitAttachments = (rawVisit: any) => {
+    const visit = withFullVisitLog(rawVisit);
     const list: VisitAttachment[] = [
       ...(visit.attachments || []),
       ...(visit.attachment ? [visit.attachment] : []),
@@ -434,24 +516,134 @@ export const AMCDetailsPage = () => {
     );
   };
 
-  const openAssetCoverageDialog = (visit: any) => {
-    const names = getVisitAssetNames(visit);
-    const attachments: VisitAttachment[] = [
+  const mapHistoryDoc = (doc: any): VisitAttachment => {
+    const nested = doc?.document && typeof doc.document === "object" ? doc.document : null;
+    const rawUrl =
+      doc?.url || doc?.document_url || doc?.attachment_url || doc?.file_url ||
+      nested?.url || (typeof doc?.document === "string" ? doc.document : "") || "";
+    const url = decodeURIComponent(String(rawUrl));
+    // Leave the name empty when unknown so lists fall back to "File N".
+    const name = doc?.filename || doc?.document_name || doc?.document_file_name || getFileNameFromUrl(rawUrl) || "";
+    return {
+      id: doc?.id ?? doc?.attachment_id,
+      document_url: url,
+      document: url,
+      filename: name,
+      document_file_name: name,
+      created_at: doc?.created_at,
+    };
+  };
+
+  // GET get_amc_history.json?id=<visitId> → per-asset documents + visit documents.
+  const fetchVisitHistory = async (visitId: number | string) => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) throw new Error("Missing base URL or token");
+    const res = await fetch(
+      `https://${baseUrl}/pms/asset_amcs/get_amc_history.json?id=${visitId}`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+    );
+    if (!res.ok) throw new Error(`History fetch failed: ${res.status}`);
+    const raw = await res.json();
+    // The payload may be wrapped (amc_history / history / data) — unwrap once.
+    const data = raw?.amc_history ?? raw?.history ?? raw?.data ?? raw;
+    const firstArray = (...candidates: unknown[]): any[] =>
+      (candidates.find((c) => Array.isArray(c)) as any[]) ?? [];
+
+    const assets = firstArray(data?.assets, data?.amc_assets, data?.asset_details, raw?.assets).map((asset: any) => {
+      const assetDocs = firstArray(asset?.documents, asset?.attachments, asset?.asset_documents);
+      return {
+        asset_id: asset?.asset_id ?? asset?.pms_asset_id ?? asset?.id ?? null,
+        name: asset?.name || asset?.asset_name || "Unknown Asset",
+        code: asset?.code || asset?.asset_code || null,
+        documents: assetDocs.map((doc: any) => mapHistoryDoc(doc)),
+      };
+    });
+
+    // Some payloads key per-asset docs separately: asset_documents: { "<asset_id>": [docs] }.
+    // ...or as a flat list where each doc carries its own asset_id.
+    const keyedDocs = data?.asset_documents ?? raw?.asset_documents;
+    const keyedEntries: Array<[string, unknown]> = Array.isArray(keyedDocs)
+      ? Object.entries(
+          keyedDocs.reduce((acc: Record<string, any[]>, doc: any) => {
+            const id = doc?.asset_id ?? doc?.pms_asset_id;
+            if (id != null) (acc[String(id)] ||= []).push(...(Array.isArray(doc?.documents) ? doc.documents : [doc]));
+            return acc;
+          }, {})
+        )
+      : keyedDocs && typeof keyedDocs === "object"
+        ? Object.entries(keyedDocs)
+        : [];
+    if (keyedEntries.length) {
+      keyedEntries.forEach(([assetId, docs]) => {
+        if (!Array.isArray(docs) || !docs.length) return;
+        const mapped = docs.map((doc: any) => mapHistoryDoc(doc));
+        const existing = assets.find((a: any) => String(a.asset_id) === String(assetId));
+        if (existing) existing.documents.push(...mapped);
+        else assets.push({ asset_id: assetId, name: null, code: null, documents: mapped });
+      });
+    }
+
+    const documents: VisitAttachment[] = firstArray(data?.documents, data?.attachments, raw?.documents, raw?.attachments)
+      .map((doc: any) => mapHistoryDoc(doc));
+    return { assets, documents };
+  };
+
+  const openAssetCoverageDialog = async (rawVisit: any) => {
+    const visit = withFullVisitLog(rawVisit);
+    const fallbackNames = getVisitAssetNames(visit);
+    const fallbackAttachments: VisitAttachment[] = [
       ...(Array.isArray(visit.attachments) ? visit.attachments : []),
       ...(visit.attachment ? [visit.attachment] : []),
     ];
 
-    const coveredIds: string[] = (
-      Array.isArray(visit.assets_covered)
-        ? visit.assets_covered
-        : Array.isArray(visit.asset_ids)
-          ? visit.asset_ids
-          : Array.isArray(visit.amc_asset_ids)
-            ? visit.amc_asset_ids
-            : []
-    ).map((id: unknown) => String(id));
+    const fallbackCoveredIds: string[] = getVisitCoveredIds(visit);
 
-    setAssetCoverageDialog({ names, coveredIds, attachments });
+    const detailsAssetCount = Number((amcData as any)?.amc_assets?.length ?? 0);
+    const totalAssetCount = detailsAssetCount > 0 ? detailsAssetCount : (fallbackNames.length || fallbackCoveredIds.length || 1);
+    const visitId = visit?.id ?? null;
+    setAssetCoverageDialog({
+      names: fallbackNames,
+      coveredIds: fallbackCoveredIds,
+      attachments: fallbackAttachments,
+      assets: [],
+      totalAssetCount,
+      loading: !!visitId,
+    });
+
+    if (!visitId) return;
+
+    try {
+      const { assets: resolvedAssets, documents: resolvedAttachments } = await fetchVisitHistory(visitId);
+
+      const detailsAssetCount = Number((amcData as any)?.amc_assets?.length ?? 0);
+      const totalAssetCount = detailsAssetCount > 0 ? detailsAssetCount : (resolvedAssets.length || fallbackNames.length || fallbackCoveredIds.length || 1);
+      // If history returns no assets/documents, keep what the visit row already had.
+      setAssetCoverageDialog({
+        names: resolvedAssets.length
+          ? resolvedAssets.map((asset) => asset.name || `Asset ${asset.asset_id ?? ""}`)
+          : fallbackNames,
+        // Coverage comes from the visit's saved asset_ids (same source as Edit
+        // Visit Log) so both views agree; history is only the fallback.
+        coveredIds: fallbackCoveredIds.length
+          ? fallbackCoveredIds
+          : resolvedAssets.map((asset) => String(asset.asset_id ?? "")),
+        attachments: resolvedAttachments.length ? resolvedAttachments : fallbackAttachments,
+        assets: resolvedAssets,
+        totalAssetCount,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("AMC history fetch failed:", error);
+      setAssetCoverageDialog({
+        names: fallbackNames,
+        coveredIds: fallbackCoveredIds,
+        attachments: fallbackAttachments,
+        assets: [],
+        totalAssetCount: Number((amcData as any)?.amc_assets?.length ?? 0) || (fallbackNames.length || fallbackCoveredIds.length || 1),
+        loading: false,
+      });
+    }
   };
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
@@ -594,11 +786,87 @@ export const AMCDetailsPage = () => {
     setVisitEditStatus((visit as any).status || "");
     setVisitEditOriginalStatus((visit as any).status || "");
     setVisitEditDocuments([]);
-    const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+    setAssetDocumentsById({});
+    // Pre-select only rows that exist in this AMC's asset (or service) table.
+    // The visit may carry ids of another kind (amc_asset row id vs asset_id)
+    // or duplicates, so map each id onto the table's key and de-duplicate —
+    // otherwise the counter reads e.g. "5 of 1 completed".
+    const amcAssets: any[] = amcDetails?.amc_assets ?? [];
+    const amcServices: any[] = (amcDetails as any)?.amc_services ?? [];
+    const rows = amcAssets.length
+      ? amcAssets.map((a) => ({ key: Number(a.asset_id), aliases: [a.asset_id, a.id] }))
+      : amcServices.map((s) => ({ key: Number(s.service_id), aliases: [s.service_id, s.id] }));
+    const coveredIds = new Set(getVisitCoveredIds(visit));
+    const assetIds: number[] = Array.from(
+      new Set(
+        rows
+          .filter((row) => row.aliases.some((alias) => alias != null && coveredIds.has(String(alias))))
+          .map((row) => row.key)
+          .filter((id) => Number.isFinite(id))
+      )
+    );
     setVisitEditSelectedAssetIds(assetIds);
+
+    // Show already-uploaded files right away: visit-level ones from the row,
+    // then refresh both visit and per-asset docs from get_amc_history.
+    const rowDocs: VisitAttachment[] = [
+      ...(Array.isArray((visit as any).attachments) ? (visit as any).attachments : []),
+      ...((visit as any).attachment ? [(visit as any).attachment] : []),
+    ];
+    setVisitEditExistingDocs(rowDocs);
+    setVisitEditExistingAssetDocs({});
+    const requestId = ++visitEditRequestRef.current;
+    setVisitEditHistoryLoading(true);
+    fetchVisitHistory(visit.id)
+      .then(({ assets, documents }) => {
+        if (requestId !== visitEditRequestRef.current) return; // modal reopened for another visit
+        const byAsset: Record<number, VisitAttachment[]> = {};
+        assets.forEach((asset: any) => {
+          const key = Number(asset.asset_id);
+          if (Number.isFinite(key) && asset.documents.length) {
+            byAsset[key] = [...(byAsset[key] || []), ...asset.documents];
+          }
+        });
+        setVisitEditExistingAssetDocs(byAsset);
+        if (documents.length) setVisitEditExistingDocs(documents);
+      })
+      .catch((error) => console.error("AMC history fetch failed:", error))
+      .finally(() => {
+        if (requestId === visitEditRequestRef.current) setVisitEditHistoryLoading(false);
+      });
+
     fetchVisitTechnicians();
     setShowVisitEditModal(true);
   };
+
+  // Compact read-only list of already-uploaded files (link + download).
+  const renderExistingDocs = (docs: VisitAttachment[], keyPrefix: string) => (
+    <ul className="space-y-1">
+      {docs.map((doc, idx) => {
+        const url = doc.document_url || doc.document || "";
+        const name = doc.filename || doc.document_file_name || getFileNameFromUrl(url) || `File ${idx + 1}`;
+        return (
+          <li
+            key={`${keyPrefix}-${doc.id ?? idx}`}
+            className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-700"
+          >
+            <a href={url} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-1.5 text-brand hover:underline">
+              <FileText className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{name}</span>
+            </a>
+            <button
+              type="button"
+              title="Download"
+              className="text-gray-500 hover:text-brand flex-shrink-0"
+              onClick={() => url && downloadVisitAttachment(url, name)}
+            >
+              <Download className="w-3 h-3" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
@@ -619,11 +887,24 @@ export const AMCDetailsPage = () => {
       if (visitEditTechnicianId) formData.append("amc_history[technician_id]", visitEditTechnicianId);
       formData.append("amc_history[remarks]", visitEditRemarks);
       formData.append("amc_history[status]", visitEditStatus);
-      visitEditSelectedAssetIds.forEach((assetId) =>
+      // An asset with docs attached was serviced on this visit, so it is always
+      // part of asset_ids — otherwise the backend stores asset_ids: null and the
+      // Assets Covered count / per-asset docs never show up.
+      const assetIdsWithDocs = Object.entries(assetDocumentsById)
+        .filter(([, files]) => files?.length)
+        .map(([assetId]) => Number(assetId))
+        .filter((assetId) => Number.isFinite(assetId));
+      Array.from(new Set([...visitEditSelectedAssetIds, ...assetIdsWithDocs])).forEach((assetId) =>
         formData.append("amc_history[asset_ids][]", String(assetId))
       );
       visitEditDocuments.forEach((file) => {
         formData.append("amc_history[documents][]", file);
+      });
+      Object.entries(assetDocumentsById).forEach(([assetId, files]) => {
+        if (!files?.length) return;
+        files.forEach((file) => {
+          formData.append(`asset_documents[${assetId}][]`, file);
+        });
       });
       const res = await fetch(
         `https://${baseUrl}/pms/asset_amcs/amc_history_update.json`,
@@ -1706,24 +1987,22 @@ export const AMCDetailsPage = () => {
                                 case "actual_visit_date":
                                   return item.actual_visit_date || "—";
                                 case "assets_covered": {
-                                  const assetsCovered = Array.isArray(item.assets_covered)
-                                    ? item.assets_covered
-                                    : [];
-                                  return assetsCovered.length > 0 ? (
+                                  const coveredCount = getVisitAssetCount(item);
+                                  return coveredCount > 0 ? (
                                     <button
                                       type="button"
                                       onClick={() => openAssetCoverageDialog(item)}
-                                      aria-label={`View ${assetsCovered.length} covered assets`}
+                                      aria-label={`View ${coveredCount} covered assets`}
                                       className="inline-flex items-center justify-center text-sm font-semibold text-[#2563eb] underline underline-offset-2 hover:text-[#1e40af] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                     >
-                                      {assetsCovered.length}
+                                      {coveredCount}
                                     </button>
                                   ) : (
                                     "—"
                                   );
                                 }
                                 case "technician":
-                                  return item.technician_name || "—";
+                                  return getVisitTechnicianName(item);
                                 case "remarks":
                                   return (
                                     <span className="max-w-[200px] inline-block whitespace-normal break-words">
@@ -1814,7 +2093,7 @@ export const AMCDetailsPage = () => {
                                 return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
                               }
                               case "technician":
-                                return item.technician_name || "—";
+                                return getVisitTechnicianName(item);
                               case "remarks":
                                 return (
                                   <span className="max-w-[200px] inline-block whitespace-normal break-words">
@@ -1838,10 +2117,8 @@ export const AMCDetailsPage = () => {
                                   <span className="text-gray-400 text-sm">—</span>
                                 );
                               case "assets_covered": {
-                                const ids: any[] =
-                                  item.asset_ids || item.amc_asset_ids || [];
                                 const total = amcDetails?.amc_assets?.length ?? 0;
-                                const covered = ids.length;
+                                const covered = getVisitAssetCount(item);
                                 return covered > 0 ? (
                                   <button
                                     type="button"
@@ -1887,124 +2164,155 @@ export const AMCDetailsPage = () => {
                 if (!open) setAssetCoverageDialog(null);
               }}
             >
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Assets Covered</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-5 py-2">
-                  <div>
-                    {(() => {
-                      const allAssets: any[] = (amcData as any)?.amc_assets ?? [];
-                      const coveredIds = assetCoverageDialog?.coveredIds ?? [];
-                      if (!allAssets.length) {
-                        return assetCoverageDialog?.names.length ? (
-                          <>
-                            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
-                              Asset Names
-                            </h3>
-                            <ul className="space-y-2">
-                              {assetCoverageDialog.names.map((name, index) => (
-                                <li
-                                  key={`${name}-${index}`}
-                                  className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800"
-                                >
-                                  {name}
-                                </li>
-                              ))}
-                            </ul>
-                          </>
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No asset names are available for this visit.
-                          </p>
-                        );
-                      }
-                      const isCovered = (a: any) =>
-                        coveredIds.includes(String(a.asset_id ?? a.id));
-                      const coveredAssets = allAssets.filter(isCovered);
-                      const coveredCount = coveredAssets.length;
-                      if (!coveredCount) {
-                        return (
-                          <p className="text-sm text-gray-500">
-                            No assets are covered for this visit.
-                          </p>
-                        );
-                      }
-                      return (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
-                              Assets
-                            </h3>
-                            <span className="text-sm font-semibold text-brand bg-brand-light px-2.5 py-0.5 rounded-full">
-                              {coveredCount} of {allAssets.length} covered
-                            </span>
-                          </div>
-                          <div className="border border-gray-200 rounded-md overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow className="bg-[#EDEAE3]">
-                                  <TableHead className="w-24 font-semibold text-[#1a1a1a] text-xs">Asset Covered</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Equipment Id</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody className="bg-white">
-                                {coveredAssets.map((asset) => {
-                                  const checked = true;
-                                  return (
-                                    <TableRow
-                                      key={asset.id}
-                                      className={`border-b border-gray-100 ${checked ? "bg-[#FFF8F8]" : ""}`}
-                                    >
-                                      <TableCell className="w-24">
-                                        <input
-                                          type="checkbox"
-                                          className="w-4 h-4 accent-[#C72030]"
-                                          checked={checked}
-                                          disabled
-                                          readOnly
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-sm text-gray-900 py-2">{asset.asset_name || "—"}</TableCell>
-                                      <TableCell className="text-sm text-gray-600 py-2">{asset.asset_code || "—"}</TableCell>
-                                      <TableCell className="py-2">
-                                        <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${asset.asset_status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                                          {asset.asset_status || "—"}
-                                        </span>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                  {assetCoverageDialog?.loading ? (
+                    <p className="text-sm text-gray-500">Loading asset details...</p>
+                  ) : (
+                    <>
+                      <div>
+                        {(() => {
+                          // Same layout as Edit Visit Log: every AMC asset, ticked when this
+                          // visit covered it, plus that asset's uploaded docs (read-only).
+                          const dialog = assetCoverageDialog;
+                          const coveredSet = new Set(dialog?.coveredIds ?? []);
+                          const docsByAsset = new Map<string, VisitAttachment[]>();
+                          (dialog?.assets ?? []).forEach((a) => {
+                            if (a.asset_id == null) return;
+                            const key = String(a.asset_id);
+                            docsByAsset.set(key, [...(docsByAsset.get(key) || []), ...a.documents]);
+                          });
+                          const amcAssets: any[] = (amcData as any)?.amc_assets ?? [];
+                          // History rows may describe the asset when the AMC row doesn't.
+                          const historyById = new Map<string, any>();
+                          (dialog?.assets ?? []).forEach((a) => {
+                            if (a.asset_id != null) historyById.set(String(a.asset_id), a);
+                          });
+                          const rows = amcAssets.length
+                            ? amcAssets.map((a) => {
+                                const aliases = [a.asset_id, a.id, a.pms_asset_id].filter((x) => x != null).map(String);
+                                const hist = aliases.map((x) => historyById.get(x)).find(Boolean);
+                                return {
+                                  key: String(a.id ?? a.asset_id),
+                                  assetId: aliases.find((x) => docsByAsset.has(x)) ?? a.asset_id,
+                                  name: a.asset_name || a.name || hist?.name,
+                                  // Equipment ID = asset_id, as in the Association tab.
+                                  code: a.asset_id ?? hist?.asset_id,
+                                  status: a.asset_status || a.status,
+                                  covered: aliases.some((alias) => coveredSet.has(alias)),
+                                };
+                              })
+                            : (dialog?.assets?.length
+                                ? dialog.assets.map((a, i) => ({
+                                    key: String(a.asset_id ?? i),
+                                    assetId: a.asset_id,
+                                    name: a.name,
+                                    code: a.asset_id,
+                                    status: null,
+                                    covered: true,
+                                  }))
+                                : (dialog?.names ?? []).map((name, i) => ({
+                                    key: `${name}-${i}`,
+                                    assetId: null,
+                                    name,
+                                    code: null,
+                                    status: null,
+                                    covered: true,
+                                  })));
 
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
-                      Attachments
-                    </h3>
-                    {assetCoverageDialog ? (
-                      renderAttachmentItems(
-                        assetCoverageDialog.attachments,
-                        "No attachments are available for this visit."
-                      )
-                    ) : (
-                      <p className="text-sm text-gray-500">No attachments available.</p>
-                    )}
-                  </div>
+                          if (!rows.length) {
+                            return <p className="text-sm text-gray-500">No assets are available for this visit.</p>;
+                          }
+                          const coveredCount = rows.filter((r) => r.covered).length;
+
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-gray-700">
+                                  Assets — AMC completed assets
+                                </label>
+                                <span className="text-sm font-semibold text-brand bg-brand-light px-2.5 py-0.5 rounded-full">
+                                  {coveredCount} of {rows.length} completed
+                                </span>
+                              </div>
+                              <div className="border border-gray-200 rounded-md overflow-hidden">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-[#EDEAE3]">
+                                      <TableHead className="w-20 font-semibold text-[#1a1a1a] text-xs">Covered</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a] text-xs">Equipment ID</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Docs</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="bg-white">
+                                    {rows.map((row) => {
+                                      const docs = row.assetId != null ? docsByAsset.get(String(row.assetId)) || [] : [];
+                                      return (
+                                        <TableRow
+                                          key={row.key}
+                                          className={`align-top border-b border-gray-100 last:border-b-0 ${row.covered ? "bg-[#FFF8F8]" : ""}`}
+                                        >
+                                          <TableCell className="w-10 py-2">
+                                            <input
+                                              type="checkbox"
+                                              className="w-4 h-4 accent-brand cursor-default"
+                                              checked={row.covered}
+                                              readOnly
+                                              disabled
+                                            />
+                                          </TableCell>
+                                          <TableCell className="text-sm text-gray-900 py-2">{row.name || "—"}</TableCell>
+                                          <TableCell className="text-sm text-gray-600 py-2">{row.code || "—"}</TableCell>
+                                          <TableCell className="py-2">
+                                            {row.status ? (
+                                              <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${row.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                                                {row.status}
+                                              </span>
+                                            ) : (
+                                              <span className="text-sm text-gray-400">—</span>
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="py-2 min-w-[200px]">
+                                            {docs.length ? (
+                                              renderExistingDocs(docs, `coverage-${row.key}`)
+                                            ) : (
+                                              <span className="text-xs text-gray-400">No attachment</span>
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Only shown when the visit actually has visit-level files. */}
+                      {assetCoverageDialog?.attachments?.some((a) => a?.document || a?.document_url) && (
+                        <div>
+                          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
+                            Visit Attachments
+                          </h3>
+                          {renderAttachmentItems(assetCoverageDialog.attachments)}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="border-b border-gray-100 pb-3">
                   <DialogTitle className="text-[#1a1a1a] font-semibold text-base uppercase tracking-wide">
                     Edit Visit Log
@@ -2119,6 +2427,12 @@ export const AMCDetailsPage = () => {
                           }}
                         />
                       </div>
+                      {visitEditExistingDocs.length > 0 && (
+                        <div className="mt-1 space-y-1">
+                          <p className="text-[11px] font-medium text-gray-500">Already uploaded</p>
+                          {renderExistingDocs(visitEditExistingDocs, "visit-doc")}
+                        </div>
+                      )}
                       {visitEditDocuments.length > 0 && (
                         <ul className="space-y-1 mt-1">
                           {visitEditDocuments.map((file, i) => (
@@ -2130,7 +2444,7 @@ export const AMCDetailsPage = () => {
                                 className="text-xs text-red-500 hover:underline flex-shrink-0"
                                 onClick={() => setVisitEditDocuments((prev) => prev.filter((_, idx) => idx !== i))}
                               >
-                                Remove
+                                x
                               </button>
                             </li>
                           ))}
@@ -2154,18 +2468,18 @@ export const AMCDetailsPage = () => {
                               Assets — select AMC completed assets
                             </label>
                             <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
-                              {visitEditSelectedAssetIds.length} of {items.length} completed
+                              {items.filter((a: any) => visitEditSelectedAssetIds.includes(a.asset_id)).length} of {items.length} completed
                             </span>
                           </div>
                           <div className="border border-gray-200 rounded-md overflow-hidden">
                             <Table>
                               <TableHeader>
                                 <TableRow className="bg-[#EDEAE3]">
-                                  <TableHead className="w-10">
+                                  <TableHead className="w-10 h-9 px-3">
                                     <input
                                       type="checkbox"
                                       className="w-4 h-4 accent-[#C72030] cursor-pointer"
-                                      checked={visitEditSelectedAssetIds.length === items.length}
+                                      checked={items.length > 0 && items.every((a: any) => visitEditSelectedAssetIds.includes(a.asset_id))}
                                       onChange={(e) =>
                                         setVisitEditSelectedAssetIds(
                                           e.target.checked ? items.map((a: any) => a.asset_id) : []
@@ -2173,14 +2487,17 @@ export const AMCDetailsPage = () => {
                                       }
                                     />
                                   </TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Code</TableHead>
-                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                                  <TableHead className="h-9 px-3 font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                                  <TableHead className="h-9 px-3 font-semibold text-[#1a1a1a] text-xs">Equipment ID</TableHead>
+                                  <TableHead className="h-9 px-3 font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                                  <TableHead className="h-9 px-3 font-semibold text-[#1a1a1a] text-xs">Asset Docs</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody className="bg-white">
                                 {items.map((asset: any) => {
                                   const checked = visitEditSelectedAssetIds.includes(asset.asset_id);
+                                  const assetFiles = assetDocumentsById[asset.asset_id] || [];
+                                  const existingAssetDocs = visitEditExistingAssetDocs[Number(asset.asset_id)] || [];
                                   return (
                                     <TableRow
                                       key={asset.id}
@@ -2191,7 +2508,7 @@ export const AMCDetailsPage = () => {
                                         )
                                       }
                                     >
-                                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                                      <TableCell className="w-10 px-3 py-1.5" onClick={(e) => e.stopPropagation()}>
                                         <input
                                           type="checkbox"
                                           className="w-4 h-4 accent-[#C72030] cursor-pointer"
@@ -2203,12 +2520,64 @@ export const AMCDetailsPage = () => {
                                           }
                                         />
                                       </TableCell>
-                                      <TableCell className="text-sm text-gray-900 py-2">{asset.asset_name || "—"}</TableCell>
-                                      <TableCell className="text-sm text-gray-600 py-2">{asset.asset_code || "—"}</TableCell>
-                                      <TableCell className="py-2">
+                                      <TableCell className="px-3 py-1.5 text-sm text-gray-900 whitespace-normal">{asset.asset_name || "—"}</TableCell>
+                                      {/* Equipment ID = asset_id, as in the Association tab. */}
+                                      <TableCell className="px-3 py-1.5 text-sm text-gray-600">{asset.asset_id ?? "—"}</TableCell>
+                                      <TableCell className="px-3 py-1.5">
                                         <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${asset.asset_status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                                           {asset.asset_status || "—"}
                                         </span>
+                                      </TableCell>
+                                      <TableCell className="px-3 py-1.5 w-[1%]" onClick={(e) => e.stopPropagation()}>
+                                        <div className="space-y-1 max-w-[220px]">
+                                          {existingAssetDocs.length > 0
+                                            ? renderExistingDocs(existingAssetDocs, `asset-${asset.asset_id}`)
+                                            : visitEditHistoryLoading && (
+                                                <p className="text-[11px] text-gray-400">Loading attachments…</p>
+                                              )}
+                                          {/* Hidden native input: the label below is the only visible control,
+                                              so the browser's "No file chosen" text never renders. */}
+                                          <label className="inline-flex cursor-pointer items-center rounded bg-brand px-2 py-1 text-xs font-medium text-white hover:bg-brand-hover">
+                                            Choose Files
+                                          <input
+                                            type="file"
+                                            multiple
+                                            className="hidden"
+                                            onChange={(e) => {
+                                              const files = Array.from(e.target.files || []);
+                                              if (!files.length) return;
+                                              setAssetDocumentsById((prev) => ({
+                                                ...prev,
+                                                [asset.asset_id]: [...(prev[asset.asset_id] || []), ...files],
+                                              }));
+                                              // Attaching a doc marks the asset as completed for this visit.
+                                              setVisitEditSelectedAssetIds((prev) =>
+                                                prev.includes(asset.asset_id) ? prev : [...prev, asset.asset_id]
+                                              );
+                                              e.target.value = "";
+                                            }}
+                                          />
+                                          </label>
+                                          {assetFiles.length > 0 && (
+                                            <ul className="space-y-1">
+                                              {assetFiles.map((file, idx) => (
+                                                <li key={`${asset.asset_id}-${idx}`} className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-700">
+                                                  <span className="truncate">{file.name}</span>
+                                                  <button
+                                                    type="button"
+                                                    className="text-red-500 hover:underline"
+                                                    onClick={() => setAssetDocumentsById((prev) => ({
+                                                      ...prev,
+                                                      [asset.asset_id]: (prev[asset.asset_id] || []).filter((_, i) => i !== idx),
+                                                    }))}
+                                                  >
+                                                    x
+                                                  </button>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          )}
+                                        </div>
                                       </TableCell>
                                     </TableRow>
                                   );
@@ -2229,7 +2598,7 @@ export const AMCDetailsPage = () => {
                             Services — select AMC completed services
                           </label>
                           <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
-                            {visitEditSelectedAssetIds.length} of {services.length} completed
+                            {services.filter((s: any) => visitEditSelectedAssetIds.includes(s.service_id)).length} of {services.length} completed
                           </span>
                         </div>
                         <div className="border border-gray-200 rounded-md overflow-hidden">
@@ -2240,7 +2609,7 @@ export const AMCDetailsPage = () => {
                                   <input
                                     type="checkbox"
                                     className="w-4 h-4 accent-[#C72030] cursor-pointer"
-                                    checked={visitEditSelectedAssetIds.length === services.length}
+                                    checked={services.length > 0 && services.every((s: any) => visitEditSelectedAssetIds.includes(s.service_id))}
                                     onChange={(e) =>
                                       setVisitEditSelectedAssetIds(
                                         e.target.checked ? services.map((s: any) => s.service_id) : []
