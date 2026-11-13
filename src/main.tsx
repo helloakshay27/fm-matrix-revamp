@@ -16,7 +16,7 @@ import { installNetworkMonitor } from "./utils/networkMonitor.ts";
 
 // App-wide toasts for slow requests, unreachable server and offline/online —
 // see utils/networkMonitor.ts for why this patches fetch/XHR globally.
-installNetworkMonitor();
+// installNetworkMonitor();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
 // if (
