@@ -1,0 +1,101 @@
+name: Production Readiness
+
+# Runs the production readiness checklist on every PR into a production branch
+# and posts the result as a single (updated) PR comment.
+# Mode comes from readiness.config.json ("report" = never blocks). Override with the
+# repo variable READINESS_MODE=enforce once the existing debt is cleaned up.
+# Keep the branch list in sync with "productionBranches" in readiness.config.json.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - Pulse-prod-main
+      - Club-House-Main
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  workflow_dispatch:
+
+concurrency:
+  group: production-readiness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  readiness:
+    name: production-readiness
+    runs-on: ubuntu-latest
+
+    steps:
+      # Full history so the check can diff against the base branch and find release tags
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        id: build
+        continue-on-error: true
+        run: npm run build
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: npm run typecheck
+
+      - name: Unit tests
+        id: test
+        continue-on-error: true
+        run: |
+          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            npm test
+          else
+            echo "No test script configured."
+          fi
+
+      - name: Readiness report
+        id: report
+        env:
+          READINESS_MODE: ${{ vars.READINESS_MODE }}
+          READINESS_BUILD: ${{ steps.build.outcome }}
+          READINESS_LINT: ${{ steps.lint.outcome }}
+          READINESS_TYPECHECK: ${{ steps.typecheck.outcome }}
+          READINESS_TEST: ${{ steps.test.outcome }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/readiness/check.mjs --base "origin/${GITHUB_BASE_REF:-main}" --out readiness-report.md
+
+      - name: Post report to PR
+        if: always() && github.event_name == 'pull_request' && hashFiles('readiness-report.md') != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const body = fs.readFileSync("readiness-report.md", "utf8");
+            const marker = "<!-- production-readiness-report -->";
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
