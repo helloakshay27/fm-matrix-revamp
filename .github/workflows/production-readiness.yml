@@ -12,6 +12,7 @@ on:
       - main
       - Pulse-prod-main
       - Club-House-Main
+      - api-integration-ui
     types: [opened, synchronize, reopened, edited, ready_for_review]
   workflow_dispatch:
 
