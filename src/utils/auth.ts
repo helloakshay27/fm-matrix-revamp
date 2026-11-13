@@ -305,7 +305,7 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"
+  hostname === "fm-matrix.lockated.com"  || hostname === "localhost"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -315,7 +315,7 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
-const isClubSite = hostname.includes("club.lockated.com") || hostname === "localhost";
+const isClubSite = hostname.includes("club.lockated.com");
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");
