@@ -1,8 +1,8 @@
 import { Download } from "lucide-react";
-import { useState } from "react";
 import { activityUserLabel, downloadRecentActiveUsers, type RecentActiveUser } from "@/features/posthog-dashboard/api/adoptionApi";
 import { clubRangeParams, useClubRecentActiveUsers } from "./usageQueries";
 import type { UsageFilters } from "./usageData";
+import { ExportSpinner, ExportStatus, useExportDownload } from "@/features/posthog-dashboard/components/ExportProgress";
 
 function relativeTime(minutesAgo: number | null, lastEvent: string | null) {
   if (minutesAgo != null && Number.isFinite(minutesAgo)) {
@@ -41,15 +41,14 @@ function ActivityRow({ user }: { user: RecentActiveUser }) {
 export function RecentActivity({ filters }: { filters: UsageFilters }) {
   const query = useClubRecentActiveUsers(filters);
   const users = query.data?.users ?? [];
-  const [isDownloading, setIsDownloading] = useState(false);
+  const exportJob = useExportDownload();
+  const isDownloading = exportJob.busy;
   const isDownloadDisabled = isDownloading;
 
   // Every event in the range as the server-built .xlsx (Club's own API), not just the 10 rows shown.
-  const downloadActivity = async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    try {
-      const blob = await downloadRecentActiveUsers(clubRangeParams(filters));
+  const downloadActivity = () =>
+    exportJob.run(async (onPhase) => {
+      const blob = await downloadRecentActiveUsers(clubRangeParams(filters), onPhase);
       if (!blob) throw new Error("The activity export came back empty");
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -59,12 +58,7 @@ export function RecentActivity({ filters }: { filters: UsageFilters }) {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (error) {
-      console.error("Unable to download Club activity", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+    });
 
   return (
     <section className="recent-activity" aria-labelledby="recentActivityTitle">
@@ -74,13 +68,15 @@ export function RecentActivity({ filters }: { filters: UsageFilters }) {
           type="button"
           className="recent-activity-download"
           aria-label="Download Recent Activity"
-          title="Download every event in the range (.xlsx)"
+          title={isDownloading ? "Preparing the download…" : "Download every event in the range (.xlsx)"}
           onClick={downloadActivity}
           disabled={isDownloadDisabled}
+          aria-busy={isDownloading}
         >
-          <Download size={14} aria-hidden="true" />
+          {isDownloading ? <ExportSpinner size={14} /> : <Download size={14} aria-hidden="true" />}
         </button>
       </div>
+      <ExportStatus phase={exportJob.phase} startedAt={exportJob.startedAt} error={exportJob.error} />
 
       {query.isLoading ? (
         <ul className="recent-activity-list" aria-label="Loading recent activity" aria-busy="true">

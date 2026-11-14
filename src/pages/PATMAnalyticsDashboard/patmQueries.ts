@@ -20,12 +20,14 @@ import {
   type PATMRangeFilters,
   type PATMWeeklyFilters,
 } from './patmApi';
+import { liveRefetchInterval } from '@/features/posthog-dashboard/api/liveRefresh';
 
 // ClickHouse scans are expensive — cache generously and never auto-refetch.
 const CACHE = {
   staleTime: 5 * 60_000,
   gcTime: 30 * 60_000,
   refetchOnWindowFocus: false,
+  refetchInterval: liveRefetchInterval, // live numbers while the page is on screen (posthog-dashboard/api/liveRefresh)
   refetchOnMount: false,
   retry: false,
 } as const;

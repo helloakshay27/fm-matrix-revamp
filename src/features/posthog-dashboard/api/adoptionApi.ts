@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from './exportJob';
 import {
   FM_ADOPTION_TENANT_URL,
   FM_ADOPTION_PROJECT_CODE,
@@ -235,14 +236,18 @@ export const fetchRecentActiveUsers = (f: RangeFilters) => {
   return get<RecentActiveUsersResponse>('recent_active_users', [...pairs, ['limit', 10]], f.signal, f.api);
 };
 
-export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
+/** The .xlsx of every event in the range, made in the background on the server (see exportJob). */
+export async function downloadRecentActiveUsers(f: RangeFilters, onPhase?: (phase: ExportPhase) => void): Promise<Blob> {
   const pairs = rangeParams(f);
   const qs = buildQuery(pairs);
-  const response = await analyticsClient.get<Blob>(
-    `${adoptionPath(f.api, pairs)}/active_users_export${qs ? `?${qs}` : ''}`,
-    { responseType: 'blob' },
-  );
-  return response.data;
+  const base = adoptionPath(f.api, pairs);
+  const { blob } = await runExportJob({
+    exportUrl: `${base}/active_users_export${qs ? `?${qs}` : ''}`,
+    adoptionUrl: base,
+    get: axiosGet(analyticsClient),
+    onPhase,
+  });
+  return blob;
 }
 
 /* Shared param slices ---------------------------------------------------- */

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { useRecentActiveUsers, type QueryFilters } from '../api/queries';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../api/adoptionApi';
 import { formatRelativeActivityTime } from '@/features/posthog-dashboard/data/format';
 import { activityUserLabel } from '@/features/posthog-dashboard/api/adoptionApi';
+import { ExportSpinner, ExportStatus, useExportDownload } from '@/features/posthog-dashboard/components/ExportProgress';
 
 function downloadBlob(blob: Blob | null): void {
   // The API client turns a failed (non-JSON) response into `null`.
@@ -39,7 +40,8 @@ function ActivityUser({ user }: { user: RecentActiveUser }) {
 }
 
 export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const exportJob = useExportDownload();
+  const isDownloading = exportJob.busy;
   const usersQuery = useRecentActiveUsers(filters);
   const users = usersQuery.data?.users ?? [];
 
@@ -47,17 +49,9 @@ export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
     if (usersQuery.error) console.error('Unable to load recent active users', usersQuery.error);
   }, [usersQuery.error]);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (isDownloading || !filters.enabled || usersQuery.isLoading || usersQuery.isFetching) return;
-    setIsDownloading(true);
-    try {
-      const blob = await downloadRecentActiveUsers(filters);
-      downloadBlob(blob);
-    } catch (error) {
-      console.error('Unable to download recent active users', error);
-    } finally {
-      setIsDownloading(false);
-    }
+    return exportJob.run(async (onPhase) => downloadBlob(await downloadRecentActiveUsers(filters, onPhase)));
   };
 
   return (
@@ -68,13 +62,15 @@ export function RecentActivitySidebar({ filters }: { filters: QueryFilters }) {
           type="button"
           className="iconbtn recent-activity-download"
           aria-label="Download recent activity"
-          title="Download recent activity"
+          title={isDownloading ? 'Preparing the download…' : 'Download recent activity'}
           disabled={isDownloading || !filters.enabled || usersQuery.isLoading || usersQuery.isFetching}
+          aria-busy={isDownloading}
           onClick={handleDownload}
         >
-          <Download aria-hidden="true" />
+          {isDownloading ? <ExportSpinner /> : <Download aria-hidden="true" />}
         </button>
       </div>
+      <ExportStatus phase={exportJob.phase} startedAt={exportJob.startedAt} error={exportJob.error} />
       {!filters.enabled || usersQuery.isLoading || usersQuery.isFetching ? (
         <p className="recent-activity-state">Loading…</p>
       ) : usersQuery.isError ? (

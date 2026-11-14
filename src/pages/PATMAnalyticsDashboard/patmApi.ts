@@ -9,6 +9,7 @@
  */
 
 import axios from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from '@/features/posthog-dashboard/api/exportJob';
 import type { RecentActiveUsersResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 
 export const PATM_MOBILE_APP_ID = '37';
@@ -23,10 +24,18 @@ export const fetchPatmRecentActiveUsers = (f: Pick<PATMRangeFilters, 'from' | 't
   ]);
 
 /** Every event in the range as the server-built .xlsx (the same download as the other dashboards). */
-export async function downloadPatmActiveUsers(f: Pick<PATMRangeFilters, 'from' | 'to'>): Promise<Blob> {
+export async function downloadPatmActiveUsers(
+  f: Pick<PATMRangeFilters, 'from' | 'to'>,
+  onPhase?: (phase: ExportPhase) => void,
+): Promise<Blob> {
   const qs = buildQuery([['from', f.from], ['to', f.to]]);
-  const { data } = await client.get<Blob>(`/commercial/patm/adoption/active_users_export?${qs}`, { responseType: 'blob' });
-  return data;
+  const { blob } = await runExportJob({
+    exportUrl: `/commercial/patm/adoption/active_users_export?${qs}`,
+    adoptionUrl: '/commercial/patm/adoption',
+    get: axiosGet(client),
+    onPhase,
+  });
+  return blob;
 }
 
 // Re-export all response types from the shared adoptionApi so callers only import from here.

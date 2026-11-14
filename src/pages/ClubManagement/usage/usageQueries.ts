@@ -13,6 +13,7 @@ import {
 } from "@/features/posthog-dashboard/api/adoptionApi";
 import type { RangeFilters, WeeklyFilters } from "@/features/posthog-dashboard/api/adoptionApi";
 import type { UsageFilters } from "./usageData";
+import { liveRefetchInterval } from "@/features/posthog-dashboard/api/liveRefresh";
 
 export const CLUB_PROJECT_CODE = "CM-01";
 const configuredTenant = (import.meta.env.VITE_FM_ADOPTION_TENANT_URL as string | undefined)?.trim();
@@ -21,6 +22,7 @@ const CACHE = {
   staleTime: 5 * 60_000,
   gcTime: 30 * 60_000,
   refetchOnWindowFocus: false,
+  refetchInterval: liveRefetchInterval, // live numbers while the page is on screen (posthog-dashboard/api/liveRefresh)
   retry: 1,
 } as const;
 

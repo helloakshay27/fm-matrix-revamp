@@ -23,6 +23,7 @@ import {
   type ViSurface,
   VI_APP_ID,
 } from './adoptionApi';
+import { liveRefetchInterval } from '@/features/posthog-dashboard/api/liveRefresh';
 
 /** All Layer-1/2/3 calls share these; one object keeps every query key in step. */
 export interface QueryFilters {
@@ -64,7 +65,8 @@ const range = (f: QueryFilters): ViRangeFilters => ({
 });
 
 /** Analytics is read-mostly and each call is a multi-second ClickHouse scan — cache generously. */
-const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus: false } as const;
+// refetchInterval: live numbers while the page is on screen (posthog-dashboard/api/liveRefresh).
+const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus: false, refetchInterval: liveRefetchInterval } as const;
 
 /**
  * Query-key root. `fm-adoption` is shared with `/posthog-dashboard` so one Refresh
