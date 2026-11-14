@@ -1,4 +1,5 @@
 import axios, { AxiosHeaders } from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from '@/features/posthog-dashboard/api/exportJob';
 import type {
   AdoptionEngagementResponse,
   AdoptionTrendResponse,
@@ -184,13 +185,16 @@ export const fetchRecentActiveUsers = (f: AccountingRangeFilters) =>
     limit: '10',
   });
 
-export async function downloadRecentActiveUsers(f: AccountingRangeFilters): Promise<Blob> {
+/** The .xlsx of every event in the range, made in the background on the server (see exportJob). */
+export async function downloadRecentActiveUsers(f: AccountingRangeFilters, onPhase?: (phase: ExportPhase) => void): Promise<Blob> {
   const qs = new URLSearchParams({
     ...rangeParams(f),
   });
-  const response = await client.get<Blob>(
-    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
-    { responseType: 'blob' },
-  );
-  return response.data;
+  const { blob } = await runExportJob({
+    exportUrl: `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
+    adoptionUrl: RECENT_ACTIVE_USERS_EXPORT_ENDPOINT.replace(/\/active_users_export$/, ''),
+    get: axiosGet(client),
+    onPhase,
+  });
+  return blob;
 }

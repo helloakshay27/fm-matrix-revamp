@@ -13,6 +13,7 @@ import {
   type AccountingOsType,
   ACCOUNTING_APP_ID,
 } from './adoptionApi';
+import { liveRefetchInterval } from '@/features/posthog-dashboard/api/liveRefresh';
 
 export interface AccountingQueryFilters {
   enabled?: boolean;
@@ -24,7 +25,8 @@ export interface AccountingQueryFilters {
   subModule?: string | null;
 }
 
-const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus: false } as const;
+// refetchInterval: live numbers while the page is on screen (posthog-dashboard/api/liveRefresh).
+const CACHE = { staleTime: 5 * 60_000, gcTime: 30 * 60_000, refetchOnWindowFocus: false, refetchInterval: liveRefetchInterval } as const;
 
 const ROOT = ['accounting-adoption', 'app', ACCOUNTING_APP_ID] as const;
 

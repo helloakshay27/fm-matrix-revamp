@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { formatRelativeActivityTime } from '@/features/posthog-dashboard/data/format';
 import { activityUserLabel } from '@/features/posthog-dashboard/api/adoptionApi';
 import { usePatmRecentActiveUsers } from './patmQueries';
 import { downloadPatmActiveUsers } from './patmApi';
+import { ExportSpinner, ExportStatus, useExportDownload } from '@/features/posthog-dashboard/components/ExportProgress';
 
 function saveBlob(blob: Blob | null, filename: string): void {
   if (!blob) throw new Error('The activity export came back empty');
@@ -20,19 +20,13 @@ function saveBlob(blob: Blob | null, filename: string): void {
 export function RecentActivitySidebar({ from, to }: { from: string; to: string }) {
   const query = usePatmRecentActiveUsers({ from, to });
   const users = query.data?.users ?? [];
-  const [isDownloading, setIsDownloading] = useState(false);
+  const exportJob = useExportDownload();
+  const isDownloading = exportJob.busy;
 
-  const handleDownload = async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    try {
-      saveBlob(await downloadPatmActiveUsers({ from, to }), `patm_active_users_${from}_to_${to}.xlsx`);
-    } catch (error) {
-      console.error('Unable to download PATM activity', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  const handleDownload = () =>
+    exportJob.run(async (onPhase) =>
+      saveBlob(await downloadPatmActiveUsers({ from, to }, onPhase), `patm_active_users_${from}_to_${to}.xlsx`),
+    );
 
   return (
     <section className="recent-activity" aria-labelledby="patm-recent-activity-title">
@@ -42,13 +36,15 @@ export function RecentActivitySidebar({ from, to }: { from: string; to: string }
           type="button"
           className="iconbtn recent-activity-download"
           aria-label="Download recent activity"
-          title="Download every event in the range (.xlsx)"
+          title={isDownloading ? 'Preparing the download…' : 'Download every event in the range (.xlsx)'}
           disabled={isDownloading}
+          aria-busy={isDownloading}
           onClick={handleDownload}
         >
-          <Download aria-hidden="true" />
+          {isDownloading ? <ExportSpinner /> : <Download aria-hidden="true" />}
         </button>
       </div>
+      <ExportStatus phase={exportJob.phase} startedAt={exportJob.startedAt} error={exportJob.error} />
       {query.isLoading ? (
         <p className="recent-activity-state" role="status">Loading…</p>
       ) : query.isError ? (
