@@ -4980,11 +4980,11 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Weightage Scoring %"
-                  value={checklistsCompliance ? `${checklistsCompliance.weightage_scoring.weightage_score_percent}%` : "—"}
+                  value={checklistsCompliance?.weightage_scoring ? `${checklistsCompliance.weightage_scoring.weightage_score_percent ?? 0}%` : "—"}
                   accent="warning"
                   subtitle={
-                    checklistsCompliance
-                      ? `${checklistsCompliance.weightage_scoring.achieved_score.toLocaleString()} of ${checklistsCompliance.weightage_scoring.max_score.toLocaleString()} score`
+                    checklistsCompliance?.weightage_scoring
+                      ? `${(checklistsCompliance.weightage_scoring.achieved_score ?? 0).toLocaleString()} of ${(checklistsCompliance.weightage_scoring.max_score ?? 0).toLocaleString()} score`
                       : "Achieved score relative to maximum score"
                   }
                 />
@@ -5598,8 +5598,9 @@ export default function RevampDashboardPage() {
                     line={{ dataKey: "breachPercent", name: "AC Ticket Breach %", unit: "%" }}
                     showInfoIcon
                     insight={
-                      attendanceStaffingGapSummary
-                        ? `Period summary: ${attendanceStaffingGapSummary.absent_staff.absent_staff_count.toLocaleString()} absent staff across ${attendanceStaffingGapSummary.absent_staff.working_days.toLocaleString()} working days · ${attendanceStaffingGapSummary.ticket_breach.breached_tickets.toLocaleString()} of ${attendanceStaffingGapSummary.ticket_breach.total_tickets.toLocaleString()} tickets breached (${attendanceStaffingGapSummary.ticket_breach.breach_percent}%).`
+                      attendanceStaffingGapSummary?.absent_staff &&
+                      attendanceStaffingGapSummary?.ticket_breach
+                        ? `Period summary: ${(attendanceStaffingGapSummary.absent_staff.absent_staff_count ?? 0).toLocaleString()} absent staff across ${(attendanceStaffingGapSummary.absent_staff.working_days ?? 0).toLocaleString()} working days · ${(attendanceStaffingGapSummary.ticket_breach.breached_tickets ?? 0).toLocaleString()} of ${(attendanceStaffingGapSummary.ticket_breach.total_tickets ?? 0).toLocaleString()} tickets breached (${attendanceStaffingGapSummary.ticket_breach.breach_percent ?? 0}%).`
                         : undefined
                     }
                     insightVariant="plain"
