@@ -144,10 +144,11 @@ export const FilterBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Platform/Device toggle — devices are the API's Desktop / Mobile values */}
+      {/* Platform toggle — sent as the API's `os` param (All = web portal and app, every platform) */}
       <div className="devtoggle" id="devToggle" title="Platform">
         <button
           className={dev === "all" ? "on" : ""}
+          title="All platforms"
           onClick={() => setDev("all")}
         >
           All
@@ -161,7 +162,7 @@ export const FilterBar: React.FC = () => {
         </button>
         <button
           className={dev === "mobile" ? "on" : ""}
-          title="Mobile only"
+          title="Android only"
           onClick={() => setDev("mobile")}
         >
           Android

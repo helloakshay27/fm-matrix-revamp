@@ -59,15 +59,15 @@ export const AdoptionEngagement: React.FC = () => {
     <section className="page on" id="pgAdopt">
       <div className="section-head">
         <h2>Adoption &amp; Engagement</h2>
-        <span className="sd">Measure how effectively residents adopt and engage with the app&rsquo;s major modules, and whether they keep coming back.</span>
+        <span className="sd">Measure how effectively people adopt and engage with Pulse&rsquo;s major modules, and whether they keep coming back.</span>
       </div>
 
       <div className="qbox">
         <b>Key questions</b>
         <ul>
           <li>Which modules and services receive the highest engagement and adoption?</li>
-          <li>Which modules need UX improvements, and where do residents spend the most time?</li>
-          <li>Are residents returning to the application, and is retention improving over time?</li>
+          <li>Which modules need UX improvements, and where do people spend the most time?</li>
+          <li>Are people returning to Pulse, and is retention improving over time?</li>
         </ul>
       </div>
 
@@ -182,7 +182,7 @@ export const AdoptionEngagement: React.FC = () => {
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
                     <b>Retention</b>
-                    Each row = residents first active that week; cells = % of that cohort still active N weeks later.
+                    Each row = people first active that week; cells = % of that cohort still active N weeks later.
                     <div className="sep">
                       Reading left to right shows how well each joining group sticks around. Darker cells mean more people retained. It answers "once people start, do they keep coming back?"
                     </div>
@@ -244,9 +244,9 @@ export const AdoptionEngagement: React.FC = () => {
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
                     <b>Adoption by audience</b>
-                    Active people broken down by their resident category (owner, tenant, visitor/family member), each shown as a share within the group — active users ÷ registered users per category.
+                    Active people broken down by their role (for example admin or occupant admin), each shown as a share of the active people who have a role.
                     <div className="sep">
-                      Shows which type of resident is actually engaging. If a key category such as tenants is under-represented, adoption may be uneven — helping the community team see which segment of the resident base is actually engaging.
+                      Shows which type of user is actually engaging. If a key role is under-represented, adoption may be uneven.
                     </div>
                   </div>
                 </span>
@@ -283,9 +283,9 @@ export const AdoptionEngagement: React.FC = () => {
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
                     <b>Dormant users</b>
-                    Registered residents with no activity in the last 14 days.
+                    Signed-in people seen before whose last activity was more than 14 days ago.
                     <div className="sep">
-                      There is no such thing as a completely "dead" user — some residents only engage seasonally (e.g. when a service or event interest them). This shows how many of the base is going quiet and is out of scope for the 14-Day Activation tile above.
+                      There is no such thing as a completely "dead" user — some people only engage seasonally (e.g. when a service or event interest them). This shows how many of the base is going quiet and is out of scope for the 14-Day Activation tile above.
                     </div>
                   </div>
                 </span>
@@ -294,11 +294,11 @@ export const AdoptionEngagement: React.FC = () => {
             <div className="card-body" id="body-dormantUsers">
               <div className="kv">
                 <div>
-                  <div className="k">Dormant residents</div>
+                  <div className="k">Dormant users</div>
                   <div className="v" style={{ fontSize: "22px" }}>
                     {adopt.dormantKv}
                   </div>
-                  <div className="u">no activity in period</div>
+                  <div className="u">no activity in 14+ days</div>
                 </div>
               </div>
             </div>

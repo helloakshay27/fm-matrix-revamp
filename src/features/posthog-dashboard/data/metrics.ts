@@ -423,7 +423,8 @@ export function buildAdopt(
       disp: a3?.value == null ? '—' : `${a3.value > 0 ? '+' : ''}${round1(a3.value)}%`,
       delta: null,
       goodUp: true,
-      sub: a3 ? `WAU ${fmtC(a3.wau_now)} vs ${fmtC(a3.wau_4wk_ago)} 4 wks ago` : 'WAU vs 4 wks ago',
+      // The API averages only the weeks since the app went live (baseline_weeks), up to 8.
+      sub: a3 ? `WAU ${fmtC(a3.wau_now)} vs ${fmtC(a3.baseline_avg ?? 0)} ${a3.baseline_weeks ?? 8}-wk avg` : 'WAU vs 8-wk avg',
       raw: round1(a3?.value ?? 0),
       unit: '%',
     },
@@ -474,8 +475,11 @@ export function buildAdopt(
     retentionRowLabels.push(`${mdLabel(row.cohort_week)} · ${row.size}`);
   }
 
+  // Two roles can read the same once prettified (pms_admin and Admin are both "Admin"): those keep
+  // their stored name in brackets, so the rows stay distinguishable.
+  const roleNames = (roles?.roles ?? []).map((r) => prettyRole(r.role));
   const roleShares: RoleShare[] = (roles?.roles ?? []).map((r, i) => ({
-    name: prettyRole(r.role),
+    name: roleNames.filter((n) => n === roleNames[i]).length > 1 ? `${roleNames[i]} (${r.role})` : roleNames[i],
     share: r.active_share / 100,
     color: ROLE_COLORS[i % ROLE_COLORS.length],
     users: r.users,

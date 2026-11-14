@@ -61,11 +61,11 @@ export const BM_DEFAULTS: Record<string, number> = {
 
 export const KPI_INFO: Record<string, { f: string; m: string }> = {
   "Active Users": {
-    f: "Count of distinct residents who were active at least once in a 7-day window (weekly active users, WAU).",
-    m: "Each person is counted only once no matter how many times they log in. This is your reach — how many of your community actually showed up in the week."
+    f: "Count of different signed-in people (each counted once) who did at least one thing on the Pulse web portal or app in the selected period.",
+    m: "Each person is counted only once no matter how many times they log in. This is your reach — how many people actually used Pulse in the period."
   },
   "Screen Views": {
-    f: "Total number of screens/pages opened across everyone, added up over the selected date range.",
+    f: "Count of every screen-load (view) event in the selected range: each page view on the web portal, each screen-viewed / screen-opened event in the app.",
     m: "Unlike active users, this counts every screen opened — so it climbs when people browse more deeply, not just when more people log in."
   },
   "Sessions": {
@@ -77,16 +77,16 @@ export const KPI_INFO: Record<string, { f: string; m: string }> = {
     m: "The average length of a single visit, shown in minutes and seconds. A session ends after ~30 minutes of inactivity, so this reflects real time-in-app."
   },
   "Bounce Rate": {
-    f: "Sessions where the person viewed only one screen and took no further action ÷ total sessions, shown as a percentage.",
-    m: "A \"bounce\" is a visit where someone opened the app but left without doing anything. Lower is better — it means people are finding a reason to stay."
+    f: "Sessions that only saw the launch or home page (sign-in, or the Pulse home page) ÷ all sessions, shown as a percentage.",
+    m: "A \"bounce\" is a visit where someone opened Pulse but left without doing anything. Lower is better — it means people are finding a reason to stay."
   },
   "Returning Users": {
     f: "Users active in the period who were also active in a prior period.",
     m: "Retention and loyalty of the resident base."
   },
   "Recently Online": {
-    f: "Count of distinct residents who were active in the last ~30 minutes.",
-    m: "A near-live pulse of who is in the app right now. It moves up and down through the day rather than reflecting the whole date range."
+    f: "Count of distinct signed-in people who were active in the last 30 minutes.",
+    m: "A near-live pulse of who is in Pulse right now. It moves up and down through the day rather than reflecting the whole date range."
   },
   "Views / Session": {
     f: "Total screen views ÷ total sessions.",
@@ -105,32 +105,32 @@ export const KPI_INFO: Record<string, { f: string; m: string }> = {
     m: "Of the people who use the app in a month, what share use it on any given day. Roughly 30% means the average active user shows up ~9 days a month. Higher means more habitual use."
   },
   "Adoption Trend": {
-    f: "The change in weekly active users now versus four weeks ago, expressed as a percentage rise or fall.",
-    m: "A simple momentum reading: a positive number means more of your community is engaging than a month ago, a negative number means engagement is slipping."
+    f: "This week's active users (the last 7 days) compared with the average of the 8 weeks before: (this week − average) ÷ average, as a percentage. Weeks before Pulse went live are left out of the average.",
+    m: "A simple momentum reading: a positive number means more people are engaging than over the last two months, a negative number means engagement is slipping."
   },
   "14-Day Activation": {
-    f: "New residents who completed a first meaningful action within 14 days of getting access ÷ all new residents in that window, as a percentage.",
+    f: "New users who did a first real action (used a feature, not just sign-in or the home page) within 14 days of first appearing ÷ all new users in the period, as a percentage.",
     m: "\"Activated\" means a new user got past just logging in and actually did something real. It shows how well newcomers get off the ground in their first two weeks."
   },
   "Module Breadth": {
-    f: "Count of distinct modules (from the Pulse PostHog event dictionary) used at least once ÷ all modules available.",
-    m: "How much of the platform a resident base has actually adopted, not just the home screen."
+    f: "Count of Pulse modules (the section after /pulse/ in the page address, e.g. carpool or amenity) used in the range, out of every module at least 3 people have ever used. Sign-in pages and this usage dashboard are not modules.",
+    m: "How much of Pulse is genuinely in use versus sitting idle, not just the home page."
   },
   "Workflow Adoption": {
-    f: "Active users who started at least one of this module's workflows ÷ active users who could use them, as a percentage.",
-    m: "For the module you're viewing, how many of the relevant residents have actually begun using its workflows at all."
+    f: "Users who did the workflow's first step ÷ users active in the period, as a percentage.",
+    m: "For the module you're viewing, how many of the active people have actually begun using its workflow at all."
   },
   "Completion Rate": {
-    f: "Workflow runs that reached the final step ÷ workflow runs that were started, as a percentage.",
-    m: "Of the processes people begin (e.g. an amenity booking, a carpool ride, a helpdesk ticket), how many they carry through to the end rather than abandoning partway."
+    f: "Users who reached the final step ÷ users who did the first step, as a percentage.",
+    m: "Of the people who begin a process (e.g. an amenity booking or a carpool setup), how many carry it through to the end rather than abandoning partway."
   },
   "Biggest Step Drop": {
-    f: "At the single worst step in the workflow, the share of runs that fail to move on to the next step, as a percentage.",
+    f: "At every step, users lost ÷ users at the step before; the largest loss is shown, as a percentage.",
     m: "Pinpoints the one place people most often get stuck or give up. Lower is better; a high number flags a confusing or heavy step to fix first."
   },
   "Usage Volume": {
-    f: "Total count of workflow runs started in this module during the selected range.",
-    m: "The raw amount of work flowing through the module — how many bookings, rides or tickets were kicked off. Shows overall throughput."
+    f: "Count of users who reached the final step in the selected range.",
+    m: "How much work was actually completed in the module — how many people finished the workflow. Shows overall throughput."
   },
   "Engagement Rate": {
     f: "% of sessions with a meaningful interaction beyond a view (a tap/create/submit-style event).",
