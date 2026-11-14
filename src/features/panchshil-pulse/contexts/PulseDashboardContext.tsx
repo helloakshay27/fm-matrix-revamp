@@ -8,8 +8,6 @@ import React, {
 } from "react";
 import { useIsFetching } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
-import { BM_DEFAULTS } from "../data/sampleData";
-import { adaptPulseWorkflowUsage } from "../utils/workflowAdapter";
 import {
   DEFAULT_STATE,
   buildTraffic,
@@ -24,17 +22,10 @@ import {
   type ModuleHealthData,
   type ModuleOption,
 } from "../../posthog-dashboard/data/metrics";
-import {
-  groupSites,
-  type Device,
-  type Site,
-  type SiteGroup,
-} from "../../posthog-dashboard/data/constants";
-import type { DeviceType } from "../../posthog-dashboard/api/adoptionApi";
+import { type Device } from "../../posthog-dashboard/data/constants";
+import { PULSE_ADOPTION_PATH, type DeviceType } from "../../posthog-dashboard/api/adoptionApi";
 import {
   dateRangeFor,
-  useAllSites,
-  useCompanyNames,
   useAdoptionEngagement,
   useAdoptionTrend,
   useGrowth,
@@ -49,11 +40,12 @@ import {
 } from "../../posthog-dashboard/api/queries";
 
 /**
- * Pulse reuses the posthog-dashboard's API/query/transform layer wholesale — the
- * endpoint paths, query params, response contracts, caching, refresh and UI
- * mappings are identical. The only differences here are the visible labels and
- * the fact that Pulse always passes the org-scoped site list (or, once the site
- * metadata resolves, the site selected in the FilterBar).
+ * Pulse reuses the posthog-dashboard's query/transform layer — response
+ * contracts, caching, refresh and UI mappings are identical — but reads its own
+ * analytics API (PULSE_ADOPTION_PATH). That API fixes Pulse's scope on the
+ * server (project code TEP-01, the Pulse web portal and the Pulse app), so a
+ * request carries only the filters: dates, the platform and the module. There
+ * is no site filter: Pulse is counted across all of its sites.
  */
 export type Dev = Device; // 'all' | 'desktop' | 'mobile'
 export type SessTab = DashboardState["sessTab"];
@@ -71,16 +63,11 @@ function deviceParam(dev: Dev): DeviceType[] {
   return [];
 }
 
-/* Pulse's platform selector maps onto the Connect-style platform values used to
-   build the single `os`/`device_type` API param (see getDeviceInfo): the iOS
-   button sends "ios" → `os=ios`, the Mobile/Android button sends "android" →
-   `device_type=mobile` (the API's mobile filter, covering Android AND iOS), and
-   "all" sends nothing at all, so the param is omitted and the API aggregates
-   every platform. The old behaviour returned `device_type=mobile` for "all",
-   which contradicted the label — "All" was filtered down to mobile only. No
-   `dev` value is ever sent over the wire, only the resulting os/device_type
-   param. Note the `dev` enum value behind the button labelled "iOS" is
-   "desktop"; `pulseDev` below is what gives that button its iOS meaning. */
+/* Pulse's platform buttons → the API's `os` param (see getDeviceInfo): "iOS"
+   sends os=ios, "Android" sends os=android, "All" sends nothing, so every
+   platform (web portal and app) is counted. Note the `dev` enum value behind
+   the button labelled "iOS" is "desktop" and behind "Android" is "mobile";
+   `pulseDev` below gives them their meaning. */
 function pulseDev(dev: Dev): string {
   if (dev === "desktop") return "ios";
   if (dev === "mobile") return "android";
@@ -98,10 +85,6 @@ export interface PulseViewModel {
   adopt: AdoptData;
   siteHealth: ModuleHealthData | null;
   flows: FlowsData;
-  sites: Site[];
-  /** The sites covered by the current FilterBar scope ("All Sites" = every org site). */
-  scopedSites: Site[];
-  groups: SiteGroup[];
   /** Layer-3 module tree — drives the Workflow Usage nav. */
   modules: ModuleOption[];
   subModules: ModuleOption[];
@@ -121,8 +104,6 @@ export interface PulseDashboardContextProps {
   setDev: (dev: Dev) => void;
   prev: boolean;
   setPrev: (prev: boolean) => void;
-  project: string;
-  setProject: (project: string) => void;
   range: number;
   setRange: (range: number) => void;
   rangeLabel: string;
@@ -170,7 +151,6 @@ export const PulseDashboardProvider: React.FC<{
 
   const [dev, setDev] = useState<Dev>("all");
   const [prev, setPrev] = useState<boolean>(true);
-  const [project, setProject] = useState<string>("all");
   const [range, setRange] = useState<number>(30);
   const [rangeLabel, setRangeLabel] = useState<string>("Last 30 days");
   const [rangeFrom, setRangeFrom] = useState<string>(init.from);
@@ -184,7 +164,6 @@ export const PulseDashboardProvider: React.FC<{
     flows: activeSection === "flows",
   }));
   const [requestId, setRequestId] = useState(0);
-  const hasRequestedAnalytics = Object.values(loadedSections).some(Boolean);
   const initialLocationKey = useRef(location.key);
 
   // A click on a Layer link changes React Router's location key. Load that
@@ -297,44 +276,13 @@ export const PulseDashboardProvider: React.FC<{
 
   /* ------------------------------------------------------- data orchestration */
 
-  // Every site on the tenant (/pms/sites.json) — drives the All Sites / per-site scope.
-  // Site metadata is fetched once analytics have been requested, which now
-  // includes the initial page view's section.
-  const sitesQ = useAllSites(hasRequestedAnalytics);
-  const companiesQ = useCompanyNames(hasRequestedAnalytics);
-  const sites = useMemo<Site[]>(() => sitesQ.data ?? [], [sitesQ.data]);
-  const groups = useMemo<SiteGroup[]>(
-    () => groupSites(sites, companiesQ.data ?? {}),
-    [sites, companiesQ.data]
-  );
-
-  // "All Sites" covers every org site; a selection covers just that one.
-  const scopedSites = useMemo(() => {
-    if (project === "all") return sites;
-    return sites.filter((s) => s.id === project);
-  }, [project, sites]);
-
-  // If the selected site drops out of the org list, fall back to All Sites.
-  useEffect(() => {
-    if (project === "all" || sitesQ.isLoading) return;
-    if (!sites.some((s) => s.id === project)) setProject("all");
-  }, [project, sites, sitesQ.isLoading]);
-
-  // Hold the analytics calls until the site list has settled — otherwise every
-  // endpoint fires once for the whole tenant and again with the real site_id list.
-  // Do not call analytics without an explicit site scope. An empty site list is
-  // a valid no-access state; a failed lookup is surfaced to the dashboard.
-  const sitesSettled = sitesQ.isSuccess && sites.length > 0;
-
   const filters = useMemo<QueryFilters>(
     () => ({
-      enabled: sitesSettled,
+      api: PULSE_ADOPTION_PATH,
+      // Each section enables its own calls below (loadedSections), so nothing waits on anything else.
+      enabled: true,
       from: rangeFrom,
       to: rangeTo,
-      // Panchshil Pulse must NOT send `site_id` to the analytics API — the
-      // request carries only project_code/from/to plus the device param. Keep
-      // the site list for the scope label/UI, but never forward it as a filter:
-      // an empty array makes buildQuery drop the `site_id` param entirely.
       siteIds: [],
       allowEmptySites: true,
       devices: deviceParam(dev),
@@ -343,12 +291,10 @@ export const PulseDashboardProvider: React.FC<{
       module,
       subModule,
       requestId,
+      token: "",
     }),
-    [sitesSettled, rangeFrom, rangeTo, dev, module, subModule, requestId]
+    [rangeFrom, rangeTo, dev, module, subModule, requestId]
   );
-
-  /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
-  const pending = sitesQ.isLoading;
 
   /* --------------------------------------------------------- route-scoped API calls */
 
@@ -401,7 +347,9 @@ export const PulseDashboardProvider: React.FC<{
       : { ...filters, enabled: false }
   );
   const subModuleTreeQ = useSubModuleTree(workflowFilters);
-  const workflowQ = useWorkflowUsage(workflowFilters, { requireModule: false });
+  // Pulse's Workflow Usage always shows one module (the busiest by default, picked below from the tree),
+  // so it waits for the module instead of first loading the whole app.
+  const workflowQ = useWorkflowUsage(workflowFilters, { requireModule: true });
 
   const modules = useMemo(
     () => toModuleOptions(moduleTreeQ.data?.tree),
@@ -437,13 +385,8 @@ export const PulseDashboardProvider: React.FC<{
     [sessTab, module, subModule]
   );
 
-  const scopeLabel = useMemo(() => {
-    if (!sites.length) return "Whole tenant · Registered residents";
-    if (project === "all")
-      return `All sites · ${sites.length} sites · Registered residents`;
-    const s = sites.find((x) => x.id === project);
-    return `${s?.name ?? "Unknown site"} · Registered residents`;
-  }, [project, sites]);
+  // What every number on the page counts (the Pulse API's scope).
+  const scopeLabel = "Web portal + mobile app · signed-in users";
 
   const vm = useMemo<PulseViewModel>(
     () => ({
@@ -465,32 +408,23 @@ export const PulseDashboardProvider: React.FC<{
         rolesQ.data
       ),
       siteHealth: buildModuleHealth(modules),
-      // Pulse's top-level Layer 3 KPIs/funnel come back empty; the adapter
-      // promotes the matching `panchshil_pulse` record from `workflows[]` first.
-      flows: buildFlows(
-        dashState,
-        adaptPulseWorkflowUsage(workflowQ.data, subModule ?? module)
-      ),
-      sites,
-      scopedSites,
-      groups,
+      // The selected module's own funnel; "–" where the API has none.
+      flows: buildFlows(dashState, workflowQ.data),
       modules,
       subModules,
       status: {
         traffic: {
-          loading: pending || trafficQ.isLoading || usageQ.isLoading,
-          error: (sitesQ.error ?? trafficQ.error ?? usageQ.error) as Error | null,
+          loading: trafficQ.isLoading || usageQ.isLoading,
+          error: (trafficQ.error ?? usageQ.error) as Error | null,
         },
         adopt: {
           loading:
-            pending ||
             engagementQ.isLoading ||
             trendQ.isLoading ||
             growthQ.isLoading ||
             retentionQ.isLoading ||
             rolesQ.isLoading,
-          error: (sitesQ.error ??
-            engagementQ.error ??
+          error: (engagementQ.error ??
             trendQ.error ??
             growthQ.error ??
             retentionQ.error ??
@@ -500,15 +434,14 @@ export const PulseDashboardProvider: React.FC<{
           // `!module && modules.length` is the one render between the tree arriving
           // and the effect below picking a default module.
           loading:
-            pending ||
             moduleTreeQ.isLoading ||
             workflowQ.isLoading ||
             (!module && modules.length > 0),
-          error: (sitesQ.error ?? moduleTreeQ.error ?? workflowQ.error) as Error | null,
+          error: (moduleTreeQ.error ?? workflowQ.error) as Error | null,
         },
         siteHealth: {
-          loading: pending || moduleTreeQ.isLoading,
-          error: (sitesQ.error ?? moduleTreeQ.error) as Error | null,
+          loading: moduleTreeQ.isLoading,
+          error: moduleTreeQ.error as Error | null,
         },
       },
       generatedAt: trafficQ.data?.meta.generated_at ?? null,
@@ -517,13 +450,9 @@ export const PulseDashboardProvider: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       scopeLabel,
-      pending,
-      sitesQ.error,
       rangeFrom,
       rangeTo,
       dashState,
-      sites,
-      scopedSites,
       modules,
       subModules,
       module,
@@ -574,8 +503,6 @@ export const PulseDashboardProvider: React.FC<{
         setDev,
         prev,
         setPrev,
-        project,
-        setProject,
         range,
         setRange,
         rangeLabel,

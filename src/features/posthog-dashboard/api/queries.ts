@@ -38,11 +38,14 @@ import {
 export interface QueryFilters {
   /** False until the allowed-sites list has settled, so we don't fire every call twice. */
   enabled: boolean;
+  /** The dashboard's own analytics API (e.g. PULSE_ADOPTION_PATH); omitted = FM's. The API fixes the
+      app's scope, so a dashboard with its own API sends only the filters. */
+  api?: string;
   from: string;
   to: string;
   siteIds: string[];
   devices: DeviceType[];
-  /** Raw platform/device selection ("all" | "ios" | "android") — Pulse only. */
+  /** Platform button ("all" | "ios" | "android"), sent as `os` — Pulse only. */
   dev?: string;
   licensedSeats: number | null;
   module: string | null;
@@ -70,6 +73,7 @@ export function dateRangeFor(days: number): { from: string; to: string } {
 }
 
 const range = (f: QueryFilters): RangeFilters => ({
+  api: f.api,
   from: f.from,
   to: f.to,
   siteIds: f.siteIds,
@@ -87,6 +91,8 @@ const CACHE = {
 } as const;
 
 const keyBase = (f: QueryFilters) => [
+  f.api ?? '',
+  f.dev ?? '',
   f.from,
   f.to,
   f.siteIds.join(','),
@@ -171,9 +177,10 @@ export function useAdoptionEngagement(f: QueryFilters) {
 
 export function useAdoptionTrend(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'adoption_trend', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
+    queryKey: ['fm-adoption', 'adoption_trend', f.api ?? '', f.dev ?? '', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
       fetchAdoptionTrend({
+        api: f.api,
         to: f.to,
         weeks: TREND_WEEKS,
         siteIds: f.siteIds,
@@ -187,9 +194,9 @@ export function useAdoptionTrend(f: QueryFilters) {
 
 export function useGrowth(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'growth', f.from, f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
+    queryKey: ['fm-adoption', 'growth', f.api ?? '', f.dev ?? '', f.from, f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
-      fetchGrowth({ from: f.from, to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
+      fetchGrowth({ api: f.api, from: f.from, to: f.to, weeks: GROWTH_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
     enabled: f.enabled,
     ...CACHE,
   });
@@ -197,9 +204,9 @@ export function useGrowth(f: QueryFilters) {
 
 export function useRetention(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'retention', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
+    queryKey: ['fm-adoption', 'retention', f.api ?? '', f.dev ?? '', f.to, f.siteIds.join(','), f.devices.join(','), f.requestId ?? 0],
     queryFn: () =>
-      fetchRetention({ to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
+      fetchRetention({ api: f.api, to: f.to, weeks: RETENTION_WEEKS, siteIds: f.siteIds, devices: f.devices, dev: f.dev }),
     enabled: f.enabled,
     ...CACHE,
   });

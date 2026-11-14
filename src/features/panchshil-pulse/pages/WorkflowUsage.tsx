@@ -124,7 +124,7 @@ export const WorkflowUsage: React.FC = () => {
       <div className="section-head">
         <h2>Workflow Usage</h2>
         <span className="sd">
-          Resident completion of key in-app workflows per module, all-modules comparison, and where residents navigate &amp; exit.
+          Completion of key workflows per Pulse module, the pages in each module, and where people start.
         </span>
       </div>
 
@@ -259,9 +259,9 @@ export const WorkflowUsage: React.FC = () => {
                 <button className="info-btn" type="button" tabIndex={-1}>i</button>
                 <div className="info-pop">
                   <b>Top entry screens</b>
-                  The screen each session lands on first, listed with its Visitors, Views and Bounce rate.
+                  The page each session lands on first in the selected module, listed with its Visitors, Views and Bounce rate.
                   <div className="sep">
-                    Shows the most common entry points into the app — what residents actually come to the app to do first, usually reached via push notification, deep link, or the app icon.
+                    Shows the most common entry points — what people actually come to Pulse to do first, usually reached from a link, a notification, or the menu.
                   </div>
                 </div>
               </span>
