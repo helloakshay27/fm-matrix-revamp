@@ -7,21 +7,13 @@ import { TrafficSkeleton } from "../components/common/PulseSkeletons";
 import { tileToKpi } from "../utils/tileAdapter";
 import { useChartColors } from "../utils/chartColors";
 
-// Platform labels shown in the device-split card. The API reports Desktop /
-// Mobile groups; Pulse is a mobile-first app so we present those rows as the
-// Android vs iOS split users care about. The share/percentage data is untouched.
-const DEVICE_LABELS: Record<string, string> = {
-  Desktop: "Android",
-  Mobile: "iOS",
-};
-
-// x-axis labels arrive as "M/D" (e.g. 8/5). Render them as the month name so
-// the usage-over-time chart shows Jan/Mar/May/... instead of day/month. The
-// underlying dates, data and tick positions are untouched.
+// x-axis labels arrive as "M/D" (e.g. 8/5). Render them as day and month name
+// ("5 Aug"): the chart is daily, so the month alone would repeat on every tick.
+// The underlying dates, data and tick positions are untouched.
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const toMonthLabel = (label: string): string => {
-  const m = parseInt(label.split("/")[0], 10);
-  return m >= 1 && m <= 12 ? MONTH_NAMES[m - 1] : label;
+  const [m, d] = label.split("/").map((x) => parseInt(x, 10));
+  return m >= 1 && m <= 12 && d >= 1 ? `${d} ${MONTH_NAMES[m - 1]}` : label;
 };
 
 export const TrafficSession: React.FC = () => {
@@ -47,14 +39,14 @@ export const TrafficSession: React.FC = () => {
       <div className="section-head">
         <div className="eyebrow-sec"></div>
         <h2>Traffic &amp; Session</h2>
-        <span className="sd">Monitor overall application traffic, resident activity, and session behavior.</span>
+        <span className="sd">Monitor overall traffic on the Pulse web portal and app, user activity, and session behavior.</span>
       </div>
 
       <div className="qbox">
         <b>Key questions</b>
         <ul>
-          <li>How many residents are actively using the app, and how frequently?</li>
-          <li>Which sites generate the highest traffic, and are residents returning?</li>
+          <li>How many people are actively using Pulse, and how frequently?</li>
+          <li>Which days are busiest, and are people coming back?</li>
         </ul>
       </div>
 
@@ -162,15 +154,15 @@ export const TrafficSession: React.FC = () => {
               <div className="charthead">
                 <div>
                   <div className="cr">Device / platform split</div>
-                  <div className="ct">Android vs iOS usage</div>
+                  <div className="ct">Desktop vs mobile sessions</div>
                 </div>
                 <span className="info-wrap">
                   <button className="info-btn" type="button" tabIndex={-1}>i</button>
                   <div className="info-pop">
                     <b>Device / platform split</b>
-                    Sessions split by the device they came from — Desktop, iOS and other mobile — each shown as a share of total sessions.
+                    Sessions split by the device they came from — Desktop, Mobile and Tablet — each shown as a share of total sessions.
                     <div className="sep">
-                      Tells you how residents are reaching the app. A heavy mobile/iOS share usually means people working on the move rather than at a desk — Pulse is a mobile-first community app, so this shows where release testing and support effort should concentrate.
+                      Tells you how people reach Pulse: the web portal is mostly used at a desk, the app on the move. It shows where release testing and support effort should concentrate.
                     </div>
                   </div>
                 </span>
@@ -181,7 +173,7 @@ export const TrafficSession: React.FC = () => {
                 {t.deviceRows.length > 0 ? (
                   t.deviceRows.map(row => (
                     <div className="role" key={row[0]}>
-                      <div className="rn">{DEVICE_LABELS[row[0]] ?? row[0]}</div>
+                      <div className="rn">{row[0]}</div>
                       <div className="rbar">
                         <i style={{ width: `${Math.round(row[1] * 100)}%`, background: row[2] }}></i>
                       </div>

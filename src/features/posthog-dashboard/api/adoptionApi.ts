@@ -32,53 +32,31 @@ export const ANALYTICS_BASE_URL =
    tenant configuration module, never hardcoded here. */
 export const ANALYTICS_TENANT = FM_ADOPTION_TENANT_URL;
 
-/* Panchshil Pulse project code — passed statically, mirroring the per-brand
-   project_code mechanism used by Panchshil Connect. Pulse Usage Analytics
-   identifies the Pulse/TEP context using project_code=TEP-01 ONLY; no
-   project_id is ever sent for Pulse (never P-238, never P-223).
-   Resolved from src/config/fmAdoptionTenant.ts (override:
-   VITE_FM_ADOPTION_PROJECT_CODE) so this read scope and the project_code
-   stamped on Pulse events by src/utils/posthogHelpers.ts can never diverge —
-   a mismatch makes every TEP-01-scoped metric come back empty. */
+/* Panchshil Pulse project code (TEP-01). Only the WRITE side uses it now:
+   src/utils/posthogHelpers.ts stamps it on Pulse events. The Pulse dashboard
+   reads its own API (PULSE_ADOPTION_PATH), which fixes TEP-01 on the server,
+   so no request carries it. */
 export const ANALYTICS_PROJECT_CODE = FM_ADOPTION_PROJECT_CODE;
 
-/* The Panchshil Pulse tenant switches the request construction onto the
-   Connect pattern: it sends `project_code` (never the `url`/`base_url`)
-   plus a single `os`/`device_type` param instead of the shared `device_type`
-   array. No `project_id` is sent for Pulse. Every other tenant keeps the
-   shared url + device_type array behaviour. */
-const IS_PULSE = ANALYTICS_TENANT.includes('pulse');
+/* Each dashboard on this client has its own usage-analytics API in the
+   backend, and that API fixes on the server which app's events it reads
+   (app id, project code, client, …). A dashboard passes its API as `api`
+   (RangeFilters / WeeklyFilters / QueryFilters) and then sends only the
+   filters: from / to / weeks, the platform, module / sub_module. */
+export const FM_ADOPTION_PATH = '/commercial/fm/adoption';
+/** Panchshil Pulse: the Pulse web portal and app, project code TEP-01 (see Commercial::PulseController). */
+export const PULSE_ADOPTION_PATH = '/commercial/pulse/adoption';
 
 /**
- * Platform filter → the API's single platform param. Used only on the Pulse
- * request path (`IS_PULSE`); every other tenant keeps the shared
- * `device_type: devices` array behaviour in rangeParams/weeklyParams.
- *
- *   "all"      → nothing at all, so the param is omitted and the API aggregates
- *                every platform. It must not name a platform: the param is a
- *                narrowing filter, and returning `device_type: 'mobile'` for
- *                "all" silently discarded every non-mobile event. For
- *                Pulse/TEP-01 the overwhelming majority of sessions are
- *                desktop-browser sessions, so "All" was returning only a single
- *                stray mobile session. An empty object contributes no pairs to
- *                buildQuery, which skips undefined and empty values.
- *   "ios"      → { os: 'ios' }, iOS only. The comparison is case-insensitive
- *                server-side, so the lowercase value is deliberate.
- *   "android"  → { device_type: 'mobile' }, the API's mobile device filter,
- *                which covers Android AND iOS. The `os` param is a single exact
- *                $os_name match, so the platform token could only ever express
- *                one OS at a time — mapping it to `os: 'Android'` made Pulse's
- *                "Mobile" selection mean "Android only", which contradicts the
- *                button's own `title="Mobile only"` and under-reports as soon
- *                as any iOS traffic exists. Verified against a data set holding
- *                both platforms: os=Android → 12 users / 16 sessions and
- *                os=iOS → 4 users / 6 sessions, while device_type=mobile → 15
- *                users / 22 sessions, matching the Mobile bucket of the API's
- *                own os_breakdown.
+ * Pulse's platform buttons → the API's platform param. Each sends what its
+ * label says (the comparison is case-insensitive server-side):
+ *   "all"      → nothing, so the API counts every platform (web and app).
+ *   "ios"      → { os: 'ios' }, iOS only.
+ *   "android"  → { os: 'android' }, Android only.
  */
 export const getDeviceInfo = (dev?: string): Record<string, string> => {
   if (dev === 'ios') return { os: 'ios' };
-  if (dev === 'android') return { device_type: 'mobile' };
+  if (dev === 'android') return { os: 'android' };
   return {};
 };
 
@@ -127,6 +105,9 @@ export type DeviceType = 'Desktop' | 'Mobile';
 export interface RangeFilters {
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
+  /** The dashboard's own analytics API (e.g. PULSE_ADOPTION_PATH). The API fixes the app's
+      scope, so the request carries only the filters; without it the request goes to FM's API. */
+  api?: string;
   /** Optional product scoping for dashboards that share these endpoints. */
   projectCode?: string;
   /** Optional analytics tenant override; the tenant is independent of projectCode. */
@@ -134,8 +115,7 @@ export interface RangeFilters {
   signal?: AbortSignal;
   siteIds?: string[];
   devices?: DeviceType[];
-  /** Raw platform/device selection ("all" | "ios" | "android") — used by the
-      Panchshil Pulse tenant to build the Connect-style `os`/`device_type` param. */
+  /** Platform button ("all" | "ios" | "android"), sent as `os` (see getDeviceInfo). Pulse only. */
   dev?: string;
   /** Optional app/platform scope used by the recent active users endpoint. */
   appId?: number | string;
@@ -169,6 +149,8 @@ export interface WeeklyFilters {
   weeks: number;
   /** Start of the selected range. Only growth reads it: its weeks follow the range. */
   from?: string;
+  /** The dashboard's own analytics API; see RangeFilters.api. */
+  api?: string;
   /** Optional product scoping for dashboards that share these endpoints. */
   projectCode?: string;
   /** Optional analytics tenant override; the tenant is independent of projectCode. */
@@ -206,30 +188,33 @@ const buildQuery = (pairs: Array<[string, string | string[] | number | undefined
   return parts.join('&');
 };
 
+type Pair = [string, string | string[] | number | undefined | null];
+
 /**
- * GET helper: appends a manually built query string (raw commas preserved for
- * site_id) to the endpoint and returns the parsed response.
+ * Which analytics API a request goes to. Each dashboard on this client has its own usage-analytics API
+ * in the backend, which fixes which app's events it reads:
+ *   - `api` given (Pulse): that API.
+ *   - Club Management sends project_code CM-01, which picks its API.
+ *   - Otherwise FM's API (Commercial::FmController), which needs site_id: a request without one gets
+ *     a 422 instead of every app's data.
  */
-/**
- * Each dashboard on this client has its own usage-analytics API in the backend, which fixes which
- * app's events it reads. FM (Commercial::FmController) needs site_id; a request without one gets a 422
- * instead of every app's data. Panchshil Pulse (project_code TEP-01) and Club Management (CM-01) share
- * this client, so the project code they send picks their API.
- */
-export const FM_ADOPTION_PATH = '/commercial/fm/adoption';
 const ADOPTION_PATH_BY_PROJECT_CODE: Record<string, string> = {
-  'TEP-01': '/commercial/pulse/adoption',
   'CM-01': '/commercial/club/adoption',
 };
 
-const adoptionPath = (pairs: Array<[string, string | string[] | number | undefined | null]>): string => {
+const adoptionPath = (api: string | undefined, pairs: Pair[]): string => {
+  if (api) return api;
   const code = pairs.find(([key]) => key === 'project_code')?.[1];
   return (typeof code === 'string' && ADOPTION_PATH_BY_PROJECT_CODE[code]) || FM_ADOPTION_PATH;
 };
 
-const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] | number | undefined | null]>, signal?: AbortSignal): Promise<T> => {
+/**
+ * GET helper: appends a manually built query string (raw commas preserved for
+ * site_id) to the endpoint and returns the parsed response.
+ */
+const get = async <T>(endpoint: string, pairs: Pair[], signal?: AbortSignal, api?: string): Promise<T> => {
   const qs = buildQuery(pairs);
-  const url = `${adoptionPath(pairs)}/${endpoint}${qs ? `?${qs}` : ''}`;
+  const url = `${adoptionPath(api, pairs)}/${endpoint}${qs ? `?${qs}` : ''}`;
   const { data } = await analyticsClient.get<T>(url, { signal });
   return data;
 };
@@ -237,24 +222,24 @@ const get = async <T>(endpoint: string, pairs: Array<[string, string | string[] 
 /** FM's download; Pulse and Club download from their own API (see adoptionPath). */
 export const RECENT_ACTIVE_USERS_EXPORT_ENDPOINT = `${FM_ADOPTION_PATH}/active_users_export`;
 
-export const fetchRecentActiveUsers = (f: RangeFilters) =>
-  get<RecentActiveUsersResponse>('recent_active_users', [
-    ...(f.appId != null
+export const fetchRecentActiveUsers = (f: RangeFilters) => {
+  const pairs: Pair[] =
+    f.appId != null
       ? [
-          ['app_id', f.appId] as [string, string | number],
+          ['app_id', f.appId],
           ['device_type', f.recentDeviceType],
           ['from', f.from],
           ['to', f.to],
         ]
-      : rangeParams(f)),
-    ['limit', 10],
-  ], f.signal);
+      : rangeParams(f);
+  return get<RecentActiveUsersResponse>('recent_active_users', [...pairs, ['limit', 10]], f.signal, f.api);
+};
 
 export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
   const pairs = rangeParams(f);
   const qs = buildQuery(pairs);
   const response = await analyticsClient.get<Blob>(
-    `${adoptionPath(pairs)}/active_users_export${qs ? `?${qs}` : ''}`,
+    `${adoptionPath(f.api, pairs)}/active_users_export${qs ? `?${qs}` : ''}`,
     { responseType: 'blob' },
   );
   return response.data;
@@ -262,34 +247,33 @@ export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> 
 
 /* Shared param slices ---------------------------------------------------- */
 
-const rangeParams = ({ from, to, siteIds, devices, dev, projectCode, tenantUrl }: RangeFilters): Array<[string, string | string[] | number | undefined | null]> => [
-  ...(tenantUrl
-    ? [['url', tenantUrl] as [string, string]]
-    : IS_PULSE
-      ? [['project_code', ANALYTICS_PROJECT_CODE] as [string, string]]
-      : [['url', ANALYTICS_TENANT] as [string, string]]),
-  ...(projectCode ? [['project_code', projectCode] as [string, string]] : []),
-  ['from', from],
-  ['to', to],
-  ['site_id', siteIds],
-  ...(tenantUrl || !IS_PULSE
-    ? ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)
-    : Object.entries(getDeviceInfo(dev))),
+/** The platform filter: Pulse's single `os` param from its button, else the `device_type` list. */
+const platformParams = (dev: string | undefined, devices: DeviceType[] | undefined): Pair[] =>
+  dev !== undefined ? Object.entries(getDeviceInfo(dev)) : [['device_type', devices]];
+
+/** The scope part. A dashboard with its own API sends none: the API fixes its app on the server. */
+const scopeParams = ({ api, projectCode, tenantUrl }: Pick<RangeFilters, 'api' | 'projectCode' | 'tenantUrl'>): Pair[] =>
+  api
+    ? []
+    : [
+        ['url', tenantUrl || ANALYTICS_TENANT],
+        ...(projectCode ? [['project_code', projectCode] as Pair] : []),
+      ];
+
+const rangeParams = (f: RangeFilters): Pair[] => [
+  ...scopeParams(f),
+  ['from', f.from],
+  ['to', f.to],
+  ['site_id', f.siteIds],
+  ...platformParams(f.dev, f.devices),
 ];
 
-const weeklyParams = ({ to, weeks, siteIds, devices, dev, projectCode, tenantUrl }: WeeklyFilters): Array<[string, string | string[] | number | undefined | null]> => [
-  ...(tenantUrl
-    ? [['url', tenantUrl] as [string, string]]
-    : IS_PULSE
-      ? [['project_code', ANALYTICS_PROJECT_CODE] as [string, string]]
-      : [['url', ANALYTICS_TENANT] as [string, string]]),
-  ...(projectCode ? [['project_code', projectCode] as [string, string]] : []),
-  ['to', to],
-  ['weeks', weeks],
-  ['site_id', siteIds],
-  ...(tenantUrl || !IS_PULSE
-    ? ([['device_type', devices]] as Array<[string, string | string[] | number | undefined | null]>)
-    : Object.entries(getDeviceInfo(dev))),
+const weeklyParams = (f: WeeklyFilters): Pair[] => [
+  ...scopeParams(f),
+  ['to', f.to],
+  ['weeks', f.weeks],
+  ['site_id', f.siteIds],
+  ...platformParams(f.dev, f.devices),
 ];
 
 /* ------------------------------------------------------------------ shared */
@@ -350,7 +334,7 @@ export interface TrafficSessionResponse {
 }
 
 export const fetchTrafficSession = (f: RangeFilters) =>
-  get<TrafficSessionResponse>('traffic_session', rangeParams(f), f.signal);
+  get<TrafficSessionResponse>('traffic_session', rangeParams(f), f.signal, f.api);
 
 /* ------------------------------------------ Layer 1 · usage_and_distribution */
 
@@ -378,7 +362,7 @@ export interface UsageDistributionResponse {
 }
 
 export const fetchUsageAndDistribution = (f: RangeFilters) =>
-  get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f), f.signal);
+  get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f), f.signal, f.api);
 
 /* ---------------------------------------- Layer 2 · adoption_engagement (A*) */
 
@@ -392,7 +376,8 @@ export interface AdoptionEngagementResponse {
   };
   stickiness: { value: number; avg_dau: number; mau: number; delta_pct: number | null };
   /** value = this week's WAU vs the average of the 8 weeks before it (baseline_avg), in %. */
-  adoption_trend: { value: number | null; wau_now: number; wau_4wk_ago: number; baseline_avg?: number | null };
+  /** baseline_weeks: how many weeks the average used (weeks before the app went live are left out). */
+  adoption_trend: { value: number | null; wau_now: number; wau_4wk_ago: number; baseline_avg?: number | null; baseline_weeks?: number | null };
   activation: { value: number; joiners: number; delta_pct: number | null };
   module_breadth: { in_use: number; total: number };
   dormant_users: { value: number; band: string };
@@ -406,7 +391,7 @@ export const fetchAdoptionEngagement = (f: RangeFilters & { licensedSeats?: numb
   if (licensedSeats != null && licensedSeats > 0) {
     pairs.push(['licensed_seats', Number(licensedSeats)]);
   }
-  return get<AdoptionEngagementResponse>('adoption_engagement', pairs, f.signal);
+  return get<AdoptionEngagementResponse>('adoption_engagement', pairs, f.signal, f.api);
 };
 
 /* -------------------------------------------- Layer 2 · adoption_trend (A3) */
@@ -426,7 +411,7 @@ export interface AdoptionTrendResponse {
 }
 
 export const fetchAdoptionTrend = (f: WeeklyFilters) =>
-  get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f), f.signal);
+  get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f), f.signal, f.api);
 
 /* ------------------------------------------------------- Layer 2 · growth */
 
@@ -445,7 +430,7 @@ export interface GrowthResponse {
 }
 
 export const fetchGrowth = (f: WeeklyFilters) =>
-  get<GrowthResponse>('growth', [...weeklyParams(f), ['from', f.from]], f.signal);
+  get<GrowthResponse>('growth', [...weeklyParams(f), ['from', f.from]], f.signal, f.api);
 
 /* ---------------------------------------------------- Layer 2 · retention */
 
@@ -463,7 +448,7 @@ export interface RetentionResponse {
 }
 
 export const fetchRetention = (f: WeeklyFilters) =>
-  get<RetentionResponse>('retention', weeklyParams(f), f.signal);
+  get<RetentionResponse>('retention', weeklyParams(f), f.signal, f.api);
 
 /* ------------------------------------------------------ Layer 2 · roles (A8) */
 
@@ -474,7 +459,7 @@ export interface RolesResponse {
   info?: AdoptionInfo;
 }
 
-export const fetchRoles = (f: RangeFilters) => get<RolesResponse>('roles', rangeParams(f), f.signal);
+export const fetchRoles = (f: RangeFilters) => get<RolesResponse>('roles', rangeParams(f), f.signal, f.api);
 
 /* ----------------------------------------------------- Layer 3 · modules */
 
@@ -495,7 +480,7 @@ export interface ModulesResponse {
 export const fetchModules = (f: RangeFilters & { module?: string }) => {
   const pairs = rangeParams(f);
   if (f.module) pairs.push(['module', f.module]);
-  return get<ModulesResponse>('modules', pairs, f.signal);
+  return get<ModulesResponse>('modules', pairs, f.signal, f.api);
 };
 
 /* ---------------------------------------------- Layer 3 · workflow_usage */
@@ -551,5 +536,5 @@ export const fetchWorkflowUsage = (
   const pairs = rangeParams(f);
   if (f.module) pairs.push(['module', f.module]);
   if (f.subModule) pairs.push(['sub_module', f.subModule]);
-  return get<WorkflowUsageResponse>('workflow_usage', pairs, f.signal);
+  return get<WorkflowUsageResponse>('workflow_usage', pairs, f.signal, f.api);
 };
