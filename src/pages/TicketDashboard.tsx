@@ -128,6 +128,18 @@ const SectionLoader: React.FC<{
   );
 };
 
+const normalizeTicketText = (value: unknown): string => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return String(value).trim();
+};
+
+const normalizeTicketDisplayValue = (value: unknown): string => {
+  const normalized = normalizeTicketText(value);
+  return normalized === "" ? "--" : normalized;
+};
+
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const gaEvents = useGaFunnelEvents();
@@ -1519,39 +1531,53 @@ export const TicketDashboard = () => {
       </span>;
     }
     if (columnKey === 'priority') {
+      const priorityValue = item.priority || item.effective_priority || item.priority_status || item.priority_value || item.severity;
       return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
-        {item.priority}
+        {normalizeTicketDisplayValue(priorityValue)}
       </span>;
     }
     if (columnKey === 'created_at') {
-      return formatDate(item.created_at);
+      return formatDate(item.created_at || item.createdAt || item.created_on);
     }
     if (columnKey === 'review_tracking_date') {
       return formatDateOnly(item.review_tracking_date);
     }
     if (columnKey === 'response_tat') {
-      return formatEscalationMinutes(item.next_response_escalation);
+      const responseTatValue = item.response_tat ?? item.response_tat_minutes ?? item.next_response_escalation?.minutes ?? item.responseTat;
+      return responseTatValue === null || responseTatValue === undefined || responseTatValue === '' ? '--' : responseTatValue;
     }
     if (columnKey === 'response_time') {
-      return formatEscalationTime(item.next_response_escalation);
+      const responseTimeValue = item.response_time ?? item.response_duration ?? item.response_tat_time ?? item.next_response_escalation?.escalation_time;
+      return responseTimeValue ? responseTimeValue : formatEscalationTime(item.next_response_escalation);
     }
     if (columnKey === 'escalation_response_name') {
-      return formatEscalationLevel(item.next_response_escalation);
+      return formatEscalationLevel(item.next_response_escalation) || normalizeTicketDisplayValue(item.escalation_response_name);
     }
     if (columnKey === 'resolution_tat') {
-      return formatEscalationMinutes(item.next_resolution_escalation);
+      const resolutionTatValue = item.resolution_tat ?? item.resolution_tat_minutes ?? item.next_resolution_escalation?.minutes ?? item.resolutionTat;
+      return resolutionTatValue === null || resolutionTatValue === undefined || resolutionTatValue === '' ? '--' : resolutionTatValue;
     }
     if (columnKey === 'resolution_time') {
-      return formatEscalationTime(item.next_resolution_escalation);
+      const resolutionTimeValue = item.resolution_time ?? item.resolution_duration ?? item.resolution_tat_time ?? item.next_resolution_escalation?.escalation_time;
+      return resolutionTimeValue ? resolutionTimeValue : formatEscalationTime(item.next_resolution_escalation);
     }
     if (columnKey === 'escalation_resolution_name') {
-      return formatEscalationLevel(item.next_resolution_escalation);
+      return formatEscalationLevel(item.next_resolution_escalation) || normalizeTicketDisplayValue(item.escalation_resolution_name);
     }
     if (columnKey === 'ticket_type') {
-      const t = item.ticket_type;
-      return t ? String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
+      const ticketTypeValue = item.ticket_type || item.issue_type || item.ticketType || item.complaint_type;
+      const formattedTicketType = normalizeTicketDisplayValue(ticketTypeValue);
+      return formattedTicketType === '--' ? '--' : formattedTicketType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     }
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+    if (columnKey === 'complaint_mode') {
+      const complaintModeValue = item.complaint_mode || item.mode || item.complaint_mode_name || item.complaintMode;
+      return normalizeTicketDisplayValue(complaintModeValue);
+    }
+    if (columnKey === 'completed_at') {
+      const completedAtValue = item.completed_at || item.completed_on || item.completedAt || item.completion_time || item.completed_date;
+      return completedAtValue ? formatDate(completedAtValue) : '--';
+    }
+    if (item[columnKey] === null || item[columnKey] === undefined || item[columnKey] === '') {
       return '--';
     }
     return item[columnKey];

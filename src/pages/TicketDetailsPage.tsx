@@ -6641,20 +6641,18 @@ export const TicketDetailsPage = () => {
                         </h3>
                       </div>
                       <div className="px-6 bg-white">
-                        <div className="flex justify-between py-4 border-b border-gray-200">
-                          <div className="w-full ">
-                            <div className="">
-                              <div className="flex items-start mb-4">
+                        <div className="grid grid-cols-1 items-start gap-5 py-4 border-b border-gray-200 xl:grid-cols-[minmax(0,1fr)_140px]">
+                          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(140px,0.7fr)_minmax(0,2fr)]">
+                            <div className="min-w-0 space-y-3">
+                              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
                                 <span
-                                  className="text-gray-500 min-w-[110px]"
-                                  style={{ fontSize: "14px" }}
+                                  className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500"
                                 >
                                   Description
                                 </span>
                                 <span
-                                  className="text-gray-900 font-medium break-words overflow-wrap-anywhere"
+                                  className="min-w-0 break-words text-[14px] font-semibold text-gray-900"
                                   style={{
-                                    fontSize: "14px",
                                     wordBreak: "break-word",
                                     overflowWrap: "anywhere",
                                   }}
@@ -6663,130 +6661,95 @@ export const TicketDetailsPage = () => {
                                     "No description available"}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <div className="">
-                                  <div className="flex items-start mb-4">
-                                    <span
-                                      className="text-gray-500 min-w-[110px]"
-                                      style={{ fontSize: "14px" }}
-                                    >
-                                      Category
-                                    </span>
-                                    <span
-                                      className="text-gray-900 font-medium"
-                                      style={{ fontSize: "14px" }}
-                                    >
-                                      {ticketData.category_type || "-"}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start mb-4">
-                                    <span
-                                      className="text-gray-500 min-w-[110px]"
-                                      style={{ fontSize: "14px" }}
-                                    >
-                                      Sub Category
-                                    </span>
-                                    <span
-                                      className="text-gray-900 font-medium"
-                                      style={{ fontSize: "14px" }}
-                                    >
-                                      {ticketData.sub_category_type || "-"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div
-                                  className="bg-white p-4"
-                                  style={{ width: "75%", borderRadius: "4px" }}
-                                >
-                                  <div className="grid grid-cols-3 w-full items-center gap-6">
+                              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
+                                <span className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500">
+                                  Category
+                                </span>
+                                <span className="min-w-0 break-words text-[14px] font-semibold text-gray-900">
+                                  {ticketData.category_type || "-"}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
+                                <span className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500">
+                                  Sub Category
+                                </span>
+                                <span className="min-w-0 break-words text-[14px] font-semibold text-gray-900">
+                                  {ticketData.sub_category_type || "-"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="min-w-0 rounded bg-white p-3 sm:p-4">
+                              <div className="grid w-full grid-cols-1 items-start gap-x-4 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
                                     {tatGridRows.flat().map((cell, idx) => {
-                                      // Determine column alignment - make escalation column left-aligned for consistency
-                                      const colAlign =
-                                        idx % 3 === 0
-                                          ? "justify-start"
-                                          : idx % 3 === 1
-                                            ? ""
-                                            : cell.label.includes("Escalation")
-                                              ? "justify-start"
-                                              : "justify-end";
+                                      const isEscalation =
+                                        cell.label.includes("Escalation");
 
                                       return (
                                         <div
                                           key={idx}
-                                          className={`flex ${colAlign} w-full`}
+                                          className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(70px,1fr)] items-start gap-x-2"
                                         >
-                                          {/* Inner flex box for key-value pair with fixed key width and 20px gap */}
-                                          <div className="flex items-center gap-[20px]">
-                                            {/* Fixed width label to align values */}
-                                            <span
-                                              className="text-[14px] text-gray-500 whitespace-nowrap"
-                                              style={{
-                                                minWidth:
-                                                  cell.label === "Response TAT"
-                                                    ? "90px"
-                                                    : "5px",
-                                              }}
-                                            >
-                                              {cell.label}
-                                            </span>
+                                          <span className="break-words text-[13px] leading-5 text-gray-500">
+                                            {cell.label}
+                                          </span>
 
-                                            {/* Dynamic value */}
-                                            <span
-                                              className={`text-[13px] md:text-[14px] font-semibold break-words text-gray-900`}
-                                              style={{
-                                                wordBreak: "break-word",
-                                                maxWidth: "120px",
-                                                whiteSpace: "pre-line",
-                                              }}
-                                            >
-                                              {cell.isExceeded &&
-                                              cell.label === "Balance TAT"
-                                                ? "Exceeded"
-                                                : cell.label.includes(
-                                                      "Escalation"
-                                                    ) &&
-                                                    cell.value &&
-                                                    cell.value.includes("\n")
-                                                  ? (() => {
-                                                      const lines = cell.value
-                                                        .split("\n")
-                                                        .filter((line) =>
-                                                          line.trim()
-                                                        );
-                                                      if (lines.length > 1) {
-                                                        const firstLine =
-                                                          lines[0];
-                                                        const remainingLines =
-                                                          lines.slice(1);
-                                                        return (
-                                                          <div className="relative inline-block group">
-                                                            <span className="cursor-pointer hover:underline">
-                                                              {firstLine}...
-                                                            </span>
-                                                            <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
-                                                              {remainingLines.join(
-                                                                "\n"
-                                                              )}
-                                                            </div>
+                                          <span
+                                            className="min-w-0 max-w-full break-words text-[13px] font-semibold text-gray-900 md:text-[14px]"
+                                            style={{
+                                              wordBreak: isEscalation
+                                                ? "break-word"
+                                                : "normal",
+                                              overflowWrap: isEscalation
+                                                ? "anywhere"
+                                                : "normal",
+                                              whiteSpace: isEscalation
+                                                ? "pre-line"
+                                                : "nowrap",
+                                            }}
+                                          >
+                                            {cell.isExceeded &&
+                                            cell.label === "Balance TAT"
+                                              ? "Exceeded"
+                                              : isEscalation &&
+                                                  cell.value &&
+                                                  cell.value.includes("\n")
+                                                ? (() => {
+                                                    const lines = cell.value
+                                                      .split("\n")
+                                                      .filter((line) =>
+                                                        line.trim()
+                                                      );
+                                                    if (lines.length > 1) {
+                                                      const firstLine =
+                                                        lines[0];
+                                                      const remainingLines =
+                                                        lines.slice(1);
+                                                      return (
+                                                        <div className="relative inline-block group">
+                                                          <span className="cursor-pointer hover:underline">
+                                                            {firstLine}...
+                                                          </span>
+                                                          <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
+                                                            {remainingLines.join(
+                                                              "\n"
+                                                            )}
                                                           </div>
-                                                        );
-                                                      }
-                                                      return cell.value;
-                                                    })()
-                                                  : cell.value}
-                                            </span>
-                                          </div>
+                                                        </div>
+                                                      );
+                                                    }
+                                                    return cell.value;
+                                                  })()
+                                                : cell.value}
+                                          </span>
                                         </div>
                                       );
                                     })}
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
                           <div
                             className="flex flex-col justify-around"
-                            style={{ textAlign: "center", marginLeft: "20px" }}
+                            style={{ textAlign: "center" }}
                           >
                             <button className="w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3">
                               {ticketData.issue_status || "-"}
@@ -11705,20 +11668,18 @@ export const TicketDetailsPage = () => {
                     </h3>
                   </div>
                   <div className="px-6 bg-white">
-                    <div className="flex justify-between py-4 border-b border-gray-200">
-                      <div className="w-full ">
-                        <div className="">
-                          <div className="flex items-start mb-4">
+                    <div className="grid grid-cols-1 items-start gap-5 py-4 border-b border-gray-200 xl:grid-cols-[minmax(0,1fr)_140px]">
+                      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(140px,0.7fr)_minmax(0,2fr)]">
+                        <div className="min-w-0 space-y-3">
+                          <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
                             <span
-                              className="text-gray-500 min-w-[110px]"
-                              style={{ fontSize: "14px" }}
+                              className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500"
                             >
                               Description
                             </span>
                             <span
-                              className="text-gray-900 font-medium break-words overflow-wrap-anywhere"
+                              className="min-w-0 break-words text-[14px] font-semibold text-gray-900"
                               style={{
-                                fontSize: "14px",
                                 wordBreak: "break-word",
                                 overflowWrap: "anywhere",
                               }}
@@ -11726,129 +11687,102 @@ export const TicketDetailsPage = () => {
                               {ticketData.heading || "No description available"}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <div className="">
-                              <div className="flex items-start mb-4">
+                          <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
                                 <span
-                                  className="text-gray-500 min-w-[110px]"
-                                  style={{ fontSize: "14px" }}
+                                  className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500"
                                 >
                                   Category
                                 </span>
                                 <span
-                                  className="text-gray-900 font-medium"
-                                  style={{ fontSize: "14px" }}
+                                  className="min-w-0 break-words text-[14px] font-semibold text-gray-900"
                                 >
                                   {ticketData.category_type || "-"}
                                 </span>
                               </div>
-                              <div className="flex items-start mb-4">
+                          <div className="grid grid-cols-[120px_minmax(0,1fr)] items-start">
                                 <span
-                                  className="text-gray-500 min-w-[110px]"
-                                  style={{ fontSize: "14px" }}
+                                  className="w-[120px] shrink-0 pr-2 text-[14px] leading-tight tracking-wide text-gray-500"
                                 >
                                   Sub Category
                                 </span>
                                 <span
-                                  className="text-gray-900 font-medium"
-                                  style={{ fontSize: "14px" }}
+                                  className="min-w-0 break-words text-[14px] font-semibold text-gray-900"
                                 >
                                   {ticketData.sub_category_type || "-"}
                                 </span>
                               </div>
-                            </div>
-                            <div
-                              className="bg-white p-4"
-                              style={{ width: "75%", borderRadius: "4px" }}
-                            >
-                              <div className="grid grid-cols-3 w-full items-center gap-4">
+                        </div>
+                        <div className="min-w-0 rounded bg-white p-3 sm:p-4">
+                              <div className="grid w-full grid-cols-1 items-start gap-x-4 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
                                 {tatGridRows.flat().map((cell, idx) => {
-                                  // Determine column alignment - make escalation column left-aligned for consistency
-                                  const colAlign =
-                                    idx % 3 === 0
-                                      ? "justify-start"
-                                      : idx % 3 === 1
-                                        ? ""
-                                        : cell.label.includes("Escalation")
-                                          ? "justify-start"
-                                          : "justify-end";
+                                  const isEscalation =
+                                    cell.label.includes("Escalation");
 
                                   return (
                                     <div
                                       key={idx}
-                                      className={`flex ${colAlign} w-full`}
+                                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(70px,1fr)] items-start gap-x-2"
                                     >
-                                      {/* Inner flex box for key-value pair with fixed key width and 20px gap */}
-                                      <div className="flex items-center gap-[20px]">
-                                        {/* Fixed width label to align values */}
-                                        <span
-                                          className="text-[14px] text-gray-500 whitespace-nowrap"
-                                          style={{
-                                            minWidth:
-                                              cell.label === "Response TAT"
-                                                ? "90px"
-                                                : "5px",
-                                          }}
-                                        >
-                                          {cell.label}
-                                        </span>
+                                      <span className="break-words text-[13px] leading-5 text-gray-500">
+                                        {cell.label}
+                                      </span>
 
-                                        {/* Dynamic value */}
-                                        <span
-                                          className={`text-[13px] md:text-[14px] font-semibold break-words text-gray-900`}
-                                          style={{
-                                            wordBreak: "break-word",
-                                            maxWidth: "120px",
-                                            whiteSpace: "pre-line",
-                                          }}
-                                        >
-                                          {cell.isExceeded &&
-                                          cell.label === "Balance TAT"
-                                            ? "Exceeded"
-                                            : cell.label.includes(
-                                                  "Escalation"
-                                                ) &&
-                                                cell.value &&
-                                                cell.value.includes("\n")
-                                              ? (() => {
-                                                  const lines = cell.value
-                                                    .split("\n")
-                                                    .filter((line) =>
-                                                      line.trim()
-                                                    );
-                                                  if (lines.length > 1) {
-                                                    const firstLine = lines[0];
-                                                    const remainingLines =
-                                                      lines.slice(1);
-                                                    return (
-                                                      <div className="relative inline-block group">
-                                                        <span className="cursor-pointer hover:underline">
-                                                          {firstLine}...
-                                                        </span>
-                                                        <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
-                                                          {remainingLines.join(
-                                                            "\n"
-                                                          )}
-                                                        </div>
+                                      <span
+                                        className="min-w-0 max-w-full break-words text-[13px] font-semibold text-gray-900 md:text-[14px]"
+                                        style={{
+                                          wordBreak: isEscalation
+                                            ? "break-word"
+                                            : "normal",
+                                          overflowWrap: isEscalation
+                                            ? "anywhere"
+                                            : "normal",
+                                          whiteSpace: isEscalation
+                                            ? "pre-line"
+                                            : "nowrap",
+                                        }}
+                                      >
+                                        {cell.isExceeded &&
+                                        cell.label === "Balance TAT"
+                                          ? "Exceeded"
+                                          : isEscalation &&
+                                              cell.value &&
+                                              cell.value.includes("\n")
+                                            ? (() => {
+                                                const lines = cell.value
+                                                  .split("\n")
+                                                  .filter((line) =>
+                                                    line.trim()
+                                                  );
+                                                if (lines.length > 1) {
+                                                  const firstLine = lines[0];
+                                                  const remainingLines =
+                                                    lines.slice(1);
+                                                  return (
+                                                    <div className="relative inline-block group">
+                                                      <span className="cursor-pointer hover:underline">
+                                                        {firstLine}...
+                                                      </span>
+                                                      <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
+                                                        {remainingLines.join(
+                                                          "\n"
+                                                        )}
                                                       </div>
-                                                    );
-                                                  }
-                                                  return cell.value;
-                                                })()
-                                              : cell.value}
-                                        </span>
-                                      </div>
+                                                    </div>
+                                                  );
+                                                }
+                                                return cell.value;
+                                              })()
+                                            : cell.value}
+                                      </span>
                                     </div>
                                   );
                                 })}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
                       <div
                         className="flex flex-col justify-around"
-                        style={{ textAlign: "center", marginLeft: "20px" }}
+                        style={{ textAlign: "center" }}
                       >
                         <button className="w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3">
                           {ticketData.issue_status || "-"}

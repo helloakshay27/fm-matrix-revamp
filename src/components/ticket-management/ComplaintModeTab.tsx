@@ -30,6 +30,8 @@ import {
   fetchAccounts
 } from '@/store/slices/complaintModeSlice';
 
+const normalizeComplaintModeName = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase();
+
 const complaintModeSchema = z.object({
   complaintMode: z.string().min(1, 'Complaint mode is required'),
 });
@@ -121,10 +123,20 @@ export const ComplaintModeTab: React.FC = () => {
       return;
     }
 
+    const trimmedMode = data.complaintMode.trim();
+    const duplicateMode = complaintModes.some(
+      (mode) => normalizeComplaintModeName(mode.name) === normalizeComplaintModeName(trimmedMode)
+    );
+
+    if (duplicateMode) {
+      toast.error('Complaint mode already exists. Please choose a different name.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const complaintModeData = {
-        name: data.complaintMode,
+        name: trimmedMode,
         of_phase: 'pms',
         society_id: userAccount.company_id.toString(),
         active: 1,
@@ -132,7 +144,7 @@ export const ComplaintModeTab: React.FC = () => {
 
       await ticketManagementAPI.createComplaintMode(complaintModeData);
       toast.success('Complaint mode created successfully!');
-      analytics.created(module, undefined, screen, { entity_type: 'complaint_mode', entity_name: data.complaintMode });
+      analytics.created(module, undefined, screen, { entity_type: 'complaint_mode', entity_name: trimmedMode });
       form.reset();
       fetchComplaintModes();
     } catch (error: any) {
