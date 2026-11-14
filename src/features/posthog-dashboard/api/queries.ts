@@ -32,6 +32,7 @@ import {
   fetchWalletOverview,
   fetchWalletTransactions,
 } from './dashboardApi';
+import { liveRefetchInterval } from './liveRefresh';
 
 /** All Layer-1/2/3 calls share these; one object keeps every query key in step. */
 export interface QueryFilters {
@@ -85,6 +86,7 @@ const CACHE = {
   staleTime: 5 * 60_000,
   gcTime: 30 * 60_000,
   refetchOnWindowFocus: false,
+  refetchInterval: liveRefetchInterval, // live numbers while the page is on screen (./liveRefresh)
   refetchOnMount: false,
   retry: false,
 } as const;
@@ -96,7 +98,7 @@ const keyBase = (f: QueryFilters) => [
   f.to,
   f.siteIds.join(','),
   f.devices.join(','),
-  f.requestId ?? 0,
+  f.requestId ?? 0, // keep last: useRecentActiveUsers drops it
 ];
 
 /** Query key components for FM Matrix API calls (token, site_id, date range). */
@@ -222,10 +224,16 @@ export function useRoles(f: QueryFilters) {
 
 export function useRecentActiveUsers(f: QueryFilters) {
   return useQuery({
-    queryKey: ['fm-adoption', 'recent_active_users', ...keyBase(f)],
+    // Not keyed by requestId: Pulse bumps it on the first visit to each tab, which would ask for the
+    // list again on every tab. The list refreshes itself every 15 s anyway.
+    queryKey: ['fm-adoption', 'recent_active_users', ...keyBase(f).slice(0, -1)],
     queryFn: () => fetchRecentActiveUsers(range(f)),
     enabled: f.enabled && (f.allowEmptySites === true || f.siteIds.length > 0),
     ...CACHE,
+    // A live log: the 10 newest events (not distinct users), refreshed every 15 s, and kept for those
+    // 15 s, so a sidebar shown again within them does not ask again.
+    staleTime: 15 * 1000,
+    refetchInterval: 15 * 1000,
   });
 }
 

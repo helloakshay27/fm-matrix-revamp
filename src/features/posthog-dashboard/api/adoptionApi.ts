@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from './exportJob';
 import {
   FM_ADOPTION_TENANT_URL,
   FM_ADOPTION_PROJECT_CODE,
@@ -209,22 +210,27 @@ export const fetchRecentActiveUsers = (f: RangeFilters) => {
   const pairs: Pair[] =
     f.appId != null
       ? [
-          ['app_id', f.appId],
-          ['device_type', f.recentDeviceType],
-          ['from', f.from],
-          ['to', f.to],
-        ]
+        ['app_id', f.appId],
+        ['device_type', f.recentDeviceType],
+        ['from', f.from],
+        ['to', f.to],
+      ]
       : rangeParams(f);
   return get<RecentActiveUsersResponse>('recent_active_users', [...pairs, ['limit', 10]], f.signal, f.api);
 };
 
-export async function downloadRecentActiveUsers(f: RangeFilters): Promise<Blob> {
-  const qs = buildQuery([...rangeParams(f), ['limit', 10]]);
-  const response = await analyticsClient.get<Blob>(
-    `${adoptionPath(f.api, pairs)}/active_users_export${qs ? `?${qs}` : ''}`,
-    { responseType: 'blob' },
-  );
-  return response.data;
+/** The .xlsx of every event in the range, made in the background on the server (see exportJob). */
+export async function downloadRecentActiveUsers(f: RangeFilters, onPhase?: (phase: ExportPhase) => void): Promise<Blob> {
+  const pairs = rangeParams(f);
+  const qs = buildQuery(pairs);
+  const base = adoptionPath(f.api, pairs);
+  const { blob } = await runExportJob({
+    exportUrl: `${base}/active_users_export${qs ? `?${qs}` : ''}`,
+    adoptionUrl: base,
+    get: axiosGet(analyticsClient),
+    onPhase,
+  });
+  return blob;
 }
 
 /* Shared param slices ---------------------------------------------------- */
@@ -238,9 +244,9 @@ const scopeParams = ({ api, projectCode, tenantUrl }: Pick<RangeFilters, 'api' |
   api
     ? []
     : [
-        ['url', tenantUrl || ANALYTICS_TENANT],
-        ...(projectCode ? [['project_code', projectCode] as Pair] : []),
-      ];
+      ['url', tenantUrl || ANALYTICS_TENANT],
+      ...(projectCode ? [['project_code', projectCode] as Pair] : []),
+    ];
 
 const rangeParams = (f: RangeFilters): Pair[] => [
   ...scopeParams(f),

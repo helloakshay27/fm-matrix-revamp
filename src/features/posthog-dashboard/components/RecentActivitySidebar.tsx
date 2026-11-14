@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { useRecentActiveUsers } from '../api/queries';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../api/adoptionApi';
 import type { QueryFilters } from '../api/queries';
 import { formatRelativeActivityTime } from '../data/format';
+import { ExportSpinner, ExportStatus, useExportDownload } from './ExportProgress';
 
 export interface RecentActivitySidebarProps {
   filters: QueryFilters;
@@ -38,7 +39,8 @@ function ActivityUser({ user }: { user: RecentActiveUser }) {
 }
 
 export function RecentActivitySidebar({ filters, filtersSettled }: RecentActivitySidebarProps) {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const exportJob = useExportDownload();
+  const isDownloading = exportJob.busy;
   const canUseFilters = filters.allowEmptySites === true || filters.siteIds.length > 0;
   const usersQuery = useRecentActiveUsers({ ...filters, enabled: filters.enabled && filtersSettled });
   const users = usersQuery.data?.users ?? [];
@@ -47,17 +49,9 @@ export function RecentActivitySidebar({ filters, filtersSettled }: RecentActivit
     if (usersQuery.error) console.error('Unable to load recent active users', usersQuery.error);
   }, [usersQuery.error]);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (isDownloading || !filtersSettled || !canUseFilters) return;
-    setIsDownloading(true);
-    try {
-      const blob = await downloadRecentActiveUsers(filters);
-      downloadBlob(blob);
-    } catch (error) {
-      console.error('Unable to download recent active users', error);
-    } finally {
-      setIsDownloading(false);
-    }
+    return exportJob.run(async (onPhase) => downloadBlob(await downloadRecentActiveUsers(filters, onPhase)));
   };
 
   return (
@@ -68,13 +62,15 @@ export function RecentActivitySidebar({ filters, filtersSettled }: RecentActivit
           type="button"
           className="iconbtn recent-activity-download"
           aria-label="Download recent activity"
-          title="Download recent activity"
+          title={isDownloading ? 'Preparing the download…' : 'Download recent activity'}
           disabled={isDownloading || !filtersSettled || !canUseFilters}
+          aria-busy={isDownloading}
           onClick={handleDownload}
         >
-          <Download aria-hidden="true" />
+          {isDownloading ? <ExportSpinner /> : <Download aria-hidden="true" />}
         </button>
       </div>
+      <ExportStatus phase={exportJob.phase} startedAt={exportJob.startedAt} error={exportJob.error} />
       {!filtersSettled || usersQuery.isLoading ? (
         <p className="recent-activity-state">Loading…</p>
       ) : users.length === 0 ? (
