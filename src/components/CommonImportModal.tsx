@@ -10,7 +10,7 @@ interface CommonImportModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
-    entityType: "projects" | "milestones" | "tasks" | "issues" | "visitors";
+    entityType: "projects" | "milestones" | "tasks" | "issues" | "visitors" | "inventory_consumption";
     onSampleDownload?: () => void;
     onImport?: () => void;
     isUploading?: boolean;
@@ -151,8 +151,8 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md [&>button]:hidden">
-                <DialogHeader>
-                    <div className="flex items-center justify-between">
+                <DialogHeader className="min-w-0">
+                    <div className="flex items-center justify-between gap-2">
                         <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
                         <Button
                             variant="ghost"
@@ -166,7 +166,7 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                     </div>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0">
                     {/* File Upload Area */}
                     <div
                         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragOver
@@ -198,8 +198,8 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                                 </p>
                             </div>
                             {selectedFile && (
-                                <div className="mt-3 p-2 bg-white rounded border">
-                                    <p className="text-sm font-medium text-gray-700">
+                                <div className="mt-3 p-2 bg-white rounded border min-w-0">
+                                    <p className="text-sm font-medium text-gray-700 break-all">
                                         📄 {selectedFile.name}
                                     </p>
                                     <p className="text-xs text-gray-500">
@@ -215,7 +215,7 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                         <Button
                             onClick={handleSampleDownloadClick}
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 min-w-0 whitespace-normal h-auto min-h-10"
                             disabled={isUploading}
                         >
                             Download Sample Format
@@ -223,7 +223,7 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                         <Button
                             onClick={onImport}
                             style={{ backgroundColor: '#C72030' }}
-                            className="text-white hover:bg-[#C72030]/90 flex-1"
+                            className="text-white hover:bg-[#C72030]/90 flex-1 min-w-0 whitespace-normal h-auto min-h-10"
                             disabled={!selectedFile || isUploading}
                         >
                             {isUploading ? 'Importing...' : 'Import'}
