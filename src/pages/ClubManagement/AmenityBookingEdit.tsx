@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RequiredLabel } from "./ClassFormSection";
+import { getApiErrorMessage } from "./apiErrorMessage";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
@@ -792,6 +793,11 @@ export const AmenityBookingEditPage = () => {
         },
       });
 
+      if (response.data?.error) {
+        toast.error(String(response.data.error));
+        return;
+      }
+
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking updated successfully!');
         cmEvents.updated("Amenity Booking", id, "amenity_booking_edit");
@@ -803,7 +809,7 @@ export const AmenityBookingEditPage = () => {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      toast.error('Error updating booking. Please check the console for details.');
+      toast.error(getApiErrorMessage(error, 'Error updating booking'));
     } finally {
       setIsSubmitting(false);
     }

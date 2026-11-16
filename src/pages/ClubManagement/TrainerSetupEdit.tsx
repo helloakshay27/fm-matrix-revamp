@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { mapTrainerApiData } from "./trainerSetupMockData";
 import { TrainerSetupForm, emptyTrainerSetupForm, type TrainerSetupFormState } from "./TrainerSetupForm";
-import { buildTrainerFormData, buildTrainerRequest, getApiErrorMessage } from "./trainerSetupApi";
+import { buildTrainerFormData, buildTrainerRequest } from "./trainerSetupApi";
+import { getApiErrorMessage } from "./apiErrorMessage";
 import { apiClient } from "@/utils/apiClient";
 
 // Existing mock records predate the availability/slot/roster fields, so fall back to the

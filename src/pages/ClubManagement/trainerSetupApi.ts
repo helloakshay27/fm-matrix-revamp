@@ -130,16 +130,3 @@ export const validateAvailabilitySlots = (slots: TrainerAvailabilitySlot[]): str
 
   return null;
 };
-
-// The backend answers validation failures with { errors: ["message", ...] } (422). Show them rather than
-// a generic failure message.
-export const getApiErrorMessage = (error: unknown, fallback: string): string => {
-  const data = (error as { response?: { data?: any } } | undefined)?.response?.data;
-  const errors = data?.errors;
-  const detail =
-    (Array.isArray(errors) && errors.length > 0 ? errors.map(String).join("; ") : undefined) ??
-    (typeof errors === "string" && errors ? errors : undefined) ??
-    (typeof data?.error === "string" && data.error ? data.error : undefined) ??
-    (typeof data?.message === "string" && data.message ? data.message : undefined);
-  return detail ? `${fallback}: ${detail}` : fallback;
-};

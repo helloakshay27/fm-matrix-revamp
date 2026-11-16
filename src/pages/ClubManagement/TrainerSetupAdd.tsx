@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { TrainerSetupForm, emptyTrainerSetupForm } from "./TrainerSetupForm";
-import { buildTrainerFormData, buildTrainerRequest, getApiErrorMessage } from "./trainerSetupApi";
+import { buildTrainerFormData, buildTrainerRequest } from "./trainerSetupApi";
+import { getApiErrorMessage } from "./apiErrorMessage";
 import { apiClient } from "@/utils/apiClient";
 
 export const TrainerSetupAdd = () => {

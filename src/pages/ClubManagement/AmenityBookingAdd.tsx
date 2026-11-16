@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RequiredLabel } from "./ClassFormSection";
+import { getApiErrorMessage } from "./apiErrorMessage";
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
@@ -844,6 +845,12 @@ export const AddFacilityBookingClubPage = () => {
 
       console.log('Response received:', response.status, response.data);
 
+      // Some refusals (e.g. the bookable-slots limit) come back as 200 with { code, error } in the body.
+      if (response.data?.error) {
+        toast.error(String(response.data.error));
+        return;
+      }
+
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking created successfully!');
         const bookingId = response.data?.facility_booking?.id ?? response.data?.id;
@@ -856,7 +863,7 @@ export const AddFacilityBookingClubPage = () => {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      toast.error('Error creating booking. Please check the console for details.');
+      toast.error(getApiErrorMessage(error, 'Error creating booking'));
     } finally {
       setIsSubmitting(false);
     }
