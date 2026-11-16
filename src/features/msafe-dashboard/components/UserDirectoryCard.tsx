@@ -32,6 +32,22 @@ function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, 
   return params;
 }
 
+function buildDirectoryParams(
+  persona: Persona,
+  appliedFilters: AppliedFilters,
+  search: string,
+  filter: Filter,
+): Record<string, string> {
+  const params = {
+    ...(search ? { search } : {}),
+    ...buildFilterParams(persona, appliedFilters),
+  };
+  if (!appliedFilters.empTypeId && (filter === 'internal' || filter === 'external')) {
+    params.employee_type = filter;
+  }
+  return params;
+}
+
 async function fetchMsafeUserDashboardJson(
   endpoint: string,
   extraParams?: Record<string, string>,
@@ -167,11 +183,9 @@ async function fetchAllDirectoryRows(
   persona: Persona,
   appliedFilters: AppliedFilters,
   search: string,
+  filter: Filter,
 ): Promise<DirectoryUser[]> {
-  const commonParams = {
-    ...(search ? { search } : {}),
-    ...buildFilterParams(persona, appliedFilters),
-  };
+  const commonParams = buildDirectoryParams(persona, appliedFilters, search, filter);
 
   const firstPayload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
     page: '1',
@@ -248,6 +262,13 @@ export function UserDirectoryCard({
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [exportingAll, setExportingAll] = useState(false);
   const msafeEvents = useMSafeEvents();
+  const hasAppliedEmployeeType = Boolean(appliedFilters.empTypeId);
+
+  useEffect(() => {
+    if (hasAppliedEmployeeType && (filter === 'internal' || filter === 'external')) {
+      setFilter('all');
+    }
+  }, [filter, hasAppliedEmployeeType]);
 
   const handleDownloadAll = async () => {
     if (exportingAll) return;
@@ -262,7 +283,7 @@ export function UserDirectoryCard({
       filters: appliedFilters,
     };
     try {
-      const rows = await fetchAllDirectoryRows(persona, appliedFilters, debouncedSearch);
+      const rows = await fetchAllDirectoryRows(persona, appliedFilters, debouncedSearch, filter);
       if (rows.length === 0) {
         showToast('No data to export');
         msafeEvents.onMsafeDownloaded({
@@ -301,8 +322,7 @@ export function UserDirectoryCard({
         const payload = await fetchMsafeUserDashboardJson('employee_compliance_status.json', {
           page: String(page),
           current_page: String(page),
-          ...(debouncedSearch ? { search: debouncedSearch } : {}),
-          ...buildFilterParams(persona, appliedFilters),
+          ...buildDirectoryParams(persona, appliedFilters, debouncedSearch, filter),
         });
         const normalized = normalizeDirectory(payload);
         if (isMounted) {
@@ -327,20 +347,18 @@ export function UserDirectoryCard({
     return () => {
       isMounted = false;
     };
-  }, [page, appliedFilters, persona, debouncedSearch]);
+  }, [page, appliedFilters, persona, debouncedSearch, filter]);
 
   // Jump back to page 1 whenever the applied filters or search term change — the old page
   // number may no longer exist against the newly filtered result set.
   useEffect(() => {
     setPage(1);
-  }, [appliedFilters, persona, debouncedSearch]);
+  }, [appliedFilters, persona, debouncedSearch, filter]);
 
-  // The chip filters (Internal/External/Pending/Cleared) only narrow the currently-loaded
-  // page — search itself is now server-side (see fetch above), so it isn't re-applied here.
+  // Employee type is filtered server-side so page rows and total counts reflect the same
+  // result set. Pending/Cleared remain client-side status filters for the loaded page.
   const data = useMemo(() => {
     let rows = directory;
-    if (filter === 'internal') rows = rows.filter((u) => u.type === 'Internal');
-    if (filter === 'external') rows = rows.filter((u) => u.type === 'External');
     if (filter === 'pending') rows = rows.filter((u) => u.tr !== 'ok' || u.kr !== 'ok' || u.lm !== 'ok');
     if (filter === 'cleared') rows = rows.filter((u) => u.tr === 'ok' && u.kr === 'ok' && u.lm === 'ok');
     return rows;
@@ -379,7 +397,11 @@ export function UserDirectoryCard({
       }
     >
       <div className="mini-filter">
-        {CHIP_DEFS.filter((c) => !hideStatusColumn || (c.id !== 'pending' && c.id !== 'cleared')).map((c) => (
+        {CHIP_DEFS.filter(
+          (c) =>
+            (!hasAppliedEmployeeType || (c.id !== 'internal' && c.id !== 'external')) &&
+            (!hideStatusColumn || (c.id !== 'pending' && c.id !== 'cleared')),
+        ).map((c) => (
           <button
             key={c.id}
             type="button"

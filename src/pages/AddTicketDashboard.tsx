@@ -1030,6 +1030,8 @@ export const AddTicketDashboard = () => {
   const handleSubmit = async () => {
     // Validation
     // field-level validation with specific messages
+    toast.dismiss();
+
     if (!ticketType) {
       toast.error("Validation Error: Ticket type is required.");
       return;
@@ -1138,6 +1140,7 @@ export const AddTicketDashboard = () => {
       // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
       const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
 
+      toast.dismiss();
       toast.success(ticketNumber
         ? `Ticket created successfully - ${ticketNumber}`
         : "Ticket created successfully!", {
@@ -1396,9 +1399,10 @@ export const AddTicketDashboard = () => {
             <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
               <Ticket className="w-3 h-3 sm:w-4 sm:h-4" />
             </span>
-            TICKETS TYPE 
+            TICKETS TYPE <span className="text-red-500">*</span>
           </div>
           <div className="space-y-6">
+            <div className="text-sm font-medium text-[#2C2C2C] mb-2">Ticket Type <span className="text-red-500">*</span></div>
             {/* Radio buttons for ticket type and flags */}
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">

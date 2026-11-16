@@ -95,6 +95,9 @@ export const OTPVerificationPage = () => {
         const baseUrl = getBaseUrl();
         // The sign-in response already stored the designation; keep it if this response omits it.
         const signInDesignation = getUser()?.designation;
+        const isCustomer =
+          (response as any).is_customer === true ||
+          getUser()?.is_customer === true;
 
         saveUser({
           id: response.id,
@@ -108,6 +111,7 @@ export const OTPVerificationPage = () => {
           spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
           designation: response.designation ?? signInDesignation,
+          is_customer: isCustomer,
         });
         saveToken(response.access_token);
 
@@ -132,6 +136,10 @@ export const OTPVerificationPage = () => {
 
         // Redirect to appropriate dashboard
         setTimeout(() => {
+          if (isCustomer) {
+            navigate("/customer-user", { replace: true });
+            return;
+          }
           navigate(isViSite ? "/safety/m-safe/internal" : "/maintenance/asset");
         }, 1000);
       }

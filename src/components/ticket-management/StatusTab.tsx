@@ -59,7 +59,10 @@ const selectMenuProps = {
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status is required'),
-  fixedState: z.enum(['closed', 'reopen', 'complete']).optional(),
+  fixedState: z.enum(['closed', 'reopen', 'complete'], {
+    required_error: 'Fixed state is required',
+    invalid_type_error: 'Fixed state is required',
+  }),
   colorCode: z.string().min(1, 'Color code is required'),
   position: z.number().min(1, 'Order must be positive'),
 });
@@ -188,10 +191,10 @@ export const StatusTab: React.FC = () => {
       return;
     }
 
-    // if (!fixedStateValue) {
-    //   toast.error('Please select a fixed state');
-    //   return;
-    // }
+    if (!fixedStateValue) {
+      toast.error('Please select a fixed state');
+      return;
+    }
 
     if (!colorCodeInput?.value?.trim()) {
       toast.error('Please enter a color code');
@@ -206,7 +209,7 @@ export const StatusTab: React.FC = () => {
     // Get the form data
     const data: StatusFormData = {
       name: statusNameInput.value.trim(),
-      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete' | '',
+      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete',
       colorCode: colorCodeInput.value.trim(),
       position: parseInt(positionInput.value) || 0,
     };
@@ -421,9 +424,7 @@ export const StatusTab: React.FC = () => {
                   name="fixedState"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>Fixed State
-                        {/* <span className="text-red-500">*</span> */}
-                      </FormLabel>
+                      <FormLabel>Fixed State <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
                           <MuiSelect

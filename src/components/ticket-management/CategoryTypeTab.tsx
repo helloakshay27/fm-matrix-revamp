@@ -87,9 +87,15 @@ const categoryTypeOptions: EnhancedSelectOption[] = [
   { label: "Security", value: "security" },
 ];
 
+const positiveNumberString = z.string().refine((value) => {
+  if (!value || value.trim() === '') return false;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0;
+}, 'Response time must be a valid non-negative number');
+
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
-  responseTime: z.string().min(1, 'Response time is required'),
+  responseTime: positiveNumberString,
   priority: z.string().optional(),
   type: z.string().optional(),
   customerEnabled: z.boolean(),
@@ -345,6 +351,12 @@ export const CategoryTypeTab: React.FC = () => {
     
     if (!responseTimeInput?.value?.trim()) {
       toast.error('Please enter response time');
+      return;
+    }
+
+    const parsedResponseTime = Number(responseTimeInput.value);
+    if (!Number.isFinite(parsedResponseTime) || parsedResponseTime < 0) {
+      toast.error('Response time must be a valid non-negative number.');
       return;
     }
     
