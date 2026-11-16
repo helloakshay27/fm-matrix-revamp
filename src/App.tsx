@@ -29,6 +29,7 @@ import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminLayout } from "./components/AdminLayout";
 import { PWALayoutWrapper } from "./components/PWALayoutWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { CustomerRouteGuard } from "./components/CustomerRouteGuard";
 
 //import club vendor pages
 
@@ -2580,6 +2581,7 @@ const LoginPage = lazy(() =>
 const SsoLoginPage = lazy(() =>
   import("@/pages/SsoLoginPage").then((m) => ({ default: m.SsoLoginPage }))
 );
+const CustomerUserPage = lazy(() => import("@/pages/CustomerUserPage"));
 const OTPVerificationPage = lazy(() =>
   import("@/pages/OTPVerificationPage").then((m) => ({
     default: m.OTPVerificationPage,
@@ -4983,6 +4985,7 @@ function App() {
                           </div>
                         }
                       >
+                        <CustomerRouteGuard>
                         <Routes>
                           {/* Public Routes - No Authentication Required */}
                           <Route
@@ -5293,6 +5296,15 @@ function App() {
                             }
                           />
                           <Route path="/sso-login" element={<SsoLoginPage />} />
+                          {/* Customer users (is_customer) are locked to this page by CustomerRouteGuard */}
+                          <Route
+                            path="/customer-user"
+                            element={
+                              <ProtectedRoute>
+                                <CustomerUserPage />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route
                             path="/otp-verification"
                             element={<OTPVerificationPage />}
@@ -11162,6 +11174,7 @@ function App() {
                             />
                           </Route>
                         </Routes>
+                        </CustomerRouteGuard>
                       </Suspense>
                       <Toaster />
                       <SonnerToaster

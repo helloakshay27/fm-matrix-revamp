@@ -16,6 +16,7 @@ export interface User {
   is_login?: boolean;
   access_token?: string;
   is_vendor?: boolean;
+  is_customer?: boolean;
   supplier_id?: number;
   number_verified?: number | boolean;
   lock_role?: {
@@ -46,6 +47,7 @@ export interface LoginResponse {
   lastname: string;
   access_token: string;
   is_vendor?: boolean;
+  is_customer?: boolean;
   supplier_id?: number;
   designation?: string;
   verified?: boolean; // OTP verification status
@@ -217,6 +219,14 @@ export const getBaseUrlDomain = (): string | null => {
   return stripProtocol(savedUrl);
 };
 
+// Customer users are locked to a single page (see CustomerRouteGuard)
+export const CUSTOMER_USER_ROUTE = "/customer-user";
+
+export const isCustomerUser = (): boolean => {
+  if (!getToken()) return false;
+  return getUser()?.is_customer === true;
+};
+
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getUser();
@@ -292,7 +302,7 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work") ;
+  hostname.includes("community.gophygital.work");
 
 const isViUatSite = hostname === "vi-uat.gophygital.work";
 
@@ -305,7 +315,7 @@ export const getViOtpApiBase = () =>
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"  || hostname === "localhost"
+  hostname === "fm-matrix.lockated.com" || hostname === "localhost"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -324,7 +334,19 @@ const isPanchshilClubSite =
 export const getOrganizationsByEmail = async (
   email: string
 ): Promise<Organization[]> => {
-  if (isOmanSite || isFmSite) {
+  if (isFmSite) {
+    const response = await fetch(
+      `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isOmanSite) {
     const response = await fetch(
       `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );

@@ -18,6 +18,7 @@ import {
   Organization,
   getUser,
   savePatmBcLinked,
+  CUSTOMER_USER_ROUTE,
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -357,6 +358,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
           is_vendor: response.is_vendor,
+          is_customer: response.is_customer === true,
           supplier_id: response.supplier_id,
           designation: response.designation,
         });
@@ -408,6 +410,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
           is_vendor: response.is_vendor,
+          is_customer: response.is_customer === true,
           supplier_id: response.supplier_id,
           designation: response.designation,
         });
@@ -450,6 +453,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
         spree_api_key: response.spree_api_key,
         lock_role: response.lock_role,
         is_vendor: response.is_vendor,
+        is_customer: response.is_customer === true,
         supplier_id: response.supplier_id,
         designation: response.designation,
       });
@@ -519,6 +523,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       const isFMAdminLogin =
         searchParams.get("fm_admin_login") !== null ||
         location.pathname.includes("login-page");
+
+      // Customer users -> locked customer page (takes priority over everything)
+      if (response.is_customer === true) {
+        redirectTo(CUSTOMER_USER_ROUTE);
+        return;
+      }
 
       // FM Admin Login -> ops-console user list
       if (isFMAdminLogin) {
