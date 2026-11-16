@@ -3,7 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download, Plus } from 'lucide-react';
+import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download, Plus, Upload, PackagePlus, PackageMinus } from 'lucide-react';
+import { toast } from 'sonner';
+import { CommonImportModal } from '@/components/CommonImportModal';
 import {
   Dialog,
   DialogContent,
@@ -43,6 +45,11 @@ const InventoryConsumptionDashboard = () => {
   const [exportEndDate, setExportEndDate] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  // Bulk import: pick Add or Consume first, then upload the file
+  const [showImportTypeModal, setShowImportTypeModal] = useState(false);
+  const [importType, setImportType] = useState<'addition' | 'consumption' | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
@@ -596,6 +603,79 @@ const InventoryConsumptionDashboard = () => {
     }
   };
 
+  // Bulk upload additions / consumptions from a sheet
+  const handleBulkImport = async () => {
+    if (!importFile || !importType) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      toast.error('Missing base URL or auth token');
+      return;
+    }
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('consumption_file', importFile);
+      formData.append('upload_type', importType);
+      const response = await axios.post(
+        `https://${baseUrl}/pms/inventories/bulk_upload.json`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(response.data?.message || 'File imported successfully');
+      setImportFile(null);
+      setImportType(null);
+      fetchMonthlyCosts();
+      dispatch(fetchInventoryConsumptionHistory());
+    } catch (err: any) {
+      console.error('Error importing inventory file:', err);
+      const data = err?.response?.data;
+      const detail = data?.error || data?.message || (Array.isArray(data?.errors) ? data.errors.join(', ') : data?.errors);
+      toast.error(typeof detail === 'string' && detail ? detail : 'Failed to import file');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Download the bulk-upload sample sheet for the open import type
+  const handleSampleDownload = async () => {
+    if (!importType) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      toast.error('Missing base URL or auth token');
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/inventories/bulk_upload_sample`,
+        {
+          params: { upload_type: importType },
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob',
+        }
+      );
+      // Prefer the server's filename; fall back to a descriptive default
+      const disposition: string = response.headers['content-disposition'] || '';
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const fileName = match
+        ? decodeURIComponent(match[1])
+        : `Inventory_${importType === 'consumption' ? 'Consumption' : 'Addition'}_Sample.xlsx`;
+
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('Error downloading sample file:', err);
+      toast.error('Failed to download sample file');
+    }
+  };
+
   // Navigate to view page
   // The :id route param is used directly as `resource_id` by the view page
   // (InventoryConsumptionViewPage -> fetchInventoryConsumptionDetails), so it
@@ -631,6 +711,11 @@ const InventoryConsumptionDashboard = () => {
           <Button size="sm" variant="default" onClick={() => setShowExportModal(true)}>
             <Download className="w-4 h-4 mr-2" /> Report
           </Button>
+          {shouldShow("Inventory Consumption", "create") && (
+            <Button size="sm" variant="default" onClick={() => setShowImportTypeModal(true)}>
+              <Upload className="w-4 h-4 mr-2" /> Import
+            </Button>
+          )}
         </div>
       </div>
 
@@ -836,6 +921,65 @@ const InventoryConsumptionDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Import: choose Add or Consume */}
+      <Dialog open={showImportTypeModal} onOpenChange={setShowImportTypeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Inventory Sheet</DialogTitle>
+            <DialogDescription>What does the file you are uploading contain?</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            {([
+              {
+                type: 'addition',
+                label: 'Add',
+                hint: 'Stock received into inventory',
+                Icon: PackagePlus,
+              },
+              {
+                type: 'consumption',
+                label: 'Consume',
+                hint: 'Stock issued or used',
+                Icon: PackageMinus,
+              },
+            ] as const).map(({ type, label, hint, Icon }) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setImportType(type);
+                  setShowImportTypeModal(false);
+                }}
+                className="group flex w-full flex-col items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-brand hover:bg-brand-selected focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-light text-brand">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-gray-900">{label}</span>
+                  <span className="mt-0.5 block text-xs text-gray-500">{hint}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <CommonImportModal
+        selectedFile={importFile}
+        setSelectedFile={setImportFile}
+        open={importType !== null}
+        onOpenChange={(open) => {
+          if (!open && !importing) {
+            setImportFile(null);
+            setImportType(null);
+          }
+        }}
+        title={importType === 'consumption' ? 'Import Consumption' : 'Import Addition'}
+        entityType="inventory_consumption"
+        onSampleDownload={handleSampleDownload}
+        onImport={handleBulkImport}
+        isUploading={importing}
+      />
       {showActionPanel && (
         <SelectionPanel
           onImport={() => {

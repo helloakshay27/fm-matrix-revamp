@@ -59,16 +59,17 @@ const historyColumns: ColumnConfig[] = [
 
 const EXPIRING_SOON_DAYS = 90;
 
-// GRN batch from GET /pms/grns/get_grn_for_consumption.json
-// { id: 6162, grn_number: "100021", quantity: "99.0", expiry_date: "01/01/2026" }
+// Ledger row from GET /pms/inventories/inventory_assets_consumption_details.json
+// { id: 163210, date: "16/11/2026", add_or_consume: 100.0, closing: 191.0,
+//   grn_no: "GRN-32324", expiry_date: null, ... }
 interface StockBatch {
   key: string;
-  id: number; // GRN id
-  grn_number: string;
-  expiry_date: string; // YYYY-MM-DD, '' when the GRN has none
-  date_added: string; // YYYY-MM-DD when the API returns a date, '' otherwise
-  available: number; // quantity remaining
-  received: number | null; // quantity received when the API returns it
+  id: number; // consumption entry id
+  grn_number: string; // '' when the entry has no GRN
+  expiry_date: string; // YYYY-MM-DD, '' when the entry has none
+  date_added: string; // YYYY-MM-DD, '' when missing
+  available: number; // closing quantity after this entry
+  received: number | null; // quantity added / consumed by this entry
 }
 
 const toNumber = (...values: unknown[]) => {
@@ -94,26 +95,18 @@ const toStockBatch = (
 ): StockBatch | null => {
   const id = toNumber(raw.id);
   if (!id) return null;
-  const available = toNumber(raw.quantity);
-  // Qty received is not part of the documented response; use it only if present.
-  const receivedRaw =
-    raw.quantity_received ??
-    raw.received_quantity ??
-    raw.original_quantity ??
-    raw.total_quantity;
-  const received =
-    receivedRaw === undefined || receivedRaw === null || receivedRaw === ""
-      ? null
-      : toNumber(receivedRaw);
-  const dateRaw = raw.date_added ?? raw.created_at ?? raw.grn_date ?? raw.date;
+  const receivedRaw = raw.add_or_consume;
   return {
     key: `${id}-${index}`,
     id,
-    grn_number: String(raw.grn_number ?? `GRN-${id}`),
+    grn_number: raw.grn_no ? String(raw.grn_no) : "",
     expiry_date: toIsoDate(raw.expiry_date),
-    date_added: dateRaw ? toIsoDate(dateRaw) : "",
-    available,
-    received: received || null,
+    date_added: toIsoDate(raw.date),
+    available: toNumber(raw.closing),
+    received:
+      receivedRaw === undefined || receivedRaw === null || receivedRaw === ""
+        ? null
+        : toNumber(receivedRaw),
   };
 };
 
@@ -401,7 +394,7 @@ export const InventoryDetailsPage = () => {
     };
   }, [id]);
 
-  // Same batches endpoint as InventoryConsumptionAddPage (Consume / Dispose allocation).
+  // Same consumption-details endpoint as InventoryConsumptionViewPage, without a date range.
   useEffect(() => {
     if (!id) return;
     let aborted = false;
@@ -416,33 +409,25 @@ export const InventoryDetailsPage = () => {
           return;
         }
         const resp = await fetch(
-          `https://${baseUrl}/pms/grns/get_grn_for_consumption.json?resource_id=${encodeURIComponent(id)}`,
+          `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.json?resource_id=${encodeURIComponent(id)}&q[move_type_eq]=plus`,
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
           }
         );
         if (!resp.ok) throw new Error("Failed to fetch batches");
         const data = await resp.json();
         if (aborted) return;
-        const rows: Record<string, unknown>[] = Array.isArray(data?.grns)
-          ? data.grns
-          : Array.isArray(data)
-            ? data
-            : [];
+        const rows: Record<string, unknown>[] = Array.isArray(
+          data?.consumptions
+        )
+          ? data.consumptions
+          : [];
+        // Keep the API order (newest entry first).
         setBatches(
-          rows
-            .map(toStockBatch)
-            .filter((b): b is StockBatch => b !== null)
-            // Oldest expiry first; batches without an expiry date go last, then by GRN number.
-            .sort(
-              (a, b) =>
-                (a.expiry_date || "9999-12-31").localeCompare(
-                  b.expiry_date || "9999-12-31"
-                ) ||
-                a.grn_number.localeCompare(b.grn_number, undefined, {
-                  numeric: true,
-                })
-            )
+          rows.map(toStockBatch).filter((b): b is StockBatch => b !== null)
         );
       } catch (e) {
         if (!aborted) {
@@ -1614,10 +1599,10 @@ export const InventoryDetailsPage = () => {
                               : "—"}
                           </td>
                           <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                            {batch.grn_number}
+                            {batch.grn_number || "—"}
                           </td>
                           <td className="px-4 py-3 text-center text-gray-700">
-                            {batch.received ?? batch.available}
+                            {batch.received ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-center font-semibold text-gray-900">
                             {batch.available}
@@ -1648,13 +1633,13 @@ export const InventoryDetailsPage = () => {
                         Total
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {batches.reduce(
-                          (sum, b) => sum + (b.received ?? b.available),
-                          0
-                        )}
+                        {batches.reduce((sum, b) => sum + (b.received ?? 0), 0)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {batches.reduce((sum, b) => sum + b.available, 0)}
+                        {/* Rows are ledger entries (newest first), so the closing
+                            qty of the latest entry is the current stock; summing
+                            running balances would double count. */}
+                        {batches[0]?.available ?? 0}
                       </td>
                       <td colSpan={4}></td>
                     </tr>
