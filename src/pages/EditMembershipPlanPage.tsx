@@ -104,6 +104,7 @@ export const EditMembershipPlanPage = () => {
   const token = localStorage.getItem("token");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDayPass, setIsDayPass] = useState(false) // a one-day pass plan: no renewal, may be free
   const [loading, setLoading] = useState(false);
   const [amenities, setAmenities] = useState([])
   const [paymentPlans, setPaymentPlans] = useState([])
@@ -176,6 +177,7 @@ export const EditMembershipPlanPage = () => {
 
       const data = response.data;
       console.log(data)
+      setIsDayPass(!!data.day_pass)
       const amenityDetailsMap = {};
       data.plan_amenities.forEach((amenity) => {
         amenityDetailsMap[amenity.facility_setup_id] = {
@@ -223,7 +225,9 @@ export const EditMembershipPlanPage = () => {
       toast.error("Please enter Plan Name");
       return false;
     }
-    if (!formData.price) {
+    // A day pass may be free, so a price of 0 counts as entered.
+    const hasPrice = isDayPass ? formData.price !== "" && formData.price != null : !!formData.price;
+    if (!hasPrice) {
       toast.error("Please enter Price");
       return false;
     }
@@ -231,19 +235,21 @@ export const EditMembershipPlanPage = () => {
       toast.error("Please enter User Limit");
       return false;
     }
-    if (!formData.renewalTerms) {
+    if (!isDayPass && !formData.renewalTerms) {
       toast.error("Please select Renewal Terms");
       return false;
     }
-    if (!formData.hsnCode) {
+    // Tax details only matter once a day pass is priced.
+    const needsTaxDetails = !isDayPass || Number(formData.price) > 0;
+    if (needsTaxDetails && !formData.hsnCode) {
       toast.error("Please enter HSN Code");
       return false;
     }
-    if (!formData.cgst) {
+    if (needsTaxDetails && !formData.cgst) {
       toast.error("Please enter CGST");
       return false;
     }
-    if (!formData.sgst) {
+    if (needsTaxDetails && !formData.sgst) {
       toast.error("Please enter SGST");
       return false;
     }

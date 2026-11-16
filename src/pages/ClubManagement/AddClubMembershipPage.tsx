@@ -79,6 +79,7 @@ interface MembershipPlan {
   price: string;
   user_limit: string;
   renewal_terms: string;
+  day_pass?: boolean; // a one-day pass: sold on the Day Pass screen, not here
   plan_amenities?: PlanAmenity[];
 }
 
@@ -348,7 +349,8 @@ export const AddClubMembershipPage = () => {
       }
 
       const data = await response.json();
-      setMembershipPlans(data.plans || []);
+      // Day passes are sold on their own screen (Day Pass), so they are not offered as a membership plan.
+      setMembershipPlans((data.plans || []).filter((plan: MembershipPlan) => !plan.day_pass));
     } catch (error) {
       console.error('Error loading membership plans:', error);
       toast.error('Failed to load membership plans');
@@ -1260,7 +1262,9 @@ export const AddClubMembershipPage = () => {
         console.error('API Error Response:', errorData);
 
         // Handle specific error messages
-        if (errorData.error === "User is already exist" || errorData.error === "User already exists") {
+        if (typeof errorData === 'string' && errorData.trim()) {
+          toast.error(errorData.includes('has already been taken') ? 'This user already has a club membership' : errorData);
+        } else if (errorData.error === "User is already exist" || errorData.error === "User already exists") {
           toast.error('This user already has a club membership');
         } else if (errorData.error && errorData.error.includes('User has already been taken')) {
           toast.error('This user already has a club membership');

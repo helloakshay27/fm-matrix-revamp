@@ -99,6 +99,11 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
+          name: "Day Pass",
+          href: "/club-management/day-pass",
+          color: "text-[#1a1a1a]",
+        },
+        {
           name: "Guest",
           href: "/club-management/users/guest",
           color: "text-[#1a1a1a]",

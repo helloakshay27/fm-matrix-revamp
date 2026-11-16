@@ -18,6 +18,24 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
 
+// A user holding a one-day pass on the booking date, with what the pass covers (GET /club_member_allocations/day_pass_users).
+interface DayPassFacility {
+  facility_setup_id: number;
+  facility_name: string | null;
+  slot_limit: number | null; // null = unlimited
+  used: number;
+  remaining: number | null;
+  can_book_after_slot_limit: boolean;
+}
+interface DayPassUser {
+  user_id: number;
+  name: string | null;
+  mobile: string | null;
+  plan_name: string | null;
+  pass_date: string;
+  facilities: DayPassFacility[];
+}
+
 
 export const AddFacilityBookingClubPage = () => {
   const navigate = useNavigate();
@@ -83,6 +101,9 @@ export const AddFacilityBookingClubPage = () => {
 
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
+  const [dayPassUsers, setDayPassUsers] = useState<DayPassUser[]>([]);
+  const [dayPassUsersLoading, setDayPassUsersLoading] = useState(false);
+  const [dayPassUsersError, setDayPassUsersError] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -147,7 +168,17 @@ export const AddFacilityBookingClubPage = () => {
     multiple_booking_count?: number;
     concurrent_slots?: number;
     bookable_slot_count?: number;
+    day_pass?: boolean;
+    pass_included?: boolean;
+    remaining_slots?: number | null;
+    message?: string | null;
   } | null>(null);
+
+  // A day pass holder is priced like a member, at the rate the booking rule returns (nothing while the pass has slots left).
+  const isMemberLike = userType === 'occupant' || userType === 'day_pass';
+  // Slots the pass includes carry no charge at all, per-slot fee included.
+  const passIncluded = userType === 'day_pass' && bookingRuleData?.pass_included === true;
+  const selectedPass = userType === 'day_pass' ? dayPassUsers.find((pass) => String(pass.user_id) === String(selectedUser)) : undefined;
 
   // Helper: Check if slot selection is allowed
   const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
@@ -251,11 +282,44 @@ export const AddFacilityBookingClubPage = () => {
       fetchOccupantUsersDirect();
     } else if (userType === 'guest') {
       fetchGuestUsers();
-    } else {
+    } else if (userType !== 'day_pass') {
       dispatch(fetchFMUsers());
     }
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
+
+  // Day pass holders for the booking date. A pass is for one date, so the list follows the date.
+  useEffect(() => {
+    if (userType !== 'day_pass') return;
+    if (!selectedDate) {
+      setDayPassUsers([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setDayPassUsersLoading(true);
+      setDayPassUsersError(false);
+      try {
+        const response = await apiClient.get('/club_member_allocations/day_pass_users.json', {
+          params: { site_id: localStorage.getItem('selectedSiteId') || undefined, date: selectedDate },
+        });
+        if (cancelled) return;
+        const users: DayPassUser[] = response.data?.day_pass_users || [];
+        setDayPassUsers(users);
+        // The chosen holder may not hold a pass on the new date.
+        setSelectedUser((current) => (users.some((pass) => String(pass.user_id) === String(current)) ? current : ''));
+      } catch (error) {
+        if (cancelled) return;
+        setDayPassUsers([]);
+        setDayPassUsersError(true);
+      } finally {
+        if (!cancelled) setDayPassUsersLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userType, selectedDate]);
 
   // Load all user types when facility is selected for the people table
   useEffect(() => {
@@ -615,7 +679,7 @@ export const AddFacilityBookingClubPage = () => {
       // --- UI-aligned cost calculation (slot-by-slot, with premiums, for all user types) ---
       const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
       const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
-      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+      const perSlotCharge = passIncluded ? 0 : (facilityDetails?.facility_charge?.per_slot_charge ?? 0);
       const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
       const slotsCount = selectedSlots.length;
       const hasSlots = slotsCount > 0;
@@ -634,12 +698,12 @@ export const AddFacilityBookingClubPage = () => {
           }
         });
         // Flat charge: price does not multiply with slot count, only with member/guest count
-        totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+        totalUserCharge = (isMemberLike ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
         totalGuestCharge = isFullCourt
           ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0) * slotsCount
           : numberOfGuests * (adultGuestCharge + maxGuestPremium);
       } else {
-        totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+        totalUserCharge = isMemberLike ? memberRate : adultGuestCharge;
         totalGuestCharge = isFullCourt
           ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0)
           : numberOfGuests * adultGuestCharge;
@@ -704,7 +768,7 @@ export const AddFacilityBookingClubPage = () => {
       const costSummary = (() => {
         const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
         const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
-        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+        const perSlotCharge = passIncluded ? 0 : (facilityDetails?.facility_charge?.per_slot_charge ?? 0);
         const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
         const slotsCount = selectedSlots.length;
         const hasSlots = slotsCount > 0;
@@ -732,12 +796,12 @@ export const AddFacilityBookingClubPage = () => {
           // Flat charge: price does not multiply with slot count, only with member/guest count
           const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
           const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
-          totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+          totalUserCharge = (isMemberLike ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
           totalGuestCharge = isFullCourt
             ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0) * slotsCount
             : numberOfGuests * (adultGuestCharge + maxGuestPremium);
         } else {
-          totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+          totalUserCharge = isMemberLike ? memberRate : adultGuestCharge;
           totalGuestCharge = isFullCourt
             ? Number(facilityDetails?.facility_charge?.full_court_charge ?? 0)
             : numberOfGuests * adultGuestCharge;
@@ -752,7 +816,7 @@ export const AddFacilityBookingClubPage = () => {
         const slotTotal = slotsCount * perSlotCharge;
         // Fix: Only add guest charge for members in subtotal and tax
         let subtotalBeforeDiscount = 0;
-        if (userType === 'occupant') {
+        if (isMemberLike) {
           subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
         } else {
           subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
@@ -812,8 +876,8 @@ export const AddFacilityBookingClubPage = () => {
             };
           }),
           entity_id: selectedCompany,
-          member_charges: isComplementary ? 0 : (userType === 'occupant' ? costSummary.totalUserCharge : 0),
-          guest_charges: isComplementary ? 0 : (userType === 'occupant' ? costSummary.totalGuestCharge : costSummary.totalUserCharge),
+          member_charges: isComplementary ? 0 : (isMemberLike ? costSummary.totalUserCharge : 0),
+          guest_charges: isComplementary ? 0 : (isMemberLike ? costSummary.totalGuestCharge : costSummary.totalUserCharge),
           guest_premium_details: guestPremiumDetails,
           discount: isComplementary ? 0 : costSummary.discountAmount,
           cgst_amount: isComplementary ? 0 : costSummary.gstAmount,
@@ -823,13 +887,13 @@ export const AddFacilityBookingClubPage = () => {
           sub_total: isComplementary ? 0 : costSummary.subtotalAfterDiscount,
           amount_full: isComplementary ? 0 : costSummary.amountFull,
           booked_members_attributes: bookedMembersAttributes,
-          member_count: userType === 'occupant' ? 1 : 0,
+          member_count: isMemberLike ? 1 : 0,
           guest_count: isFullCourt ? 0 : numberOfGuests,
           ...(isFullCourt && { is_full_court: true }),
           ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
-        on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
-        occupant_user_id: userType === 'occupant' ? selectedUser : '',
+        on_behalf_of: isMemberLike ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
+        occupant_user_id: isMemberLike ? selectedUser : '',
         fm_user_id: userType === 'fm' ? selectedUser : '',
         guest_user_id: userType === 'guest' ? selectedUser : ''
       };
@@ -930,11 +994,15 @@ export const AddFacilityBookingClubPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
             {/* User Type Selection */}
             <div>
-              <RadioGroup value={userType} onValueChange={(val) => { setUserType(val); if (val !== 'guest') setIsFullCourt(false); }} className="flex gap-6">
+              <RadioGroup value={userType} onValueChange={(val) => { setUserType(val); setSelectedUser(''); setBookingRuleData(null); if (val !== 'guest') setIsFullCourt(false); }} className="flex gap-6">
 
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="occupant" id="occupant" />
                   <Label htmlFor="occupant">Members</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="day_pass" id="day_pass" />
+                  <Label htmlFor="day_pass">Day Pass</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="guest" id="guest" />
@@ -995,7 +1063,7 @@ export const AddFacilityBookingClubPage = () => {
               <div className="space-y-2">
                 <TextField
                   select
-                  label={<RequiredLabel>User</RequiredLabel>}
+                  label={<RequiredLabel>{userType === 'day_pass' ? 'Day Pass Users' : 'User'}</RequiredLabel>}
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
                   variant="outlined"
@@ -1005,9 +1073,9 @@ export const AddFacilityBookingClubPage = () => {
                     shrink: true
                   }}
                   sx={fieldStyles}
-                  disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
-                  helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : userType === 'guest' ? (guestUsersError ? "Error loading guest users" : "") : (fmUsersError ? "Error loading users" : "")}
-                  error={userType === 'occupant' ? !!occupantUsersError : userType === 'guest' ? !!guestUsersError : !!fmUsersError}
+                  disabled={userType === 'day_pass' ? (dayPassUsersLoading || !selectedDate) : userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
+                  helperText={userType === 'day_pass' ? (!selectedDate ? "Select the booking date to see who holds a day pass" : dayPassUsersError ? "Error loading day pass users" : "") : userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : userType === 'guest' ? (guestUsersError ? "Error loading guest users" : "") : (fmUsersError ? "Error loading users" : "")}
+                  error={userType === 'day_pass' ? dayPassUsersError : userType === 'occupant' ? !!occupantUsersError : userType === 'guest' ? !!guestUsersError : !!fmUsersError}
                 >
                   <MenuItem value="" disabled>
                     <em>
@@ -1027,6 +1095,22 @@ export const AddFacilityBookingClubPage = () => {
                   {userType === 'occupant' && occupantUsers.map((user) => (
                     <MenuItem key={user.id} value={user.id.toString()}>
                       {user.name || `${user.firstname || ''} ${user.lastname || ''}`.trim()}
+                    </MenuItem>
+                  ))}
+
+                  {userType === 'day_pass' && dayPassUsersLoading && (
+                    <MenuItem value="" disabled>
+                      Loading day pass users...
+                    </MenuItem>
+                  )}
+                  {userType === 'day_pass' && selectedDate && !dayPassUsersLoading && !dayPassUsersError && dayPassUsers.length === 0 && (
+                    <MenuItem value="" disabled>
+                      No day passes for this date
+                    </MenuItem>
+                  )}
+                  {userType === 'day_pass' && dayPassUsers.map((pass) => (
+                    <MenuItem key={pass.user_id} value={pass.user_id.toString()}>
+                      {pass.name}{pass.mobile ? ` (${pass.mobile})` : ''}
                     </MenuItem>
                   ))}
 
@@ -1062,6 +1146,20 @@ export const AddFacilityBookingClubPage = () => {
                     </MenuItem>
                   ))}
                 </TextField>
+                {selectedPass && (
+                  <div className="rounded-md border border-brand-light bg-brand-selected p-2 text-xs text-gray-700 space-y-1">
+                    <div className="font-medium text-brand">Day pass: {selectedPass.plan_name || 'Day Pass'}</div>
+                    {selectedPass.facilities.length === 0 && <div>No facilities are set up on this pass.</div>}
+                    {selectedPass.facilities.map((facility) => (
+                      <div key={facility.facility_setup_id} className="flex justify-between gap-2">
+                        <span>{facility.facility_name}</span>
+                        <span className="font-medium">
+                          {facility.remaining === null ? 'Unlimited' : `${facility.remaining} of ${facility.slot_limit} slot${facility.slot_limit === 1 ? '' : 's'} left`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Facility Selection */}
@@ -1259,10 +1357,12 @@ export const AddFacilityBookingClubPage = () => {
               )}
               {/* Show booking rule info/warnings */}
               {bookingRuleData && !canSelectSlots && (
-                <div className="mt-2 text-red-600 text-sm font-medium">You are not allowed to book slots for this user.</div>
+                <div className="mt-2 text-red-600 text-sm font-medium">{bookingRuleData.message || 'You are not allowed to book slots for this user.'}</div>
               )}
               {bookingRuleData && canSelectSlots && (
                 <div className="mt-2 text-gray-600 text-xs">
+                  {bookingRuleData.day_pass && bookingRuleData.pass_included && 'Included in the day pass, at no charge. '}
+                  {bookingRuleData.day_pass && !bookingRuleData.pass_included && bookingRuleData.message && `${bookingRuleData.message} `}
                   {`You can select up to ${maxSelectableSlots} slot${maxSelectableSlots !== 1 ? 's' : ''}. `}
                   {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
                 </div>
@@ -1535,7 +1635,7 @@ export const AddFacilityBookingClubPage = () => {
                     {(() => {
                       const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
                       const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
-                      const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
+                      const perSlotCharge = passIncluded ? 0 : (facilityDetails.facility_charge?.per_slot_charge ?? 0);
 
                       // Use booking rule rate for members if available (even if 0), otherwise use facility charge
                       const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
@@ -1545,7 +1645,7 @@ export const AddFacilityBookingClubPage = () => {
                       const hasSlots = slotsCount > 0;
 
                       // Restore userCharge for use in JSX
-                      const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                      const userCharge = isMemberLike ? memberRate : adultGuestCharge;
                       // Prepare slot premium details for display
                       let slotPremiumDetails = [];
                       let totalUserCharge = 0;
@@ -1571,12 +1671,12 @@ export const AddFacilityBookingClubPage = () => {
                         // Flat charge: price does not multiply with slot count, only with member/guest count
                         const maxMemberPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.memberPremium), 0);
                         const maxGuestPremium = slotPremiumDetails.reduce((max, s) => Math.max(max, s.guestPremium), 0);
-                        totalUserCharge = (userType === 'occupant' ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
+                        totalUserCharge = (isMemberLike ? memberRate + maxMemberPremium : adultGuestCharge + maxGuestPremium);
                         totalGuestCharge = isFullCourt
                           ? Number(facilityDetails.facility_charge?.full_court_charge ?? 0) * slotsCount
                           : numberOfGuests * (adultGuestCharge + maxGuestPremium);
                       } else {
-                        totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                        totalUserCharge = isMemberLike ? memberRate : adultGuestCharge;
                         totalGuestCharge = isFullCourt
                           ? Number(facilityDetails.facility_charge?.full_court_charge ?? 0)
                           : numberOfGuests * adultGuestCharge;
@@ -1592,7 +1692,7 @@ export const AddFacilityBookingClubPage = () => {
 
                       // Fix: Only add guest charge for members
                       let subtotalBeforeDiscount = 0;
-                      if (userType === 'occupant') {
+                      if (isMemberLike) {
                         subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
                       } else {
                         subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
@@ -1633,8 +1733,8 @@ export const AddFacilityBookingClubPage = () => {
                                 </div>
                               )}
 
-                              {/* Member Charge - Always show for occupant users, even if zero */}
-                              {userType === 'occupant' && (
+                              {/* Member Charge - Always show for occupant and day pass users, even if zero */}
+                              {isMemberLike && (
                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                   <div className="flex flex-col gap-1 w-full">
                                     <div className="flex items-center gap-2">
