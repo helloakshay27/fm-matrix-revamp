@@ -409,7 +409,7 @@ export const InventoryDetailsPage = () => {
           return;
         }
         const resp = await fetch(
-          `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.json?resource_id=${encodeURIComponent(id)}&q[move_type_eq]=plus`,
+          `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.json?resource_id=${encodeURIComponent(id)}&s[move_type_eq]=plus`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
