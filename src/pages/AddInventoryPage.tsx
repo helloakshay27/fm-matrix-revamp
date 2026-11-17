@@ -1,37 +1,48 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
-import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
-import { getUser } from '@/utils/auth';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchInventoryAssets } from "@/store/slices/inventoryAssetsSlice";
+import { fetchSuppliersData } from "@/store/slices/suppliersSlice";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  SelectChangeEvent,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Box,
+} from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
+import { getUser } from "@/utils/auth";
+import { toast } from "sonner";
 
 // Helper: strip HTML tags / stray wrappers returned by backend so toast doesn't show raw tags
 const sanitizeErrorMessage = (msg: string): string => {
   if (!msg) return msg;
   // Remove any HTML tags
-  let cleaned = msg.replace(/<[^>]+>/g, ' ');
+  let cleaned = msg.replace(/<[^>]+>/g, " ");
   // Decode basic HTML entities if present
   cleaned = cleaned
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'");
   // Collapse whitespace
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
   // Sometimes backend prefixes redundant field name like "Name Inventory name" -> dedupe first word if duplicated
-  cleaned = cleaned.replace(/^(Name\s+)?(Inventory name)/i, 'Inventory name');
+  cleaned = cleaned.replace(/^(Name\s+)?(Inventory name)/i, "Inventory name");
   return cleaned;
 };
 
@@ -59,7 +70,9 @@ export const AddInventoryPage = () => {
   const navigate = useNavigate();
   // const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
-  const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
+  const inventoryAssetsState = useSelector(
+    (state: RootState) => state.inventoryAssets
+  );
   const { assets = [], loading = false } = inventoryAssetsState || {};
 
   const suppliersState = useSelector((state: RootState) => state.suppliers);
@@ -71,49 +84,58 @@ export const AddInventoryPage = () => {
       : [];
   const suppliersLoading = suppliersState?.loading || false;
 
-  const [inventoryType, setInventoryType] = useState('spares');
-  const [criticality, setCriticality] = useState('critical');
+  const [inventoryType, setInventoryType] = useState("spares");
+  const [criticality, setCriticality] = useState("critical");
   const [taxApplicable, setTaxApplicable] = useState(false);
   const [ecoFriendly, setEcoFriendly] = useState(false);
-  const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
+  const [inventoryDetailsExpanded, setInventoryDetailsExpanded] =
+    useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
   const [formData, setFormData] = useState({
-    assetName: '',
-    inventoryName: '',
-    inventoryCode: '',
-    serialNumber: '',
-    quantity: '',
-    cost: '',
-    unit: '',
-    expiryDate: '',
-    category: '',
-    vendor: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '',
-    sacHsnCode: '',
-    sgstRate: '',
-    cgstRate: '',
-    igstRate: '',
+    assetName: "",
+    inventoryName: "",
+    inventoryCode: "",
+    serialNumber: "",
+    quantity: "",
+    cost: "",
+    unit: "",
+    expiryDate: "",
+    category: "",
+    vendor: "",
+    maxStockLevel: "",
+    minStockLevel: "",
+    minOrderLevel: "",
+    sacHsnCode: "",
+    sgstRate: "",
+    cgstRate: "",
+    igstRate: "",
     // New fields
-    plantCode: '',
-    categoryCode: '',
-    taxCategory: '',
+    plantCode: "",
+    categoryCode: "",
+    taxCategory: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [sacList, setSacList] = useState([])
+  const [sacList, setSacList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   // Inventory Type/Sub Type masters
-  const [invTypeOptions, setInvTypeOptions] = useState<Array<{ id: number; name?: string; title?: string; label?: string }>>([]);
-  const [invSubTypeOptions, setInvSubTypeOptions] = useState<Array<{ id: number; name?: string; title?: string; label?: string }>>([]);
+  const [invTypeOptions, setInvTypeOptions] = useState<
+    Array<{ id: number; name?: string; title?: string; label?: string }>
+  >([]);
+  const [invSubTypeOptions, setInvSubTypeOptions] = useState<
+    Array<{ id: number; name?: string; title?: string; label?: string }>
+  >([]);
   const [invTypeLoading, setInvTypeLoading] = useState(false);
   const [invSubTypeLoading, setInvSubTypeLoading] = useState(false);
-  const [invTypeId, setInvTypeId] = useState<string>('');
-  const [invSubTypeId, setInvSubTypeId] = useState<string>('');
+  const [invTypeId, setInvTypeId] = useState<string>("");
+  const [invSubTypeId, setInvSubTypeId] = useState<string>("");
   // Suggestions state for inventory name
-  const [nameSuggestions, setNameSuggestions] = useState<{ id: number; name: string }[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<
+    { id: number; name: string }[]
+  >([]);
   // Plants list for PlantCode dropdown
-  const [plants, setPlants] = useState<Array<{ id?: string | number; name?: string }>>([]);
+  const [plants, setPlants] = useState<
+    Array<{ id?: string | number; name?: string }>
+  >([]);
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const nameDebounceRef = useRef<number | null>(null);
@@ -128,23 +150,28 @@ export const AddInventoryPage = () => {
   useEffect(() => {
     const loadPlants = async () => {
       try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
         if (!baseUrl || !token) return;
         const url = `https://${baseUrl}/pms/purchase_orders/get_plant_detail?token=${encodeURIComponent(token)}`;
-        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        const res = await fetch(url, {
+          headers: { "Content-Type": "application/json" },
+        });
         if (!res.ok) return;
         const data = await res.json();
         // Normalize to [{name: string}]
-        const arr: Array<{ id?: string | number; name?: string }> = Array.isArray(data)
-          ? data
-          : Array.isArray((data as any)?.data)
-            ? (data as any).data
-            : Array.isArray((data as any)?.plants)
-              ? (data as any).plants
-              : [];
+        const arr: Array<{ id?: string | number; name?: string }> =
+          Array.isArray(data)
+            ? data
+            : Array.isArray((data as any)?.data)
+              ? (data as any).data
+              : Array.isArray((data as any)?.plants)
+                ? (data as any).plants
+                : [];
         setPlants(arr);
-      } catch {/* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     loadPlants();
   }, []);
@@ -157,7 +184,7 @@ export const AddInventoryPage = () => {
   // Parse query param once
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const id = params.get('asset_id');
+    const id = params.get("asset_id");
     setAssetIdParam(id);
   }, [location.search]);
 
@@ -166,14 +193,18 @@ export const AddInventoryPage = () => {
     if (!assetIdParam) return;
     if (!assets || assets.length === 0) return;
     if (formData.assetName) return; // already selected
-    const exists = assets.some(a => String(a.id) === assetIdParam);
+    const exists = assets.some((a) => String(a.id) === assetIdParam);
     if (exists) {
-      setFormData(prev => ({ ...prev, assetName: assetIdParam }));
+      setFormData((prev) => ({ ...prev, assetName: assetIdParam }));
     }
   }, [assetIdParam, assets, formData.assetName]);
 
   // Validation function
-  const validateField = (field: string, value: string, currentFormData = formData) => {
+  const validateField = (
+    field: string,
+    value: string,
+    currentFormData = formData
+  ) => {
     const newErrors: FormErrors = { ...errors };
 
     // Helper to check if a value is a valid positive number
@@ -190,105 +221,148 @@ export const AddInventoryPage = () => {
     };
 
     switch (field) {
-      case 'inventoryName':
-        newErrors.inventoryName = !value ? 'Inventory Name is required' : '';
+      case "inventoryName":
+        newErrors.inventoryName = !value ? "Inventory Name is required" : "";
         break;
-      case 'inventoryCode':
-        newErrors.inventoryCode = !value ? 'Inventory Code is required' : '';
+      case "inventoryCode":
+        newErrors.inventoryCode = !value ? "Inventory Code is required" : "";
         break;
-      case 'quantity':
+      case "quantity":
         newErrors.quantity = !value
-          ? 'Quantity is required'
+          ? "Quantity is required"
           : !isValidPositiveNumber(value)
-            ? 'Quantity must be a valid number'
-            : '';
+            ? "Quantity must be a valid number"
+            : "";
         break;
-      case 'unit':
-        newErrors.unit = !value ? 'Unit is required' : '';
+      case "unit":
+        newErrors.unit = !value ? "Unit is required" : "";
         break;
-      case 'category':
-        newErrors.category = !value ? 'Category is required' : '';
+      case "category":
+        newErrors.category = !value ? "Category is required" : "";
         break;
-      case 'cost':
-        newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
+      case "cost":
+        newErrors.cost =
+          value && !isValidPositiveNumber(value)
+            ? "Cost must be a valid number"
+            : "";
         break;
-      case 'minStockLevel':
+      case "minStockLevel":
         // Clear any existing error first
-        newErrors.minStockLevel = '';
+        newErrors.minStockLevel = "";
 
         // Basic validation
         if (!value) {
-          newErrors.minStockLevel = 'Min Stock Level is required';
+          newErrors.minStockLevel = "Min Stock Level is required";
         } else if (!isValidPositiveNumber(value)) {
-          newErrors.minStockLevel = 'Min Stock Level must be a valid number';
+          newErrors.minStockLevel = "Min Stock Level must be a valid number";
         }
         // Cross-field validation: Min Stock Level should be <= Max Stock Level
-        else if (currentFormData.maxStockLevel && isValidPositiveNumber(currentFormData.maxStockLevel)) {
+        else if (
+          currentFormData.maxStockLevel &&
+          isValidPositiveNumber(currentFormData.maxStockLevel)
+        ) {
           if (parseFloat(value) > parseFloat(currentFormData.maxStockLevel)) {
-            newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+            newErrors.minStockLevel =
+              "Min Stock Level cannot be greater than Max Stock Level";
           }
         }
 
         // Clear maxStockLevel error if it exists and the relationship is now valid
-        if (value && currentFormData.maxStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.maxStockLevel)) {
+        if (
+          value &&
+          currentFormData.maxStockLevel &&
+          isValidPositiveNumber(value) &&
+          isValidPositiveNumber(currentFormData.maxStockLevel)
+        ) {
           if (parseFloat(value) <= parseFloat(currentFormData.maxStockLevel)) {
-            newErrors.maxStockLevel = '';
+            newErrors.maxStockLevel = "";
           }
         }
         break;
-      case 'maxStockLevel':
+      case "maxStockLevel":
         // Clear any existing error first
-        newErrors.maxStockLevel = '';
+        newErrors.maxStockLevel = "";
 
         // Basic validation
         if (!value) {
-          newErrors.maxStockLevel = 'Max Stock Level is required';
+          newErrors.maxStockLevel = "Max Stock Level is required";
         } else if (!isValidPositiveNumber(value)) {
-          newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+          newErrors.maxStockLevel = "Max Stock Level must be a valid number";
         }
         // Cross-field validation: Max Stock Level should be >= Min Stock Level
-        else if (currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+        else if (
+          currentFormData.minStockLevel &&
+          isValidPositiveNumber(value) &&
+          isValidPositiveNumber(currentFormData.minStockLevel)
+        ) {
           if (parseFloat(value) < parseFloat(currentFormData.minStockLevel)) {
-            newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
+            newErrors.maxStockLevel =
+              "Max Stock Level cannot be less than Min Stock Level";
           }
         }
 
         // Clear minStockLevel error if it exists and the relationship is now valid
-        if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+        if (
+          value &&
+          currentFormData.minStockLevel &&
+          isValidPositiveNumber(value) &&
+          isValidPositiveNumber(currentFormData.minStockLevel)
+        ) {
           if (parseFloat(currentFormData.minStockLevel) <= parseFloat(value)) {
-            newErrors.minStockLevel = currentFormData.minStockLevel ? '' : 'Min Stock Level is required';
+            newErrors.minStockLevel = currentFormData.minStockLevel
+              ? ""
+              : "Min Stock Level is required";
           }
         }
         break;
-      case 'minOrderLevel':
+      case "minOrderLevel":
         // First, clear any existing error for this field
-        newErrors.minOrderLevel = '';
+        newErrors.minOrderLevel = "";
 
         // Basic validation
         if (value && !isValidPositiveNumber(value)) {
-          newErrors.minOrderLevel = 'Min Order Level must be a valid number';
+          newErrors.minOrderLevel = "Min Order Level must be a valid number";
         }
         // Cross-field validation: Min Order Level should be <= Min Stock Level
-        else if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+        else if (
+          value &&
+          currentFormData.minStockLevel &&
+          isValidPositiveNumber(value) &&
+          isValidPositiveNumber(currentFormData.minStockLevel)
+        ) {
           if (parseFloat(value) > parseFloat(currentFormData.minStockLevel)) {
-            newErrors.minOrderLevel = 'Min Order Level cannot be greater than Min Stock Level';
+            newErrors.minOrderLevel =
+              "Min Order Level cannot be greater than Min Stock Level";
           }
         }
         break;
-      case 'sacHsnCode':
-        newErrors.sacHsnCode = taxApplicable && !value ? 'SAC/HSN Code is required when tax is applicable' : '';
+      case "sacHsnCode":
+        newErrors.sacHsnCode =
+          taxApplicable && !value
+            ? "SAC/HSN Code is required when tax is applicable"
+            : "";
         break;
-      case 'sgstRate':
-        newErrors.sgstRate = taxApplicable && value && !isValidPositiveNumber(value) ? 'SGST Rate must be a valid number' : '';
+      case "sgstRate":
+        newErrors.sgstRate =
+          taxApplicable && value && !isValidPositiveNumber(value)
+            ? "SGST Rate must be a valid number"
+            : "";
         break;
-      case 'cgstRate':
-        newErrors.cgstRate = taxApplicable && value && !isValidPositiveNumber(value) ? 'CGST Rate must be a valid number' : '';
+      case "cgstRate":
+        newErrors.cgstRate =
+          taxApplicable && value && !isValidPositiveNumber(value)
+            ? "CGST Rate must be a valid number"
+            : "";
         break;
-      case 'igstRate':
-        newErrors.igstRate = taxApplicable && value && !isValidPositiveNumber(value) ? 'IGST Rate must be a valid number' : '';
+      case "igstRate":
+        newErrors.igstRate =
+          taxApplicable && value && !isValidPositiveNumber(value)
+            ? "IGST Rate must be a valid number"
+            : "";
         break;
-      case 'expiryDate':
-        newErrors.expiryDate = value && !isValidDate(value) ? 'Invalid date format' : '';
+      case "expiryDate":
+        newErrors.expiryDate =
+          value && !isValidDate(value) ? "Invalid date format" : "";
         break;
       default:
         break;
@@ -300,7 +374,7 @@ export const AddInventoryPage = () => {
   // Helpers to safely convert between YYYY-MM-DD and Date without timezone drift
   const parseYMDToDate = (s: string | null | undefined): Date | null => {
     if (!s) return null;
-    const parts = s.split('-');
+    const parts = s.split("-");
     if (parts.length !== 3) return null;
     const y = Number(parts[0]);
     const m = Number(parts[1]);
@@ -309,10 +383,10 @@ export const AddInventoryPage = () => {
     return new Date(y, m - 1, d);
   };
   const formatDateToYMD = (date: Date | null): string => {
-    if (!date) return '';
+    if (!date) return "";
     const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   };
 
@@ -320,37 +394,50 @@ export const AddInventoryPage = () => {
   const validateForm = () => {
     const newErrors: FormErrors = {};
 
-    newErrors.inventoryType = !inventoryType ? 'Inventory Type is required' : '';
-    newErrors.criticality = !criticality ? 'Criticality is required' : '';
-    newErrors.inventoryName = !formData.inventoryName ? 'Inventory Name is required' : '';
-    newErrors.inventoryCode = !formData.inventoryCode ? 'Inventory Code is required' : '';
+    newErrors.inventoryType = !inventoryType
+      ? "Inventory Type is required"
+      : "";
+    newErrors.criticality = !criticality ? "Criticality is required" : "";
+    newErrors.inventoryName = !formData.inventoryName
+      ? "Inventory Name is required"
+      : "";
+    newErrors.inventoryCode = !formData.inventoryCode
+      ? "Inventory Code is required"
+      : "";
     newErrors.quantity = !formData.quantity
-      ? 'Quantity is required'
-      : (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
-        ? 'Quantity must be a valid number'
-        : '';
-    newErrors.unit = !formData.unit ? 'Unit is required' : '';
-    newErrors.category = !formData.category ? 'Category is required' : '';
+      ? "Quantity is required"
+      : isNaN(parseFloat(formData.quantity)) ||
+          parseFloat(formData.quantity) < 0
+        ? "Quantity must be a valid number"
+        : "";
+    newErrors.unit = !formData.unit ? "Unit is required" : "";
+    newErrors.category = !formData.category ? "Category is required" : "";
     newErrors.minStockLevel = !formData.minStockLevel
-      ? 'Min Stock Level is required'
-      : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
-        ? ''
-        : 'Min Stock Level must be a valid number';
+      ? "Min Stock Level is required"
+      : !isNaN(parseFloat(formData.minStockLevel)) &&
+          parseFloat(formData.minStockLevel) >= 0
+        ? ""
+        : "Min Stock Level must be a valid number";
     newErrors.maxStockLevel = !formData.maxStockLevel
-      ? 'Max Stock Level is required'
-      : !isNaN(parseFloat(formData.maxStockLevel)) && parseFloat(formData.maxStockLevel) >= 0
-        ? ''
-        : 'Max Stock Level must be a valid number';
-    newErrors.minOrderLevel = formData.minOrderLevel && (isNaN(parseFloat(formData.minOrderLevel)) || parseFloat(formData.minOrderLevel) < 0)
-      ? 'Min Order Level must be a valid number'
-      : '';
+      ? "Max Stock Level is required"
+      : !isNaN(parseFloat(formData.maxStockLevel)) &&
+          parseFloat(formData.maxStockLevel) >= 0
+        ? ""
+        : "Max Stock Level must be a valid number";
+    newErrors.minOrderLevel =
+      formData.minOrderLevel &&
+      (isNaN(parseFloat(formData.minOrderLevel)) ||
+        parseFloat(formData.minOrderLevel) < 0)
+        ? "Min Order Level must be a valid number"
+        : "";
 
     // Cross-field validations
     if (formData.minStockLevel && formData.maxStockLevel) {
       const minStock = parseFloat(formData.minStockLevel);
       const maxStock = parseFloat(formData.maxStockLevel);
       if (!isNaN(minStock) && !isNaN(maxStock) && minStock > maxStock) {
-        newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+        newErrors.minStockLevel =
+          "Min Stock Level cannot be greater than Max Stock Level";
       }
     }
 
@@ -358,37 +445,57 @@ export const AddInventoryPage = () => {
       const minOrder = parseFloat(formData.minOrderLevel);
       const minStock = parseFloat(formData.minStockLevel);
       if (!isNaN(minOrder) && !isNaN(minStock) && minOrder > minStock) {
-        newErrors.minOrderLevel = 'Min Order Level cannot be greater than Min Stock Level';
+        newErrors.minOrderLevel =
+          "Min Order Level cannot be greater than Min Stock Level";
       }
     }
-    newErrors.cost = formData.cost && (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0)
-      ? 'Cost must be a valid number'
-      : '';
-    newErrors.expiryDate = formData.expiryDate && isNaN(new Date(formData.expiryDate).getTime()) ? 'Invalid date format' : '';
+    newErrors.cost =
+      formData.cost &&
+      (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0)
+        ? "Cost must be a valid number"
+        : "";
+    newErrors.expiryDate =
+      formData.expiryDate && isNaN(new Date(formData.expiryDate).getTime())
+        ? "Invalid date format"
+        : "";
 
     if (taxApplicable) {
-      newErrors.sacHsnCode = !formData.sacHsnCode ? 'SAC/HSN Code is required when tax is applicable' : '';
-      newErrors.sgstRate = formData.sgstRate && (isNaN(parseFloat(formData.sgstRate)) || parseFloat(formData.sgstRate) < 0)
-        ? 'SGST Rate must be a valid number'
-        : '';
-      newErrors.cgstRate = formData.cgstRate && (isNaN(parseFloat(formData.cgstRate)) || parseFloat(formData.cgstRate) < 0)
-        ? 'CGST Rate must be a valid number'
-        : '';
-      newErrors.igstRate = formData.igstRate && (isNaN(parseFloat(formData.igstRate)) || parseFloat(formData.igstRate) < 0)
-        ? 'IGST Rate must be a valid number'
-        : '';
+      newErrors.sacHsnCode = !formData.sacHsnCode
+        ? "SAC/HSN Code is required when tax is applicable"
+        : "";
+      newErrors.sgstRate =
+        formData.sgstRate &&
+        (isNaN(parseFloat(formData.sgstRate)) ||
+          parseFloat(formData.sgstRate) < 0)
+          ? "SGST Rate must be a valid number"
+          : "";
+      newErrors.cgstRate =
+        formData.cgstRate &&
+        (isNaN(parseFloat(formData.cgstRate)) ||
+          parseFloat(formData.cgstRate) < 0)
+          ? "CGST Rate must be a valid number"
+          : "";
+      newErrors.igstRate =
+        formData.igstRate &&
+        (isNaN(parseFloat(formData.igstRate)) ||
+          parseFloat(formData.igstRate) < 0)
+          ? "IGST Rate must be a valid number"
+          : "";
     }
 
     setErrors(newErrors);
 
     // Return true if there are no errors
-    return Object.values(newErrors).every(error => !error);
+    return Object.values(newErrors).every((error) => !error);
   };
 
   const handleInputChange = (field: string, value: string) => {
     // Sanitize numeric-only fields: Min/Max Stock and Min Order should accept digits only
-    const isNumericOnlyField = field === 'minStockLevel' || field === 'maxStockLevel' || field === 'minOrderLevel';
-    const sanitized = isNumericOnlyField ? value.replace(/\D/g, '') : value;
+    const isNumericOnlyField =
+      field === "minStockLevel" ||
+      field === "maxStockLevel" ||
+      field === "minOrderLevel";
+    const sanitized = isNumericOnlyField ? value.replace(/\D/g, "") : value;
 
     const updatedFormData = { ...formData, [field]: sanitized };
     setFormData(updatedFormData);
@@ -397,29 +504,46 @@ export const AddInventoryPage = () => {
     validateField(field, sanitized, updatedFormData);
 
     // Re-validate related fields for stock level cross-validations using updated data
-    if (field === 'minStockLevel') {
+    if (field === "minStockLevel") {
       if (updatedFormData.maxStockLevel) {
-        validateField('maxStockLevel', updatedFormData.maxStockLevel, updatedFormData);
+        validateField(
+          "maxStockLevel",
+          updatedFormData.maxStockLevel,
+          updatedFormData
+        );
       }
       if (updatedFormData.minOrderLevel) {
-        validateField('minOrderLevel', updatedFormData.minOrderLevel, updatedFormData);
+        validateField(
+          "minOrderLevel",
+          updatedFormData.minOrderLevel,
+          updatedFormData
+        );
       }
-    } else if (field === 'maxStockLevel') {
+    } else if (field === "maxStockLevel") {
       if (updatedFormData.minStockLevel) {
-        validateField('minStockLevel', updatedFormData.minStockLevel, updatedFormData);
+        validateField(
+          "minStockLevel",
+          updatedFormData.minStockLevel,
+          updatedFormData
+        );
       }
-    } else if (field === 'minOrderLevel') {
+    } else if (field === "minOrderLevel") {
       if (updatedFormData.minStockLevel) {
-        validateField('minStockLevel', updatedFormData.minStockLevel, updatedFormData);
+        validateField(
+          "minStockLevel",
+          updatedFormData.minStockLevel,
+          updatedFormData
+        );
       }
     }
   };
 
-  const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
-    validateField(field, value);
-  };
+  const handleSelectChange =
+    (field: string) => (event: SelectChangeEvent<string>) => {
+      const value = event.target.value;
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      validateField(field, value);
+    };
 
   const handleSubmit = async () => {
     if (!validateForm()) {
@@ -434,8 +558,8 @@ export const AddInventoryPage = () => {
     const payload = {
       pms_inventory: {
         user_id: user?.id?.toString() || "",
-        inventory_type: inventoryType === 'spares' ? 1 : 2,
-        criticality: criticality === 'critical' ? 1 : 2,
+        inventory_type: inventoryType === "spares" ? 1 : 2,
+        criticality: criticality === "critical" ? 1 : 2,
         asset_id: parseInt(formData.assetName) || null,
         name: formData.inventoryName,
         code: formData.inventoryCode,
@@ -443,23 +567,31 @@ export const AddInventoryPage = () => {
         quantity: parseInt(formData.quantity) || 0,
         cost: parseFloat(formData.cost) || 0,
         unit: formData.unit,
-        expiry_date: formData.expiryDate ? `${formData.expiryDate}T00:00:00Z` : null,
+        expiry_date: formData.expiryDate
+          ? `${formData.expiryDate}T00:00:00Z`
+          : null,
         category: formData.category,
         // Backend expects supplier_id (was previously sent as rate_contract_vendor_code per earlier implementation)
-        rate_contract_vendor_code: formData.vendor ? parseInt(formData.vendor) : null,
+        rate_contract_vendor_code: formData.vendor
+          ? parseInt(formData.vendor)
+          : null,
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
         // New master fields
         pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
-        pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
+        pms_inventory_sub_type_id: invSubTypeId
+          ? parseInt(invSubTypeId, 10)
+          : null,
         green_product: ecoFriendly ? 1 : 0,
         // New fields in payload
         sap_plant_code: formData.plantCode || null, // send plant NAME per requirement
         category_code: formData.categoryCode || null,
         ...(taxApplicable && {
           tax_category: formData.taxCategory || null,
-          hsn_id: formData.sacHsnCode ? parseInt(String(formData.sacHsnCode), 10) : null,
+          hsn_id: formData.sacHsnCode
+            ? parseInt(String(formData.sacHsnCode), 10)
+            : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,
           cgst_rate: parseFloat(formData.cgstRate) || 0,
           igst_rate: parseFloat(formData.igstRate) || 0,
@@ -468,39 +600,47 @@ export const AddInventoryPage = () => {
       tax_applicable: taxApplicable ? 1 : 0,
     };
 
-    console.log('Submitting inventory payload:', payload);
+    console.log("Submitting inventory payload:", payload);
 
     try {
-      const response = await fetch(getFullUrl('/pms/inventories.json'), {
-        method: 'POST',
+      const response = await fetch(getFullUrl("/pms/inventories.json"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Inventory created successfully:', result);
+        console.log("Inventory created successfully:", result);
         toast("Inventory has been successfully created.");
         navigate(-1);
       } else {
-        console.error('Failed to create inventory:', response.status, response.statusText);
+        console.error(
+          "Failed to create inventory:",
+          response.status,
+          response.statusText
+        );
         const raw = await response.text();
-        console.error('Error response raw:', raw);
-        let message = 'Failed to create inventory. Please try again.';
+        console.error("Error response raw:", raw);
+        let message = "Failed to create inventory. Please try again.";
         // Try JSON parse first
         try {
           const parsed = JSON.parse(raw);
           if (parsed) {
             if (parsed.errors) {
-              if (Array.isArray(parsed.errors)) message = parsed.errors.join(', ');
-              else if (typeof parsed.errors === 'object') {
+              if (Array.isArray(parsed.errors))
+                message = parsed.errors.join(", ");
+              else if (typeof parsed.errors === "object") {
                 try {
-                  message = Object.values(parsed.errors).flat().join(', ');
-                } catch { message = JSON.stringify(parsed.errors); }
-              } else if (typeof parsed.errors === 'string') message = parsed.errors;
+                  message = Object.values(parsed.errors).flat().join(", ");
+                } catch {
+                  message = JSON.stringify(parsed.errors);
+                }
+              } else if (typeof parsed.errors === "string")
+                message = parsed.errors;
             } else if (parsed.error) message = parsed.error;
             else if (parsed.message) message = parsed.message;
           }
@@ -513,8 +653,10 @@ export const AddInventoryPage = () => {
         toast(sanitizeErrorMessage(message));
       }
     } catch (error) {
-      console.error('Error creating inventory:', error);
-      toast(sanitizeErrorMessage('Failed to create inventory. Please try again.'));
+      console.error("Error creating inventory:", error);
+      toast(
+        sanitizeErrorMessage("Failed to create inventory. Please try again.")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -526,40 +668,40 @@ export const AddInventoryPage = () => {
 
   // Consistent field styling for MUI components with rounded corners and larger labels
   const fieldStyles = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '6px',
-      backgroundColor: '#FFFFFF',
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "6px",
+      backgroundColor: "#FFFFFF",
       height: 45,
-      '& fieldset': {
-        borderColor: '#E0E0E0',
-        borderRadius: '6px',
+      "& fieldset": {
+        borderColor: "#E0E0E0",
+        borderRadius: "6px",
       },
-      '&:hover fieldset': {
-        borderColor: '#1A1A1A',
+      "&:hover fieldset": {
+        borderColor: "#1A1A1A",
       },
-      '&.Mui-focused fieldset': {
-        borderColor: '#DA7756',
+      "&.Mui-focused fieldset": {
+        borderColor: "#DA7756",
         borderWidth: 2,
       },
-      '&.Mui-error fieldset': {
-        borderColor: '#DA7756',
+      "&.Mui-error fieldset": {
+        borderColor: "#DA7756",
       },
     },
-    '& .MuiInputLabel-root': {
-      color: '#1A1A1A',
+    "& .MuiInputLabel-root": {
+      color: "#1A1A1A",
       fontWeight: 500,
-      fontSize: '16px',
-      '&.Mui-focused': {
-        color: '#DA7756',
+      fontSize: "16px",
+      "&.Mui-focused": {
+        color: "#DA7756",
       },
-      '&.Mui-error': {
-        color: '#DA7756',
+      "&.Mui-error": {
+        color: "#DA7756",
       },
     },
-    '& .MuiInputBase-input': {
-      padding: '12px',
-      '&::placeholder': {
-        color: '#999',
+    "& .MuiInputBase-input": {
+      padding: "12px",
+      "&::placeholder": {
+        color: "#999",
         opacity: 1,
       },
     },
@@ -567,36 +709,38 @@ export const AddInventoryPage = () => {
 
   const selectStyles = {
     ...fieldStyles,
-    '& .MuiSelect-select': {
-      padding: '12px',
-      display: 'flex',
-      alignItems: 'center',
+    "& .MuiSelect-select": {
+      padding: "12px",
+      display: "flex",
+      alignItems: "center",
     },
   };
 
-
   const fetchSAC = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
+    const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token"); // Get token from localStorage
 
     try {
-      const response = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+      const response = await fetch(
+        `https://${baseUrl}/pms/hsns/get_hsns.json`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Ensure token is a Bearer token if needed
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
       const data = await response.json();
-      setSacList(data)
-      console.log('SAC data:', data);
+      setSacList(data);
+      console.log("SAC data:", data);
       return data;
     } catch (error) {
-      console.error('Error fetching SAC:', error);
+      console.error("Error fetching SAC:", error);
     }
   };
 
@@ -609,26 +753,32 @@ export const AddInventoryPage = () => {
     const fetchInventoryTypes = async () => {
       setInvTypeLoading(true);
       try {
-        const res = await fetch(getFullUrl('/pms/inventory_types/autocomplete.json'), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': getAuthHeader(),
-          },
-        });
-        if (!res.ok) throw new Error('Failed to load inventory types');
+        const res = await fetch(
+          getFullUrl("/pms/inventory_types/autocomplete.json"),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: getAuthHeader(),
+            },
+          }
+        );
+        if (!res.ok) throw new Error("Failed to load inventory types");
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
+        else if (Array.isArray(data?.inventory_types))
+          arr = data.inventory_types;
         else if (Array.isArray(data?.item_types)) arr = data.item_types;
         else if (Array.isArray(data?.data)) arr = data.data;
         else if (Array.isArray(data?.items)) arr = data.items;
-        else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
-        else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
+        else if (Array.isArray(data?.inventory_types?.data))
+          arr = data.inventory_types.data;
+        else if (Array.isArray(data?.item_types?.data))
+          arr = data.item_types.data;
         else if (Array.isArray(data?.payload)) arr = data.payload;
         setInvTypeOptions(arr);
       } catch (e) {
-        console.error('Error fetching inventory types', e);
+        console.error("Error fetching inventory types", e);
         setInvTypeOptions([]);
       } finally {
         setInvTypeLoading(false);
@@ -640,32 +790,43 @@ export const AddInventoryPage = () => {
   // Fetch Inventory Sub Types when type changes
   useEffect(() => {
     const fetchSubTypes = async () => {
-      if (!invTypeId) { setInvSubTypeOptions([]); setInvSubTypeId(''); return; }
+      if (!invTypeId) {
+        setInvSubTypeOptions([]);
+        setInvSubTypeId("");
+        return;
+      }
       setInvSubTypeLoading(true);
       try {
-        const url = getFullUrl(`/pms/inventory_types/get_subtype.json?inventory_type_id=${encodeURIComponent(invTypeId)}`);
+        const url = getFullUrl(
+          `/pms/inventory_types/get_subtype.json?inventory_type_id=${encodeURIComponent(invTypeId)}`
+        );
         const res = await fetch(url, {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': getAuthHeader(),
+            "Content-Type": "application/json",
+            Authorization: getAuthHeader(),
           },
         });
-        if (!res.ok) throw new Error('Failed to load inventory sub types');
+        if (!res.ok) throw new Error("Failed to load inventory sub types");
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
+        else if (Array.isArray(data?.inventory_sub_types))
+          arr = data.inventory_sub_types;
         else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
-        else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
+        else if (Array.isArray(data?.item_categories))
+          arr = data.item_categories;
         else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
         else if (Array.isArray(data?.data)) arr = data.data;
         else if (Array.isArray(data?.items)) arr = data.items;
-        else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
-        else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
-        else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
+        else if (Array.isArray(data?.inventory_sub_types?.data))
+          arr = data.inventory_sub_types.data;
+        else if (Array.isArray(data?.item_sub_types?.data))
+          arr = data.item_sub_types.data;
+        else if (Array.isArray(data?.item_categories?.data))
+          arr = data.item_categories.data;
         setInvSubTypeOptions(arr);
       } catch (e) {
-        console.error('Error fetching inventory sub types', e);
+        console.error("Error fetching inventory sub types", e);
         setInvSubTypeOptions([]);
       } finally {
         setInvSubTypeLoading(false);
@@ -676,15 +837,18 @@ export const AddInventoryPage = () => {
 
   // Fetch inventory name suggestions
   const fetchNameSuggestions = async (query: string) => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
     if (!baseUrl || !token) return;
     setNameSuggestLoading(true);
     try {
-      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?q=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed suggestions');
+      const res = await fetch(
+        `https://${baseUrl}/pms/inventories/suggestions.json?q=${encodeURIComponent(query)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) throw new Error("Failed suggestions");
       const data = await res.json();
       let arr: any[] = [];
       if (Array.isArray(data)) arr = data;
@@ -692,15 +856,20 @@ export const AddInventoryPage = () => {
       // Store raw list; actual filtering happens via useMemo against current input to avoid stale display
       setNameSuggestions(arr);
     } catch (e) {
-      setNameSuggestions([]); setShowNameSuggestions(false);
-    } finally { setNameSuggestLoading(false); }
+      setNameSuggestions([]);
+      setShowNameSuggestions(false);
+    } finally {
+      setNameSuggestLoading(false);
+    }
   };
 
   // Filter suggestions based on current text (case-insensitive substring OR startsWith)
   const filteredNameSuggestions = useMemo(() => {
     const q = formData.inventoryName.trim().toLowerCase();
     if (q.length < 2) return [];
-    return nameSuggestions.filter(s => s.name && s.name.toLowerCase().includes(q));
+    return nameSuggestions.filter(
+      (s) => s.name && s.name.toLowerCase().includes(q)
+    );
   }, [nameSuggestions, formData.inventoryName]);
 
   // Control visibility: only show if filtered suggestions exist AND input not empty
@@ -717,36 +886,48 @@ export const AddInventoryPage = () => {
         setShowNameSuggestions(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
-        <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
           <ArrowLeft className="w-4 h-4" />
           Back to Inventory List
         </button>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">NEW INVENTORY</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">
+          NEW INVENTORY
+        </h1>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         {/* Inventory Details Section */}
         <div className="border-b bg-white rounded-lg border border-gray-200 shadow-sm">
           <button
-            onClick={() => setInventoryDetailsExpanded(!inventoryDetailsExpanded)}
+            onClick={() =>
+              setInventoryDetailsExpanded(!inventoryDetailsExpanded)
+            }
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 1
               </div>
-              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">INVENTORY DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">
+                INVENTORY DETAILS
+              </h2>
             </div>
-            {inventoryDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            {inventoryDetailsExpanded ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
           </button>
 
           {inventoryDetailsExpanded && (
@@ -761,26 +942,36 @@ export const AddInventoryPage = () => {
                   value={inventoryType}
                   onChange={(e) => {
                     setInventoryType(e.target.value);
-                    setErrors(prev => ({ ...prev, inventoryType: '' }));
+                    setErrors((prev) => ({ ...prev, inventoryType: "" }));
                   }}
                   sx={{
-                    '& .MuiFormControlLabel-label': {
-                      color: '#1A1A1A',
-                      fontSize: '14px',
+                    "& .MuiFormControlLabel-label": {
+                      color: "#1A1A1A",
+                      fontSize: "14px",
                     },
-                    '& .MuiRadio-root': {
-                      color: '#DA7756',
-                      '&.Mui-checked': {
-                        color: '#DA7756',
+                    "& .MuiRadio-root": {
+                      color: "#DA7756",
+                      "&.Mui-checked": {
+                        color: "#DA7756",
                       },
                     },
                   }}
                 >
-                  <FormControlLabel value="spares" control={<Radio />} label="Spares" />
-                  <FormControlLabel value="consumable" control={<Radio />} label="Consumable" />
+                  <FormControlLabel
+                    value="spares"
+                    control={<Radio />}
+                    label="Spares"
+                  />
+                  <FormControlLabel
+                    value="consumable"
+                    control={<Radio />}
+                    label="Consumable"
+                  />
                 </RadioGroup>
                 {errors.inventoryType && (
-                  <p className="text-red-500 text-sm mt-1">{errors.inventoryType}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.inventoryType}
+                  </p>
                 )}
               </div>
 
@@ -794,37 +985,52 @@ export const AddInventoryPage = () => {
                   value={criticality}
                   onChange={(e) => {
                     setCriticality(e.target.value);
-                    setErrors(prev => ({ ...prev, criticality: '' }));
+                    setErrors((prev) => ({ ...prev, criticality: "" }));
                   }}
                   sx={{
-                    '& .MuiFormControlLabel-label': {
-                      color: '#1A1A1A',
-                      fontSize: '14px',
+                    "& .MuiFormControlLabel-label": {
+                      color: "#1A1A1A",
+                      fontSize: "14px",
                     },
-                    '& .MuiRadio-root': {
-                      color: '#DA7756',
-                      '&.Mui-checked': {
-                        color: '#DA7756',
+                    "& .MuiRadio-root": {
+                      color: "#DA7756",
+                      "&.Mui-checked": {
+                        color: "#DA7756",
                       },
                     },
                   }}
                 >
-                  <FormControlLabel value="critical" control={<Radio />} label="Critical" />
-                  <FormControlLabel value="non-critical" control={<Radio />} label="Non-Critical" />
+                  <FormControlLabel
+                    value="critical"
+                    control={<Radio />}
+                    label="Critical"
+                  />
+                  <FormControlLabel
+                    value="non-critical"
+                    control={<Radio />}
+                    label="Non-Critical"
+                  />
                 </RadioGroup>
                 {errors.criticality && (
-                  <p className="text-red-500 text-sm mt-1">{errors.criticality}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.criticality}
+                  </p>
                 )}
               </div>
 
               <div className="flex items-center space-x-2">
-                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">
+                <label
+                  htmlFor="eco-friendly"
+                  className="text-sm font-medium text-black"
+                >
                   Eco-friendly Inventory
                 </label>
                 <Checkbox
                   id="eco-friendly"
                   checked={ecoFriendly}
-                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
+                  onCheckedChange={(checked) =>
+                    setEcoFriendly(checked === true)
+                  }
                 />
               </div>
 
@@ -835,14 +1041,14 @@ export const AddInventoryPage = () => {
                     <InputLabel shrink>Select Asset Name</InputLabel>
                     <MuiSelect
                       value={formData.assetName}
-                      onChange={handleSelectChange('assetName')}
+                      onChange={handleSelectChange("assetName")}
                       label="Select Asset Name"
                       notched
                       displayEmpty
                       disabled={loading}
                     >
-                      <MenuItem value="" sx={{ color: '#DA7756' }}>
-                        {loading ? 'Loading...' : 'Select an Option...'}
+                      <MenuItem value="" sx={{ color: "#DA7756" }}>
+                        {loading ? "Loading..." : "Select an Option..."}
                       </MenuItem>
                       {assets.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
@@ -856,22 +1062,31 @@ export const AddInventoryPage = () => {
 
                 <div ref={inventoryNameWrapperRef} className="relative">
                   <TextField
-                    label={<>Inventory Name<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={
+                      <>
+                        Inventory Name
+                        <span style={{ color: "#DA7756" }}>*</span>
+                      </>
+                    }
                     placeholder="Name"
                     value={formData.inventoryName}
                     onChange={(e) => {
                       const val = e.target.value;
-                      handleInputChange('inventoryName', val);
-                      if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+                      handleInputChange("inventoryName", val);
+                      if (nameDebounceRef.current)
+                        window.clearTimeout(nameDebounceRef.current);
                       if (val.trim().length < 2) {
-                        setNameSuggestions([]); setShowNameSuggestions(false); return;
+                        setNameSuggestions([]);
+                        setShowNameSuggestions(false);
+                        return;
                       }
                       nameDebounceRef.current = window.setTimeout(() => {
                         fetchNameSuggestions(val.trim());
                       }, 350);
                     }}
                     onFocus={() => {
-                      if (filteredNameSuggestions.length > 0) setShowNameSuggestions(true);
+                      if (filteredNameSuggestions.length > 0)
+                        setShowNameSuggestions(true);
                     }}
                     onBlur={(e) => {
                       // Delay hiding to allow click
@@ -879,11 +1094,11 @@ export const AddInventoryPage = () => {
                     }}
                     autoComplete="off"
                     inputProps={{
-                      autoComplete: 'off',
-                      autoCorrect: 'off',
-                      autoCapitalize: 'none',
+                      autoComplete: "off",
+                      autoCorrect: "off",
+                      autoCapitalize: "none",
                       spellCheck: false,
-                      name: 'inventory-name-no-autofill',
+                      name: "inventory-name-no-autofill",
                     }}
                     fullWidth
                     variant="outlined"
@@ -892,32 +1107,43 @@ export const AddInventoryPage = () => {
                     error={!!errors.inventoryName}
                     helperText={errors.inventoryName}
                   />
-                  {showNameSuggestions && filteredNameSuggestions.length > 0 && (
-                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
-                      {filteredNameSuggestions.map(s => (
-                        <button
-                          type="button"
-                          key={s.id}
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, inventoryName: s.name }));
-                            setShowNameSuggestions(false);
-                            validateField('inventoryName', s.name);
-                          }}
-                          className={`block w-full text-left px-3 py-2 hover:bg-red-50 ${s.name === formData.inventoryName ? 'bg-red-50' : ''}`}
-                        >
-                          {s.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {showNameSuggestions &&
+                    filteredNameSuggestions.length > 0 && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
+                        {filteredNameSuggestions.map((s) => (
+                          <button
+                            type="button"
+                            key={s.id}
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                inventoryName: s.name,
+                              }));
+                              setShowNameSuggestions(false);
+                              validateField("inventoryName", s.name);
+                            }}
+                            className={`block w-full text-left px-3 py-2 hover:bg-red-50 ${s.name === formData.inventoryName ? "bg-red-50" : ""}`}
+                          >
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 <div>
                   <TextField
-                    label={<>Inventory Code<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={
+                      <>
+                        Inventory Code
+                        <span style={{ color: "#DA7756" }}>*</span>
+                      </>
+                    }
                     placeholder="code"
                     value={formData.inventoryCode}
-                    onChange={(e) => handleInputChange('inventoryCode', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("inventoryCode", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -932,7 +1158,9 @@ export const AddInventoryPage = () => {
                     label="Serial Number"
                     placeholder="Serial Number"
                     value={formData.serialNumber}
-                    onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("serialNumber", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -942,10 +1170,16 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity<span className="text-red-500">*</span></>}
+                    label={
+                      <>
+                        Quantity<span className="text-red-500">*</span>
+                      </>
+                    }
                     placeholder="Qty"
                     value={formData.quantity}
-                    onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("quantity", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -962,26 +1196,33 @@ export const AddInventoryPage = () => {
                     value={formData.cost}
                     onChange={(e) => {
                       // Allow only digits and a single decimal point
-                      let v = e.target.value.replace(/[^0-9.]/g, '');
-                      const parts = v.split('.');
-                      if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
-                      handleInputChange('cost', v);
+                      let v = e.target.value.replace(/[^0-9.]/g, "");
+                      const parts = v.split(".");
+                      if (parts.length > 2)
+                        v = parts[0] + "." + parts.slice(1).join("");
+                      handleInputChange("cost", v);
                     }}
                     onPaste={(e) => {
-                      const text = (e.clipboardData || (window as any).clipboardData).getData('text');
-                      const sanitized = text.replace(/[^0-9.]/g, '');
-                      const parts = sanitized.split('.');
-                      const finalVal = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitized;
+                      const text = (
+                        e.clipboardData || (window as any).clipboardData
+                      ).getData("text");
+                      const sanitized = text.replace(/[^0-9.]/g, "");
+                      const parts = sanitized.split(".");
+                      const finalVal =
+                        parts.length > 2
+                          ? parts[0] + "." + parts.slice(1).join("")
+                          : sanitized;
                       e.preventDefault();
-                      handleInputChange('cost', finalVal);
+                      handleInputChange("cost", finalVal);
                     }}
                     onKeyDown={(e) => {
                       // Block invalid characters like e, E, +, - and multiple dots
-                      const invalid = ['e', 'E', '+', '-'];
+                      const invalid = ["e", "E", "+", "-"];
                       if (invalid.includes(e.key)) e.preventDefault();
-                      if (e.key === '.' && (formData.cost || '').includes('.')) e.preventDefault();
+                      if (e.key === "." && (formData.cost || "").includes("."))
+                        e.preventDefault();
                     }}
-                    inputProps={{ inputMode: 'decimal' }}
+                    inputProps={{ inputMode: "decimal" }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -999,20 +1240,20 @@ export const AddInventoryPage = () => {
                       const qty = parseFloat(formData.quantity) || 0;
                       const cost = parseFloat(formData.cost) || 0;
                       const total = qty * cost;
-                      return total > 0 ? total.toFixed(2) : '';
+                      return total > 0 ? total.toFixed(2) : "";
                     })()}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     sx={{
                       ...fieldStyles,
-                      '& .MuiOutlinedInput-root': {
-                        ...fieldStyles['& .MuiOutlinedInput-root'],
-                        backgroundColor: '#F5F5F5',
+                      "& .MuiOutlinedInput-root": {
+                        ...fieldStyles["& .MuiOutlinedInput-root"],
+                        backgroundColor: "#F5F5F5",
                       },
-                      '& .MuiInputBase-input': {
-                        ...fieldStyles['& .MuiInputBase-input'],
-                        cursor: 'not-allowed',
+                      "& .MuiInputBase-input": {
+                        ...fieldStyles["& .MuiInputBase-input"],
+                        cursor: "not-allowed",
                       },
                     }}
                     disabled
@@ -1020,11 +1261,18 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
-                    <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={selectStyles}
+                    error={!!errors.unit}
+                  >
+                    <InputLabel shrink>
+                      Select Unit<span className="text-red-500">*</span>
+                    </InputLabel>
                     <MuiSelect
                       value={formData.unit}
-                      onChange={handleSelectChange('unit')}
+                      onChange={handleSelectChange("unit")}
                       label="Select Unit"
                       notched
                       displayEmpty
@@ -1074,22 +1322,22 @@ export const AddInventoryPage = () => {
                       value={parseYMDToDate(formData.expiryDate)}
                       onChange={(date) => {
                         const ymd = formatDateToYMD(date as Date | null);
-                        handleInputChange('expiryDate', ymd);
+                        handleInputChange("expiryDate", ymd);
                       }}
-                      format='dd-MM-yyyy'
+                      format="dd-MM-yyyy"
                       slotProps={{
                         textField: {
                           fullWidth: true,
-                          variant: 'outlined',
-                          size: 'small',
+                          variant: "outlined",
+                          size: "small",
                           InputLabelProps: { shrink: true },
                           sx: {
                             ...fieldStyles,
-                            '& .MuiInputBase-root': { height: 40 },
-                            '& .MuiInputBase-input': { padding: '8px 12px' },
+                            "& .MuiInputBase-root": { height: 40 },
+                            "& .MuiInputBase-input": { padding: "8px 12px" },
                           },
                           error: Boolean(errors.expiryDate),
-                          helperText: errors.expiryDate || '',
+                          helperText: errors.expiryDate || "",
                         },
                       }}
                     />
@@ -1097,16 +1345,23 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
-                    <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={selectStyles}
+                    error={!!errors.category}
+                  >
+                    <InputLabel shrink>
+                      Select Category<span className="text-red-500">*</span>
+                    </InputLabel>
                     <MuiSelect
                       value={formData.category}
-                      onChange={handleSelectChange('category')}
+                      onChange={handleSelectChange("category")}
                       label="Select Category"
                       notched
                       displayEmpty
                     >
-                      <MenuItem value="" sx={{ color: '#DA7756' }}>
+                      <MenuItem value="" sx={{ color: "#DA7756" }}>
                         Select an Option...
                       </MenuItem>
                       <MenuItem value="Non Technical">Non Technical</MenuItem>
@@ -1114,9 +1369,12 @@ export const AddInventoryPage = () => {
                       <MenuItem value="Houskeeping">Houskeeping</MenuItem>
                       <MenuItem value="Stationary">Stationary</MenuItem>
                       <MenuItem value="Pantry">Pantry</MenuItem>
+                      <MenuItem value="Storage">Storage</MenuItem>
                     </MuiSelect>
                     {errors.category && (
-                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.category}
+                      </p>
                     )}
                   </FormControl>
                 </div>
@@ -1127,7 +1385,9 @@ export const AddInventoryPage = () => {
                     label="Category Code"
                     placeholder="Enter Category Code"
                     value={formData.categoryCode}
-                    onChange={(e) => handleInputChange('categoryCode', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("categoryCode", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1141,15 +1401,18 @@ export const AddInventoryPage = () => {
                     <InputLabel shrink>Plant Code</InputLabel>
                     <MuiSelect
                       value={formData.plantCode}
-                      onChange={handleSelectChange('plantCode')}
+                      onChange={handleSelectChange("plantCode")}
                       label="Plant Code"
                       notched
                       displayEmpty
                     >
                       <MenuItem value="">Select Plant</MenuItem>
                       {plants.map((p, idx) => (
-                        <MenuItem key={p.id ?? idx} value={(p as any).plant_name || ''}>
-                          {(p as any).plant_name || 'Unnamed Plant'}
+                        <MenuItem
+                          key={p.id ?? idx}
+                          value={(p as any).plant_name || ""}
+                        >
+                          {(p as any).plant_name || "Unnamed Plant"}
                         </MenuItem>
                       ))}
                     </MuiSelect>
@@ -1161,14 +1424,14 @@ export const AddInventoryPage = () => {
                     <InputLabel shrink>Vendor</InputLabel>
                     <MuiSelect
                       value={formData.vendor}
-                      onChange={handleSelectChange('vendor')}
+                      onChange={handleSelectChange("vendor")}
                       label="Vendor"
                       notched
                       displayEmpty
                       disabled={suppliersLoading}
                     >
                       <MenuItem value="">
-                        {suppliersLoading ? 'Loading...' : 'Select Vendor'}
+                        {suppliersLoading ? "Loading..." : "Select Vendor"}
                       </MenuItem>
                       {suppliers.map((supplier: any) => (
                         <MenuItem key={supplier.id} value={String(supplier.id)}>
@@ -1181,10 +1444,17 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Max.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={
+                      <>
+                        Max.Stock Level
+                        <span style={{ color: "#DA7756" }}>*</span>
+                      </>
+                    }
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
-                    onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("maxStockLevel", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1196,10 +1466,17 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Min.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={
+                      <>
+                        Min.Stock Level
+                        <span style={{ color: "#DA7756" }}>*</span>
+                      </>
+                    }
                     placeholder="Min Stock"
                     value={formData.minStockLevel}
-                    onChange={(e) => handleInputChange('minStockLevel', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("minStockLevel", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1214,7 +1491,9 @@ export const AddInventoryPage = () => {
                     label="Min.Order Level"
                     placeholder="Min order"
                     value={formData.minOrderLevel}
-                    onChange={(e) => handleInputChange('minOrderLevel', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("minOrderLevel", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1241,9 +1520,15 @@ export const AddInventoryPage = () => {
               <div className="w-8 h8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
-              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">TAX DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">
+                TAX DETAILS
+              </h2>
             </div>
-            {taxDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            {taxDetailsExpanded ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
           </button>
 
           {taxDetailsExpanded && (
@@ -1255,34 +1540,47 @@ export const AddInventoryPage = () => {
                   onCheckedChange={(checked) => {
                     setTaxApplicable(checked === true);
                     if (!checked) {
-                      setErrors(prev => ({
+                      setErrors((prev) => ({
                         ...prev,
-                        sacHsnCode: '',
-                        sgstRate: '',
-                        cgstRate: '',
-                        igstRate: '',
+                        sacHsnCode: "",
+                        sgstRate: "",
+                        cgstRate: "",
+                        igstRate: "",
                       }));
                     }
                   }}
                 />
-                <label htmlFor="tax-applicable" className="text-sm font-medium text-black">Tax Applicable</label>
+                <label
+                  htmlFor="tax-applicable"
+                  className="text-sm font-medium text-black"
+                >
+                  Tax Applicable
+                </label>
               </div>
 
               {taxApplicable && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.sacHsnCode}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={selectStyles}
+                      error={!!errors.sacHsnCode}
+                    >
                       <InputLabel shrink>SAC/HSN Code</InputLabel>
                       <MuiSelect
                         value={formData.sacHsnCode}
-                        onChange={handleSelectChange('sacHsnCode')}
+                        onChange={handleSelectChange("sacHsnCode")}
                         label="SAC/HSN Code"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">Select SAC/HSN Code</MenuItem>
                         {sacList
-                          ?.filter((item: any) => item.code !== null && item.code !== '')
+                          ?.filter(
+                            (item: any) =>
+                              item.code !== null && item.code !== ""
+                          )
                           .map((item: any) => (
                             <MenuItem key={item.id} value={item.id}>
                               {item.code}
@@ -1291,11 +1589,11 @@ export const AddInventoryPage = () => {
                       </MuiSelect>
 
                       {errors.sacHsnCode && (
-                        <p className="text-red-500 text-sm mt-1">{errors.sacHsnCode}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.sacHsnCode}
+                        </p>
                       )}
                     </FormControl>
-
-
                   </div>
 
                   {/* Tax Category input */}
@@ -1304,7 +1602,9 @@ export const AddInventoryPage = () => {
                       label="Tax Category"
                       placeholder="Enter Tax Category"
                       value={formData.taxCategory}
-                      onChange={(e) => handleInputChange('taxCategory', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("taxCategory", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1317,7 +1617,9 @@ export const AddInventoryPage = () => {
                       label="SGST Rate"
                       placeholder="SGST Rate"
                       value={formData.sgstRate}
-                      onChange={(e) => handleInputChange('sgstRate', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("sgstRate", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1332,7 +1634,9 @@ export const AddInventoryPage = () => {
                       label="CGST Rate"
                       placeholder="CGST Rate"
                       value={formData.cgstRate}
-                      onChange={(e) => handleInputChange('cgstRate', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("cgstRate", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1347,7 +1651,9 @@ export const AddInventoryPage = () => {
                       label="IGST Rate"
                       placeholder="IGST Rate"
                       value={formData.igstRate}
-                      onChange={(e) => handleInputChange('igstRate', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("igstRate", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1392,7 +1698,7 @@ export const AddInventoryPage = () => {
                 />
               </svg>
             )}
-            {submitting ? 'Submitting...' : 'Submit'}
+            {submitting ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </div>
