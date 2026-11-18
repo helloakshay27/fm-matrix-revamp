@@ -3851,6 +3851,9 @@ const AddDayPassPage = lazy(
 const DayPassDashboard = lazy(
   () => import("./pages/ClubManagement/DayPassDashboard")
 );
+const DayPassDetails = lazy(
+  () => import("./pages/ClubManagement/DayPassDetails")
+);
 const AddGroupMembershipPage = lazy(
   () => import("./pages/ClubManagement/AddGroupMembershipPage")
 );
@@ -6419,6 +6422,10 @@ function App() {
                             <Route
                               path="/club-management/day-pass/add"
                               element={<AddDayPassPage />}
+                            />
+                            <Route
+                              path="/club-management/day-pass/:id"
+                              element={<DayPassDetails />}
                             />
                             <Route
                               path="/club-management/membership/add-group"

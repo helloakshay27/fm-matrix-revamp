@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Users } from 'lucide-react';
+import { Eye, Users, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -25,6 +25,7 @@ import {
 
 interface MembershipData {
   id: number;
+  can_renew?: boolean;
   user_id: number;
   pms_site_id: number;
   club_member_enabled: boolean;
@@ -681,6 +682,16 @@ export const ClubMembershipDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
+          {item.can_renew && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate(`/club-management/membership/${item.id}?action=renew`)}
+              title="Renew membership"
+              className=" p-0"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
           {/* <Button
             variant="ghost"
             onClick={() => navigate(`/club-management/membership/${item.id}/edit`)}

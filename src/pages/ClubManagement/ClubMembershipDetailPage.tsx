@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon, Loader2, RefreshCw, ArrowUpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import axios from 'axios';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { MembershipRolloverDialog, RolloverMode, RolloverResult } from './components/MembershipRolloverDialog';
+import { MembershipHistoryTab } from './components/MembershipHistoryTab';
 
 interface Attachment {
   id: number;
@@ -107,6 +109,11 @@ interface MembershipDetail {
     updated_at: string;
   } | null;
   club_member_allocation_id?: number;
+  status?: string;
+  change_type?: 'new' | 'renewal' | 'upgrade';
+  previous_club_member_id?: number | null;
+  can_renew?: boolean;
+  can_upgrade?: boolean;
   user: {
     id: number;
     email: string;
@@ -175,6 +182,7 @@ interface MembershipPlan {
 export const ClubMembershipDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const cmEvents = useClubManagementEvents();
   const detailViewLogged = useRef(false);
 
@@ -187,11 +195,20 @@ export const ClubMembershipDetailPage = () => {
   const [loadingPlanName, setLoadingPlanName] = useState(false);
   const [allocationPaymentDetail, setAllocationPaymentDetail] = useState<any>(null);
   const [loadingAllocationPayment, setLoadingAllocationPayment] = useState(false);
+  const [rolloverMode, setRolloverMode] = useState<RolloverMode | null>(null);
 
   // Fetch membership details
   useEffect(() => {
     fetchMembershipDetails();
   }, [id]);
+
+  // The list's Renew action opens this page with ?action=renew: open the renewal dialog once the member is loaded.
+  useEffect(() => {
+    if (searchParams.get('action') === 'renew' && membershipData?.can_renew) {
+      setRolloverMode('renewal');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, membershipData?.can_renew]);
 
   // Fetch membership plan name when membership data is loaded
   useEffect(() => {
@@ -317,6 +334,14 @@ export const ClubMembershipDetailPage = () => {
 
   const handleEdit = () => {
     navigate(`/club-management/membership/${id}/edit`);
+  };
+
+  // A renewal / upgrade creates a new version of the membership: continue on it. The old version stays in the history.
+  const handleRolloverDone = (result: RolloverResult) => {
+    cmEvents.action('membership_rollover', { membership_id: id, change_type: result.change_type });
+    const newId = result.club_member_ids?.[0];
+    if (newId) navigate(`/club-management/membership/${newId}`);
+    else fetchMembershipDetails();
   };
 
   const formatDate = (dateString: string | null) => {
@@ -530,6 +555,18 @@ export const ClubMembershipDetailPage = () => {
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
+            {membershipData.can_renew && (
+              <Button onClick={() => setRolloverMode('renewal')} className="bg-brand hover:bg-brand-hover text-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Renew
+              </Button>
+            )}
+            {membershipData.can_upgrade && (
+              <Button variant="outline" onClick={() => setRolloverMode('upgrade')}>
+                <ArrowUpCircle className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+            )}
             <Button
               onClick={handleEdit}
             >
@@ -593,6 +630,12 @@ export const ClubMembershipDetailPage = () => {
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
               System Information
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Membership History
             </TabsTrigger>
             {membershipData?.snag_answers && membershipData.snag_answers.length > 0 && (
               <TabsTrigger
@@ -1089,6 +1132,18 @@ export const ClubMembershipDetailPage = () => {
               </TabsContent>
             )}
 
+          <TabsContent value="history" className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+              <RefreshCw className="w-5 h-5 text-[#C72030]" />
+              Membership History
+            </h2>
+            <MembershipHistoryTab
+              clubMemberId={membershipData.id}
+              viewingClubMemberId={membershipData.id}
+              onOpenVersion={(version) => navigate(`/club-management/membership/${version.club_member_id}`)}
+            />
+          </TabsContent>
+
           <TabsContent value="system" className="p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
               <FileText className="w-5 h-5 text-[#C72030]" />
@@ -1216,6 +1271,17 @@ export const ClubMembershipDetailPage = () => {
           )}
         </Tabs>
       </div>
+
+      {rolloverMode && (
+        <MembershipRolloverDialog
+          open
+          onOpenChange={(o) => !o && setRolloverMode(null)}
+          mode={rolloverMode}
+          target={{ kind: 'member', id: membershipData.id }}
+          currentPlanId={membershipData.membership_plan_id}
+          onDone={handleRolloverDone}
+        />
+      )}
 
       {/* Image Modal */}
       {selectedImage && (

@@ -16,6 +16,17 @@ import { StatsCard } from '@/components/StatsCard';
 import { useDebounce } from '@/hooks/useDebounce';
 import { apiClient } from '@/utils/apiClient';
 import { getApiErrorMessage } from './apiErrorMessage';
+import {
+  PASS_PAYMENT_LABEL,
+  PASS_PAYMENT_STYLE,
+  PASS_STATUS_LABEL,
+  PASS_STATUS_STYLE,
+  PassStatus,
+  formatDate,
+  passPaymentOf,
+  passStatusOf,
+  toAmount,
+} from './dayPassUtils';
 
 // A day pass is a club member of the Day Pass plan; the Members list leaves them out and this list shows only them
 // (GET /club_members.json?day_pass=true).
@@ -28,13 +39,14 @@ interface DayPassRow {
   start_date?: string | null;
   end_date?: string | null;
   created_at?: string | null;
+  club_member_allocation_id?: number | null;
+  allocation_status?: string | null;
+  allocation_amount?: number | null;
   member_payment_detail?: {
     total_amount?: number | string | null;
     payment_mode?: string | null;
   } | null;
 }
-
-type PassStatus = 'today' | 'upcoming' | 'past';
 
 const PER_PAGE = 20;
 
@@ -47,34 +59,9 @@ const columns = [
   { key: 'start_date', label: 'Pass Date', sortable: true },
   { key: 'status', label: 'Status', sortable: false },
   { key: 'amount', label: 'Amount (₹)', sortable: false },
-  { key: 'payment_mode', label: 'Payment Mode', sortable: false },
+  { key: 'payment', label: 'Payment', sortable: false },
   { key: 'created_at', label: 'Created On', sortable: true },
 ];
-
-const todayString = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-};
-
-// 'YYYY-MM-DD' -> 'DD/MM/YYYY' without going through Date (no timezone shift).
-const formatDate = (value?: string | null) => {
-  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return match ? `${match[3]}/${match[2]}/${match[1]}` : '-';
-};
-
-const passStatusOf = (row: DayPassRow): PassStatus => {
-  const today = todayString();
-  if (row.start_date && row.start_date > today) return 'upcoming';
-  if (row.end_date && row.end_date < today) return 'past';
-  return 'today';
-};
-
-const STATUS_LABEL: Record<PassStatus, string> = { today: 'Valid today', upcoming: 'Upcoming', past: 'Expired' };
-const STATUS_STYLE: Record<PassStatus, string> = {
-  today: 'bg-brand-success-bg text-brand-success border-transparent',
-  upcoming: 'bg-brand-selected text-brand border-transparent',
-  past: 'bg-gray-100 text-gray-600 border-transparent',
-};
 
 export const DayPassDashboard = () => {
   const navigate = useNavigate();
@@ -134,7 +121,7 @@ export const DayPassDashboard = () => {
             variant="ghost"
             className="p-0"
             title="View Details"
-            onClick={() => navigate(`/club-management/membership/${item.id}`)}
+            onClick={() => navigate(`/club-management/day-pass/${item.id}`)}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -143,15 +130,16 @@ export const DayPassDashboard = () => {
         return formatDate(item.start_date);
       case 'status': {
         const status = passStatusOf(item);
-        return <Badge className={STATUS_STYLE[status]}>{STATUS_LABEL[status]}</Badge>;
+        return <Badge className={PASS_STATUS_STYLE[status]}>{PASS_STATUS_LABEL[status]}</Badge>;
       }
       case 'amount': {
-        const amount = parseFloat(String(item.member_payment_detail?.total_amount ?? ''));
-        return Number.isFinite(amount) ? amount.toFixed(2) : '-';
+        // From the pass's bill when it has one (see ClubMemberSerializer), else what was recorded when it was created.
+        const amount = item.club_member_allocation_id ? item.allocation_amount : item.member_payment_detail?.total_amount;
+        return amount === null || amount === undefined ? '-' : toAmount(amount).toFixed(2);
       }
-      case 'payment_mode': {
-        const mode = item.member_payment_detail?.payment_mode;
-        return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : '-';
+      case 'payment': {
+        const payment = passPaymentOf(item);
+        return <Badge className={PASS_PAYMENT_STYLE[payment]}>{PASS_PAYMENT_LABEL[payment]}</Badge>;
       }
       case 'created_at':
         return formatDate(item.created_at);

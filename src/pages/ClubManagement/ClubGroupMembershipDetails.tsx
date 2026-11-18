@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Loader } from 'lucide-react';
+import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Loader, RefreshCw, ArrowUpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +20,8 @@ import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
 import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
+import { MembershipRolloverDialog, RolloverMode, RolloverResult } from './components/MembershipRolloverDialog';
+import { MembershipHistoryTab } from './components/MembershipHistoryTab';
 
 interface Attachment {
   id: number;
@@ -44,6 +46,8 @@ interface Address {
 
 interface ClubMember {
   id: number;
+  can_renew?: boolean;
+  can_upgrade?: boolean;
   user_id: number;
   pms_site_id: number;
   club_member_enabled: boolean;
@@ -102,6 +106,8 @@ interface GroupMembershipDetail {
   referred_by?: string;
   club_members: ClubMember[];
   status: string;
+  change_type?: 'new' | 'renewal' | 'upgrade';
+  superseded_at?: string | null;
   allocation_payment_detail?: {
     id: number;
     club_member_allocation_id: number;
@@ -236,6 +242,7 @@ export const ClubGroupMembershipDetails = () => {
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [sendingBillId, setSendingBillId] = useState<number | null>(null);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [rolloverMode, setRolloverMode] = useState<RolloverMode | null>(null);
 
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
@@ -533,6 +540,23 @@ export const ClubGroupMembershipDetails = () => {
     navigate(`/club-management/group-membership/${id}/edit`);
   };
 
+  // A group is renewed / upgraded as a whole: every member has to be eligible. A pending (unpaid) group changes plan
+  // with "Change Membership Plan" instead.
+  const groupMembers = membershipData?.club_members ?? [];
+  const canRenewGroup = groupMembers.length > 0 && !membershipData?.superseded_at && groupMembers.every((m) => m.can_renew);
+  const canUpgradeGroup =
+    groupMembers.length > 0 &&
+    !membershipData?.superseded_at &&
+    membershipData?.status !== 'pending' &&
+    groupMembers.every((m) => m.can_upgrade);
+
+  // A renewal / upgrade creates a new allocation (a new version of the group): continue on it. The old one stays in the history.
+  const handleRolloverDone = (result: RolloverResult) => {
+    cmEvents.action('membership_rollover', { allocation_id: id, change_type: result.change_type });
+    const newId = result.new_allocation?.id;
+    if (newId) navigate(`/club-management/membership/group-details/${newId}`);
+  };
+
   const handleSendInvoice = async () => {
     setSendingInvoice(true);
     try {
@@ -808,6 +832,18 @@ export const ClubGroupMembershipDetails = () => {
                 </Button>
               )
             }
+            {canRenewGroup && (
+              <Button onClick={() => setRolloverMode('renewal')} className="bg-brand hover:bg-brand-hover text-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Renew
+              </Button>
+            )}
+            {canUpgradeGroup && (
+              <Button variant="outline" onClick={() => setRolloverMode('upgrade')}>
+                <ArrowUpCircle className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+            )}
             <Button
               onClick={handleEdit}
             >
@@ -854,7 +890,29 @@ export const ClubGroupMembershipDetails = () => {
             >
               Member Details
             </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Membership History
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="history" className="p-4 sm:p-6">
+            {membershipData.club_members?.[0] && (
+              <MembershipHistoryTab
+                clubMemberId={membershipData.club_members[0].id}
+                viewingAllocationId={membershipData.id}
+                onOpenVersion={(version) =>
+                  navigate(
+                    version.allocation_id
+                      ? `/club-management/membership/group-details/${version.allocation_id}`
+                      : `/club-management/membership/${version.club_member_id}`
+                  )
+                }
+              />
+            )}
+          </TabsContent>
 
           <TabsContent value="overview" className="p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
@@ -1824,6 +1882,17 @@ export const ClubGroupMembershipDetails = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {rolloverMode && (
+        <MembershipRolloverDialog
+          open
+          onOpenChange={(o) => !o && setRolloverMode(null)}
+          mode={rolloverMode}
+          target={{ kind: 'allocation', id: membershipData.id }}
+          currentPlanId={membershipData.membership_plan_id}
+          onDone={handleRolloverDone}
+        />
+      )}
 
       {/* Image Modal */}
       {selectedImage && (

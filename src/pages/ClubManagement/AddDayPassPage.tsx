@@ -36,13 +36,6 @@ interface HolderOption {
   mobile?: string;
 }
 
-const PAYMENT_MODES = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'card', label: 'Card' },
-  { value: 'upi', label: 'UPI' },
-  { value: 'online', label: 'Online' },
-];
-
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '0.375rem',
@@ -81,7 +74,6 @@ export const AddDayPassPage = () => {
   const [planError, setPlanError] = useState('');
 
   const [passDate, setPassDate] = useState(today());
-  const [paymentMode, setPaymentMode] = useState('cash');
 
   const [holderMode, setHolderMode] = useState<'new' | 'existing'>('new');
   const [holders, setHolders] = useState<HolderOption[]>([]);
@@ -187,57 +179,59 @@ export const AddDayPassPage = () => {
       const siteId = plan.site?.id ?? Number(localStorage.getItem('selectedSiteId'));
       const companyId = Number(localStorage.getItem('selectedCompanyId'));
 
-      const clubMember: Record<string, unknown> = {
-        custom_amenities: [[]],
-        pms_site_id: siteId,
-        club_member_enabled: true,
-        membership_plan_id: plan.id,
-        start_date: passDate,
-        end_date: passDate,
-        member_payment_detail_attributes: {
-          base_amount: base,
-          discount: '0',
-          cgst: cgstAmount.toString(),
-          sgst: sgstAmount.toString(),
-          total_tax: (cgstAmount + sgstAmount).toString(),
-          total_amount: total.toString(),
-          landed_amount: total.toString(),
-          payment_status: 'success',
-          payment_mode: paymentMode,
-          membership_plan_id: plan.id,
+      // The pass is created through the allocation route: that bills it, and the payment is marked afterwards on the
+      // pass's own page (Mark Payment), like a club membership allocation.
+      const member: Record<string, unknown> =
+        holderMode === 'existing'
+          ? { user_id: Number(selectedHolder), club_member: { club_member_enabled: true } }
+          : {
+              firstname: newHolder.firstName.trim(),
+              lastname: newHolder.lastName.trim(),
+              mobile: newHolder.mobile.trim(),
+              email: newHolder.email.trim(),
+              gender: newHolder.gender || undefined,
+              club_member: { club_member_enabled: true },
+              ...(companyId
+                ? {
+                    permissions: [
+                      { account_id: companyId, user_type: 'pms_occupant', access_level: 'Site', access_to: [siteId], status: 'approved' },
+                    ],
+                  }
+                : {}),
+            };
+
+      const response = await apiClient.post(
+        '/club_member_allocations.json',
+        {
+          club_member_allocation: {
+            pms_site_id: siteId,
+            membership_plan_id: plan.id,
+            start_date: passDate,
+            end_date: passDate,
+            name: `Day Pass ${passDate}`,
+            allocation_payment_detail_attributes: {
+              base_amount: base,
+              discount: 0,
+              cgst: cgstAmount,
+              sgst: sgstAmount,
+              igst: 0,
+              total_tax: cgstAmount + sgstAmount,
+              total_amount: total,
+              landed_amount: total,
+              payment_mode: 'online',
+              payment_status: 'pending',
+            },
+            members: [member],
+          },
         },
-      };
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-      const payload: Record<string, unknown> = { answers: [], club_member: clubMember };
-      if (holderMode === 'existing') {
-        clubMember.user_id = Number(selectedHolder);
-      } else {
-        payload.user = {
-          site_id: siteId,
-          registration_source: 'Web',
-          firstname: newHolder.firstName.trim(),
-          lastname: newHolder.lastName.trim(),
-          mobile: newHolder.mobile.trim(),
-          email: newHolder.email.trim(),
-          gender: newHolder.gender || undefined,
-          user_type: 'ClubMember',
-          ...(companyId
-            ? {
-                lock_user_permissions_attributes: [
-                  { account_id: companyId, user_type: 'pms_occupant', access_level: 'Site', access_to: [siteId], status: 'approved' },
-                ],
-              }
-            : {}),
-        };
-      }
-
-      await apiClient.post('/club_members.json', payload, { headers: { 'Content-Type': 'application/json' } });
       toast.success('Day pass created');
-      navigate('/club-management/day-pass');
+      const memberId = response.data?.club_member_ids?.[0];
+      navigate(memberId ? `/club-management/day-pass/${memberId}` : '/club-management/day-pass');
     } catch (error) {
-      // "User is already exist": the email or mobile belongs to someone already.
-      const reason = getApiErrorMessage(error, 'Failed to create the day pass');
-      toast.error(/already exist/i.test(reason) ? 'This email or mobile already belongs to a user: choose "Existing user" instead' : reason);
+      toast.error(getApiErrorMessage(error, 'Failed to create the day pass'));
     } finally {
       setIsSubmitting(false);
     }
@@ -328,22 +322,6 @@ export const AddDayPassPage = () => {
               fullWidth
               sx={fieldStyles}
             />
-            <TextField
-              select
-              label="Payment mode"
-              value={paymentMode}
-              onChange={(event) => setPaymentMode(event.target.value)}
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-              fullWidth
-              sx={fieldStyles}
-            >
-              {PAYMENT_MODES.map((mode) => (
-                <MenuItem key={mode.value} value={mode.value}>
-                  {mode.label}
-                </MenuItem>
-              ))}
-            </TextField>
           </div>
         </section>
 
