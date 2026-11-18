@@ -1865,7 +1865,7 @@ export default function RevampDashboardPage() {
   const poolTotal = ticketsOverview?.pool_composition.total ?? 0;
 
   // Tickets category names come back padded ("ELECTRICAL SYSTEM "), so compare trimmed.
-  const matchesCategoryFilter = (name: string) => appliedCategory === "all" || name.trim() === appliedCategory.trim();
+  const matchesCategoryFilter = (name: string) => appliedCategory === "all" || (name ?? "").trim() === appliedCategory.trim();
 
   // tickets_category_comparison is the dedicated per-category status source; the older
   // tickets_breakdown.by_category stays as a fallback if that endpoint returned nothing.
@@ -1873,14 +1873,14 @@ export default function RevampDashboardPage() {
     const comparison = ticketsApiData.categoryComparison;
     const rows = comparison.length
       ? comparison.map((c) => ({
-          category: c.name.trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
+          category: (c.name ?? "").trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
           pending: c.status_count.pending,
           inProgress: c.status_count.in_progress,
           onHold: c.status_count.on_hold,
           closed: c.status_count.closed,
         }))
       : (ticketsBreakdown?.by_category ?? []).map((c) => ({
-          category: c.name.trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
+          category: (c.name ?? "").trim().replace(/\s+/g, " ") || `Category ${c.category_type_id}`,
           pending: c.status_breakdown.pending,
           inProgress: c.status_breakdown.in_progress,
           onHold: c.status_breakdown.on_hold,
@@ -1896,7 +1896,7 @@ export default function RevampDashboardPage() {
         const trend = vsLastMonthDisplay(c.vs_last_month_percent);
         const ageingDays = Math.round(parseFloat(c.avg_ageing_days) || 0);
         return {
-          category: c.name.trim(),
+          category: (c.name ?? "").trim(),
           total: c.total,
           tatBreach: c.tat_breach_percent,
           tatTone: tatBreachTone(c.tat_breach_percent),
@@ -1916,7 +1916,7 @@ export default function RevampDashboardPage() {
       .sort((a, b) => b.ticket_count - a.ticket_count)
       .map((tenant) => ({
         ...tenant,
-        label: tenant.name.trim().replace(/\s+/g, " ") || `Tenant ${tenant.entity_id}`,
+        label: (tenant.name ?? "").trim().replace(/\s+/g, " ") || `Tenant ${tenant.entity_id}`,
       }));
     const labelCounts = new Map<string, number>();
     tenants.forEach(({ label }) => {
@@ -1961,7 +1961,7 @@ export default function RevampDashboardPage() {
       (techWorkload?.data ?? [])
         .slice()
         .sort((a, b) => b.open_ticket_count - a.open_ticket_count)
-        .map((t) => ({ tech: t.name.trim().replace(/\s+/g, " "), count: t.open_ticket_count })),
+        .map((t) => ({ tech: (t.name ?? "").trim().replace(/\s+/g, " "), count: t.open_ticket_count })),
     [techWorkload]
   );
 
@@ -2010,7 +2010,7 @@ export default function RevampDashboardPage() {
         .sort((a, b) => b.ticket_count - a.ticket_count)
         .map((location) => ({
           ...location,
-          label: location.name.trim().replace(/\s+/g, " ") || `Location ${location.tower_id}`,
+          label: (location.name ?? "").trim().replace(/\s+/g, " ") || `Location ${location.tower_id}`,
         }));
       const labelCounts = new Map<string, number>();
       locations.forEach(({ label }) => {
@@ -2462,12 +2462,12 @@ export default function RevampDashboardPage() {
   const amcCoverageByCategoryData = useMemo(
     () => {
       const categories = (amcCoverage?.coverage_by_category ?? [])
-        .filter((category) => appliedCategory === "all" || category.name.trim() === appliedCategory.trim())
+        .filter((category) => appliedCategory === "all" || (category.name ?? "").trim() === appliedCategory.trim())
         .slice()
         .sort((a, b) => a.coverage_percent - b.coverage_percent);
 
       return categories.map((category) => ({
-        category: category.name.trim().replace(/\s+/g, " ") || `Category #${category.pms_asset_group_id}`,
+        category: (category.name ?? "").trim().replace(/\s+/g, " ") || `Category #${category.pms_asset_group_id}`,
         pct: category.coverage_percent,
       }));
     },
@@ -2894,7 +2894,7 @@ export default function RevampDashboardPage() {
       .sort((a, b) => b.missed_visits - a.missed_visits)
       .map((vendor) => ({
         ...vendor,
-        name: vendor.vendor_name.trim().replace(/\s+/g, " ") || `Vendor #${vendor.pms_supplier_id}`,
+        name: (vendor.vendor_name ?? "").trim().replace(/\s+/g, " ") || `Vendor #${vendor.pms_supplier_id}`,
       }));
     const nameCounts = new Map<string, number>();
     vendors.forEach(({ name }) => {
@@ -2938,7 +2938,7 @@ export default function RevampDashboardPage() {
     (assetsCategory?.category_wise_breakdown ?? []).forEach((c) => names.add(c.name));
     (wasteBreakdown?.by_category ?? []).forEach((c) => names.add(c.category));
     (amcCoverage?.coverage_by_category ?? []).forEach((c) => names.add(c.name));
-    (ticketsApiData.categoryComparison ?? []).forEach((c) => names.add(c.name.trim()));
+    (ticketsApiData.categoryComparison ?? []).forEach((c) => names.add((c.name ?? "").trim()));
     return Array.from(names).sort();
   }, [assetsCategory, wasteBreakdown, amcCoverage, ticketsApiData.categoryComparison]);
 
@@ -5016,11 +5016,16 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Weightage Scoring %"
-                  value={checklistsCompliance ? `${checklistsCompliance.weightage_scoring.weightage_score_percent}%` : "—"}
+                  value={
+                    checklistsCompliance?.weightage_scoring?.weightage_score_percent != null
+                      ? `${checklistsCompliance.weightage_scoring.weightage_score_percent}%`
+                      : "—"
+                  }
                   accent="warning"
                   subtitle={
-                    checklistsCompliance
-                      ? `${checklistsCompliance.weightage_scoring.achieved_score.toLocaleString()} of ${checklistsCompliance.weightage_scoring.max_score.toLocaleString()} score`
+                    checklistsCompliance?.weightage_scoring?.achieved_score != null &&
+                    checklistsCompliance.weightage_scoring.max_score != null
+                      ? `${Number(checklistsCompliance.weightage_scoring.achieved_score).toLocaleString()} of ${Number(checklistsCompliance.weightage_scoring.max_score).toLocaleString()} score`
                       : "Achieved score relative to maximum score"
                   }
                 />

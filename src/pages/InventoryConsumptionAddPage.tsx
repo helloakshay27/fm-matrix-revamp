@@ -445,7 +445,22 @@ const InventoryConsumptionAddPage = () => {
   };
 
   const handleFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+    const selected = Array.from(event.target.files || []);
+    // Only JPEG, PNG and PDF are allowed; `accept` alone can be bypassed via "All files".
+    const validType = selected.filter((file) =>
+      /\.(jpe?g|png|pdf)$/i.test(file.name)
+    );
+    if (validType.length < selected.length) {
+      toast.error("Only JPEG, PNG and PDF files are allowed");
+    }
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file
+    const files = validType.filter((file) => file.size <= MAX_FILE_SIZE);
+    const oversized = validType.filter((file) => file.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      toast.error(
+        `${oversized.map((f) => f.name).join(", ")} ${oversized.length > 1 ? "exceed" : "exceeds"} the 10 MB limit`
+      );
+    }
     setAttachments((prev) => [...prev, ...files]);
     event.target.value = "";
   };
@@ -1024,7 +1039,7 @@ const InventoryConsumptionAddPage = () => {
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+              accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
               className="hidden"
               onChange={handleFilesSelected}
             />
@@ -1033,8 +1048,11 @@ const InventoryConsumptionAddPage = () => {
               onClick={() => fileInputRef.current?.click()}
               className="w-full rounded-lg border border-dashed border-gray-300 py-4 text-sm text-gray-500 hover:border-brand hover:text-brand transition-colors"
             >
-              Click to upload images or documents
+              Click to upload attachments
             </button>
+            <p className="mt-1 text-xs text-gray-500">
+              Supported formats: JPEG, PNG, PDF (max 10 MB each)
+            </p>
             {attachments.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {attachments.map((file, index) => (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, FileText } from "lucide-react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchInventoryConsumptionDetails } from "@/store/slices/inventoryConsumptionDetailsSlice";
@@ -9,6 +9,40 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { CircularProgress } from "@mui/material";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { ImageCarouselModal } from "@/components/community/ImageCarouselModal";
+
+interface ConsumptionAttachment {
+  id: number;
+  filename?: string;
+  url?: string;
+}
+
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  bmp: "image/bmp",
+  svg: "image/svg+xml",
+};
+
+const VIDEO_MIME_BY_EXT: Record<string, string> = {
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
+};
+
+// The API sends only a filename, but ImageCarouselModal keys off a content type.
+const getContentType = (filename?: string): string => {
+  const ext = (filename || "").split(".").pop()?.toLowerCase() || "";
+  return IMAGE_MIME_BY_EXT[ext] || VIDEO_MIME_BY_EXT[ext] || "application/octet-stream";
+};
+
+const isPreviewable = (contentType: string) =>
+  contentType.startsWith("image/") || contentType.startsWith("video/");
+
+const MAX_VISIBLE_ATTACHMENTS = 3;
 
 const ledgerCellClass = "block w-full text-[12.5px] text-[var(--color-ink-68)]";
 const ledgerNumericCellClass = `${ledgerCellClass} text-right tabular-nums`;
@@ -32,6 +66,35 @@ const InventoryConsumptionViewPage = () => {
 
   const [dateRange, setDateRange] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [carousel, setCarousel] = useState<{
+    key: number;
+    attachments: { id: number; document_content_type: string; url: string }[];
+    startIndex: number;
+  } | null>(null);
+
+  // Opens the row's image/video attachments in the carousel, starting at the clicked one.
+  const openAttachmentCarousel = useCallback(
+    (attachments: ConsumptionAttachment[], clicked: ConsumptionAttachment) => {
+      const media = attachments
+        .map((a) => ({
+          id: a.id,
+          url: a.url as string,
+          document_content_type: getContentType(a.filename),
+        }))
+        .filter((a) => isPreviewable(a.document_content_type));
+      const startIndex = Math.max(
+        0,
+        media.findIndex((a) => a.id === clicked.id)
+      );
+      // Fresh key per open so the modal never keeps a stale index from a previous row
+      setCarousel((prev) => ({
+        key: (prev?.key ?? 0) + 1,
+        attachments: media,
+        startIndex,
+      }));
+    },
+    []
+  );
 
   const handleExport = async () => {
     try {
@@ -105,6 +168,7 @@ const InventoryConsumptionViewPage = () => {
       { key: "handover_to", label: "Handover To", sortable: true },
       { key: "comments", label: "Comments", sortable: false },
       { key: "consumed_by", label: "Consumed By", sortable: true },
+      { key: "attachments", label: "Attachments", sortable: false },
     ],
     []
   );
@@ -238,10 +302,73 @@ const InventoryConsumptionViewPage = () => {
             {item?.consumed_by || "-"}
           </span>
         );
+      case "attachments": {
+        const attachments: ConsumptionAttachment[] = Array.isArray(
+          item?.attachments
+        )
+          ? item.attachments.filter((a: ConsumptionAttachment) => a?.url)
+          : [];
+        if (attachments.length === 0) {
+          return <span className={ledgerCellClass}>-</span>;
+        }
+        const visible = attachments.slice(0, MAX_VISIBLE_ATTACHMENTS);
+        const hiddenCount = attachments.length - visible.length;
+        return (
+          <div className="flex gap-1.5">
+            {visible.map((attachment, index) => {
+              const name = attachment.filename || `Attachment ${index + 1}`;
+              const contentType = getContentType(attachment.filename);
+              const showMore =
+                hiddenCount > 0 && index === MAX_VISIBLE_ATTACHMENTS - 1;
+              return (
+                <button
+                  key={attachment.id ?? index}
+                  type="button"
+                  title={name}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isPreviewable(contentType)) {
+                      openAttachmentCarousel(attachments, attachment);
+                    } else {
+                      // Non-media files (PDF, docs, ...) can't render in the carousel
+                      window.open(attachment.url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  className="relative w-12 h-12 shrink-0 rounded border border-gray-200 overflow-hidden bg-[#F6F4EE] hover:border-brand"
+                >
+                  {contentType.startsWith("image/") ? (
+                    <img
+                      src={attachment.url}
+                      alt={name}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : contentType.startsWith("video/") ? (
+                    <video
+                      src={attachment.url}
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex w-full h-full items-center justify-center">
+                      <FileText className="w-5 h-5 text-brand" />
+                    </span>
+                  )}
+                  {showMore && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm font-semibold">
+                      +{hiddenCount + 1}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        );
+      }
       default:
         return <span className={ledgerCellClass}>-</span>;
     }
-  }, []);
+  }, [openAttachmentCarousel]);
 
   return (
     <div className="p-6 space-y-4">
@@ -311,6 +438,18 @@ const InventoryConsumptionViewPage = () => {
               </Button>
             </div>
           }
+        />
+      )}
+
+      {carousel && (
+        <ImageCarouselModal
+          key={carousel.key}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setCarousel(null);
+          }}
+          attachments={carousel.attachments}
+          initialIndex={carousel.startIndex}
         />
       )}
     </div>
