@@ -5016,11 +5016,16 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="teal"
                   label="Weightage Scoring %"
-                  value={checklistsCompliance ? `${checklistsCompliance.weightage_scoring.weightage_score_percent}%` : "—"}
+                  value={
+                    checklistsCompliance?.weightage_scoring?.weightage_score_percent != null
+                      ? `${checklistsCompliance.weightage_scoring.weightage_score_percent}%`
+                      : "—"
+                  }
                   accent="warning"
                   subtitle={
-                    checklistsCompliance
-                      ? `${checklistsCompliance.weightage_scoring.achieved_score.toLocaleString()} of ${checklistsCompliance.weightage_scoring.max_score.toLocaleString()} score`
+                    checklistsCompliance?.weightage_scoring?.achieved_score != null &&
+                    checklistsCompliance.weightage_scoring.max_score != null
+                      ? `${Number(checklistsCompliance.weightage_scoring.achieved_score).toLocaleString()} of ${Number(checklistsCompliance.weightage_scoring.max_score).toLocaleString()} score`
                       : "Achieved score relative to maximum score"
                   }
                 />
