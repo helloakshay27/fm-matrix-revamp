@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/StatsCard";
 import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface LockedUser {
   id: number;
@@ -64,9 +65,11 @@ interface LockedUsersResponse {
 
 export const LockedUsersDashboard = () => {
   const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<LockedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 500);
+  // Tracks the latest request so out-of-order responses (fast typing) are ignored
+  const latestRequestRef = useRef(0);
   const [selectedUser, setSelectedUser] = useState<LockedUser | null>(null);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
@@ -80,13 +83,17 @@ export const LockedUsersDashboard = () => {
   });
 
   // Fetch locked users
-  const fetchLockedUsers = async (page: number = 1) => {
+  const fetchLockedUsers = async (page: number = 1, search: string = debouncedSearchTerm) => {
+    const requestId = ++latestRequestRef.current;
     setLoading(true);
     try {
       const baseUrl = location.pathname.startsWith("/master")
         ? "/pms/users/locked_users.json?selected_site_wise=true"
         : "/pms/users/locked_users.json";
-      const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+      let url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+      if (search) {
+        url += `&q[email_or_mobile_cont]=${encodeURIComponent(search)}`;
+      }
 
       const response = await fetch(
         getFullUrl(url),
@@ -104,53 +111,37 @@ export const LockedUsersDashboard = () => {
       }
 
       const data: LockedUsersResponse = await response.json();
+      if (requestId !== latestRequestRef.current) return;
       setLockedUsers(data.locked_users || []);
-      setFilteredUsers(data.locked_users || []);
 
       if (data.pagination) {
         setPagination(data.pagination);
       }
 
-      if (data.locked_users?.length === 0) {
+      if (data.locked_users?.length === 0 && !search) {
         toast.info("No locked users found");
       }
     } catch (error: any) {
+      if (requestId !== latestRequestRef.current) return;
       console.error("Error fetching locked users:", error);
       toast.error(
         error.message || "Failed to load locked users"
       );
       // Set empty arrays on error
       setLockedUsers([]);
-      setFilteredUsers([]);
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
-  // Load data on mount
+  // Load data on mount and re-fetch (from page 1) whenever the debounced search changes
   useEffect(() => {
-    fetchLockedUsers();
-  }, []);
-
-  // Filter users based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(lockedUsers);
-      return;
-    }
-
-    const lowerSearch = searchTerm.toLowerCase();
-    const filtered = lockedUsers.filter(
-      (user) =>
-        user.firstname?.toLowerCase().includes(lowerSearch) ||
-        user.lastname?.toLowerCase().includes(lowerSearch) ||
-        user.email?.toLowerCase().includes(lowerSearch) ||
-        user.mobile?.includes(searchTerm) ||
-        user.department?.toLowerCase().includes(lowerSearch) ||
-        user.designation?.toLowerCase().includes(lowerSearch)
-    );
-    setFilteredUsers(filtered);
-  }, [searchTerm, lockedUsers]);
+    setSelectedIds(new Set());
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
+    fetchLockedUsers(1, debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   // Handle unlock user
   const handleUnlockUser = async () => {
@@ -180,7 +171,6 @@ export const LockedUsersDashboard = () => {
 
       // Remove unlocked user from the list
       setLockedUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
-      setFilteredUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
 
       setUnlockDialogOpen(false);
       setSelectedUser(null);
@@ -224,10 +214,10 @@ export const LockedUsersDashboard = () => {
 
   // Handle select all checkbox
   const handleSelectAll = () => {
-    if (selectedIds.size === filteredUsers.length) {
+    if (selectedIds.size === lockedUsers.length) {
       setSelectedIds(new Set());
     } else {
-      const allIds = new Set(filteredUsers.map((user) => user.id));
+      const allIds = new Set(lockedUsers.map((user) => user.id));
       setSelectedIds(allIds);
     }
   };
@@ -265,9 +255,6 @@ export const LockedUsersDashboard = () => {
       // Remove unlocked users from the list
       const selectedIdsArray = Array.from(selectedIds);
       setLockedUsers((prev) =>
-        prev.filter((u) => !selectedIdsArray.includes(u.id))
-      );
-      setFilteredUsers((prev) =>
         prev.filter((u) => !selectedIdsArray.includes(u.id))
       );
 
@@ -464,7 +451,7 @@ export const LockedUsersDashboard = () => {
 
         <StatsCard
           title="Filtered Results"
-          value={filteredUsers.length}
+          value={lockedUsers.length}
           icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
         />
 
@@ -481,7 +468,7 @@ export const LockedUsersDashboard = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
-              placeholder="Search by name, email, mobile, department, or designation..."
+              placeholder="Search by email or mobile..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-11"
@@ -498,7 +485,7 @@ export const LockedUsersDashboard = () => {
               <Loader2 className="w-5 h-5 animate-spin" />
               <span className="ml-2">Loading ...</span>
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : lockedUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <UnlockIcon className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -517,13 +504,13 @@ export const LockedUsersDashboard = () => {
                   <TableRow>
                     <TableHead className="w-12">
                       <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === filteredUsers.length && filteredUsers.length > 0
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === lockedUsers.length && lockedUsers.length > 0
                           ? "bg-[#DA7756] border-[#DA7756]"
                           : "border-gray-300 hover:border-gray-400"
                           }`}
                         onClick={handleSelectAll}
                       >
-                        {selectedIds.size > 0 && selectedIds.size === filteredUsers.length && (
+                        {selectedIds.size > 0 && selectedIds.size === lockedUsers.length && (
                           <Check className="w-4 h-4 text-white" />
                         )}
                       </div>
@@ -537,7 +524,7 @@ export const LockedUsersDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {lockedUsers.map((user) => (
                     <TableRow key={user.id} className={selectedIds.has(user.id) ? "bg-blue-50" : ""}>
                       <TableCell>
                         <div
