@@ -2723,15 +2723,17 @@ export default function RevampDashboardPage() {
   const inventoryConsumption = inventoryApiData.consumption;
   const inventoryTypeBreakdownData = useMemo(() => {
     const rows = inventoryOverview?.type_criticality_breakdown ?? [];
-    const byType = new Map<string, { type: string; critical: number; nonCritical: number }>();
+    const byType = new Map<string, { type: string; critical: number; nonCritical: number; unclassified: number }>();
     rows.forEach((r) => {
-      const entry = byType.get(r.inventory_type) ?? { type: r.inventory_type, critical: 0, nonCritical: 0 };
+      const entry = byType.get(r.inventory_type) ?? { type: r.inventory_type, critical: 0, nonCritical: 0, unclassified: 0 };
       if (r.criticality === "Critical") entry.critical += r.count;
-      else entry.nonCritical += r.count;
+      else if (r.criticality === "Non-Critical") entry.nonCritical += r.count;
+      else entry.unclassified += r.count;
       byType.set(r.inventory_type, entry);
     });
     return Array.from(byType.values());
   }, [inventoryOverview]);
+  const inventoryHasUnclassified = inventoryTypeBreakdownData.some((r) => r.unclassified > 0);
 
   const inventoryUrgentRestockRows = useMemo(
     () =>
@@ -5330,10 +5332,11 @@ export default function RevampDashboardPage() {
                     subtitle="Critical vs Non-Critical, per inventory type"
                     data={inventoryTypeBreakdownData}
                     categoryKey="type"
-                    seriesColors={["#2F6FE0", "#5A4BE0"]}
+                    seriesColors={["#2F6FE0", "#5A4BE0", "#9CA3AF"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
+                      ...(inventoryHasUnclassified ? [{ dataKey: "unclassified", name: "Unclassified" }] : []),
                     ]}
                     showInfoIcon
                     className="h-full overflow-auto"
