@@ -1839,7 +1839,13 @@ export default function RevampDashboardPage() {
   useEffect(() => {
     failedSections.forEach((section) => {
       if (!shownFailedSectionLabelsRef.current.has(section.label)) {
-        toast.error(`${section.label} failed to load`, { description: section.error });
+        const raw = section.error;
+        const short = /<\s*(!doctype|html)/i.test(raw)
+          ? "Server returned an error page"
+          : raw.length > 120
+            ? `${raw.slice(0, 120)}…`
+            : raw;
+        toast.error(`${section.label} failed to load`, { description: short });
       }
     });
     shownFailedSectionLabelsRef.current = new Set(failedSections.map((s) => s.label));

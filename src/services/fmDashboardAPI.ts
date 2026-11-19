@@ -43,7 +43,26 @@ export async function fetchFmDashboardJson<T>(endpoint: string, params: FmDashbo
   const response = await fetch(url, getAuthenticatedFetchOptions("GET"));
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`FM dashboard request failed (${response.status}) for ${endpoint}: ${body}`);
+    const looksLikeHtml = /^\s*<(!doctype|html)/i.test(body);
+    let detail = "";
+    if (!looksLikeHtml && body) {
+      try {
+        const j = JSON.parse(body);
+        detail = String(j?.message || j?.error || "");
+      } catch {
+        detail = body;
+      }
+    }
+    const short: Record<number, string> = {
+      401: "Unauthorized",
+      403: "Access denied",
+      404: "Not found",
+      500: "Server error",
+      502: "Bad gateway",
+      503: "Service unavailable",
+    };
+    const msg = detail.trim().slice(0, 120) || short[response.status] || "Request failed";
+    throw new Error(`${msg} (${response.status})`);
   }
   return response.json() as Promise<T>;
 }
@@ -1037,7 +1056,7 @@ const INVENTORY_ENDPOINTS = {
   STOCK_HEALTH: "/fm_dashboard/inventory/inventory_stock_health.json",
   CONSUMPTION: "/fm_dashboard/inventory/inventory_consumption.json",
   OPERATIONS: "/fm_dashboard/inventory/inventory_operations.json",
-  KPIS_TABLE: "/fm_dashboard/inventory/inventory_kpis_table",
+  // KPIS_TABLE: "/fm_dashboard/inventory/inventory_kpis_table",
 } as const;
 
 export const fetchInventoryOverview = (params: FmDashboardParams) =>
