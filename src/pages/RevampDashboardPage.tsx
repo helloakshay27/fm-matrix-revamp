@@ -52,7 +52,7 @@ import {
   type DataTableColumn,
   type TableBadgeTone,
 } from "@/components/charts";
-import type { SurveyOverviewQuestion, SurveyCsatPeriod, SurveyCsatBreakdownRow, SurveyTrendPoint } from "@/services/fmDashboardAPI";
+import type { AttendanceDepartmentRow, SurveyOverviewQuestion, SurveyCsatPeriod, SurveyCsatBreakdownRow, SurveyTrendPoint } from "@/services/fmDashboardAPI";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponseHeatmapCard } from "@/components/charts/ResponseHeatmapCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1209,6 +1209,41 @@ function buildSurveyCsatColumns(period: SurveyCsatPeriod): DataTableColumn<Surve
     { key: "total", header: "Total", align: "center", render: (row) => <span className="text-brand-text">{row.total}</span> },
   ];
 }
+
+const attendancePercent = (part: number, total: number) => (total > 0 ? Math.round((part / total) * 1000) / 10 : 0);
+
+const ATTENDANCE_DEPARTMENT_COLUMNS: DataTableColumn<AttendanceDepartmentRow>[] = [
+  { key: "department", header: "Department", render: (row) => <span className="font-semibold text-brand-text">{row.department_name}</span> },
+  {
+    key: "present",
+    header: "Present",
+    align: "center",
+    render: (row) => <TableBadge tone="green">{row.present}</TableBadge>,
+  },
+  {
+    key: "absent",
+    header: "Absent",
+    align: "center",
+    render: (row) => (
+      <TableBadge tone={row.absent > 0 ? "red" : "grey"}>
+        {row.absent} ({attendancePercent(row.absent, row.total_working_days)}%)
+      </TableBadge>
+    ),
+  },
+  { key: "leave", header: "Leave", align: "center", render: (row) => <TableBadge tone="amber">{row.leave}</TableBadge> },
+  {
+    key: "total",
+    header: "Working days",
+    align: "center",
+    render: (row) => <span className="text-brand-text">{row.total_working_days}</span>,
+  },
+  {
+    key: "rate",
+    header: "Present %",
+    align: "center",
+    render: (row) => <span className="text-brand-text">{attendancePercent(row.present, row.total_working_days)}%</span>,
+  },
+];
 
 interface VendorContractTableRow {
   vendorId: number;
@@ -2723,15 +2758,17 @@ export default function RevampDashboardPage() {
   const inventoryConsumption = inventoryApiData.consumption;
   const inventoryTypeBreakdownData = useMemo(() => {
     const rows = inventoryOverview?.type_criticality_breakdown ?? [];
-    const byType = new Map<string, { type: string; critical: number; nonCritical: number }>();
+    const byType = new Map<string, { type: string; critical: number; nonCritical: number; unclassified: number }>();
     rows.forEach((r) => {
-      const entry = byType.get(r.inventory_type) ?? { type: r.inventory_type, critical: 0, nonCritical: 0 };
+      const entry = byType.get(r.inventory_type) ?? { type: r.inventory_type, critical: 0, nonCritical: 0, unclassified: 0 };
       if (r.criticality === "Critical") entry.critical += r.count;
-      else entry.nonCritical += r.count;
+      else if (r.criticality === "Non-Critical") entry.nonCritical += r.count;
+      else entry.unclassified += r.count;
       byType.set(r.inventory_type, entry);
     });
     return Array.from(byType.values());
   }, [inventoryOverview]);
+  const inventoryHasUnclassified = inventoryTypeBreakdownData.some((r) => r.unclassified > 0);
 
   const inventoryUrgentRestockRows = useMemo(
     () =>
@@ -2910,13 +2947,8 @@ export default function RevampDashboardPage() {
   const attendanceDepartmentRows = useMemo(
     () =>
       (attendanceDepartment?.department_breakdown ?? [])
-        .filter((d) => typeof d.department === "string")
-        .map((d) => ({
-          label: d.department as string,
-          value: `${typeof d.present_count === "number" ? d.present_count : "–"} / ${
-            typeof d.absent_count === "number" ? d.absent_count : "–"
-          }`,
-        })),
+        .slice()
+        .sort((a, b) => b.total_working_days - a.total_working_days),
     [attendanceDepartment]
   );
 
@@ -5371,10 +5403,11 @@ export default function RevampDashboardPage() {
                     subtitle="Critical vs Non-Critical, per inventory type"
                     data={inventoryTypeBreakdownData}
                     categoryKey="type"
-                    seriesColors={["#2F6FE0", "#5A4BE0"]}
+                    seriesColors={["#2F6FE0", "#5A4BE0", "#9CA3AF"]}
                     series={[
                       { dataKey: "critical", name: "Critical" },
                       { dataKey: "nonCritical", name: "Non-Critical" },
+                      ...(inventoryHasUnclassified ? [{ dataKey: "unclassified", name: "Unclassified" }] : []),
                     ]}
                     showInfoIcon
                     className="h-full overflow-auto"
@@ -5754,10 +5787,13 @@ export default function RevampDashboardPage() {
               <div key="attendance-department-wise" chart_code="fm-attendance-department-wise" className="h-full relative">
                 <AddToDashboardButton chartId="fm-attendance-department-wise" moduleKey="maintenance" subTab="Attendance" height="5" width="12" position="0,438" />
                 {attendanceDepartmentRows.length ? (
-                  <StatListCard
+                  <DataTableCard
                     title="Department-wise Present/Absent"
                     subtitle="Where are the gaps concentrated?"
-                    rows={attendanceDepartmentRows}
+                    columns={ATTENDANCE_DEPARTMENT_COLUMNS}
+                    data={attendanceDepartmentRows}
+                    getRowKey={(row) => row.pms_department_id ?? row.department_name}
+                    visibleRows={6}
                     className="h-full overflow-auto"
                   />
                 ) : (

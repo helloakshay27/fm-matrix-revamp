@@ -540,20 +540,37 @@ export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
     setError(null);
 
     const params = { siteIds, fromDate, toDate };
-    Promise.all([
+    // allSettled: one failing endpoint must not blank the overview cards (they only need the overview call).
+    Promise.allSettled([
       fetchInventoryOverview(params),
       fetchInventoryStockHealth(params),
       fetchInventoryConsumption(params),
       fetchInventoryOperations(params),
       fetchInventoryKpisTable(params),
     ])
-      .then(([overview, stockHealth, consumption, operations, kpisTable]) => {
+      .then(([overviewResult, stockHealthResult, consumptionResult, operationsResult, kpisTableResult]) => {
         if (cancelled) return;
-        setData({ overview, stockHealth, consumption, operations, kpisTable });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load inventory dashboard data");
+        setData({
+          overview: overviewResult.status === "fulfilled" ? overviewResult.value : null,
+          stockHealth: stockHealthResult.status === "fulfilled" ? stockHealthResult.value : null,
+          consumption: consumptionResult.status === "fulfilled" ? consumptionResult.value : null,
+          operations: operationsResult.status === "fulfilled" ? operationsResult.value : null,
+          kpisTable: kpisTableResult.status === "fulfilled" ? kpisTableResult.value : null,
+        });
+
+        const getFailure = (name: string, result: PromiseSettledResult<unknown>) => {
+          if (result.status === "fulfilled") return null;
+          const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+          return `${name}: ${reason}`;
+        };
+        const failures = [
+          getFailure("overview", overviewResult),
+          getFailure("stock health", stockHealthResult),
+          getFailure("consumption", consumptionResult),
+          getFailure("operations", operationsResult),
+          getFailure("KPIs table", kpisTableResult),
+        ].filter((failure): failure is string => failure !== null);
+        setError(failures.length ? `Some inventory data failed to load: ${failures.join("; ")}` : null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
