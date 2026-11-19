@@ -5667,16 +5667,16 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="peach"
                   label="Positive Sentiment"
-                  value={surveyOverview ? `${surveyOverview.sentiment.positive_count}` : "…"}
+                  value={surveyOverview ? `${(surveyOverview.sentiment?.positive_count ?? 0)}` : "…"}
                   accent="success"
-                  subtitle={surveyOverview ? `${surveyOverview.sentiment.positive_percent}% of responses` : undefined}
+                  subtitle={surveyOverview ? `${(surveyOverview.sentiment?.positive_percent ?? 0)}% of responses` : undefined}
                 />
                 <StatHeroCard
                   tone="blue"
                   label="Negative Sentiment"
-                  value={surveyOverview ? `${surveyOverview.sentiment.negative_count}` : "…"}
+                  value={surveyOverview ? `${(surveyOverview.sentiment?.negative_count ?? 0)}` : "…"}
                   accent="error"
-                  subtitle={surveyOverview ? `${surveyOverview.sentiment.negative_percent}% of responses` : undefined}
+                  subtitle={surveyOverview ? `${(surveyOverview.sentiment?.negative_percent ?? 0)}% of responses` : undefined}
                 />
               </div>
 
