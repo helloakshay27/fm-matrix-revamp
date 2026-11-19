@@ -61,7 +61,7 @@ const productData = {
       title: "Demo Portal",
       url: "#",
       id: "demo@fmmatrix.com",
-      pass: "Demo#2024",
+      pass: "Available on request",
       icon: <Monitor className="w-5 h-5" />,
     },
   ],

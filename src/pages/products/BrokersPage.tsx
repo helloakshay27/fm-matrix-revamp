@@ -60,7 +60,7 @@ const brokersData: ProductData = {
       title: "Admin Dashboard",
       url: "https://cp.lockated.com/admin",
       id: "sales@builder.com",
-      pass: "Sale#2026",
+      pass: "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

@@ -22,7 +22,7 @@ const esgData: ProductData = {
   keyPoints: ["[ To be filled ]"],
   roi: ["[ To be filled ]"],
   assets: [{ type: "Link", title: "Product Deck", url: "#", icon: <Presentation className="w-5 h-5" /> }],
-  credentials: [{ title: "Demo", url: "#", id: "demo@lockated.com", pass: "Demo#2024", icon: <Monitor className="w-5 h-5" /> }],
+  credentials: [{ title: "Demo", url: "#", id: "demo@lockated.com", pass: "Available on request", icon: <Monitor className="w-5 h-5" /> }],
   owner: "To be assigned", ownerImage: "",
   extendedContent: {
     featureSummary: (

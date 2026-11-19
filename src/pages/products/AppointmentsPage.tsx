@@ -52,7 +52,7 @@ const appointmentsData: ProductData = {
       title: "Demo Portal",
       url: "#",
       id: "admin@appointments.com",
-      pass: "123456",
+      pass: "Available on request",
       icon: <Calendar className="w-5 h-5" />,
     },
   ],

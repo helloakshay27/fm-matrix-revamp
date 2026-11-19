@@ -12,9 +12,11 @@ const TownHallsWidget: React.FC = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const token =
-          localStorage.getItem("token") ||
-          "9c321b4fe31d68572f18cbc082557777f681f283c244fa55";
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setCards([]);
+          return;
+        }
         const baseUrl =
           localStorage.getItem("baseUrl") || "lockated-api.gophygital.work";
         const res = await axios.get(

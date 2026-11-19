@@ -72,7 +72,7 @@ export const postSalesData: ProductData = {
       title: "Staging CMS",
       url: "https://staging.lockated.com",
       id: "admin@postsales.com",
-      pass: "Referral2024!",
+      pass: "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
     {

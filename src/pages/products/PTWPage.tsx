@@ -25,7 +25,7 @@ const ptwData: ProductData = {
   keyPoints: ['Eliminate unauthorised work starting without approval', 'Digital proof for safety audits', 'Reduce permit processing time by 70%'],
   roi: ['Reduced LTIR (Lost Time Injury Rate).', 'Audit readiness without manual paperwork.', 'Faster permit approval cycle reducing operational downtime.'],
   assets: [{ type: 'Link', title: 'Product Overview', url: '#', icon: <Presentation className="w-5 h-5" /> }],
-  credentials: [{ title: 'Demo', url: 'https://ptw.gophygital.work', id: 'demo@gophygital.work', pass: 'PTW#2024', icon: <Monitor className="w-5 h-5" /> }],
+  credentials: [{ title: 'Demo', url: 'https://ptw.gophygital.work', id: 'demo@gophygital.work', pass: 'Available on request', icon: <Monitor className="w-5 h-5" /> }],
   owner: 'Abdul / Vinayak', ownerImage: '',
   extendedContent: {
     featureSummary: (

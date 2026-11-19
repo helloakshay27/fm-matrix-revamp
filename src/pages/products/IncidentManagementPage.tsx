@@ -86,7 +86,7 @@ const incidentManagementData: ProductData = {
       title: "Safety Command Center",
       url: "https://fm-matrix.lockated.com",
       id: "abdul.ghaffar@lockated.com",
-      pass: "123456",
+      pass: "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

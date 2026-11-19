@@ -1690,19 +1690,19 @@ export const credentials: Credential[] = [
     environment: "Production",
     role: "Developer Admin",
     username: "admin@builder.com",
-    password: "Dev@2026",
+    password: "Available on request",
   },
   {
     environment: "Production",
     role: "Site Inspector",
     username: "inspector.karan@site.com",
-    password: "SiteSync#1",
+    password: "Available on request",
   },
   {
     environment: "Production",
     role: "Reviewer / Supervisor",
     username: "sup.singh@qa.com",
-    password: "QCVerify!99",
+    password: "Available on request",
   },
 ];
 

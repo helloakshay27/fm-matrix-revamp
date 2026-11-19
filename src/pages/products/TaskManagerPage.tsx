@@ -97,7 +97,7 @@ const productData = {
       title: "Internal Sandbox Access",
       url: "https://tasks.lockated.com",
       id: "demo.pm@lockated.com",
-      pass: "Task#Master",
+      pass: "Available on request",
       icon: <Monitor className="w-5 h-5" />,
     },
   ],

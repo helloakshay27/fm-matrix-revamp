@@ -61,7 +61,7 @@ const rhbData: ProductData = {
       title: "WEB Login",
       url: "#",
       id: "7303434567",
-      pass: "11111 (OTP)",
+      pass: "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

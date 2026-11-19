@@ -48,7 +48,7 @@ const clubData: ProductData = {
       title: "Club Admin",
       url: "#",
       id: "club@admin.com",
-      pass: "123456",
+      pass: "Available on request",
       icon: <Dumbbell className="w-5 h-5" />,
     },
   ],

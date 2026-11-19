@@ -24,7 +24,7 @@ const parkingData: ProductData = {
   keyPoints: ['Eliminate parking congestion and unauthorised entry', 'Automated billing replaces manual collection', 'Live occupancy data for informed planning'],
   roi: ['Increased parking revenue through better utilisation.', 'Reduced security staff at gates.', 'Improved occupant satisfaction through self-service booking.'],
   assets: [{ type: 'Link', title: 'Product Deck', url: '#', icon: <Presentation className="w-5 h-5" /> }],
-  credentials: [{ title: 'Demo', url: 'https://parking.gophygital.work', id: 'demo@parking', pass: 'Park#2024', icon: <Monitor className="w-5 h-5" /> }],
+  credentials: [{ title: 'Demo', url: 'https://parking.gophygital.work', id: 'demo@parking', pass: 'Available on request', icon: <Monitor className="w-5 h-5" /> }],
   owner: 'Ubaid / Abdul', ownerImage: '',
   extendedContent: {
     featureSummary: (

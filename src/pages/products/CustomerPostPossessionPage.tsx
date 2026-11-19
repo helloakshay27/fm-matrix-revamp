@@ -69,7 +69,7 @@ export const customerPostPossessionData: ProductData = {
       title: "Admin Staging",
       url: "https://staging.lockated.com",
       id: "admin@lockated.com",
-      pass: "Admin2024!",
+      pass: "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
     {

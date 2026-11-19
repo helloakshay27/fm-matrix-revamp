@@ -13,8 +13,7 @@ export const ScratchCardListing: React.FC = () => {
   const [scratchCards, setScratchCards] = useState<ScratchContest[]>([]);
 
   const orgId = searchParams.get("org_id") || "runwal";
-  const token =
-    searchParams.get("token") || "QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ";
+  const token = searchParams.get("token") || "";
 
   useEffect(() => {
     const fetchScratchCards = async () => {
