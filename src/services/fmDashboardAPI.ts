@@ -1205,12 +1205,13 @@ export interface AttendanceOverviewData {
   on_time_percent: number;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
 export interface AttendanceDepartmentRow {
-  department?: string;
-  present_count?: number;
-  absent_count?: number;
-  [key: string]: unknown;
+  pms_department_id: number | null;
+  department_name: string;
+  present: number;
+  absent: number;
+  leave: number;
+  total_working_days: number;
 }
 
 export interface AttendanceDepartmentData {
