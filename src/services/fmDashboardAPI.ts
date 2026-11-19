@@ -1360,25 +1360,32 @@ export const fetchAttendanceStaffingGapVsBreach = (params: FmDashboardParams) =>
 // Survey
 // ============================================================================
 
-export interface SurveyOverviewData {
-  total_responses: number;
-  total_surveys_in_scope: number;
-  total_rating_answers: number;
-  avg_csat: number;
-  sentiment: {
-    positive_count: number;
-    negative_count: number;
-    positive_percent: number;
-    negative_percent: number;
-  };
+export interface SurveyOverviewOption {
+  option: string;
+  /** "p" = positive, "n" = negative */
+  option_type: "p" | "n" | string;
+  count: number;
+  percent: number;
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
+export interface SurveyOverviewQuestion {
+  number: number;
+  text: string;
+  options: SurveyOverviewOption[];
+}
+
+export interface SurveyOverviewData {
+  csat?: { score?: number; out_of?: number; survey_name?: string };
+  total_questions?: { count?: number; question_text?: string };
+  positive?: { count?: number; percent?: number };
+  negative?: { count?: number; percent?: number };
+  questions?: SurveyOverviewQuestion[];
+}
+
 export interface SurveyCategoryRow {
-  category?: string;
-  count?: number;
-  percent?: number;
-  [key: string]: unknown;
+  category: string;
+  count: number;
+  percent: number;
 }
 
 export interface SurveyBreakdownData {
@@ -1386,26 +1393,29 @@ export interface SurveyBreakdownData {
   response_by_category: SurveyCategoryRow[];
 }
 
-// Shape unconfirmed against live data (returned empty at integration time) — kept defensive.
-export interface SurveyTrendWeek {
-  week_start?: string;
-  avg_csat?: number;
-  response_count?: number;
-  [key: string]: unknown;
-}
-
-export interface SurveyTrendData {
-  weekly_trend: SurveyTrendWeek[];
-}
-
-export interface SurveyTimingHour {
-  hour: number;
-  response_count: number;
+export interface SurveyTrendPoint {
+  /** Bucket label ("Oct 11 - Oct 17" for weekly; the key may differ for monthly/yearly). */
+  week?: string;
+  month?: string;
+  year?: string | number;
+  period?: string;
+  label?: string;
+  start_date?: string;
+  end_date?: string;
+  total_responses: number;
+  avg_csat: number | null;
 }
 
 export interface SurveyTimingData {
   total_responses: number;
-  hourly_heatmap: SurveyTimingHour[];
+  /** Heatmap rows — one per hour of day ("12 AM" … "11 PM"). */
+  rows: { hour: number; label: string }[];
+  /** Heatmap columns — the period's buckets (days for weekly/monthly, longer buckets for yearly). */
+  columns: { date?: string; label: string }[];
+  /** matrix[rowIndex][columnIndex] = number of responses. */
+  matrix: number[][];
+  /** Count thresholds → shade class, e.g. breaks [0,1,3,5] with classes [none, light, dark]. */
+  scale?: { breaks: number[]; classes: string[] };
 }
 
 interface SurveyOverviewResponse {
@@ -1420,17 +1430,14 @@ interface SurveyBreakdownResponse {
   survey_breakdown: SurveyBreakdownData;
   filters: FmDashboardFilters;
 }
-interface SurveyTrendResponse {
-  success: number;
-  message: string;
-  survey_trend: SurveyTrendData;
-  filters: FmDashboardFilters;
-}
+/** Raw heatmap: `rows` are hours of day, `columns` are the period's buckets, `matrix[hourIndex][columnIndex]` is the count. */
 interface SurveyTimingResponse {
-  success: number;
-  message: string;
-  survey_timing: SurveyTimingData;
-  filters: FmDashboardFilters;
+  totals?: { responses?: number; skipped?: number };
+  rows?: { hour: number; label: string }[];
+  columns?: { date?: string; label?: string }[];
+  matrix?: number[][];
+  scale?: { breaks: number[]; classes: string[] };
+  survey_timing?: SurveyTimingResponse;
 }
 
 const SURVEY_ENDPOINTS = {
@@ -1439,24 +1446,110 @@ const SURVEY_ENDPOINTS = {
   TREND: "/fm_dashboard/survey/survey_trend.json",
   WEEKLY_CSAT_BREAKDOWN: "/fm_dashboard/survey/survey_weekly_csat_breakdown",
   TIMING: "/fm_dashboard/survey/survey_timing.json",
+  TITLE_FILTER: "/fm_dashboard/survey/survey_title_filter",
 } as const;
 
-export const fetchSurveyOverview = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<SurveyOverviewResponse>(SURVEY_ENDPOINTS.OVERVIEW, params).then((res) => res.survey_overview);
+/** Optional survey (by id) the Survey section is scoped to; omitted = all surveys. */
+const surveyScope = (surveyId?: number | string | null) =>
+  surveyId !== undefined && surveyId !== null && surveyId !== "" ? { survey_id: surveyId } : undefined;
 
-export const fetchSurveyBreakdown = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<SurveyBreakdownResponse>(SURVEY_ENDPOINTS.BREAKDOWN, params).then((res) => res.survey_breakdown);
+export interface SurveyTitleOption {
+  id: number;
+  name: string;
+}
 
-export const fetchSurveyTrend = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<SurveyTrendResponse>(SURVEY_ENDPOINTS.TREND, params).then((res) => res.survey_trend);
+interface SurveyTitleFilterResponse {
+  success?: number;
+  message?: string;
+  survey_titles?: SurveyTitleOption[];
+}
 
-export const fetchSurveyWeeklyCsatBreakdown = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<{ survey_weekly_csat_breakdown: unknown }>(SURVEY_ENDPOINTS.WEEKLY_CSAT_BREAKDOWN, params).then(
-    (res) => res.survey_weekly_csat_breakdown
+// Powers the Survey section's single dropdown (GET /fm_dashboard/survey/survey_title_filter?site_id=...)
+export const fetchSurveyTitles = (params: Pick<FmDashboardParams, "siteIds">) =>
+  fetchFmDashboardJson<SurveyTitleFilterResponse>(SURVEY_ENDPOINTS.TITLE_FILTER, { siteIds: params.siteIds }).then(
+    (res) => res.survey_titles ?? []
   );
 
-export const fetchSurveyTiming = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<SurveyTimingResponse>(SURVEY_ENDPOINTS.TIMING, params).then((res) => res.survey_timing);
+export const fetchSurveyOverview = (params: FmDashboardParams, surveyId?: number | string | null) =>
+  fetchFmDashboardJson<SurveyOverviewResponse>(SURVEY_ENDPOINTS.OVERVIEW, params, surveyScope(surveyId)).then(
+    (res) => res.survey_overview
+  );
+
+export const fetchSurveyBreakdown = (params: FmDashboardParams, surveyId?: number | string | null) =>
+  fetchFmDashboardJson<SurveyBreakdownResponse>(SURVEY_ENDPOINTS.BREAKDOWN, params, surveyScope(surveyId)).then(
+    (res) => res.survey_breakdown
+  );
+
+export type SurveyCsatPeriod = "weekly" | "monthly" | "yearly";
+
+export interface SurveyCsatBreakdownRow {
+  /** Bucket label ("Oct 11 - Oct 17" for weekly; the key may differ for monthly/yearly). */
+  week?: string;
+  month?: string;
+  year?: string | number;
+  period?: string;
+  label?: string;
+  avg_csat: number | null;
+  change_percent: number | null;
+  negative_count: number;
+  negative_percent: number;
+  positive_count: number;
+  positive_percent: number;
+  total: number;
+}
+
+/** Returns the breakdown rows for the chosen period (the array key in the response is not fixed, so the first array is used). */
+export const fetchSurveyWeeklyCsatBreakdown = (
+  params: FmDashboardParams,
+  surveyId: number | string | null | undefined,
+  period: SurveyCsatPeriod
+) =>
+  fetchFmDashboardJson<{ survey_weekly_csat_breakdown?: Record<string, unknown> }>(
+    SURVEY_ENDPOINTS.WEEKLY_CSAT_BREAKDOWN,
+    params,
+    // `peroid` (sic) is the spelling the backend expects (per its own curl). Sent once only.
+    { ...surveyScope(surveyId), peroid: period }
+  ).then((res): SurveyCsatBreakdownRow[] => {
+    const body = res.survey_weekly_csat_breakdown ?? {};
+    const rows = Object.values(body).find(Array.isArray);
+    return (rows as SurveyCsatBreakdownRow[] | undefined) ?? [];
+  });
+
+/** Trend points for the chosen period (the array key in the response is not fixed, so the first array is used). */
+export const fetchSurveyTrend = (
+  params: FmDashboardParams,
+  surveyId: number | string | null | undefined,
+  period: SurveyCsatPeriod
+) =>
+  fetchFmDashboardJson<{ survey_trend?: Record<string, unknown> }>(SURVEY_ENDPOINTS.TREND, params, {
+    ...surveyScope(surveyId),
+    peroid: period,
+  }).then((res): SurveyTrendPoint[] => {
+    const body = res.survey_trend ?? {};
+    return ((Object.values(body).find(Array.isArray) as SurveyTrendPoint[] | undefined) ?? []);
+  });
+
+export const fetchSurveyTiming = (
+  params: FmDashboardParams,
+  surveyId: number | string | null | undefined,
+  period: SurveyCsatPeriod
+) =>
+  fetchFmDashboardJson<SurveyTimingResponse>(SURVEY_ENDPOINTS.TIMING, params, {
+    ...surveyScope(surveyId),
+    peroid: period,
+  }).then((raw): SurveyTimingData => {
+    const res = raw.survey_timing ?? raw; // tolerate both a bare body and one wrapped in `survey_timing`
+    const rows = res.rows ?? [];
+    const matrix = res.matrix ?? [];
+    return {
+      total_responses:
+        res.totals?.responses ?? matrix.reduce((sum, r) => sum + r.reduce((a, n) => a + (Number(n) || 0), 0), 0),
+      rows,
+      columns: (res.columns ?? []).map((c) => ({ date: c.date, label: c.label ?? c.date ?? "" })),
+      matrix,
+      scale: res.scale,
+    };
+  });
 
 // ============================================================================
 // Vendor
