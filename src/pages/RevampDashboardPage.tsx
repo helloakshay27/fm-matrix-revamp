@@ -39,6 +39,7 @@ import {
   FilterPillBar,
   DataTableCard,
   TableBadge,
+  TrendLabel,
   TicketHeatmapCard,
   StatListCard,
   GaugeChartCard,
@@ -47,11 +48,13 @@ import {
   MultiAreaTrendChartCard,
   StatusSummaryCard,
   ProgressListCard,
-  HourlyPatternChartCard,
   MultiLineTrendChartCard,
   type DataTableColumn,
   type TableBadgeTone,
 } from "@/components/charts";
+import type { SurveyOverviewQuestion, SurveyCsatPeriod, SurveyCsatBreakdownRow, SurveyTrendPoint } from "@/services/fmDashboardAPI";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponseHeatmapCard } from "@/components/charts/ResponseHeatmapCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -245,7 +248,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "survey-response-by-category", x: 0, y: 463, w: 12, h: 6, minW: 6, minH: 4 },
   { i: "survey-weekly-csat-trend", x: 0, y: 469, w: 12, h: 5, minW: 6, minH: 4 },
   { i: "survey-weekly-breakdown-table", x: 0, y: 474, w: 12, h: 6, minW: 6, minH: 4 },
-  { i: "survey-hourly-response", x: 0, y: 480, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "survey-hourly-response", x: 0, y: 480, w: 12, h: 17, minW: 6, minH: 4 },
 
   // Maintenance › Vendor
   { i: "vendor-section-label", x: 0, y: 485, w: 12, h: 1, minW: 6, minH: 1 },
@@ -316,8 +319,25 @@ function reconcileLayout(stored: GridLayout.Layout[] | null): GridLayout.Layout[
     if (!storedItem) return defaultItem;
     const minW = defaultItem.minW ?? 1;
     const minH = defaultItem.minH ?? 1;
-    if (storedItem.w < minW || storedItem.h < minH) return defaultItem;
+    if (storedItem.w < minW || storedItem.h < minH) {
+      // Take the card's default size but keep its saved position. Using the default y here would
+      // mix coded coordinates with the saved (compacted) ones, and the grid orders cards by y — so a
+      // resized card would jump to the wrong place (e.g. below the Vendor section).
+      return { ...defaultItem, x: storedItem.x, y: storedItem.y };
+    }
     return storedItem;
+  });
+}
+
+// The response-timing heat map needs ~17 rows; with no responses the card is just a short empty state,
+// so it shrinks to fit instead of leaving a big blank card.
+const SURVEY_TIMING_EMPTY_H = 6;
+function sizeSurveyTimingCard(layout: GridLayout.Layout[], hasData: boolean): GridLayout.Layout[] {
+  return layout.map((item) => {
+    if (item.i !== "survey-hourly-response") return item;
+    if (!hasData) return { ...item, h: SURVEY_TIMING_EMPTY_H };
+    // Data arrived: undo the shrunk empty-state height (it may have been saved with the layout).
+    return item.h <= SURVEY_TIMING_EMPTY_H ? { ...item, h: 17 } : item;
   });
 }
 
@@ -601,11 +621,13 @@ const SOURCE_COLOR_MAP: Record<string, string> = {
 function EmptyStateCard({
   title,
   subtitle,
+  headerExtra,
   message,
   className,
 }: {
   title: string;
   subtitle?: string;
+  headerExtra?: ReactNode;
   message: string;
   className?: string;
 }) {
@@ -614,11 +636,83 @@ function EmptyStateCard({
       <CardHeader className="pb-2">
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}
+        {headerExtra && <div className="pt-2">{headerExtra}</div>}
       </CardHeader>
       <CardContent>
         <div className="flex h-32 items-center justify-center text-center text-brand-body-5 text-brand-text-light">
           {message}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const SURVEY_OPTION_EMOJI: Record<string, string> = {
+  amazing: "😍",
+  excellent: "😍",
+  great: "😍",
+  good: "🙂",
+  average: "😐",
+  okay: "😐",
+  neutral: "😐",
+  bad: "🙁",
+  poor: "🙁",
+  terrible: "😡",
+  worst: "😡",
+};
+
+function surveyOptionEmoji(option: string, index: number, total: number, type: string): string {
+  const named = SURVEY_OPTION_EMOJI[option.trim().toLowerCase()];
+  if (named) return named;
+  // Unknown label: fall back to its position on the scale (best → worst)
+  const scale = ["😍", "🙂", "😐", "🙁", "😡"];
+  if (total <= 1) return type === "p" ? "🙂" : "🙁";
+  return scale[Math.round((index / (total - 1)) * (scale.length - 1))];
+}
+
+/** Per-question 5-point response scale: an emoji, label, count and share bar for each answer option. */
+function SurveyResponseScaleCard({
+  questions,
+  className,
+}: {
+  questions: SurveyOverviewQuestion[];
+  className?: string;
+}) {
+  return (
+    <Card className={cn("border-brand-border", className)}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-brand-body-3 font-semibold text-brand-text">Per-question response scale</CardTitle>
+        <p className="text-brand-body-5 text-brand-text-light">5-point response scale, not just positive/negative</p>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {questions.map((q) => (
+          <div key={q.number}>
+            <p className="mb-3 text-brand-body-4 font-medium text-brand-text">
+              Q{q.number}. {q.text}
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {q.options.map((o, i) => (
+                <div
+                  key={`${q.number}-${o.option}`}
+                  className="flex flex-col items-center rounded-xl bg-white/60 px-2 py-3 text-center"
+                >
+                  <span className="text-3xl leading-none" aria-hidden="true">
+                    {surveyOptionEmoji(o.option, i, q.options.length, o.option_type)}
+                  </span>
+                  <span className="mt-2 text-brand-body-5 font-medium text-brand-text">{o.option}</span>
+                  <span className="text-brand-body-4 font-semibold text-brand-text">{o.count}</span>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+                    <div
+                      className={cn("h-full rounded-full", o.option_type === "p" ? "bg-brand-success" : "bg-brand-error")}
+                      style={{ width: `${Math.min(100, Math.max(0, o.percent))}%` }}
+                    />
+                  </div>
+                  <span className="mt-1 text-brand-caption text-brand-text-light">{o.percent}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
@@ -1039,27 +1133,82 @@ const WASTE_CATEGORY_TABLE_COLUMNS: DataTableColumn<WasteCategoryTableRow>[] = [
 // Maintenance › Attendance, Survey, and Vendor analytics — wired to the live
 // /fm_dashboard/attendance/*, /fm_dashboard/survey/*, /fm_dashboard/vendor/* endpoints.
 // Only fixed column/row shape definitions live here now; figures are computed at render time.
-interface SurveyWeeklyTableRow {
-  week: string;
-  avgCsat: number | null;
-  responseCount: number | null;
+const SURVEY_CSAT_PERIOD_LABEL: Record<SurveyCsatPeriod, string> = {
+  weekly: "Week",
+  monthly: "Month",
+  yearly: "Year",
+};
+
+function SurveyPeriodTabs({
+  value,
+  onChange,
+}: {
+  value: SurveyCsatPeriod;
+  onChange: (period: SurveyCsatPeriod) => void;
+}) {
+  return (
+    <Tabs value={value} onValueChange={(v) => onChange(v as SurveyCsatPeriod)}>
+      <TabsList className="h-8">
+        <TabsTrigger value="weekly" className="px-3 text-xs">Weekly</TabsTrigger>
+        <TabsTrigger value="monthly" className="px-3 text-xs">Monthly</TabsTrigger>
+        <TabsTrigger value="yearly" className="px-3 text-xs">Yearly</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
 }
 
-const SURVEY_WEEKLY_TABLE_COLUMNS: DataTableColumn<SurveyWeeklyTableRow>[] = [
-  { key: "week", header: "Week", render: (row) => <span className="font-semibold text-brand-text">{row.week}</span> },
-  {
-    key: "csat",
-    header: "Avg CSAT",
-    align: "center",
-    render: (row) => <span className="text-brand-text">{row.avgCsat !== null ? row.avgCsat.toFixed(2) : "–"}</span>,
-  },
-  {
-    key: "responses",
-    header: "Responses",
-    align: "center",
-    render: (row) => <span className="text-brand-text">{row.responseCount !== null ? row.responseCount : "–"}</span>,
-  },
-];
+function surveyCsatRowLabel(row: SurveyCsatBreakdownRow): string {
+  const label = row.week ?? row.month ?? row.year ?? row.period ?? row.label;
+  return label != null ? String(label) : "–";
+}
+
+function buildSurveyCsatColumns(period: SurveyCsatPeriod): DataTableColumn<SurveyCsatBreakdownRow>[] {
+  return [
+    {
+      key: "period",
+      header: SURVEY_CSAT_PERIOD_LABEL[period],
+      render: (row) => <span className="font-semibold text-brand-text">{surveyCsatRowLabel(row)}</span>,
+    },
+    {
+      key: "csat",
+      header: "Avg CSAT",
+      align: "center",
+      render: (row) => <span className="text-brand-text">{row.avg_csat != null ? row.avg_csat.toFixed(2) : "–"}</span>,
+    },
+    {
+      key: "change",
+      header: "Change",
+      align: "center",
+      render: (row) =>
+        row.change_percent == null ? (
+          <span className="text-brand-text-light">–</span>
+        ) : (
+          <TrendLabel delta={`${row.change_percent > 0 ? "+" : ""}${row.change_percent}%`} good={row.change_percent >= 0} />
+        ),
+    },
+    {
+      key: "positive",
+      header: "Positive",
+      align: "center",
+      render: (row) => (
+        <TableBadge tone="green">
+          {row.positive_count} ({row.positive_percent}%)
+        </TableBadge>
+      ),
+    },
+    {
+      key: "negative",
+      header: "Negative",
+      align: "center",
+      render: (row) => (
+        <TableBadge tone="red">
+          {row.negative_count} ({row.negative_percent}%)
+        </TableBadge>
+      ),
+    },
+    { key: "total", header: "Total", align: "center", render: (row) => <span className="text-brand-text">{row.total}</span> },
+  ];
+}
 
 interface VendorContractTableRow {
   vendorId: number;
@@ -1713,11 +1862,26 @@ export default function RevampDashboardPage() {
     enabled: isTicketsView && !sitesLoading && dashboardSiteIds.length > 0,
   });
 
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string>("all");
+  const [surveyCsatPeriod, setSurveyCsatPeriod] = useState<SurveyCsatPeriod>("weekly");
+  const [surveyTrendPeriod, setSurveyTrendPeriod] = useState<SurveyCsatPeriod>("weekly");
+  const [surveyTimingPeriod, setSurveyTimingPeriod] = useState<SurveyCsatPeriod>("weekly");
   const {
     data: surveyApiData,
+    surveyTitles,
+    csatBreakdown: surveyCsatRows,
+    csatLoading: surveyCsatLoading,
+    trend: surveyTrendRows,
+    trendLoading: surveyTrendLoading,
+    timing: surveyTiming,
+    timingLoading: surveyTimingLoading,
     loading: surveyLoading,
     error: surveyError,
   } = useSurveyDashboardData({
+    surveyId: selectedSurveyId === "all" ? null : selectedSurveyId,
+    csatPeriod: surveyCsatPeriod,
+    trendPeriod: surveyTrendPeriod,
+    timingPeriod: surveyTimingPeriod,
     siteIds: dashboardSiteIds,
     fromDate: dashboardFromDate,
     toDate: dashboardToDate,
@@ -2771,60 +2935,30 @@ export default function RevampDashboardPage() {
   // --- Survey section: derived from the live /fm_dashboard/survey/* endpoints ---
   const surveyOverview = surveyApiData.overview;
   const surveyBreakdown = surveyApiData.breakdown;
-  const surveyTrend = surveyApiData.trend;
-  const surveyTiming = surveyApiData.timing;
-  const surveyWeeklyBreakdownRows = useMemo(
-    () => toDashboardApiTableRows(surveyApiData.weeklyCsatBreakdown),
-    [surveyApiData.weeklyCsatBreakdown]
-  );
-  const surveyWeeklyBreakdownColumns = useMemo(
-    () => dashboardApiTableColumns(surveyWeeklyBreakdownRows),
-    [surveyWeeklyBreakdownRows]
-  );
+  const surveyTimingHasData = (surveyTiming?.total_responses ?? 0) > 0;
+  const surveyCsatColumns = useMemo(() => buildSurveyCsatColumns(surveyCsatPeriod), [surveyCsatPeriod]);
 
   const surveyCategoryRows = useMemo(() => {
-    const rows = (surveyBreakdown?.response_by_category ?? []).filter(
-      (r) => typeof r.category === "string" && typeof r.count === "number"
-    );
-    const max = Math.max(1, ...rows.map((r) => r.count as number));
+    const rows = surveyBreakdown?.response_by_category ?? [];
+    const max = Math.max(1, ...rows.map((r) => r.count));
     return rows
       .slice()
-      .sort((a, b) => (b.count as number) - (a.count as number))
+      .sort((a, b) => b.count - a.count)
       .map((r, i) => ({
-        label: r.category as string,
-        value: typeof r.percent === "number" ? `${r.percent}% (${r.count})` : `${r.count}`,
-        percent: Math.round(((r.count as number) / max) * 100),
+        label: r.category,
+        value: `${r.percent}% (${r.count})`,
+        // Bar length is relative to the top category so the ranking is easy to read
+        percent: Math.round((r.count / max) * 100),
         color: getVedaColor(i),
       }));
   }, [surveyBreakdown]);
 
-  const surveyWeeklyTrendData = useMemo(
+  const surveyTrendData = useMemo(
     () =>
-      (surveyTrend?.weekly_trend ?? [])
-        .filter((w) => typeof w.week_start === "string" && typeof w.avg_csat === "number")
-        .map((w) => ({ week: w.week_start as string, csat: w.avg_csat as number })),
-    [surveyTrend]
-  );
-
-  const surveyWeeklyTableRows: SurveyWeeklyTableRow[] = useMemo(
-    () =>
-      (surveyTrend?.weekly_trend ?? [])
-        .filter((w) => typeof w.week_start === "string")
-        .map((w) => ({
-          week: w.week_start as string,
-          avgCsat: typeof w.avg_csat === "number" ? w.avg_csat : null,
-          responseCount: typeof w.response_count === "number" ? w.response_count : null,
-        })),
-    [surveyTrend]
-  );
-
-  const surveyHourlyData = useMemo(
-    () =>
-      (surveyTiming?.hourly_heatmap ?? []).map((h) => ({
-        hour: h.hour === 0 ? "12AM" : h.hour < 12 ? `${h.hour}AM` : h.hour === 12 ? "12PM" : `${h.hour - 12}PM`,
-        value: h.response_count,
-      })),
-    [surveyTiming]
+      surveyTrendRows
+        .filter((p) => typeof p.avg_csat === "number")
+        .map((p) => ({ week: surveyCsatRowLabel(p), csat: p.avg_csat as number })),
+    [surveyTrendRows]
   );
 
   // --- Vendor section: derived from the live /fm_dashboard/vendor/* endpoints ---
@@ -3330,7 +3464,7 @@ export default function RevampDashboardPage() {
 
             <ResponsiveGridLayout
               className="layout"
-              layouts={{ lg: isMyDashboardModule ? myDashboardMaintenanceLayout : reconcileLayout(ticketsLayout) }}
+              layouts={{ lg: isMyDashboardModule ? myDashboardMaintenanceLayout : sizeSurveyTimingCard(reconcileLayout(ticketsLayout), surveyTimingHasData) }}
               onDragStop={isMyDashboardModule ? handleMyDashboardMaintenanceLayoutChange : (layout) => persistTicketsLayout(layout)}
               onResizeStop={isMyDashboardModule ? handleMyDashboardMaintenanceLayoutChange : (layout) => persistTicketsLayout(layout)}
               breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -5646,6 +5780,19 @@ export default function RevampDashboardPage() {
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Survey
                 </span>
+                <Select value={selectedSurveyId} onValueChange={setSelectedSurveyId}>
+                  <SelectTrigger className="ml-4 h-8 w-56 bg-white text-xs" aria-label="Filter survey section by survey">
+                    <SelectValue placeholder="All Surveys" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Surveys</SelectItem>
+                    {surveyTitles.map((t) => (
+                      <SelectItem key={t.id} value={String(t.id)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div key="survey-kpi-row" chart_code="fm-survey-kpi-row" className="h-full grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
@@ -5653,41 +5800,49 @@ export default function RevampDashboardPage() {
                 <StatHeroCard
                   tone="purple"
                   label="Avg CSAT"
-                  value={surveyOverview ? `${surveyOverview.avg_csat}` : "…"}
-                  accent={surveyOverview && surveyOverview.avg_csat >= 3 ? "success" : "error"}
-                  subtitle={surveyOverview ? `${surveyOverview.total_surveys_in_scope} survey(s) in scope` : undefined}
+                  value={surveyOverview?.csat?.score != null ? `${surveyOverview.csat.score}` : surveyOverview ? "—" : "…"}
+                  accent={surveyOverview?.csat?.score != null && surveyOverview.csat.score >= 3 ? "success" : "error"}
+                  subtitle={
+                    surveyOverview
+                      ? `out of ${surveyOverview.csat?.out_of ?? 5}${surveyOverview.csat?.survey_name ? ` · ${surveyOverview.csat.survey_name}` : ""}`
+                      : undefined
+                  }
                 />
                 <StatHeroCard
                   tone="teal"
-                  label="Total Responses"
-                  value={surveyOverview ? `${surveyOverview.total_responses}` : "…"}
+                  label="Total Questions"
+                  value={surveyOverview ? `${surveyOverview.total_questions?.count ?? 0}` : "…"}
                   accent="neutral"
-                  subtitle={surveyOverview ? `${surveyOverview.total_rating_answers} rating answers` : undefined}
+                  subtitle={surveyOverview?.total_questions?.question_text}
                 />
                 <StatHeroCard
                   tone="peach"
                   label="Positive Sentiment"
-                  value={surveyOverview ? `${(surveyOverview.sentiment?.positive_count ?? 0)}` : "…"}
+                  value={surveyOverview ? `${surveyOverview.positive?.count ?? 0}` : "…"}
                   accent="success"
-                  subtitle={surveyOverview ? `${(surveyOverview.sentiment?.positive_percent ?? 0)}% of responses` : undefined}
+                  subtitle={surveyOverview ? `${surveyOverview.positive?.percent ?? 0}% of responses` : undefined}
                 />
                 <StatHeroCard
                   tone="blue"
                   label="Negative Sentiment"
-                  value={surveyOverview ? `${(surveyOverview.sentiment?.negative_count ?? 0)}` : "…"}
+                  value={surveyOverview ? `${surveyOverview.negative?.count ?? 0}` : "…"}
                   accent="error"
-                  subtitle={surveyOverview ? `${(surveyOverview.sentiment?.negative_percent ?? 0)}% of responses` : undefined}
+                  subtitle={surveyOverview ? `${surveyOverview.negative?.percent ?? 0}% of responses` : undefined}
                 />
               </div>
 
               <div key="survey-satisfaction-scale" chart_code="fm-survey-satisfaction-scale" className="h-full relative">
                 <AddToDashboardButton chartId="fm-survey-satisfaction-scale" moduleKey="maintenance" subTab="Survey" height="4" width="12" position="0,459" />
-                <EmptyStateCard
-                  title="Per-question response scale"
-                  subtitle="5-point response scale, not just positive/negative"
-                  message="The survey API returns an aggregate positive/negative sentiment split, not a per-question 5-point scale breakdown — not available."
-                  className="h-full"
-                />
+                {surveyOverview?.questions?.length ? (
+                  <SurveyResponseScaleCard questions={surveyOverview.questions} className="h-full overflow-auto" />
+                ) : (
+                  <EmptyStateCard
+                    title="Per-question response scale"
+                    subtitle="5-point response scale, not just positive/negative"
+                    message="No per-question responses for the selected survey and date range."
+                    className="h-full"
+                  />
+                )}
               </div>
 
               <div key="survey-response-by-category" chart_code="fm-survey-response-by-category" className="h-full relative">
@@ -5706,60 +5861,62 @@ export default function RevampDashboardPage() {
 
               <div key="survey-weekly-csat-trend" chart_code="fm-survey-weekly-csat-trend" className="h-full relative">
                 <AddToDashboardButton chartId="fm-survey-weekly-csat-trend" moduleKey="maintenance" subTab="Survey" height="5" width="12" position="0,469" />
-                {surveyWeeklyTrendData.length ? (
+                {surveyTrendData.length ? (
                   <BarChartCard
                     title="Weekly CSAT trend"
-                    subtitle="Average CSAT by week"
-                    data={surveyWeeklyTrendData}
+                    subtitle={`Average CSAT by ${SURVEY_CSAT_PERIOD_LABEL[surveyTrendPeriod].toLowerCase()}`}
+                    headerExtra={<SurveyPeriodTabs value={surveyTrendPeriod} onChange={setSurveyTrendPeriod} />}
+                    data={surveyTrendData}
                     categoryKey="week"
                     series={[{ dataKey: "csat", name: "CSAT" }]}
                     showInfoIcon
                     className="h-full overflow-auto"
                   />
                 ) : (
-                  <EmptyStateCard title="Weekly CSAT trend" message="No weekly CSAT trend data for the selected sites and date range." className="h-full" />
+                  <EmptyStateCard
+                    title="Weekly CSAT trend"
+                    headerExtra={<SurveyPeriodTabs value={surveyTrendPeriod} onChange={setSurveyTrendPeriod} />}
+                    message={surveyTrendLoading ? "Loading…" : `No ${surveyTrendPeriod} CSAT trend data for the selected filters.`}
+                    className="h-full"
+                  />
                 )}
               </div>
 
               <div key="survey-weekly-breakdown-table" chart_code="fm-survey-weekly-breakdown-table" className="h-full relative">
                 <AddToDashboardButton chartId="fm-survey-weekly-breakdown-table" moduleKey="maintenance" subTab="Survey" height="6" width="12" position="0,474" />
-                {surveyWeeklyBreakdownRows.length ? (
-                  <DataTableCard
-                    title="Weekly CSAT Breakdown"
-                    columns={surveyWeeklyBreakdownColumns}
-                    data={surveyWeeklyBreakdownRows}
-                    getRowKey={(row) => row.__rowKey}
-                    className="h-full overflow-auto"
-                  />
-                ) : surveyWeeklyTableRows.length ? (
-                  <DataTableCard
-                    title="Weekly CSAT Breakdown"
-                    columns={SURVEY_WEEKLY_TABLE_COLUMNS}
-                    data={surveyWeeklyTableRows}
-                    getRowKey={(row) => row.week}
-                    className="h-full overflow-auto"
-                  />
-                ) : (
-                  <EmptyStateCard title="Weekly CSAT Breakdown" message="No weekly CSAT breakdown for the selected sites and date range." className="h-full" />
-                )}
+                <DataTableCard
+                  title="Weekly CSAT Breakdown"
+                  headerExtra={<SurveyPeriodTabs value={surveyCsatPeriod} onChange={setSurveyCsatPeriod} />}
+                  columns={surveyCsatColumns}
+                  data={surveyCsatRows}
+                  getRowKey={(row) => surveyCsatRowLabel(row)}
+                  emptyMessage={surveyCsatLoading ? "Loading…" : `No ${surveyCsatPeriod} CSAT breakdown for the selected filters.`}
+                  className="h-full overflow-auto"
+                />
               </div>
 
               <div key="survey-hourly-response" chart_code="fm-survey-hourly-response" className="h-full relative">
-                <AddToDashboardButton chartId="fm-survey-hourly-response" moduleKey="maintenance" subTab="Survey" height="5" width="12" position="0,480" />
+                <AddToDashboardButton chartId="fm-survey-hourly-response" moduleKey="maintenance" subTab="Survey" height="6" width="12" position="0,480" />
                 {surveyTiming && surveyTiming.total_responses > 0 ? (
-                  <HourlyPatternChartCard
+                  <ResponseHeatmapCard
                     title="Response timing — hour of day"
                     subtitle={`Total Response: ${surveyTiming.total_responses} · when do people actually respond`}
-                    data={surveyHourlyData}
-                    showInfoIcon
-                    insightVariant="plain"
-                    insight="If responses cluster at specific hours, that's when the underlying issue is most active — useful for scheduling around actual response timing, not a fixed roster."
+                    headerExtra={<SurveyPeriodTabs value={surveyTimingPeriod} onChange={setSurveyTimingPeriod} />}
+                    rows={surveyTiming.rows}
+                    columns={surveyTiming.columns}
+                    matrix={surveyTiming.matrix}
+                    scale={surveyTiming.scale}
                     className="h-full overflow-auto"
                   />
                 ) : (
                   <EmptyStateCard
                     title="Response timing — hour of day"
-                    message="No survey responses recorded for the selected sites and date range — hourly timing has nothing to show yet."
+                    headerExtra={<SurveyPeriodTabs value={surveyTimingPeriod} onChange={setSurveyTimingPeriod} />}
+                    message={
+                      surveyTimingLoading
+                        ? "Loading…"
+                        : `No survey responses recorded for the selected filters in this ${SURVEY_CSAT_PERIOD_LABEL[surveyTimingPeriod].toLowerCase()} view.`
+                    }
                     className="h-full"
                   />
                 )}

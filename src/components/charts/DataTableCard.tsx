@@ -49,6 +49,10 @@ export interface DataTableColumn<T> {
 export interface DataTableCardProps<T> {
   title: string;
   subtitle?: string;
+  /** Extra control rendered under the title (e.g. period tabs). */
+  headerExtra?: ReactNode;
+  /** Shown instead of the table when `data` is empty. */
+  emptyMessage?: string;
   columns: DataTableColumn<T>[];
   data: T[];
   getRowKey: (row: T) => string | number;
@@ -70,6 +74,8 @@ export interface DataTableCardProps<T> {
 export function DataTableCard<T>({
   title,
   subtitle,
+  headerExtra,
+  emptyMessage,
   columns,
   data,
   getRowKey,
@@ -106,8 +112,14 @@ export function DataTableCard<T>({
       <CardHeader className="pb-2">
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}
+        {headerExtra && <div className="pt-2">{headerExtra}</div>}
       </CardHeader>
       <CardContent>
+        {data.length === 0 && emptyMessage ? (
+          <div className="flex h-32 items-center justify-center text-center text-brand-body-5 text-brand-text-light">
+            {emptyMessage}
+          </div>
+        ) : (
         <div className="rounded-xl overflow-hidden border border-brand-border">
           {/* no-drag: lets the scrollbar be grabbed without dragging the grid card. */}
           <div
@@ -152,6 +164,7 @@ export function DataTableCard<T>({
             </table>
           </div>
         </div>
+        )}
 
         {insight && <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>}
       </CardContent>

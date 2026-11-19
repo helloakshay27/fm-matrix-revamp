@@ -54,14 +54,14 @@ export function ProgressListCard({ title, subtitle, sections, footnote, classNam
                       onClick={row.onClick}
                       className={cn("flex items-center gap-3", row.onClick && "cursor-pointer")}
                     >
-                      <span className="w-28 flex-shrink-0 truncate text-brand-body-5 text-brand-text">{row.label}</span>
+                      <span title={row.label} className="w-40 flex-shrink-0 truncate text-brand-body-5 text-brand-text">{row.label}</span>
                       <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${Math.min(100, Math.max(0, row.percent))}%`, backgroundColor: VEDA_BAR_COLOR }}
                         />
                       </div>
-                      <span className="flex-shrink-0 text-brand-body-5 font-semibold text-brand-text">
+                      <span className="w-24 flex-shrink-0 text-right whitespace-nowrap text-brand-body-5 font-semibold text-brand-text">
                         {row.value}
                       </span>
                     </div>

@@ -104,9 +104,13 @@ import {
   fetchSurveyTrend,
   fetchSurveyWeeklyCsatBreakdown,
   fetchSurveyTiming,
+  fetchSurveyTitles,
+  type SurveyTitleOption,
+  type SurveyCsatPeriod,
+  type SurveyCsatBreakdownRow,
   type SurveyOverviewData,
   type SurveyBreakdownData,
-  type SurveyTrendData,
+  type SurveyTrendPoint,
   type SurveyTimingData,
   fetchVendorOverview,
   fetchVendorPerformance,
@@ -695,25 +699,47 @@ export function useAttendanceDashboardData(rawArgs: UseFmDashboardModuleArgs) {
 export interface SurveyDashboardData {
   overview: SurveyOverviewData | null;
   breakdown: SurveyBreakdownData | null;
-  trend: SurveyTrendData | null;
-  timing: SurveyTimingData | null;
-  weeklyCsatBreakdown: unknown;
 }
 
 const EMPTY_SURVEY_DATA: SurveyDashboardData = {
   overview: null,
   breakdown: null,
-  trend: null,
-  timing: null,
-  weeklyCsatBreakdown: null,
 };
 
-export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs) {
+export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs & { surveyId?: number | string | null; csatPeriod?: SurveyCsatPeriod; trendPeriod?: SurveyCsatPeriod; timingPeriod?: SurveyCsatPeriod }) {
   const { siteIds, fromDate, toDate, enabled } = useKeepAliveArgs(rawArgs);
+  const surveyId = rawArgs.surveyId ?? null;
+  const csatPeriod = rawArgs.csatPeriod ?? "weekly";
+  const trendPeriod = rawArgs.trendPeriod ?? "weekly";
+  const timingPeriod = rawArgs.timingPeriod ?? "weekly";
+  const [timing, setTiming] = useState<SurveyTimingData | null>(null);
+  const [timingLoading, setTimingLoading] = useState(false);
+  const [trend, setTrend] = useState<SurveyTrendPoint[]>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [csatBreakdown, setCsatBreakdown] = useState<SurveyCsatBreakdownRow[]>([]);
+  const [csatLoading, setCsatLoading] = useState(false);
   const [data, setData] = useState<SurveyDashboardData>(EMPTY_SURVEY_DATA);
+  const [surveyTitles, setSurveyTitles] = useState<SurveyTitleOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const siteIdsKey = siteIds.join(",");
+
+  // Dropdown options depend only on the sites, not on the date range or selected survey.
+  useEffect(() => {
+    if (!enabled || siteIds.length === 0) return;
+    let cancelled = false;
+    fetchSurveyTitles({ siteIds })
+      .then((titles) => {
+        if (!cancelled) setSurveyTitles(titles);
+      })
+      .catch(() => {
+        if (!cancelled) setSurveyTitles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey]);
 
   useEffect(() => {
     if (!enabled || siteIds.length === 0 || !fromDate || !toDate) return;
@@ -723,15 +749,12 @@ export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs) {
 
     const params = { siteIds, fromDate, toDate };
     Promise.all([
-      fetchSurveyOverview(params),
-      fetchSurveyBreakdown(params),
-      fetchSurveyTrend(params),
-      fetchSurveyWeeklyCsatBreakdown(params),
-      fetchSurveyTiming(params),
+      fetchSurveyOverview(params, surveyId),
+      fetchSurveyBreakdown(params, surveyId),
     ])
-      .then(([overview, breakdown, trend, weeklyCsatBreakdown, timing]) => {
+      .then(([overview, breakdown]) => {
         if (cancelled) return;
-        setData({ overview, breakdown, trend, weeklyCsatBreakdown, timing });
+        setData({ overview, breakdown });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -745,9 +768,72 @@ export function useSurveyDashboardData(rawArgs: UseFmDashboardModuleArgs) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, siteIdsKey, fromDate, toDate]);
+  }, [enabled, siteIdsKey, fromDate, toDate, surveyId]);
 
-  return { data, loading, error };
+  // The CSAT breakdown table has its own Weekly / Monthly / Yearly tab, so switching it refetches only this one call.
+  useEffect(() => {
+    if (!enabled || siteIds.length === 0 || !fromDate || !toDate) return;
+    let cancelled = false;
+    setCsatLoading(true);
+    fetchSurveyWeeklyCsatBreakdown({ siteIds, fromDate, toDate }, surveyId, csatPeriod)
+      .then((rows) => {
+        if (!cancelled) setCsatBreakdown(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setCsatBreakdown([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCsatLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate, surveyId, csatPeriod]);
+
+  // The CSAT trend chart has its own Weekly / Monthly / Yearly tab, so switching it refetches only this one call.
+  useEffect(() => {
+    if (!enabled || siteIds.length === 0 || !fromDate || !toDate) return;
+    let cancelled = false;
+    setTrendLoading(true);
+    fetchSurveyTrend({ siteIds, fromDate, toDate }, surveyId, trendPeriod)
+      .then((rows) => {
+        if (!cancelled) setTrend(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setTrend([]);
+      })
+      .finally(() => {
+        if (!cancelled) setTrendLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate, surveyId, trendPeriod]);
+
+  // The response-timing chart has its own Weekly / Monthly / Yearly tab, so switching it refetches only this one call.
+  useEffect(() => {
+    if (!enabled || siteIds.length === 0 || !fromDate || !toDate) return;
+    let cancelled = false;
+    setTimingLoading(true);
+    fetchSurveyTiming({ siteIds, fromDate, toDate }, surveyId, timingPeriod)
+      .then((result) => {
+        if (!cancelled) setTiming(result);
+      })
+      .catch(() => {
+        if (!cancelled) setTiming(null);
+      })
+      .finally(() => {
+        if (!cancelled) setTimingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, siteIdsKey, fromDate, toDate, surveyId, timingPeriod]);
+
+  return { data, surveyTitles, csatBreakdown, csatLoading, trend, trendLoading, timing, timingLoading, loading, error };
 }
 
 // ============================================================================
