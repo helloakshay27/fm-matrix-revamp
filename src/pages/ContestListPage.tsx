@@ -76,7 +76,6 @@ export const ContestListPage: React.FC = () => {
       const baseUrl = localStorage.getItem("baseUrl");
       const token = localStorage.getItem("token");
       //   const baseUrl =  "https://uat-hi-society.lockated.com";
-      // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
 
       if (!baseUrl || !token) {
         throw new Error("Base URL or token not set in localStorage");

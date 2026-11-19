@@ -100,7 +100,7 @@ const cpManagementData: ProductData = {
       title: 'Demo',
       url: '#',
       id: 'demo@lockated.com',
-      pass: 'Available on request',
+      pass: import.meta.env.VITE_DEMO_PASS_DEMO_LOCKATED_COM_DEFAULT || 'Available on request',
       icon: <Monitor className="w-5 h-5" />,
     },
   ],

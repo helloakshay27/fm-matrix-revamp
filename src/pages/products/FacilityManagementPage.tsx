@@ -61,7 +61,7 @@ const productData = {
       title: "Demo Portal",
       url: "#",
       id: "demo@fmmatrix.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_DEMO_FMMATRIX_COM || "Available on request",
       icon: <Monitor className="w-5 h-5" />,
     },
   ],

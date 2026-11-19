@@ -72,7 +72,7 @@ export const postSalesData: ProductData = {
       title: "Staging CMS",
       url: "https://staging.lockated.com",
       id: "admin@postsales.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_ADMIN_POSTSALES_COM || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
     {

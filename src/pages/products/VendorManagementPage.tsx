@@ -183,7 +183,7 @@ const vendorManagementData: ProductData = {
       title: "Vendor Portal Sandbox",
       url: "https://vendors.lockated.com/users/sign_in",
       id: "demo.vendor@lockated.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_DEMO_VENDOR_LOCKATED_COM || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

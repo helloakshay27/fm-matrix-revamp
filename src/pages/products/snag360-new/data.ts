@@ -1690,19 +1690,19 @@ export const credentials: Credential[] = [
     environment: "Production",
     role: "Developer Admin",
     username: "admin@builder.com",
-    password: "Available on request",
+    password: import.meta.env.VITE_DEMO_PASS_ADMIN_BUILDER_COM || "Available on request",
   },
   {
     environment: "Production",
     role: "Site Inspector",
     username: "inspector.karan@site.com",
-    password: "Available on request",
+    password: import.meta.env.VITE_DEMO_PASS_INSPECTOR_KARAN_SITE_COM || "Available on request",
   },
   {
     environment: "Production",
     role: "Reviewer / Supervisor",
     username: "sup.singh@qa.com",
-    password: "Available on request",
+    password: import.meta.env.VITE_DEMO_PASS_SUP_SINGH_QA_COM || "Available on request",
   },
 ];
 

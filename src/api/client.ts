@@ -43,7 +43,7 @@ apiClient.interceptors.response.use(
           {
             headers: {
               'Content-Type': 'application/json',
-              'X-Integration-Key': 'afa01bab9233764566c75933940fb07ecd299f6c0d3cce5fd08d59cf8dcc176b'
+              'X-Integration-Key': import.meta.env.VITE_HELPDESK_INTEGRATION_KEY || ''
             }
           }
         );

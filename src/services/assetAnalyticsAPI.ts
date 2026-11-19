@@ -165,8 +165,7 @@ const getCurrentSiteId = (): string => {
 
 const getAccessToken = (): string => {
   return localStorage.getItem('access_token') || 
-         API_CONFIG.TOKEN || 
-         'BcN-zqYejFbQ2jnNorpCGRoVfdzPHcgQRP1bw8jQJYQ';
+         API_CONFIG.TOKEN || '';
 };
 
 // Asset Analytics API

@@ -15,7 +15,7 @@ const UpcomingEventsWidget: React.FC = () => {
         const baseUrl =
           localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const res = await axios.get(
-          `https://${baseUrl}/pms/admin/events/upcoming_events.json?token=9c321b4fe31d68572f18cbc082557777f681f283c244fa55`,
+          `https://${baseUrl}/pms/admin/events/upcoming_events.json?token=${token}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setEvents(res.data.upcoming || []);

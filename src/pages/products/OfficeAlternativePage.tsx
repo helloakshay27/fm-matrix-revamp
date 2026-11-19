@@ -22,7 +22,7 @@ const officeAlternativeData: ProductData = {
   keyPoints: ["[ To be filled ]"],
   roi: ["[ To be filled ]"],
   assets: [{ type: "Link", title: "Product Deck", url: "#", icon: <Presentation className="w-5 h-5" /> }],
-  credentials: [{ title: "Demo", url: "#", id: "demo@lockated.com", pass: "Available on request", icon: <Monitor className="w-5 h-5" /> }],
+  credentials: [{ title: "Demo", url: "#", id: "demo@lockated.com", pass: import.meta.env.VITE_DEMO_PASS_DEMO_LOCKATED_COM_DEFAULT || "Available on request", icon: <Monitor className="w-5 h-5" /> }],
   owner: "To be assigned", ownerImage: "",
   extendedContent: {
     featureSummary: (

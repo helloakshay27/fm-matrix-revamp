@@ -51,7 +51,7 @@ const qcData: ProductData = {
       title: "Web Login",
       url: "#",
       id: "qc@admin.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_QC_ADMIN_COM || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

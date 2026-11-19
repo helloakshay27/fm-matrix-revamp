@@ -118,14 +118,14 @@ const fmMatrixData: ProductData = {
       title: "Web Login",
       url: "https://fm.lockated.com/",
       id: "admin@lockated.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_ADMIN_LOCKATED_COM_FM || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
     {
        title: "Mobile App Access",
        url: "Play Store / App Store",
        id: "9988776655",
-       pass: "Available on request",
+       pass: import.meta.env.VITE_DEMO_PASS_9988776655 || "Available on request",
        icon: <Smartphone className="w-5 h-5" />
     }
   ],

@@ -69,7 +69,7 @@ export const customerPostPossessionData: ProductData = {
       title: "Admin Staging",
       url: "https://staging.lockated.com",
       id: "admin@lockated.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_ADMIN_LOCKATED_COM_STAGING || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
     {

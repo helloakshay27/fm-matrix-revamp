@@ -48,7 +48,7 @@ const clubData: ProductData = {
       title: "Club Admin",
       url: "#",
       id: "club@admin.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_CLUB_ADMIN_COM || "Available on request",
       icon: <Dumbbell className="w-5 h-5" />,
     },
   ],

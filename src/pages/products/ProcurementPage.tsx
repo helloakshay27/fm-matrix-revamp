@@ -2963,7 +2963,7 @@ const procurementData: ProductData = {
       title: "Procurement Portal Login",
       url: "https://procurement.lockated.com/",
       id: "demo.buyer@lockated.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_DEMO_BUYER_LOCKATED_COM || "Available on request",
       icon: <Globe className="w-5 h-5" />,
     },
   ],

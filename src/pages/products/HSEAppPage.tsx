@@ -52,7 +52,7 @@ const hseData: ProductData = {
       title: "HSE Admin",
       url: "#",
       id: "safety@admin.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_SAFETY_ADMIN_COM || "Available on request",
       icon: <ShieldCheck className="w-5 h-5" />,
     },
   ],

@@ -9,13 +9,13 @@ The Flip Card feature allows users to flip cards and reveal prizes (points or co
 ### Local Testing URL Format
 
 ```
-http://localhost:5173/flipcard?org_id=1&token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ&contest_id=2
+http://localhost:5173/flipcard?org_id=1&token=YOUR_ACCESS_TOKEN&contest_id=2
 ```
 
 ### Production URL Format
 
 ```
-https://ui-hisociety.lockated.com/flipcard?org_id=1&token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ&contest_id=2
+https://ui-hisociety.lockated.com/flipcard?org_id=1&token=YOUR_ACCESS_TOKEN&contest_id=2
 ```
 
 ## API Endpoints
@@ -29,7 +29,7 @@ GET https://runwal-api.lockated.com/contests?token={token}
 **Example:**
 
 ```bash
-curl --location 'https://runwal-api.lockated.com/contests?token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ'
+curl --location 'https://runwal-api.lockated.com/contests?token=YOUR_ACCESS_TOKEN'
 ```
 
 **Response (filtered for content_type=flip):**
@@ -71,7 +71,7 @@ POST https://runwal-api.lockated.com/contests/{contest_id}/play?token={token}
 **Example:**
 
 ```bash
-curl --location --request POST 'https://runwal-api.lockated.com/contests/2/play?token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ'
+curl --location --request POST 'https://runwal-api.lockated.com/contests/2/play?token=YOUR_ACCESS_TOKEN'
 ```
 
 ## Features
@@ -134,7 +134,7 @@ npm run dev
 Navigate to:
 
 ```
-http://localhost:5173/flipcard?org_id=1&token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ&contest_id=2
+http://localhost:5173/flipcard?org_id=1&token=YOUR_ACCESS_TOKEN&contest_id=2
 ```
 
 ### Step 3: Test Functionality
@@ -155,7 +155,7 @@ http://localhost:5173/flipcard?org_id=1&token=QsUjajggGCYJJGKndHkRidBxJN2cIUC06l
 | Parameter    | Required | Description                            | Example                                       |
 | ------------ | -------- | -------------------------------------- | --------------------------------------------- |
 | `org_id`     | Optional | Organization ID for dynamic base URL   | `1`                                           |
-| `token`      | Required | Authentication token                   | `QsUjajggGCYJJGKndHkRidBxJN2cIUC06lr42Vru1EQ` |
+| `token`      | Required | Authentication token                   | `YOUR_ACCESS_TOKEN` |
 | `contest_id` | Required | Contest ID to load (must be flip type) | `2`                                           |
 
 ## Dynamic Base URL Logic

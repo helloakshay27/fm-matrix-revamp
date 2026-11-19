@@ -37,6 +37,12 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: choco install imagemagick -y
 
+      - name: Create .env
+        shell: bash
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+
       - name: Build web app
         run: npm run build
         env:

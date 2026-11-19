@@ -33,11 +33,8 @@ function SupersetDashboard() {
       standalone: "2",
     });
 
-    if (token) {
-      params.append(
-        "token",
-        "93d65f48f3b24ee90357e76fd3747b863dfba98a5445511b"
-      );
+    if (token && import.meta.env.VITE_SUPERSET_TOKEN) {
+      params.append("token", import.meta.env.VITE_SUPERSET_TOKEN);
     }
 
     params.append("project_id", ids.join(","));

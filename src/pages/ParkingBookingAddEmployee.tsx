@@ -152,7 +152,7 @@ const ParkingBookingAddEmployee = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const token = localStorage.getItem('token') || 'FYxPtbCqXq417hBPKteefDAMe57i1GWsm7nxiKOo2Bk';
+        const token = localStorage.getItem('token') || '';
         const url = getFullUrl(`/pms/admin/parking_categories.json?token=${token}`);
         const options = getAuthenticatedFetchOptions();
         const response = await fetch(url, options);
@@ -205,7 +205,7 @@ const ParkingBookingAddEmployee = () => {
       }
 
       try {
-        const token = localStorage.getItem('token') || 'FYxPtbCqXq417hBPKteefDAMe57i1GWsm7nxiKOo2Bk';
+        const token = localStorage.getItem('token') || '';
         const params = new URLSearchParams({
           type: 'parking',
           date: selectedDate,

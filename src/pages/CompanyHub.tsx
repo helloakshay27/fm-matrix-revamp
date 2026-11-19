@@ -2397,7 +2397,7 @@ const AutoScrollTownHalls = () => {
     const fetchTownHalls = async () => {
       try {
         const tokenFromStorage = localStorage.getItem("token");
-        const token = tokenFromStorage || "9c321b4fe31d68572f18cbc082557777f681f283c244fa55";
+        const token = tokenFromStorage || "";
         const baseUrl = localStorage.getItem("baseUrl") || "lockated-api.gophygital.work";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
@@ -2589,8 +2589,7 @@ const AutoScrollEvents = () => {
     const fetchUpcomingEvents = async () => {
       try {
         const tokenFromStorage = localStorage.getItem("token");
-        // Use provided token as fallback if storage token is missing or for this specific legacy API
-        const token = tokenFromStorage || "9c321b4fe31d68572f18cbc082557777f681f283c244fa55";
+        const token = tokenFromStorage || "";
         const baseUrl =
           localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";

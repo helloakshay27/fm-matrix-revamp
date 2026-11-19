@@ -21,6 +21,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      # Create .env from the ENV_FILE repository secret (Settings > Secrets > Actions)
+      - name: Create .env
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+
       # Install dependencies & build (Vite)
       - name: Install & Build
         run: |

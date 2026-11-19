@@ -893,8 +893,7 @@ export const CarpoolDashboard = () => {
 
     try {
       const token =
-        localStorage.getItem("token") ||
-        "F8jgP8cVc8fRUNdVzFeWF0ouaQiWcPYaajDFnEWXUKc"; // Fallback to provided token for testing if local is missing
+        localStorage.getItem("token") || "";
       const baseUrl =
         localStorage.getItem("baseUrl") || "pulse-api.lockated.com";
       const protocol = baseUrl.startsWith("http") ? "" : "https://";

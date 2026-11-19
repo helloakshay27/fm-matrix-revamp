@@ -24,7 +24,7 @@ const goPhygitalTenantsData: ProductData = {
   keyPoints: ['Reduce tenant helpdesk calls by 60%', 'Digital audit trail for all service requests', 'Improve tenant NPS through self-service'],
   roi: ['Faster service request resolution.', 'Reduced front-desk staffing costs.', 'Higher tenant retention through improved experience.'],
   assets: [{ type: 'Link', title: 'Product Deck', url: '#', icon: <Presentation className="w-5 h-5" /> }],
-  credentials: [{ title: 'Demo', url: 'https://tenants.gophygital.work', id: 'demo@gophygital.work', pass: 'Available on request', icon: <Monitor className="w-5 h-5" /> }],
+  credentials: [{ title: 'Demo', url: 'https://tenants.gophygital.work', id: 'demo@gophygital.work', pass: import.meta.env.VITE_DEMO_PASS_DEMO_GOPHYGITAL_WORK_TENANTS || 'Available on request', icon: <Monitor className="w-5 h-5" /> }],
   owner: 'Anjali / Ubaid', ownerImage: '',
   extendedContent: {
     featureSummary: (

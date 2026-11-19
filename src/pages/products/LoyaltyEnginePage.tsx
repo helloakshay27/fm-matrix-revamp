@@ -107,7 +107,7 @@ const loyaltyEngineData: ProductData = {
       title: "Rule Builder Dashboard",
       url: "https://rules.lockated.com",
       id: "admin.rules@lockated.com",
-      pass: "Available on request",
+      pass: import.meta.env.VITE_DEMO_PASS_ADMIN_RULES_LOCKATED_COM || "Available on request",
       icon: <Settings className="w-5 h-5" />,
     },
   ],
