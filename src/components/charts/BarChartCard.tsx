@@ -12,6 +12,7 @@ import {
   type TooltipProps,
   type LegendProps,
 } from "recharts";
+import type { ReactNode } from "react";
 import { BarChart3, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,8 @@ function BarLegend({ payload }: LegendProps) {
 export interface BarChartCardProps {
   title: string;
   subtitle?: string;
+  /** Extra control rendered under the title (e.g. period tabs). */
+  headerExtra?: ReactNode;
   data: Record<string, string | number>[];
   categoryKey: string;
   series: BarSeriesConfig[];
@@ -117,6 +120,7 @@ export interface BarChartCardProps {
 export function BarChartCard({
   title,
   subtitle,
+  headerExtra,
   data,
   categoryKey,
   series,
@@ -193,6 +197,7 @@ export function BarChartCard({
         )}
         <CardTitle className="text-brand-body-3 font-semibold text-brand-text">{title}</CardTitle>
         {subtitle && <p className="text-brand-body-5 text-brand-text-light">{subtitle}</p>}
+        {headerExtra && <div className="pt-2">{headerExtra}</div>}
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
