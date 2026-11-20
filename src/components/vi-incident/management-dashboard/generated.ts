@@ -1026,7 +1026,7 @@ export const KPI_INFO = [
   }
 ] as const;
 export const CARD_INFO = {
-  "Closure Progress by Circle × Stage": "% complete per stage per circle. Green ≥90%, Teal 80–90%, Amber 70–80%, Red <70%. On-time and No Extension are proposed measures based on Target Date and Extend Target Date.",
+  "Closure Progress by Circle × Stage": "Count (numerator) per stage per circle; hover a cell for count of total and %. Colour by % complete: Green ≥90%, Teal 80–90%, Amber 70–80%, Red <70%. On-time and No Extension are proposed measures based on Target Date and Extend Target Date.",
   "Circles Needing Follow-up": "Circles ranked by the average of the five heatmap stages, lowest first.",
   "All Incidents — with checklist and action plan progress at a glance": "Every incident with its checklist and action progress. Click a row for the full drill-down.",
   "Waiting for SPOC Review · Aging": "Days from submission to today for incidents still Pending By SPOC. Proposed measure.",

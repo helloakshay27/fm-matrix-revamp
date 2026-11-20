@@ -51,7 +51,7 @@ export function IncidentOverview({ values, heatmap, activeGroup, onJump, onDrill
             <div className="card-hd">
               <div>
                 <div className="card-title">Closure Progress by Circle<InfoButton text={cardInfo("Closure Progress by Circle × Stage")} /></div>
-                <div className="card-sub">% complete per stage · click a cell to drill into that circle</div>
+                <div className="card-sub">Count per stage · hover for count of total and % · click a cell to drill into that circle</div>
               </div>
             </div>
             <div className="hm-wrap">
@@ -62,11 +62,11 @@ export function IncidentOverview({ values, heatmap, activeGroup, onJump, onDrill
                 <div key={row.circle} className="hm-row">
                   <div className="hm-label">{row.circle}</div>
                   {row.cells.map((cell, index) => (
-                    <div key={index} className={`hm-cell ${cell.cls}`} onClick={() => onDrill("circle-underperform")}>{cell.value}</div>
+                    <div key={index} className={`hm-cell ${cell.cls}`} title={cell.title} onClick={() => onDrill("circle-underperform")}>{cell.value}</div>
                   ))}
                 </div>
               ))}
-              <div className="hm-scale">Scale <div className="hm-scale-block"><span style={{ background: "rgba(238,39,55,.28)" }} /><span style={{ background: "rgba(255,196,0,.55)" }} /><span style={{ background: "rgba(255,143,107,.42)" }} /><span style={{ background: "var(--sky)" }} /></div> &lt;70% → ≥90%</div>
+              <div className="hm-scale">Scale <div className="hm-scale-block"><span style={{ background: "rgba(238,39,55,.28)" }} /><span style={{ background: "rgba(255,196,0,.55)" }} /><span style={{ background: "rgba(255,143,107,.42)" }} /><span style={{ background: "var(--sky)" }} /></div> Low → High</div>
             </div>
           </div>
           {/* <div className="card">
