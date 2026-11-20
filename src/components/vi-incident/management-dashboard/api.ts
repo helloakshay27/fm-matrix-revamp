@@ -34,7 +34,7 @@ export interface IncidentFilters {
 
 export interface HeatmapRow {
   circle: string;
-  cells: { cls: string; value: string }[];
+  cells: { cls: string; value: string; title: string }[];
 }
 
 export interface RecentIncident {
@@ -146,7 +146,10 @@ function openClosedSpec(base: ChartSpec, items: CountItem[]): ChartSpec {
 const BAND_CLASS: Record<string, string> = { red: "c1", amber: "c2", teal: "c3", green: "c4" };
 
 interface HeatmapResponse {
-  data: { circle_name: string; stages: { percentage: number; band: string }[] }[];
+  data: {
+    circle_name: string;
+    stages: { label?: string; percentage: number | null; band: string; numerator?: number; denominator?: number }[];
+  }[];
 }
 
 /* ── Hooks ─────────────────────────────────────────────────────── */
@@ -345,7 +348,17 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
 
       const heatmap = (value<HeatmapResponse>(15)?.data ?? []).map((row) => ({
         circle: row.circle_name,
-        cells: row.stages.map((stage) => ({ cls: BAND_CLASS[stage.band] ?? "c1", value: `${Math.round(stage.percentage)}%` })),
+        // Show the numerator (count); colour still follows the API's % band.
+        cells: row.stages.map((stage) => {
+          const numerator = stage.numerator ?? 0;
+          const denominator = stage.denominator ?? 0;
+          const pct = stage.percentage == null ? "no data" : `${Math.round(stage.percentage)}%`;
+          return {
+            cls: BAND_CLASS[stage.band] ?? "c1",
+            value: String(numerator),
+            title: `${stage.label ? `${stage.label}: ` : ""}${numerator} of ${denominator} (${pct})`,
+          };
+        }),
       }));
       const recent = value<{ recent_incidents: RecentIncident[] }>(16)?.recent_incidents ?? [];
 

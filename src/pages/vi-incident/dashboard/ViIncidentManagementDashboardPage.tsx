@@ -151,7 +151,12 @@ export function ViIncidentManagementDashboardPage() {
       notify("Select at least one Circle and one Function to apply");
       return;
     }
-    if (!draft.dateFrom || !draft.dateTo || draft.dateFrom > draft.dateTo) {
+    // Dates are optional (Reset clears them), but a partial or reversed range is not allowed.
+    if (Boolean(draft.dateFrom) !== Boolean(draft.dateTo)) {
+      notify("Select both Incident Date From and To, or leave both empty");
+      return;
+    }
+    if (draft.dateFrom && draft.dateTo && draft.dateFrom > draft.dateTo) {
       notify("Select a valid Incident Date range");
       return;
     }
@@ -180,10 +185,11 @@ export function ViIncidentManagementDashboardPage() {
         onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
         onApply={applyFilters}
         onReset={() => {
-          const reset = defaultFilters();
+          // Reset clears every filter, including both Incident Dates.
+          const reset = { ...defaultFilters(), dateFrom: "", dateTo: "" };
           setDraft(reset);
           setApplied(reset);
-          notify("Filters reset to default");
+          notify("Filters reset");
         }}
       />
       <ModuleTabs module={module} onModule={switchModule} />

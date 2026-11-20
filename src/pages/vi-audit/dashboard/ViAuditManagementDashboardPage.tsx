@@ -176,11 +176,12 @@ export function ViAuditManagementDashboardPage() {
   };
 
   const apply = () => {
-    if (!filters.dateFrom || !filters.dateTo) {
-      notify("Select the audit date range");
+    // Dates are optional (Reset clears them), but a partial or reversed range is not allowed.
+    if (Boolean(filters.dateFrom) !== Boolean(filters.dateTo)) {
+      notify("Select both Audit Date From and To, or leave both empty");
       return;
     }
-    if (filters.dateFrom > filters.dateTo) {
+    if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
       notify("Audit Date From must be before Audit Date To");
       return;
     }
@@ -220,9 +221,11 @@ export function ViAuditManagementDashboardPage() {
         onDateTo={update("dateTo")}
         onApply={apply}
         onReset={() => {
-          const next = defaultFilters();
+          // Reset clears every filter, including both Audit Dates.
+          const next = { ...defaultFilters(), dateFrom: "", dateTo: "" };
           setFilters(next);
           setApplied(next);
+          notify("Filters reset");
         }}
       />
 
