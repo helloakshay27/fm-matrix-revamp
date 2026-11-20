@@ -87,11 +87,12 @@ export function ViInspectionManagementDashboardPage() {
   };
 
   const apply = () => {
-    if (!filters.dateFrom || !filters.dateTo) {
-      notify("Select the inspection date range");
+    // Dates are optional (Reset clears them), but a partial or reversed range is not allowed.
+    if (Boolean(filters.dateFrom) !== Boolean(filters.dateTo)) {
+      notify("Select both Inspection Date From and To, or leave both empty");
       return;
     }
-    if (filters.dateFrom > filters.dateTo) {
+    if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
       notify("Inspection Date From must be before Inspection Date To");
       return;
     }
@@ -125,9 +126,11 @@ export function ViInspectionManagementDashboardPage() {
         onDateTo={update("dateTo")}
         onApply={apply}
         onReset={() => {
-          const next = defaultFilters();
+          // Reset clears every filter, including both Inspection Dates.
+          const next = { ...defaultFilters(), dateFrom: "", dateTo: "" };
           setFilters(next);
           setApplied(next);
+          notify("Filters reset");
         }}
       />
       <ModuleTabs module={module} onModule={switchModule} />
