@@ -13,6 +13,7 @@ import type {
   WeeklyFilters,
   WorkflowUsageResponse,
 } from '@/features/posthog-dashboard/api/adoptionApi';
+import { analyticsToken } from '@/features/posthog-dashboard/api/analyticsAuth';
 
 /* ---------------------------------------------------------------------------
  * Calendar App Adoption Analytics API client.
@@ -59,10 +60,8 @@ const client = axios.create({
 
 /* Attach Bearer token when present. */
 client.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('access_token') ||
-    sessionStorage.getItem('access_token') ||
-    '';
+  // The login token (JWT): the analytics API checks it on every request.
+  const token = analyticsToken();
   if (token) {
     config.headers = AxiosHeaders.from(config.headers);
     config.headers.set('Authorization', `Bearer ${token}`);

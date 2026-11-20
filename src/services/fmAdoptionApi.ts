@@ -1,12 +1,18 @@
 import axios from "axios";
+import { analyticsToken } from "@/features/posthog-dashboard/api/analyticsAuth";
 
 // FM Adoption Analytics API — see FM_ADOPTION_API_CURLS.md at repo root.
-// No auth header, no `team` param — team is fixed server-side. `url` is
-// fixed to the FM Matrix tenant host; this service only exposes date + site.
+// No `team` param — team is fixed server-side. `url` is fixed to the FM Matrix tenant host; this service
+// only exposes date + site. The API checks the login token on every request (Authorization: Bearer).
 const FM_ADOPTION_BASE_URL = "https://posthog-api.lockated.com";
 const FM_ADOPTION_TENANT_URL = "fm-matrix.lockated.com";
 
 const client = axios.create({ baseURL: FM_ADOPTION_BASE_URL });
+client.interceptors.request.use((config) => {
+  const token = analyticsToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 export interface FmAdoptionFilters {
   siteIds: string[];

@@ -13,6 +13,7 @@ import type {
   WeeklyFilters,
   WorkflowUsageResponse,
 } from '@/features/posthog-dashboard/api/adoptionApi';
+import { analyticsToken } from '@/features/posthog-dashboard/api/analyticsAuth';
 
 /**
  * FM Adoption Analytics API, bound to the Vi my Workspace tenant.
@@ -141,6 +142,13 @@ export const ANALYTICS_TENANT_URL =
   'vi-web.gophygital.work';
 
 const client = axios.create({ baseURL: ANALYTICS_BASE_URL, timeout: 60_000 });
+
+// The login token (JWT): the analytics API checks it on every request.
+client.interceptors.request.use((config) => {
+  const token = analyticsToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 export type {
   AdoptionEngagementResponse,
