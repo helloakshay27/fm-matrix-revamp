@@ -10,7 +10,9 @@ describe('liveRefetchInterval', () => {
   });
   it('asks again once a minute for a live range', () => {
     expect(liveRefetchInterval(q({ meta: { metric: 'traffic_session', cache: { live: true, refreshing: false } } }))).toBe(LIVE_POLL_MS);
-    expect(liveRefetchInterval(q({ meta: { metric: 'traffic_session' } }))).toBe(LIVE_POLL_MS); // just worked out
+  });
+  it('does not ask again when the API reads the database directly (no meta.cache: answers cache off)', () => {
+    expect(liveRefetchInterval(q({ meta: { metric: 'traffic_session' } }))).toBe(false);
   });
   it('does not ask again for a range that has ended, or for anything that is not a usage-analytics answer', () => {
     expect(liveRefetchInterval(q({ meta: { metric: 'growth', cache: { live: false, refreshing: false } } }))).toBe(false);

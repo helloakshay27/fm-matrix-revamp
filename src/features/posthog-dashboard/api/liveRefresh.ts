@@ -7,6 +7,10 @@
  * the card then asks again after a few seconds and shows the new numbers. Otherwise it asks once a
  * minute. A range that has ended (meta.cache.live === false) does not change, so it is not asked again,
  * and neither is anything that is not a usage-analytics answer (sites lists, other APIs: no meta.metric).
+ *
+ * Only an API that keeps stored answers says meta.cache. One that reads the database directly on every
+ * request (answers cache off) does not: then nothing is asked again by itself, because every ask would
+ * be a full database query. A page load or the Refresh button always gets the newest numbers there.
  */
 export const LIVE_POLL_MS = 60_000;
 export const REFRESHING_POLL_MS = 5_000;
@@ -21,8 +25,8 @@ interface AnswerMeta {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function liveRefetchInterval(query: { state: { data?: any } }): number | false {
   const meta = (query.state.data as { meta?: AnswerMeta } | null | undefined)?.meta;
-  if (!meta || typeof meta !== 'object' || !meta.metric) return false;
-  if (meta.cache?.refreshing) return REFRESHING_POLL_MS;
-  if (meta.cache?.live === false) return false;
+  if (!meta || typeof meta !== 'object' || !meta.metric || !meta.cache) return false;
+  if (meta.cache.refreshing) return REFRESHING_POLL_MS;
+  if (meta.cache.live === false) return false;
   return LIVE_POLL_MS;
 }
