@@ -16,6 +16,7 @@ import {
   Settings,
   Mail,
   Building2,
+  BarChart3,
   MessageSquare,
   CircleCheckBig,
   MessagesSquare,
@@ -47,8 +48,14 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
+import {
+  getUser,
+  clearAuth,
+  fetchLockAccount,
+  logoutUser,
+} from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
@@ -70,6 +77,7 @@ export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const currentUser = getUser();
   // VI account details (for vi-web only)
   const [viAccount, setViAccount] = useState<{
     firstname?: string;
@@ -123,7 +131,9 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
-    hostname === "club.lockated.com" || hostname.includes("localhost");
+    hostname === "club.lockated.com" ||
+    hostname === "recess-club.panchshil.com" ||
+    hostname.includes("localhost");
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
@@ -137,26 +147,36 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
 
-  // Profile menu → Usage Analytics. Single entry, opens the Vi my Workspace adoption
-  // dashboard. The FM Matrix one at /fm-usage-analytics is still routed and reachable
-  // directly by URL; it just no longer has a profile-menu entry.
+  // VI Usage Analytics opens the my Workspace adoption dashboard.
   const usageAnalyticsPath = "/vi-posthog-dashboard";
-  const showUsageAnalytics = isViSite || isLocalhost;
 
   // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
-  // the Vi adoption dashboard above. Scoped to isPulseSite (pulse domains + org_id 90)
-  // and deliberately NOT localhost — the entry above already renders there, and two
-  // identical "Usage Analytics" rows in the same profile menu is what the previous
-  // localhost condition produced.
-  const showPulseUsageAnalytics = isPulseSite;
+  // the Vi adoption dashboard above. External-role users only get Logout.
+  const isExternalRole =
+    localStorage.getItem("lock_role_name")?.toLowerCase() === "external";
+  const showPulseUsageAnalytics = isPulseSite && !isExternalRole;
 
-  // FM Matrix Usage Analytics (/posthog-dashboard), as on the api-integration-ui branch,
-  // but restricted to an explicit allowlist of users.
-  const fmUsageAnalyticsUsers = ["psipl@gophygital.work"];
-  const showFmUsageAnalytics = fmUsageAnalyticsUsers.includes(
-    (getUser()?.email ?? "").toLowerCase()
-  );
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  const usageAnalyticsOptions = [
+    {
+      key: "vi",
+      label: "Usage Analytics",
+      shouldShow: () =>
+        (isViSite || isLocalhost) && shouldShow("vi_usage_analytics"),
+      onSelect: () => {
+        window.location.href = usageAnalyticsPath;
+      },
+    },
+    {
+      key: "pulse",
+      label: "Usage Analytics",
+      shouldShow: () =>
+        showPulseUsageAnalytics && shouldShow("pulse_usage_analytics"),
+      onSelect: () => navigate("/pulse"),
+    },
+  ];
 
   useEffect(() => {
     if (selectedSite) {
@@ -1127,60 +1147,89 @@ export const Header = () => {
                   </div>
                 )}
 
-              {/* Menu Items */}
-              <div className="py-1">
-                <DropdownMenuItem
-                  onClick={() => navigate("/business-compass/profile")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <User className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">My Profile</span>
-                </DropdownMenuItem>
+              {/* Menu Items — hidden for External-role users, who only get Logout */}
+              {!isExternalRole && (
+                <>
+                  <div className="py-1">
+                    {!isViSite && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/business-compass/profile")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <User className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">My Profile</span>
+                      </DropdownMenuItem>
+                    )}
+                    {currentUser?.email === "chetan.bafna@lockated.com" && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/vas/ceo-dashboard")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">CEO Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
+                    {(isClubSite ||
+                      window.location.pathname.startsWith(
+                        "/club-management"
+                      )) && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          navigate("/club-management/usage-dashboard")
+                        }
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
+                    {!isViSite && (
+                      <DropdownMenuItem
+                        onClick={handleFmPosthog}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Analytics</span>
+                      </DropdownMenuItem>
+                    )}
+                    {!isViSite &&
+                      usageAnalyticsOptions
+                        .filter((option) => option.shouldShow())
+                        .map((option) => (
+                          <DropdownMenuItem
+                            key={option.key}
+                            onClick={option.onSelect}
+                            className="mx-2 my-1 rounded-md"
+                          >
+                            <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                            <span className="font-medium">{option.label}</span>
+                          </DropdownMenuItem>
+                        ))}
 
-                {/* {showFmUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/posthog-dashboard")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )} */}
-                {showUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => (window.location.href = usageAnalyticsPath)}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
-                {showPulseUsageAnalytics && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pulse")}
-                    className="mx-2 my-1 rounded-md"
-                  >
-                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                    <span className="font-medium">Usage Analytics</span>
-                  </DropdownMenuItem>
-                )}
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate(
+                          isClubSite
+                            ? "/settings/vas/booking-club/setup"
+                            : "/settings/company-hub/Company-setup"
+                        )
+                      }
+                      className="mx-2 my-1 rounded-md"
+                    >
+                      <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                      <span className="font-medium">Settings</span>
+                    </DropdownMenuItem>
+                  </div>
 
-                <DropdownMenuItem
-                  onClick={() => navigate("/settings")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
-              </div>
-
-              <DropdownMenuSeparator className="my-1" />
+                  <DropdownMenuSeparator className="my-1" />
+                </>
+              )}
 
               {/* Logout Button */}
               <div className="p-2">
                 <DropdownMenuItem
                   onClick={async () => {
-                    // await logoutUser();
+                    await logoutUser();
                     navigate("/login");
                     permissionService.clearUserData();
                     clearAuth();
