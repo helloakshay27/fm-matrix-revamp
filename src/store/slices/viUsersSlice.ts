@@ -244,12 +244,15 @@ export const fetchViUsers = createAsyncThunk(
       employee_type_cont = "internal",
       web_enabled_eq = true,
       search = "",
+      filterParams = {},
     }: {
       page?: number;
       perPage?: number;
       employee_type_cont?: string;
       web_enabled_eq?: boolean;
       search?: string;
+      /** Extra ransack params from the filter dialog, e.g. { "q[firstname_cont]": "ab" }. */
+      filterParams?: Record<string, string>;
     },
     { rejectWithValue }
   ) => {
@@ -267,7 +270,11 @@ export const fetchViUsers = createAsyncThunk(
         params.append("q[lock_user_permissions_web_enabled_eq]", "true");
       }
 
-      if (search) {
+      for (const [key, value] of Object.entries(filterParams)) {
+        params.append(key, value);
+      }
+      // The search box searches by email unless the filter dialog already sets an email.
+      if (search && !filterParams["q[email_cont]"]) {
         params.append("q[email_cont]", search);
       }
 
