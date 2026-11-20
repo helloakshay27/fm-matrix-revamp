@@ -141,14 +141,14 @@ export const Header = () => {
   // dashboard. The FM Matrix one at /fm-usage-analytics is still routed and reachable
   // directly by URL; it just no longer has a profile-menu entry.
   const usageAnalyticsPath = "/vi-posthog-dashboard";
-  const showUsageAnalytics = isViSite || isLocalhost;
+  const showUsageAnalytics = isLocalhost && !isViSite;
 
   // Pulse tenants get their own Usage Analytics entry (the /pulse dashboard) instead of
   // the Vi adoption dashboard above. Scoped to isPulseSite (pulse domains + org_id 90)
   // and deliberately NOT localhost — the entry above already renders there, and two
   // identical "Usage Analytics" rows in the same profile menu is what the previous
   // localhost condition produced.
-  const showPulseUsageAnalytics = isPulseSite;
+  const showPulseUsageAnalytics = isPulseSite && !isViSite;
 
   // FM Matrix Usage Analytics (/posthog-dashboard), as on the api-integration-ui branch,
   // but restricted to an explicit allowlist of users.
@@ -1129,13 +1129,15 @@ export const Header = () => {
 
               {/* Menu Items */}
               <div className="py-1">
-                <DropdownMenuItem
-                  onClick={() => navigate("/business-compass/profile")}
-                  className="mx-2 my-1 rounded-md"
-                >
-                  <User className="w-4 h-4 mr-2 text-gray-500" />
-                  <span className="font-medium">My Profile</span>
-                </DropdownMenuItem>
+                {!isViSite && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/business-compass/profile")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <User className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">My Profile</span>
+                  </DropdownMenuItem>
+                )}
 
                 {/* {showFmUsageAnalytics && (
                   <DropdownMenuItem
