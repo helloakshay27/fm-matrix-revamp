@@ -50,11 +50,11 @@ export const helpdeskAnalyticsAPI = {
     return resp.data;
   },
 
-  async getTicketAgingClosureEfficiency(fromDate: Date, toDate: Date, siteId?: string): Promise<any> {
+  async getTicketAgingClosureEfficiency(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
     const resolvedSiteId = siteId ?? getSiteId();
-    const url = `/api/pms/reports/ticket_aging_closure_efficiency.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}`;
+    const url = `/api/pms/reports/ticket_aging_closure_efficiency.json?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}&site_id=${resolvedSiteId}${typeParam('category_type_type_eq', categoryType)}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
@@ -80,7 +80,7 @@ export const helpdeskAnalyticsAPI = {
   // Convenience wrapper to return both datasets together
   async getAgingClosureFeedbackOverview(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<{ agingClosure: any; feedback: any; }> {
     const [agingClosure, feedback] = await Promise.all([
-      this.getTicketAgingClosureEfficiency(fromDate, toDate, siteId),
+      this.getTicketAgingClosureEfficiency(fromDate, toDate, siteId, categoryType),
       this.getCustomerExperienceFeedback(fromDate, toDate, siteId, categoryType),
     ]);
     return { agingClosure, feedback };
