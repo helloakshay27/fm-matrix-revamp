@@ -220,7 +220,6 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
       icon: Trash,
       href: "/safety/employee-deletion-history",
     },
-    // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
   ],
   Master: [
     {
