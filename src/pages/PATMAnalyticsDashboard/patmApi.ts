@@ -1,0 +1,241 @@
+/**
+ * PATM Analytics API client.
+ *
+ * All requests are scoped to project_code=PTM-01.
+ * Mobile requests include app_id=37; other devices may supply an optional app_id.
+ *
+ * Base URL : VITE_FM_ADOPTION_API_URL (default https://posthog-api.lockated.com)
+ * Endpoints: /commercial/patm/adoption/* (PATM's own API; same calculations as FM/Pulse)
+ */
+
+import axios from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from '@/features/posthog-dashboard/api/exportJob';
+import { analyticsToken } from '@/features/posthog-dashboard/api/analyticsAuth';
+import type { RecentActiveUsersResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+
+export const PATM_MOBILE_APP_ID = '37';
+export const PATM_RECENT_ACTIVITY_DEVICE = 'mobile';
+
+// The PATM API fixes the scope (project_code PTM-01, web and app). The 10 newest events, all platforms.
+export const fetchPatmRecentActiveUsers = (f: Pick<PATMRangeFilters, 'from' | 'to'>) =>
+  get<RecentActiveUsersResponse>('recent_active_users', [
+    ['from', f.from],
+    ['to', f.to],
+    ['limit', 10],
+  ]);
+
+/** Every event in the range as the server-built .xlsx (the same download as the other dashboards). */
+export async function downloadPatmActiveUsers(
+  f: Pick<PATMRangeFilters, 'from' | 'to'>,
+  onPhase?: (phase: ExportPhase) => void,
+): Promise<Blob> {
+  const qs = buildQuery([['from', f.from], ['to', f.to]]);
+  const { blob } = await runExportJob({
+    exportUrl: `/commercial/patm/adoption/active_users_export?${qs}`,
+    adoptionUrl: '/commercial/patm/adoption',
+    get: axiosGet(client),
+    onPhase,
+  });
+  return blob;
+}
+
+// Re-export all response types from the shared adoptionApi so callers only import from here.
+export type {
+  TrafficSessionResponse,
+  UsageDistributionResponse,
+  AdoptionEngagementResponse,
+  AdoptionTrendResponse,
+  GrowthResponse,
+  RetentionResponse,
+  RolesResponse,
+  ModulesResponse,
+  WorkflowUsageResponse,
+  RecentActiveUsersResponse,
+  WorkflowFunnelStep,
+  WorkflowFlowRow,
+  WorkflowEntryScreen,
+  GrowthWeekRow,
+  RetentionCohort,
+  WeeklyWau,
+  ModuleNode,
+} from '@/features/posthog-dashboard/api/adoptionApi';
+
+/* ── constants ─────────────────────────────────────────────────────── */
+
+export const PATM_PROJECT_CODE = 'PTM-01';
+
+export const ANALYTICS_BASE_URL =
+  (import.meta.env.VITE_FM_ADOPTION_API_URL as string | undefined) ??
+  'https://posthog-api.lockated.com';
+
+/** Frontend tenant whose events are queried; never the backend API host. */
+function getPatmBaseUrl(override?: string): string {
+  return override ?? 'fm-matrix.lockated.com';
+}
+
+/* ── axios client ───────────────────────────────────────────────────── */
+
+const client = axios.create({
+  baseURL: ANALYTICS_BASE_URL,
+  timeout: 60_000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+client.interceptors.request.use((config) => {
+  // The login token (JWT): the analytics API checks it on every request.
+  const token = analyticsToken();
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// HTTP failures stay rejected so the dashboard can display an error state.
+
+/* ── query-string builder (raw commas for multi-value params) ─────── */
+
+type Pair = [string, string | string[] | number | undefined | null];
+
+function buildQuery(pairs: Pair[]): string {
+  const parts: string[] = [];
+  for (const [key, value] of pairs) {
+    if (value === undefined || value === null || value === '') continue;
+    if (Array.isArray(value)) {
+      if (value.length === 0) continue;
+      parts.push(`${key}=${value.join(',')}`);
+    } else {
+      parts.push(`${key}=${encodeURIComponent(String(value))}`);
+    }
+  }
+  return parts.join('&');
+}
+
+async function get<T>(endpoint: string, pairs: Pair[]): Promise<T> {
+  const qs = buildQuery(pairs);
+  const { data } = await client.get<T>(
+    `/commercial/patm/adoption/${endpoint}${qs ? `?${qs}` : ''}`, // PATM's own API (project_code PTM-01, fixed on the server)
+  );
+  return data;
+}
+
+/* ── filter types ───────────────────────────────────────────────────── */
+
+export interface PATMRangeFilters {
+  from: string; // YYYY-MM-DD
+  to: string; // YYYY-MM-DD
+  appId?: string; // optional for non-mobile requests
+  baseUrl?: string; // frontend tenant URL; defaults to fm-matrix.lockated.com
+  device?: string; // 'all' | 'desktop' | 'mobile' → mapped to Desktop/Mobile
+}
+
+export interface PATMWeeklyFilters {
+  to: string;
+  weeks: number;
+  /** Start of the selected range. Only growth reads it: its weeks follow the range. */
+  from?: string;
+  appId?: string;
+  baseUrl?: string;
+  device?: string;
+}
+
+/* ── device mapping ─────────────────────────────────────────────────── */
+
+function mapDevice(device?: string): string | undefined {
+  if (device === 'desktop') return 'Desktop';
+  if (device === 'mobile') return 'Mobile';
+  return undefined; // 'all' → param omitted, API aggregates all platforms
+}
+
+/* ── shared param builders ──────────────────────────────────────────── */
+
+export function getPatmAppId(f: { device?: string; appId?: string }): string | undefined {
+  return f.device === 'mobile' ? PATM_MOBILE_APP_ID : f.appId;
+}
+
+function rangeParams(f: PATMRangeFilters): Pair[] {
+  const url = getPatmBaseUrl(f.baseUrl);
+  const deviceType = mapDevice(f.device);
+  return [
+    ['project_code', PATM_PROJECT_CODE],
+    ['url', url],
+    ['app_id', getPatmAppId(f)],
+    ['from', f.from],
+    ['to', f.to],
+    ...(deviceType ? [['device_type', deviceType] as Pair] : []),
+  ];
+}
+
+function weeklyParams(f: PATMWeeklyFilters): Pair[] {
+  const url = getPatmBaseUrl(f.baseUrl);
+  const deviceType = mapDevice(f.device);
+  return [
+    ['project_code', PATM_PROJECT_CODE],
+    ['url', url],
+    ['app_id', getPatmAppId(f)],
+    ['to', f.to],
+    ['weeks', f.weeks],
+    ...(deviceType ? [['device_type', deviceType] as Pair] : []),
+  ];
+}
+
+/* ── Layer 1 · Traffic & Session ────────────────────────────────────── */
+
+import type { TrafficSessionResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmTrafficSession = (f: PATMRangeFilters) =>
+  get<TrafficSessionResponse>('traffic_session', rangeParams(f));
+
+import type { UsageDistributionResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmUsageAndDistribution = (f: PATMRangeFilters) =>
+  get<UsageDistributionResponse>('usage_and_distribution', rangeParams(f));
+
+/* ── Layer 2 · Adoption & Engagement ───────────────────────────────── */
+
+import type { AdoptionEngagementResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmAdoptionEngagement = (
+  f: PATMRangeFilters & { licensedSeats?: number | null },
+) => {
+  const pairs = rangeParams(f);
+  if (f.licensedSeats != null && f.licensedSeats > 0)
+    pairs.push(['licensed_seats', f.licensedSeats]);
+  return get<AdoptionEngagementResponse>('adoption_engagement', pairs);
+};
+
+import type { AdoptionTrendResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmAdoptionTrend = (f: PATMWeeklyFilters) =>
+  get<AdoptionTrendResponse>('adoption_trend', weeklyParams(f));
+
+import type { GrowthResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmGrowth = (f: PATMWeeklyFilters) =>
+  get<GrowthResponse>('growth', [...weeklyParams(f), ...(f.from ? [['from', f.from] as Pair] : [])]);
+
+import type { RetentionResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmRetention = (f: PATMWeeklyFilters) =>
+  get<RetentionResponse>('retention', weeklyParams(f));
+
+/* ── Layer 3 · Workflow Usage ───────────────────────────────────────── */
+
+import type { ModulesResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmModules = (f: PATMRangeFilters & { module?: string }) => {
+  // Discover frontend paths within the PATM project and selected mobile app.
+  const pairs: Pair[] = [
+    ['url', getPatmBaseUrl(f.baseUrl)],
+    ['project_code', PATM_PROJECT_CODE],
+    ['from', f.from],
+    ['to', f.to],
+    ['app_id', getPatmAppId(f)],
+    ['device_type', mapDevice(f.device)],
+  ];
+  if (f.module) pairs.push(['module', f.module]);
+  return get<ModulesResponse>('modules', pairs);
+};
+
+import type { WorkflowUsageResponse } from '@/features/posthog-dashboard/api/adoptionApi';
+export const fetchPatmWorkflowUsage = (
+  f: PATMRangeFilters & { module?: string; subModule?: string },
+) => {
+  const pairs = rangeParams(f);
+  if (f.module) pairs.push(['module', f.module]);
+  if (f.subModule) pairs.push(['sub_module', f.subModule]);
+  return get<WorkflowUsageResponse>('workflow_usage', pairs);
+};
