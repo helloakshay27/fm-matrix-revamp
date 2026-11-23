@@ -81,6 +81,7 @@ interface SiteDetails {
   }>;
   shared_content: string;
   google_maps_url: string;
+  banner?: string | null;
 }
 
 export const SiteDetailsPage: React.FC = () => {
@@ -247,6 +248,34 @@ export const SiteDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Details */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Site Banner */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-brand" />
+                Site Banner
+              </h2>
+              {site.banner ? (
+                <a
+                  href={site.banner}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full aspect-[3/1] rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                  title="Open full size"
+                >
+                  <img
+                    src={site.banner}
+                    alt={`${site.name} banner`}
+                    className="w-full h-full object-cover"
+                  />
+                </a>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2 w-full aspect-[3/1] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 text-gray-400">
+                  <ImageIcon className="w-8 h-8" />
+                  <p className="text-sm">No banner uploaded</p>
+                </div>
+              )}
+            </div>
+
             {/* Images Section */}
             {site.image_url && site.image_url.length > 0 && (
               <div className="bg-white rounded-lg shadow p-6">
