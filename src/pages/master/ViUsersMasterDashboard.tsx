@@ -93,12 +93,11 @@ export const ViUsersMasterDashboard = () => {
         if (isDownloading) return;
         setIsDownloading(true);
         try {
+            // Company from the session; no hardcoded fallback company.
             const companyId =
-                localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
-            const params = new URLSearchParams({
-                "q[employee_type_cont]": "internal",
-                company_id: companyId,
-            });
+                localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
+            const params = new URLSearchParams({ "q[employee_type_cont]": "internal" });
+            if (companyId) params.set("company_id", companyId);
             // Only restrict the export to web-enabled users while "Web Enabled Only" is on.
             if (webEnabledFilter) {
                 params.set("q[lock_user_permissions_web_enabled_eq]", "true");
