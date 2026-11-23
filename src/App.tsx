@@ -3915,6 +3915,9 @@ import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoice
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
+const PATMAnalyticsDashboard = lazy(
+  () => import("./pages/PATMAnalyticsDashboard")
+);
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
 import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
@@ -5216,6 +5219,24 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <CostApprovalStandalonePage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/PATM-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <PATMAnalyticsDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/PATM-posthog"
+                            element={
+                              <ProtectedRoute>
+                                <PATMAnalyticsDashboard />
                               </ProtectedRoute>
                             }
                           />
