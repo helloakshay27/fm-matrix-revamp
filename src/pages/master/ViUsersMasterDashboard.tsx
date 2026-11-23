@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate,useLocation } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
@@ -21,12 +21,41 @@ import {
 } from "@/components/ui/pagination";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { FMUserFilterDialog } from "@/components/FMUserFilterDialog";
 import { toast } from "sonner";
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+
+// Minimum characters before the search box queries the API; shorter input searches nothing.
+const MIN_SEARCH_LENGTH = 4;
+const appliedSearch = (value: string) => {
+    const term = value.trim();
+    return term.length >= MIN_SEARCH_LENGTH ? term : "";
+};
+
+type UserFilters = Parameters<React.ComponentProps<typeof FMUserFilterDialog>["onApplyFilters"]>[0];
+
+// Filter dialog values → ransack params, the same ones the M-Safe internal users page sends.
+const filtersToParams = (f: UserFilters | null): Record<string, string> => {
+    const params: Record<string, string> = {};
+    if (!f) return params;
+    if (f.firstname?.trim()) params["q[firstname_cont]"] = f.firstname.trim();
+    if (f.lastname?.trim()) params["q[lastname_cont]"] = f.lastname.trim();
+    if (f.email?.trim()) params["q[email_cont]"] = f.email.trim();
+    if (f.mobile?.trim()) params["q[mobile_cont]"] = f.mobile.trim();
+    // Prefer the exact cluster id; fall back to the cluster name.
+    if (f.cluster_id) params["q[company_cluster_id_eq]"] = String(f.cluster_id);
+    else if (f.cluster) params["q[company_cluster_cluster_name_cont]"] = f.cluster;
+    if (f.circle) params["q[lock_user_permissions_circle_name_cont]"] = f.circle;
+    if (f.department) params["q[lock_user_permissions_pms_department_department_name_cont]"] = f.department;
+    if (f.role) params["q[lock_user_permissions_lock_role_name_cont]"] = f.role;
+    const lineManager = String(f.report_to_id ?? "");
+    if (lineManager.includes("@")) params["q[report_to_email_cont]"] = lineManager;
+    return params;
+};
 
 const columns: ColumnConfig[] = [
     { key: "id", label: "ID", sortable: true, draggable: true },
@@ -54,6 +83,9 @@ export const ViUsersMasterDashboard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    // Applied filter-dialog params, read by every fetch (a ref so fetchUsers stays stable).
+    const filterParamsRef = useRef<Record<string, string>>({});
 
     // Download the internal Vi users as Excel (company_wise_users_export), following the
     // "Web Enabled Only" toggle.
@@ -61,15 +93,18 @@ export const ViUsersMasterDashboard = () => {
         if (isDownloading) return;
         setIsDownloading(true);
         try {
+            // Company from the session; no hardcoded fallback company.
             const companyId =
-                localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
-            const params = new URLSearchParams({
-                "q[employee_type_cont]": "internal",
-                company_id: companyId,
-            });
+                localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
+            const params = new URLSearchParams({ "q[employee_type_cont]": "internal" });
+            if (companyId) params.set("company_id", companyId);
             // Only restrict the export to web-enabled users while "Web Enabled Only" is on.
             if (webEnabledFilter) {
                 params.set("q[lock_user_permissions_web_enabled_eq]", "true");
+            }
+            // Export the same users the applied filters show.
+            for (const [key, value] of Object.entries(filterParamsRef.current)) {
+                params.set(key, value);
             }
             const response = await fetch(
                 getFullUrl(`/pms/users/company_wise_users_export.xlsx?${params.toString()}`),
@@ -127,6 +162,7 @@ export const ViUsersMasterDashboard = () => {
                     employee_type_cont: "internal",
                     web_enabled_eq: webEnabled,
                     search,
+                    filterParams: filterParamsRef.current,
                 })
             );
         },
@@ -148,14 +184,29 @@ export const ViUsersMasterDashboard = () => {
         [fetchUsers]
     );
 
+    // Search hits the API only once at least 4 characters are typed. Clearing the box (or going
+    // back under 4 characters after a search) reloads the full list once.
+    const lastSearchRef = useRef("");
     const handleSearchChange = (value: string) => {
         setSearchTerm(value);
-        debouncedSearch(value, webEnabledFilter);
+        const next = appliedSearch(value);
+        if (next === lastSearchRef.current) {
+            debouncedSearch.cancel();
+            return;
+        }
+        lastSearchRef.current = next;
+        debouncedSearch(next, webEnabledFilter);
+    };
+
+    const handleApplyFilters = (filters: UserFilters) => {
+        filterParamsRef.current = filtersToParams(filters);
+        setIsFilterOpen(false);
+        fetchUsers(1, appliedSearch(searchTerm), webEnabledFilter);
     };
 
     const handleWebEnabledFilterChange = (checked: boolean) => {
         setWebEnabledFilter(checked);
-        fetchUsers(1, searchTerm, checked);
+        fetchUsers(1, appliedSearch(searchTerm), checked);
     };
 
     useEffect(() => {
@@ -168,7 +219,7 @@ export const ViUsersMasterDashboard = () => {
       current_page: page,
     }));
     navigate(`${location.pathname}?page=${page}`, { replace: true });
-    fetchUsers(page, searchTerm, webEnabledFilter);
+    fetchUsers(page, appliedSearch(searchTerm), webEnabledFilter);
   };
 
     // Status update functionality
@@ -194,7 +245,7 @@ export const ViUsersMasterDashboard = () => {
             );
 
             toast.success("User status updated successfully!");
-            fetchUsers(localPagination.current_page, searchTerm, webEnabledFilter);
+            fetchUsers(localPagination.current_page, appliedSearch(searchTerm), webEnabledFilter);
         } catch (error: unknown) {
             console.error("Status toggle failed:", error);
             toast.error("Failed to update user status.");
@@ -412,6 +463,12 @@ export const ViUsersMasterDashboard = () => {
                     </div>
                 </div>
 
+                {/* Shown while 1–3 characters are typed: the search only runs from 4 */}
+                {searchTerm.trim().length > 0 && searchTerm.trim().length < MIN_SEARCH_LENGTH && (
+                    <p className="mb-2 text-xs text-brand-error">
+                        Type at least {MIN_SEARCH_LENGTH} characters to search
+                    </p>
+                )}
                 {/* Table */}
                 <div className="overflow-x-auto">
                     <EnhancedTable
@@ -446,6 +503,8 @@ export const ViUsersMasterDashboard = () => {
                         )}
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
+                        onFilterClick={() => setIsFilterOpen(true)}
+                        disableClientSearch
                         storageKey="vi-users-master-table"
                         searchPlaceholder="Search by name, email or mobile..."
                         loading={loading}
@@ -453,6 +512,7 @@ export const ViUsersMasterDashboard = () => {
                         handleExport={handleDownloadUsers}
                         isExporting={isDownloading}
                     />
+                    <FMUserFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} />
                 </div>
 
                 <div className="flex justify-center mt-6">

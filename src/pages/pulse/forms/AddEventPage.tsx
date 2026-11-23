@@ -20,7 +20,6 @@ import {
   Calendar,
   Share2,
   File,
-  Info,
   XCircle,
   ArrowLeft,
   Pencil,
@@ -32,12 +31,6 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserGroups } from "@/store/slices/userGroupSlice";
 import { createEvent } from "@/store/slices/eventSlice";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -490,7 +483,7 @@ export const AddEventPage = () => {
 
       <div className="space-y-6">
         {/* Event Detail Section */}
-        <PulseFormSection title="Event detail" icon={Calendar}>
+        <PulseFormSection variant="card" title="Event detail" icon={Calendar}>
 
             {/* Row 1: Event Name, Event Category, Event Amount Per Person */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -1085,7 +1078,7 @@ export const AddEventPage = () => {
 
         {/* Share Section - hidden on club.lockated.com */}
         {!isClubSite && (
-        <PulseFormSection title="Share" icon={Share2}>
+        <PulseFormSection variant="card" title="Share" icon={Share2}>
 
             <div className="flex flex-col md:flex-row md:items-center gap-8 mb-3">
               <div className="flex items-center gap-4">
@@ -1277,7 +1270,7 @@ export const AddEventPage = () => {
         )}
 
         {/* Attachment Section */}
-        <PulseFormSection title="Attachment" icon={File}>
+        <PulseFormSection variant="card" title="Attachment" icon={File}>
 
             <div className="grid grid-cols-1 gap-6">
               <div>
@@ -1320,18 +1313,6 @@ export const AddEventPage = () => {
                     className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px] min-h-40 p-6 border border-dashed border-gray-300 rounded-xl bg-white hover:bg-gray-50"
                   >
 <PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info size={18} />
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                            <p>Upload a document or image.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
 
                     <input
                       type="file"
@@ -1359,22 +1340,22 @@ export const AddEventPage = () => {
           
 </PulseFormSection>
 
-        <div className="pulse-form-actions flex flex-wrap justify-end gap-3 pt-6"><Button
+        <div className="fm-action-bar pt-4 sm:pt-6"><button
             type="button"
             onClick={() => navigate(`/pulse/events`)}
-            variant="outline"
-            className="pulse-form-secondary min-h-[42px] px-[22px] rounded-lg text-[13px] font-semibold"
+            disabled={isSubmitting}
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
-<Button
+          </button>
+<button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="pulse-form-primary min-h-[42px] px-[22px] rounded-lg text-[13px] font-semibold"
+            className="fm-action-primary"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
-          </Button></div>
+          </button></div>
       </div>
 
       {/* Tech Park Selection Modal */}

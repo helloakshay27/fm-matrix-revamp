@@ -17,18 +17,12 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Calendar, Share2, File, Info, XCircle, ArrowLeft, Pencil } from "lucide-react";
+import { Calendar, Share2, File, XCircle, ArrowLeft, Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchEventById, updateEvent } from "@/store/slices/eventSlice";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -497,7 +491,7 @@ export const EditEventPage = () => {
 
       <div className="space-y-6">
         {/* Event Detail Section */}
-        <PulseFormSection title="Event detail" icon={Calendar} headerActions={<div className="flex items-center gap-2"><span className="text-sm text-gray-700">{isActive ? 'Active' : 'Inactive'}</span><Switch aria-label="Event active" checked={isActive} onCheckedChange={(checked) => handleStatusChange(checked)} disabled={updatingStatus} /></div>}>
+        <PulseFormSection variant="card" title="Event detail" icon={Calendar} headerActions={<div className="flex items-center gap-2"><span className="text-sm text-gray-700">{isActive ? 'Active' : 'Inactive'}</span><Switch aria-label="Event active" checked={isActive} onCheckedChange={(checked) => handleStatusChange(checked)} disabled={updatingStatus} /></div>}>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
@@ -927,7 +921,7 @@ export const EditEventPage = () => {
 </PulseFormSection>
 
         {/* Share Section */}
-        <PulseFormSection title="Share" icon={Share2}>
+        <PulseFormSection variant="card" title="Share" icon={Share2}>
 
             <div className="flex flex-col md:flex-row md:items-center gap-8 mb-3">
               <div className="flex items-center gap-4">
@@ -1037,7 +1031,7 @@ export const EditEventPage = () => {
 </PulseFormSection>
 
         {/* Attachment Section */}
-        <PulseFormSection title="Attachment" icon={File}>
+        <PulseFormSection variant="card" title="Attachment" icon={File}>
 
             <div className="grid grid-cols-1 gap-6">
               <div>
@@ -1048,7 +1042,7 @@ export const EditEventPage = () => {
                 <div className="flex flex-wrap gap-6">
                   {/* Existing Attachments */}
                   {existingAttachments.map((att) => (
-                    <div key={att.id} className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
+                    <div key={att.id} className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center border border-gray-200 rounded-xl bg-white">
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         Existing File
                       </span>
@@ -1070,7 +1064,7 @@ export const EditEventPage = () => {
                   {newAttachments.map((attachment, index) => (
                     <div
                       key={index}
-                      className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center"
+                      className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center border border-gray-200 rounded-xl bg-white"
                     >
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {attachment.file.name}
@@ -1097,21 +1091,9 @@ export const EditEventPage = () => {
                   {/* Add new attachment box */}
                   <div
                     onClick={triggerFileInput}
-                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
+                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px] min-h-40 p-6 border border-dashed border-gray-300 rounded-xl bg-white hover:bg-gray-50"
                   >
 <PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info size={18} />
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                            <p>Upload a document or image.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
 
                     <input
                       type="file"
@@ -1137,22 +1119,22 @@ export const EditEventPage = () => {
           
 </PulseFormSection>
 
-        <div className="pulse-form-actions"><Button
+        <div className="fm-action-bar pt-4 sm:pt-6"><button
             type="button"
             onClick={() => navigate(`/pulse/events`)}
-            variant="outline"
-            className="pulse-form-secondary"
+            disabled={isSubmitting}
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
-<Button
+          </button>
+<button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="pulse-form-primary"
+            className="fm-action-primary"
           >
             {isSubmitting ? "Updating..." : "Update Event"}
-          </Button></div>
+          </button></div>
       </div>
 
       {/* Tech Park Selection Modal */}

@@ -15,7 +15,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
-import { Loader2, X } from "lucide-react";
+import { ImagePlus, Loader2, RefreshCw, Trash2, X } from "lucide-react";
 import {
   siteService,
   SiteFormData,
@@ -55,6 +55,141 @@ const selectMenuProps = {
   disablePortal: false,
   disableAutoFocus: true,
   disableEnforceFocus: true,
+};
+
+const MAX_IMAGE_SIZE_MB = 10;
+
+interface ImageUploadFieldProps {
+  id: string;
+  label: string;
+  hint: string;
+  previewUrl: string | null;
+  fileName?: string;
+  disabled?: boolean;
+  onSelect: (file: File) => void;
+  onRemove: () => void;
+}
+
+// Drag-and-drop / click-to-browse image picker with a large preview
+const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
+  id,
+  label,
+  hint,
+  previewUrl,
+  fileName,
+  disabled,
+  onSelect,
+  onRemove,
+}) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFile = (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      toast.error(`${label} size should be less than ${MAX_IMAGE_SIZE_MB}MB`);
+      return;
+    }
+    onSelect(file);
+  };
+
+  const openPicker = () => {
+    if (!disabled) inputRef.current?.click();
+  };
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <input
+        ref={inputRef}
+        id={id}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={disabled}
+        onChange={(e) => {
+          handleFile(e.target.files?.[0]);
+          // clear input so the same file can be selected again
+          e.currentTarget.value = "";
+        }}
+      />
+
+      {previewUrl ? (
+        <div className="group relative h-40 w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          <img
+            src={previewUrl}
+            alt={`${label} preview`}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            <button
+              type="button"
+              onClick={openPicker}
+              disabled={disabled}
+              className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow hover:bg-gray-100 disabled:opacity-50"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Change
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              disabled={disabled}
+              className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-brand-error shadow hover:bg-gray-100 disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Remove
+            </button>
+          </div>
+          {fileName && (
+            <div className="absolute bottom-0 left-0 right-0 truncate bg-black/55 px-3 py-1 text-xs text-white">
+              {fileName}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          onClick={openPicker}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openPicker();
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (!disabled) setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            if (!disabled) handleFile(e.dataTransfer.files?.[0]);
+          }}
+          className={`flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 text-center transition-colors ${
+            isDragging
+              ? "border-brand bg-brand-selected"
+              : "border-gray-300 bg-gray-50 hover:border-brand hover:bg-brand-selected"
+          } ${disabled ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-light text-brand">
+            <ImagePlus className="h-5 w-5" />
+          </div>
+          <p className="text-sm text-gray-700">
+            <span className="font-medium text-brand">Click to upload</span>{" "}
+            or drag and drop
+          </p>
+          <p className="text-xs text-gray-500">{hint}</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 interface AddSiteModalProps {
@@ -108,6 +243,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     govt_id_enabled: false,
     visitor_host_mandatory: false,
     attachfile: null,
+    banner: null,
   });
 
   // Filtered dropdown options based on selections
@@ -120,6 +256,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
 
   // Local preview for site image (single)
   const [siteImagePreviewUrl, setSiteImagePreviewUrl] = useState<string | null>(
+    null
+  );
+
+  // Local preview for site banner (single)
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(
     null
   );
 
@@ -175,6 +316,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         govt_id_enabled: editingSite.govt_id_enabled ?? false,
         visitor_host_mandatory: editingSite.visitor_host_mandatory ?? false,
         attachfile: null,
+        banner: null,
       });
       // Show preselected image preview if available
       // Support both array and object for attachfile
@@ -185,6 +327,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       } else {
         setSiteImagePreviewUrl(null);
       }
+      // Show existing banner preview if available (API returns a URL string)
+      setBannerPreviewUrl(editingSite.banner || null);
     } else {
       // Reset form for new site
       setFormData({
@@ -217,8 +361,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         govt_id_enabled: false,
         visitor_host_mandatory: false,
         attachfile: null,
+        banner: null,
       });
       setSiteImagePreviewUrl(null);
+      setBannerPreviewUrl(null);
     }
   }, [editingSite, isOpen]);
 
@@ -762,82 +908,48 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   disabled={isLoading}
                 />
 
-                {/* Single image upload */}
-                <div className="space-y-2 mb-2">
-                  <span className="text-sm font-medium text-[#C72030] ">
-                    Site Image
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file =
-                        e.target.files && e.target.files[0]
-                          ? e.target.files[0]
-                          : null;
-                      // enforce single image and 5MB max similar to AddCompanyModal
-                      if (file) {
-                        if (file.size > 10 * 1024 * 1024) {
-                          toast.error(
-                            "Image file size should be less than 10MB"
-                          );
-                          return;
-                        }
-                        // cleanup previous preview
-                        if (siteImagePreviewUrl) {
-                          URL.revokeObjectURL(siteImagePreviewUrl);
-                        }
-                        const url = URL.createObjectURL(file);
-                        setSiteImagePreviewUrl(url);
-                        setFormData((prev) => ({ ...prev, attachfile: file }));
-                        // clear input so same file can be selected again
-                        e.currentTarget.value = "";
-                      } else {
-                        if (siteImagePreviewUrl)
-                          URL.revokeObjectURL(siteImagePreviewUrl);
-                        setSiteImagePreviewUrl(null);
-                        setFormData((prev) => ({ ...prev, attachfile: null }));
-                      }
-                    }}
+                {/* Site image & banner upload */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                  <ImageUploadField
+                    id="site-image-upload"
+                    label="Site Image"
+                    hint={`PNG, JPG or WEBP · up to ${MAX_IMAGE_SIZE_MB}MB`}
+                    previewUrl={siteImagePreviewUrl}
+                    fileName={formData.attachfile?.name}
                     disabled={isLoading}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+                    onSelect={(file) => {
+                      if (siteImagePreviewUrl?.startsWith("blob:"))
+                        URL.revokeObjectURL(siteImagePreviewUrl);
+                      setSiteImagePreviewUrl(URL.createObjectURL(file));
+                      setFormData((prev) => ({ ...prev, attachfile: file }));
+                    }}
+                    onRemove={() => {
+                      if (siteImagePreviewUrl?.startsWith("blob:"))
+                        URL.revokeObjectURL(siteImagePreviewUrl);
+                      setSiteImagePreviewUrl(null);
+                      setFormData((prev) => ({ ...prev, attachfile: null }));
+                    }}
                   />
-
-                  {(siteImagePreviewUrl || formData.attachfile) && (
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {formData.attachfile && (
-                        <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          {formData.attachfile.name}
-                        </div>
-                      )}
-                      {siteImagePreviewUrl && (
-                        <div className="relative">
-                          <img
-                            src={siteImagePreviewUrl}
-                            alt="Site Image Preview"
-                            className="h-16 w-16 object-cover border border-gray-200 rounded"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (siteImagePreviewUrl)
-                                URL.revokeObjectURL(siteImagePreviewUrl);
-                              setSiteImagePreviewUrl(null);
-                              setFormData((prev) => ({
-                                ...prev,
-                                attachfile: null,
-                              }));
-                            }}
-                            className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
-                            aria-label="Remove image"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <ImageUploadField
+                    id="site-banner-upload"
+                    label="Site Banner"
+                    hint={`Wide image recommended (e.g. 1200×400) · up to ${MAX_IMAGE_SIZE_MB}MB`}
+                    previewUrl={bannerPreviewUrl}
+                    fileName={formData.banner?.name}
+                    disabled={isLoading}
+                    onSelect={(file) => {
+                      if (bannerPreviewUrl?.startsWith("blob:"))
+                        URL.revokeObjectURL(bannerPreviewUrl);
+                      setBannerPreviewUrl(URL.createObjectURL(file));
+                      setFormData((prev) => ({ ...prev, banner: file }));
+                    }}
+                    onRemove={() => {
+                      if (bannerPreviewUrl?.startsWith("blob:"))
+                        URL.revokeObjectURL(bannerPreviewUrl);
+                      setBannerPreviewUrl(null);
+                      setFormData((prev) => ({ ...prev, banner: null }));
+                    }}
+                  />
                 </div>
               </div>
 

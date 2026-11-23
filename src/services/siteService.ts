@@ -148,6 +148,8 @@ export interface SiteData {
   }>;
   shared_content?: string;
   google_maps_url?: string;
+  // Site banner image URL
+  banner?: string | null;
 }
 
 export interface SiteFormData {
@@ -165,6 +167,8 @@ export interface SiteFormData {
   zone_id?: string;
   // Single image file to upload
   attachfile?: File | null;
+  // Site banner image to upload
+  banner?: File | null;
   // Boolean configuration fields
   skip_host_approval?: boolean;
   survey_enabled?: boolean;
@@ -275,7 +279,7 @@ class SiteService {
 
       let response: Response;
 
-      if (siteData.attachfile && siteData.attachfile instanceof File) {
+      if (siteData.attachfile instanceof File || siteData.banner instanceof File) {
         const formData = new FormData();
         formData.append("pms_site[name]", basePayload.name);
         formData.append("pms_site[company_id]", String(basePayload.company_id));
@@ -305,7 +309,13 @@ class SiteService {
         formData.append("pms_site[govt_id_enabled]", String(basePayload.govt_id_enabled));
         formData.append("pms_site[visitor_host_mandatory]", String(basePayload.visitor_host_mandatory));
         // Single image upload
-        formData.append("pms_site[attachfile]", siteData.attachfile);
+        if (siteData.attachfile instanceof File) {
+          formData.append("pms_site[attachfile]", siteData.attachfile);
+        }
+        // Site banner upload
+        if (siteData.banner instanceof File) {
+          formData.append("pms_site[banner]", siteData.banner);
+        }
 
         response = await fetch(url, {
           method: "POST",
@@ -397,7 +407,7 @@ class SiteService {
 
       let response: Response;
 
-      if (siteData.attachfile && siteData.attachfile instanceof File) {
+      if (siteData.attachfile instanceof File || siteData.banner instanceof File) {
         const formData = new FormData();
         formData.append("pms_site[name]", basePayload.name);
         formData.append("pms_site[company_id]", String(basePayload.company_id));
@@ -427,7 +437,13 @@ class SiteService {
         formData.append("pms_site[govt_id_enabled]", String(basePayload.govt_id_enabled));
         formData.append("pms_site[visitor_host_mandatory]", String(basePayload.visitor_host_mandatory));
         // Single image upload
-        formData.append("pms_site[attachfile]", siteData.attachfile);
+        if (siteData.attachfile instanceof File) {
+          formData.append("pms_site[attachfile]", siteData.attachfile);
+        }
+        // Site banner upload
+        if (siteData.banner instanceof File) {
+          formData.append("pms_site[banner]", siteData.banner);
+        }
 
         response = await fetch(url, {
           method: "PUT",

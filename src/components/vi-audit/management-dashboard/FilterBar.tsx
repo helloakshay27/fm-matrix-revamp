@@ -137,9 +137,9 @@ export function FilterBar(props: FilterBarProps) {
       <MultiSelect label="Personnel Area / Zone" plural="Zones" value={props.zones} options={props.options.zones} loaded={props.options.loaded.zones} onChange={props.onZones} />
       <MultiSelect label="Work Location" plural="Work Locations" value={props.workLocations} options={props.options.workLocations} loaded={props.options.loaded.workLocations} onChange={props.onWorkLocations} />
       <MultiSelect label="Audit Type" plural="Audit Types" value={props.auditTypes} options={props.options.auditTypes} loaded={props.options.loaded.auditTypes} onChange={props.onAuditTypes} />
-      <TextField type="date" label={<>Audit Date From <span style={{ color: "#EE2737" }}>*</span></>} value={props.dateFrom} onChange={(event) => props.onDateFrom(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
+      <TextField type="date" label="Audit Date From" value={props.dateFrom} onChange={(event) => props.onDateFrom(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
       <span className="cm-filter-to">to</span>
-      <TextField type="date" label={<>Audit Date To <span style={{ color: "#EE2737" }}>*</span></>} value={props.dateTo} onChange={(event) => props.onDateTo(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
+      <TextField type="date" label="Audit Date To" value={props.dateTo} onChange={(event) => props.onDateTo(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
       <button type="button" className="cm-apply-btn" onClick={props.onApply}>Apply</button>
       <button type="button" className="cm-reset-btn" onClick={props.onReset}>Reset</button>
     </div>

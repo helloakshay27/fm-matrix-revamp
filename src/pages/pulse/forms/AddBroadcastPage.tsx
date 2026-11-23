@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft } from "lucide-react";
+import { FileText, Share2, File, XCircle, Pencil, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
@@ -20,12 +20,6 @@ import { createBroadcast } from "@/store/slices/broadcastSlice";
 import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
 import { isCMContextActive } from "@/utils/posthogHelpers";
 import axios from "axios";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -369,7 +363,7 @@ export const AddBroadcastPage = () => {
       <PulsePageHeader title="Add Notice" parent={{ label: "Notices", to: "/pulse/notices" }} onBack={() => navigate("/pulse/notices")} />
       <div className="space-y-6">
         {/* Notice Details Section */}
-        <PulseFormSection title="Notice details" icon={FileText}>
+        <PulseFormSection variant="card" title="Notice details" icon={FileText}>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
@@ -526,7 +520,7 @@ export const AddBroadcastPage = () => {
 </PulseFormSection>
 
         {/* Share Section */}
-        <PulseFormSection title="Share" icon={Share2}>
+        <PulseFormSection variant="card" title="Share" icon={Share2}>
 
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               <div className="flex items-center gap-4">
@@ -629,7 +623,7 @@ export const AddBroadcastPage = () => {
 </PulseFormSection>
 
         {/* Attachment Section */}
-        <PulseFormSection title="Attachment" icon={File}>
+        <PulseFormSection variant="card" title="Attachment" icon={File}>
 
             <div className={`grid ${formData.showOnHomeScreen === "yes" ? "grid-cols-1 md:grid-cols-5" : "grid-cols-1"} gap-6`}>
               {/* Upload Document */}
@@ -639,7 +633,7 @@ export const AddBroadcastPage = () => {
                 </Label>
 
                 {formData.attachment ? (
-                  <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
+                  <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center border border-gray-200 rounded-xl bg-white">
                     <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                       {formData.attachment.name}
                     </span>
@@ -662,21 +656,9 @@ export const AddBroadcastPage = () => {
                 ) : (
                   <div
                     onClick={triggerFileInput}
-                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
+                    className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px] min-h-40 p-6 border border-dashed border-gray-300 rounded-xl bg-white hover:bg-gray-50"
                   >
 <PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info size={18} />
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                            <p>Upload a document or image.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
 
                     <input
                       type="file"
@@ -706,7 +688,7 @@ export const AddBroadcastPage = () => {
                   </Label>
 
                   {formData.coverImage ? (
-                    <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center">
+                    <div className="pulse-upload-preview relative w-full sm:w-[240px] min-h-40 flex items-center justify-center border border-gray-200 rounded-xl bg-white">
                       <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 truncate max-w-[60%] text-center">
                         {formData.coverImage.name}
                       </span>
@@ -729,21 +711,9 @@ export const AddBroadcastPage = () => {
                   ) : (
                     <div
                       onClick={triggerCoverImageInput}
-                      className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px]"
+                      className="pulse-upload-dropzone relative flex flex-col items-center justify-center gap-3 cursor-pointer w-full sm:w-[240px] min-h-40 p-6 border border-dashed border-gray-300 rounded-xl bg-white hover:bg-gray-50"
                     >
 <PulseUploadIcon className="pulse-upload-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-gray-400">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info size={18} />
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                              <p>Upload a cover image for home screen display.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
 
                       <input
                         type="file"
@@ -770,24 +740,22 @@ export const AddBroadcastPage = () => {
           
 </PulseFormSection>
 
-        <div className="pulse-form-actions"><Button
+        <div className="fm-action-bar pt-4 sm:pt-6"><button
             type="button"
             onClick={() => navigate(-1)}
-            variant="outline"
-            className="pulse-form-secondary"
+            disabled={isSubmitting}
+            className="fm-action-secondary"
           >
             Cancel
-          </Button>
-<Button
+          </button>
+<button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="pulse-form-primary"
+            className="fm-action-primary"
           >
-            <span className="font-medium">
             {isSubmitting ? "Submitting..." : "Submit"}
-            </span>
-          </Button></div>
+          </button></div>
       </div>
 
       <Dialog open={isTechParkModalOpen} onOpenChange={(open) => {

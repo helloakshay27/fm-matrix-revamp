@@ -168,9 +168,9 @@ export function FilterBar({ persona, value, options, onChange, onApply, onReset 
       <SingleSelect label="Personnel Area / Zone" allLabel="All Zones" value={value.zoneId} options={options.zones} onChange={(zoneId) => onChange({ zoneId })} />
       <SingleSelect label="Work Location" allLabel="All Work Locations" value={value.workLocationId} options={options.workLocations} onChange={(workLocationId) => onChange({ workLocationId })} searchable />
       <SingleSelect label="Incident Classification" allLabel="All Classifications" value={value.classificationId} options={options.classifications} onChange={(classificationId) => onChange({ classificationId })} />
-      <TextField type="date" label={<>Incident Date From <span style={{ color: BRAND.crimson }}>*</span></>} value={value.dateFrom} onChange={(event) => onChange({ dateFrom: event.target.value })} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
+      <TextField type="date" label="Incident Date From" value={value.dateFrom} onChange={(event) => onChange({ dateFrom: event.target.value })} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
       <span className="cm-filter-to">to</span>
-      <TextField type="date" label={<>Incident Date To <span style={{ color: BRAND.crimson }}>*</span></>} value={value.dateTo} onChange={(event) => onChange({ dateTo: event.target.value })} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
+      <TextField type="date" label="Incident Date To" value={value.dateTo} onChange={(event) => onChange({ dateTo: event.target.value })} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
       <button type="button" className="cm-apply-btn" onClick={onApply}>Apply</button>
       <button type="button" className="cm-reset-btn" onClick={onReset}>Reset</button>
     </div>

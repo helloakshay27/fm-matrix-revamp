@@ -1205,13 +1205,15 @@ export const Header = () => {
               {!isExternalRole && (
                 <>
                   <div className="py-1">
-                    <DropdownMenuItem
-                      onClick={() => navigate("/business-compass/profile")}
-                      className="mx-2 my-1 rounded-md"
-                    >
-                      <User className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="font-medium">My Profile</span>
-                    </DropdownMenuItem>
+                    {!isViSite && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/business-compass/profile")}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <User className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">My Profile</span>
+                      </DropdownMenuItem>
+                    )}
                     {currentUser?.email === "chetan.bafna@lockated.com" && (
                       <DropdownMenuItem
                         onClick={() => navigate("/vas/ceo-dashboard")}
@@ -1235,25 +1237,28 @@ export const Header = () => {
                         <span className="font-medium">Usage Dashboard</span>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem
-                      onClick={handleFmPosthog}
-                      className="mx-2 my-1 rounded-md"
-                    >
-                      <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="font-medium">Usage Analytics</span>
-                    </DropdownMenuItem>
-                    {usageAnalyticsOptions
-                      .filter((option) => option.shouldShow())
-                      .map((option) => (
-                        <DropdownMenuItem
-                          key={option.key}
-                          onClick={option.onSelect}
-                          className="mx-2 my-1 rounded-md"
-                        >
-                          <Activity className="w-4 h-4 mr-2 text-gray-500" />
-                          <span className="font-medium">{option.label}</span>
-                        </DropdownMenuItem>
-                      ))}
+                    {!isViSite && (
+                      <DropdownMenuItem
+                        onClick={handleFmPosthog}
+                        className="mx-2 my-1 rounded-md"
+                      >
+                        <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Usage Analytics</span>
+                      </DropdownMenuItem>
+                    )}
+                    {!isViSite &&
+                      usageAnalyticsOptions
+                        .filter((option) => option.shouldShow())
+                        .map((option) => (
+                          <DropdownMenuItem
+                            key={option.key}
+                            onClick={option.onSelect}
+                            className="mx-2 my-1 rounded-md"
+                          >
+                            <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                            <span className="font-medium">{option.label}</span>
+                          </DropdownMenuItem>
+                        ))}
 
                     <DropdownMenuItem
                       onClick={() =>

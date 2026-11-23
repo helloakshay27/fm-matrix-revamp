@@ -4,6 +4,7 @@ import {
   FM_ADOPTION_TENANT_URL,
   FM_ADOPTION_PROJECT_CODE,
 } from '@/config/fmAdoptionTenant';
+import { analyticsToken } from './analyticsAuth';
 
 
 /* ---------------------------------------------------------------------------
@@ -71,10 +72,8 @@ const analyticsClient = axios.create({
    the same keys the app's other clients use (see src/utils/auth.ts and the
    sign-in flow). */
 analyticsClient.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('access_token') ||
-    sessionStorage.getItem('access_token') ||
-    '';
+  // The login token (JWT): the analytics API checks it on every request.
+  const token = analyticsToken();
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;

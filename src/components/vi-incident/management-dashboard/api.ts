@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { CHARTS, PALETTE, BRAND, type ChartSpec } from "./data";
 
 /** Live data for the Vi Incident dashboard — `/vi_incident_dashboard/*` endpoints. */
@@ -30,7 +31,7 @@ export interface IncidentFilters {
 
 export interface HeatmapRow {
   circle: string;
-  cells: { cls: string; value: string }[];
+  cells: { cls: string; value: string; title: string }[];
 }
 
 export interface RecentIncident {
@@ -74,25 +75,22 @@ interface CountResponse {
   data: CountItem[];
 }
 
-function getBaseUrl(): string {
-  const fromLS = localStorage.getItem("baseUrl") || "";
-  const host = fromLS.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  return host ? `https://${host}` : "https://live-api.gophygital.work";
-}
-
+// Base URL and token come from the logged-in session — no hardcoded server or company fallback.
 function getCompanyId(): string {
-  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
+  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
 }
 
 async function fetchJson<T>(endpoint: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
-  const query = new URLSearchParams({ company_id: getCompanyId() });
+  const query = new URLSearchParams();
+  const companyId = getCompanyId();
+  if (companyId) query.set("company_id", companyId);
   Object.entries(params).forEach(([key, value]) => {
     if (value) query.set(key, value);
   });
-  const token = localStorage.getItem("token") || "";
-  const headers: Record<string, string> = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${getBaseUrl()}/vi_incident_dashboard/${endpoint}?${query.toString()}`, { signal, headers });
+  const res = await fetch(getFullUrl(`/vi_incident_dashboard/${endpoint}?${query.toString()}`), {
+    signal,
+    headers: { Authorization: getAuthHeader() },
+  });
   if (!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -144,7 +142,10 @@ function openClosedSpec(base: ChartSpec, items: CountItem[]): ChartSpec {
 const BAND_CLASS: Record<string, string> = { red: "c1", amber: "c2", teal: "c3", green: "c4" };
 
 interface HeatmapResponse {
-  data: { circle_name: string; stages: { percentage: number; band: string }[] }[];
+  data: {
+    circle_name: string;
+    stages: { label?: string; percentage: number | null; band: string; numerator?: number; denominator?: number }[];
+  }[];
 }
 
 /* ── Hooks ─────────────────────────────────────────────────────── */
@@ -303,7 +304,17 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
 
       const heatmap = (value<HeatmapResponse>(15)?.data ?? []).map((row) => ({
         circle: row.circle_name,
-        cells: row.stages.map((stage) => ({ cls: BAND_CLASS[stage.band] ?? "c1", value: `${Math.round(stage.percentage)}%` })),
+        // Show the numerator (count); colour still follows the API's % band.
+        cells: row.stages.map((stage) => {
+          const numerator = stage.numerator ?? 0;
+          const denominator = stage.denominator ?? 0;
+          const pct = stage.percentage == null ? "no data" : `${Math.round(stage.percentage)}%`;
+          return {
+            cls: BAND_CLASS[stage.band] ?? "c1",
+            value: String(numerator),
+            title: `${stage.label ? `${stage.label}: ` : ""}${numerator} of ${denominator} (${pct})`,
+          };
+        }),
       }));
       const recent = value<{ recent_incidents: RecentIncident[] }>(16)?.recent_incidents ?? [];
 

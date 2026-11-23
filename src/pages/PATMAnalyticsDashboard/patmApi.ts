@@ -10,6 +10,7 @@
 
 import axios from 'axios';
 import { axiosGet, runExportJob, type ExportPhase } from '@/features/posthog-dashboard/api/exportJob';
+import { analyticsToken } from '@/features/posthog-dashboard/api/analyticsAuth';
 import type { RecentActiveUsersResponse } from '@/features/posthog-dashboard/api/adoptionApi';
 
 export const PATM_MOBILE_APP_ID = '37';
@@ -81,11 +82,8 @@ const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('access_token') ||
-    sessionStorage.getItem('access_token') ||
-    localStorage.getItem('token') ||
-    '';
+  // The login token (JWT): the analytics API checks it on every request.
+  const token = analyticsToken();
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
