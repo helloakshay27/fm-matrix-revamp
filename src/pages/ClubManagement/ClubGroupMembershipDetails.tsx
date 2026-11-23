@@ -142,8 +142,14 @@ interface MembershipPlan {
 }
 
 // Add BillDetail interface after other interfaces
+const billVersionLabel = (changeType?: string) =>
+  changeType === 'renewal' ? 'Renewal' : changeType === 'upgrade' ? 'Upgrade' : 'Original';
+
 interface BillDetail {
   id: number;
+  /** With include_history: the membership version (allocation) the bill was raised for, and how it came about. */
+  allocation_id?: number;
+  change_type?: 'new' | 'renewal' | 'upgrade' | string;
   lock_account_id: number | null;
   society_id: number;
   society_flat_id: number | null;
@@ -503,6 +509,8 @@ export const ClubGroupMembershipDetails = () => {
 
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${allocationId}/get_bill_by_allocation`);
       url.searchParams.append('access_token', token || '');
+      // Also the bills of the versions this membership renewed / upgraded: original first, then each renewal / upgrade.
+      url.searchParams.append('include_history', 'true');
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -1423,7 +1431,15 @@ export const ClubGroupMembershipDetails = () => {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="cursor-pointer flex-1" onClick={() => setSelectedBill(bill)}>
-                          <h3 className="font-semibold text-gray-900">Bill #{bill.bill_number || bill.id}</h3>
+                          <h3 className="font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
+                            Bill #{bill.bill_number || bill.id}
+                            {/* Only worth labelling once the membership has been renewed / upgraded */}
+                            {new Set(billDetails.map((b) => b.allocation_id)).size > 1 && (
+                              <Badge variant="outline" className="font-normal">
+                                {billVersionLabel(bill.change_type)}
+                              </Badge>
+                            )}
+                          </h3>
                           <p className="text-sm text-gray-500">Due: {formatDate(bill.due_date)}</p>
                         </div>
                         <div className="text-right">

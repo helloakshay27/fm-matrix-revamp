@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Download, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { apiClient } from '@/utils/apiClient';
 import { getApiErrorMessage } from '../apiErrorMessage';
 import { downloadLockAccountBillInvoice } from '../lockAccountBillInvoiceUtils';
@@ -15,14 +14,6 @@ interface HistoryInvoice {
   total_amount: number | null;
   bill_date: string | null;
   due_date: string | null;
-}
-
-interface HistoryAudit {
-  auditable_type: string;
-  action: string;
-  at: string;
-  by: string | null;
-  changes: Record<string, unknown>;
 }
 
 interface HistoryVersion {
@@ -48,7 +39,6 @@ interface HistoryVersion {
     payment_status: string | null;
   } | null;
   invoices: HistoryInvoice[];
-  audits: HistoryAudit[];
 }
 
 interface Props {
@@ -65,7 +55,6 @@ interface Props {
 const money = (n: number | string | null | undefined) =>
   `₹ ${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-GB') : '-');
-const fmtDateTime = (d?: string | null) => (d ? new Date(d).toLocaleString('en-GB') : '-');
 
 const CHANGE_LABEL: Record<string, string> = { new: 'Original', renewal: 'Renewal', upgrade: 'Upgrade' };
 const REPLACED_LABEL: Record<string, string> = { renewal: 'Renewed', upgrade: 'Upgraded' };
@@ -220,26 +209,6 @@ export const MembershipHistoryTab: React.FC<Props> = ({
             )}
           </div>
 
-          {v.audits.length > 0 && (
-            <Collapsible>
-              <CollapsibleTrigger className="group flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
-                <ChevronRight className="h-4 w-4 group-data-[state=open]:hidden" />
-                <ChevronDown className="h-4 w-4 hidden group-data-[state=open]:block" />
-                Change log ({v.audits.length})
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-1 text-xs text-gray-600">
-                {v.audits.map((a, i) => (
-                  <div key={`${a.at}-${i}`} className="rounded bg-gray-50 px-2 py-1">
-                    <span className="font-medium">{a.action}</span> {a.auditable_type} · {fmtDateTime(a.at)}
-                    {a.by ? ` · ${a.by}` : ''}
-                    <div className="truncate" title={JSON.stringify(a.changes)}>
-                      {Object.keys(a.changes ?? {}).join(', ')}
-                    </div>
-                  </div>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
-          )}
         </div>
       ))}
     </div>
