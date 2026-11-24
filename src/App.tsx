@@ -4390,6 +4390,11 @@ const ViPosthogDashboardPage = lazy(() =>
     (m) => ({ default: m.ViPosthogDashboardPage })
   )
 );
+const CalendarPosthogDashboardPage = lazy(() =>
+  import("./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage").then(
+    (m) => ({ default: m.CalendarPosthogDashboardPage })
+  )
+);
 const FmAdoptionDashboardPage = lazy(() =>
   import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(
     (m) => ({ default: m.FmAdoptionDashboardPage })
@@ -5237,6 +5242,23 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <PATMAnalyticsDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/calendar-usage-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <CalendarPosthogDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <CalendarPosthogDashboardPage />
                               </ProtectedRoute>
                             }
                           />

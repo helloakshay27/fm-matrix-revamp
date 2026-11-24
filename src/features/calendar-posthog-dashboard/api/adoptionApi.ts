@@ -1,4 +1,5 @@
 import axios, { AxiosHeaders } from 'axios';
+import { axiosGet, runExportJob, type ExportPhase } from '@/features/posthog-dashboard/api/exportJob';
 import type {
   AdoptionEngagementResponse,
   AdoptionTrendResponse,
@@ -13,6 +14,7 @@ import type {
   WeeklyFilters,
   WorkflowUsageResponse,
 } from '@/features/posthog-dashboard/api/adoptionApi';
+import { analyticsToken } from '@/features/posthog-dashboard/api/analyticsAuth';
 
 /* ---------------------------------------------------------------------------
  * Calendar App Adoption Analytics API client.
@@ -59,10 +61,8 @@ const client = axios.create({
 
 /* Attach Bearer token when present. */
 client.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('access_token') ||
-    sessionStorage.getItem('access_token') ||
-    '';
+  // The login token (JWT): the analytics API checks it on every request.
+  const token = analyticsToken();
   if (token) {
     config.headers = AxiosHeaders.from(config.headers);
     config.headers.set('Authorization', `Bearer ${token}`);
@@ -184,13 +184,16 @@ export const fetchRecentActiveUsers = (f: CalendarRangeFilters) =>
     limit: '10',
   });
 
-export async function downloadRecentActiveUsers(f: CalendarRangeFilters): Promise<Blob> {
+/** The .xlsx of every event in the range, made in the background on the server (see exportJob). */
+export async function downloadRecentActiveUsers(f: CalendarRangeFilters, onPhase?: (phase: ExportPhase) => void): Promise<Blob> {
   const qs = new URLSearchParams({
     ...rangeParams(f),
   });
-  const response = await client.get<Blob>(
-    `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
-    { responseType: 'blob' },
-  );
-  return response.data;
+  const { blob } = await runExportJob({
+    exportUrl: `${RECENT_ACTIVE_USERS_EXPORT_ENDPOINT}?${qs.toString()}`,
+    adoptionUrl: RECENT_ACTIVE_USERS_EXPORT_ENDPOINT.replace(/\/active_users_export$/, ''),
+    get: axiosGet(client),
+    onPhase,
+  });
+  return blob;
 }
