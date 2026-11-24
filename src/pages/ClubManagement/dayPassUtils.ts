@@ -29,15 +29,55 @@ export const PASS_STATUS_STYLE: Record<PassStatus, string> = {
 };
 
 // Where a pass's payment stands. 'untracked': made before payments were tracked, so it has no bill or invoice.
-export type PassPayment = 'paid' | 'pending' | 'free' | 'untracked';
+export type PassPayment = 'paid' | 'pending' | 'free' | 'complementary' | 'untracked';
 
-export const PASS_PAYMENT_LABEL: Record<PassPayment, string> = { paid: 'Paid', pending: 'Payment pending', free: 'Free', untracked: 'No invoice' };
+export const PASS_PAYMENT_LABEL: Record<PassPayment, string> = {
+  paid: 'Paid',
+  pending: 'Payment pending',
+  free: 'Free',
+  complementary: 'Complementary',
+  untracked: 'No invoice',
+};
 export const PASS_PAYMENT_STYLE: Record<PassPayment, string> = {
   paid: 'bg-brand-success-bg text-brand-success border-transparent',
   pending: 'bg-brand-warning-light text-gray-800 border-transparent',
   free: 'bg-gray-100 text-gray-600 border-transparent',
+  complementary: 'bg-brand-selected text-brand border-transparent',
   untracked: 'bg-gray-100 text-gray-500 border-transparent',
 };
+
+// How a pass is to be paid, chosen when it is created (like a facility booking's payment method):
+// prepaid / pay at facility are charged at the plan's price and billed as pending until the payment is marked;
+// a complementary pass is given free, with a reason.
+export const DAY_PASS_PAYMENT_METHODS = [
+  { value: 'prepaid', label: 'Prepaid' },
+  { value: 'pay_at_facility', label: 'Pay at Facility' },
+  { value: 'complementary', label: 'Complementary' },
+];
+
+// How a payment is made, asked when it is marked: the same choices as the Mark Payment dialog of a club membership
+// allocation.
+export const PAYMENT_MODES = [
+  { value: 'online', label: 'Online' },
+  { value: 'offline', label: 'Offline' },
+];
+
+export const paymentMethodsFor = (mode: string) =>
+  mode === 'offline'
+    ? [{ value: 'offline', label: 'Offline' }]
+    : [
+        { value: 'upi', label: 'UPI' },
+        { value: 'card', label: 'Card' },
+        { value: 'cash', label: 'Cash' },
+        { value: 'netbanking', label: 'Net Banking' },
+      ];
+
+export const paymentLabel = (value?: string | null) =>
+  [...DAY_PASS_PAYMENT_METHODS, ...PAYMENT_MODES, ...paymentMethodsFor('online'), ...paymentMethodsFor('offline')].find(
+    (option) => option.value === value
+  )?.label ||
+  value ||
+  '-';
 
 export const toAmount = (value: unknown) => {
   const parsed = parseFloat(String(value ?? ''));
@@ -46,8 +86,14 @@ export const toAmount = (value: unknown) => {
 
 // From what the members API says of a pass: allocation_status ('approved' once paid, or at once when free) and
 // allocation_amount (null without an allocation).
-export const passPaymentOf = (pass: { club_member_allocation_id?: number | null; allocation_status?: string | null; allocation_amount?: number | null }): PassPayment => {
+export const passPaymentOf = (pass: {
+  club_member_allocation_id?: number | null;
+  allocation_status?: string | null;
+  allocation_amount?: number | null;
+  allocation_payment_method?: string | null;
+}): PassPayment => {
   if (!pass.club_member_allocation_id) return 'untracked';
+  if (pass.allocation_payment_method === 'complementary') return 'complementary';
   if (!toAmount(pass.allocation_amount)) return 'free';
   return pass.allocation_status === 'approved' ? 'paid' : 'pending';
 };

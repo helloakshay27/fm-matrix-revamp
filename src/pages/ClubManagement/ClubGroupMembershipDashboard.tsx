@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { GROUP_MEMBERSHIP_LIST_URL_KEY } from './listState';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -110,7 +111,29 @@ export const ClubGroupMembershipDashboard = () => {
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  // The page is kept in the URL (?page=3), so Back from a membership's page returns to the same page of the list.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(() => Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1));
+  useEffect(() => {
+    const inUrl = searchParams.get('page');
+    const wanted = currentPage > 1 ? String(currentPage) : null;
+    if (inUrl === wanted) return;
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (wanted) params.set('page', wanted);
+      else params.delete('page');
+      return params;
+    }, { replace: true });
+  }, [currentPage, searchParams, setSearchParams]);
+
+  const location = useLocation();
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(GROUP_MEMBERSHIP_LIST_URL_KEY, `${location.pathname}${location.search}`);
+    } catch {
+      // Storage unavailable (private window): Back to the list then opens its first page.
+    }
+  }, [location.pathname, location.search]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');

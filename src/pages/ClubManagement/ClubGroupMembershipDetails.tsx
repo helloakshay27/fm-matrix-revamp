@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { GROUP_MEMBERSHIP_LIST_URL_KEY } from './listState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Loader, RefreshCw, ArrowUpCircle } from 'lucide-react';
@@ -536,8 +537,16 @@ export const ClubGroupMembershipDetails = () => {
     }
   };
 
+  // Back to the list as it was left (e.g. ?page=3), not its first page.
   const handleBackToList = () => {
-    navigate('/club-management/membership/groups');
+    let listUrl = '/club-management/membership/groups';
+    try {
+      const saved = sessionStorage.getItem(GROUP_MEMBERSHIP_LIST_URL_KEY);
+      if (saved?.startsWith(listUrl)) listUrl = saved;
+    } catch {
+      // Storage unavailable: the list's first page.
+    }
+    navigate(listUrl);
   };
 
   const handleEdit = () => {

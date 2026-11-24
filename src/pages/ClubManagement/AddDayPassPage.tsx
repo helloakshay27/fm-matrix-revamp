@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Ticket } from 'lucide-react';
+import { ArrowLeft, Plus, Ticket, Trash2 } from 'lucide-react';
 import { MenuItem, TextField } from '@mui/material';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { apiClient } from '@/utils/apiClient';
 import { getApiErrorMessage } from './apiErrorMessage';
+import { DAY_PASS_PAYMENT_METHODS } from './dayPassUtils';
 
 interface PlanAmenity {
   id: number;
@@ -35,6 +36,37 @@ interface HolderOption {
   lastname?: string;
   mobile?: string;
 }
+
+// One person on the pass: someone new (their details are entered) or an existing user (picked from the list).
+interface PassPerson {
+  key: number;
+  mode: 'new' | 'existing';
+  userId: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
+  email: string;
+  gender: string;
+}
+
+type BlockReason = 'membership' | 'day_pass';
+
+const BLOCK_REASON_LABEL: Record<BlockReason, string> = {
+  membership: 'has a club membership on this date',
+  day_pass: 'already has a day pass for this date',
+};
+
+let nextPersonKey = 0;
+const blankPerson = (): PassPerson => ({
+  key: ++nextPersonKey,
+  mode: 'new',
+  userId: '',
+  firstName: '',
+  lastName: '',
+  mobile: '',
+  email: '',
+  gender: '',
+});
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -75,11 +107,15 @@ export const AddDayPassPage = () => {
 
   const [passDate, setPassDate] = useState(today());
 
-  const [holderMode, setHolderMode] = useState<'new' | 'existing'>('new');
+  const [people, setPeople] = useState<PassPerson[]>(() => [blankPerson()]);
   const [holders, setHolders] = useState<HolderOption[]>([]);
   const [holdersLoading, setHoldersLoading] = useState(false);
-  const [selectedHolder, setSelectedHolder] = useState('');
-  const [newHolder, setNewHolder] = useState({ firstName: '', lastName: '', mobile: '', email: '', gender: '' });
+  // Who cannot be given a pass on the pass date (they hold a membership or a pass then), by user id.
+  const [blocked, setBlocked] = useState<Record<string, BlockReason>>({});
+
+  // prepaid / pay_at_facility / complementary (see DAY_PASS_PAYMENT_METHODS); a complementary pass needs its reason.
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [complementaryReason, setComplementaryReason] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,9 +142,10 @@ export const AddDayPassPage = () => {
     };
   }, []);
 
-  // People who can be given a pass, loaded when "Existing user" is chosen.
+  // People who can be given a pass, loaded once someone on the pass is an "Existing user".
+  const needsHolders = people.some((person) => person.mode === 'existing');
   useEffect(() => {
-    if (holderMode !== 'existing' || holders.length > 0) return;
+    if (!needsHolders || holders.length > 0) return;
     let cancelled = false;
     (async () => {
       setHoldersLoading(true);
@@ -124,16 +161,48 @@ export const AddDayPassPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [holderMode, holders.length]);
+  }, [needsHolders, holders.length]);
 
-  // Price and tax are set up on the plan (Membership Plan), not typed in per pass.
-  const base = toNumber(plan?.price);
+  // Who is blocked on the pass date, asked again whenever the date changes (only needed to pick existing users).
+  useEffect(() => {
+    if (!needsHolders || !passDate) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await apiClient.get('/club_member_allocations/day_pass_blocked_users.json', {
+          params: { site_id: plan?.site?.id ?? (localStorage.getItem('selectedSiteId') || undefined), date: passDate },
+        });
+        if (cancelled) return;
+        const rows: { user_id: number; reason: BlockReason }[] = response.data?.blocked_users || [];
+        setBlocked(Object.fromEntries(rows.map((row) => [String(row.user_id), row.reason])));
+      } catch {
+        // Not knowing who is blocked only means the server says so on submit instead.
+        if (!cancelled) setBlocked({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [needsHolders, passDate, plan?.site?.id]);
+
+  // Price and tax are set up on the plan (Membership Plan), not typed in per pass, and charged for each person; a
+  // complementary pass is not charged at all. A plan without a price is free, so there is no payment method to choose.
+  const pricePerPerson = toNumber(plan?.price);
+  const peopleCount = people.length;
+  const isPriced = pricePerPerson > 0;
+  const isComplementary = isPriced && paymentMethod === 'complementary';
+  const base = isComplementary ? 0 : pricePerPerson * peopleCount;
   const cgstAmount = (base * toNumber(plan?.cgst)) / 100;
   const sgstAmount = (base * toNumber(plan?.sgst)) / 100;
   const total = base + cgstAmount + sgstAmount;
 
   const holderName = (holder: HolderOption) =>
     holder.name || `${holder.firstname || ''} ${holder.lastname || ''}`.trim() || `User ${holder.id}`;
+
+  const updatePerson = (key: number, changes: Partial<PassPerson>) =>
+    setPeople((current) => current.map((person) => (person.key === key ? { ...person, ...changes } : person)));
+
+  const removePerson = (key: number) => setPeople((current) => current.filter((person) => person.key !== key));
 
   const validate = () => {
     if (!plan) {
@@ -148,23 +217,49 @@ export const AddDayPassPage = () => {
       toast.error('A day pass cannot be for a past date');
       return false;
     }
-    if (holderMode === 'existing') {
-      if (!selectedHolder) {
-        toast.error('Please select the pass holder');
+    for (const [index, person] of people.entries()) {
+      const who = peopleCount > 1 ? `Person ${index + 1}: ` : '';
+      if (person.mode === 'existing') {
+        if (!person.userId) {
+          toast.error(`${who}please select the user`);
+          return false;
+        }
+        const reason = blocked[person.userId];
+        if (reason) {
+          const holder = holders.find((candidate) => String(candidate.id) === person.userId);
+          toast.error(`${who}${holder ? holderName(holder) : 'this user'} ${BLOCK_REASON_LABEL[reason]}: choose someone else or another date`);
+          return false;
+        }
+        continue;
+      }
+      if (!person.firstName.trim() || !person.lastName.trim()) {
+        toast.error(`${who}please enter the first and last name`);
         return false;
       }
-      return true;
+      if (!/^\d{10}$/.test(person.mobile.trim())) {
+        toast.error(`${who}please enter a 10 digit mobile number`);
+        return false;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(person.email.trim())) {
+        toast.error(`${who}please enter a valid email`);
+        return false;
+      }
     }
-    if (!newHolder.firstName.trim() || !newHolder.lastName.trim()) {
-      toast.error('Please enter the first and last name');
+    // Each person only once (the server refuses it too).
+    const keys = people.map((person) =>
+      person.mode === 'existing' ? `user:${person.userId}` : `email:${person.email.trim().toLowerCase()}`
+    );
+    const mobiles = people.filter((person) => person.mode === 'new').map((person) => person.mobile.trim());
+    if (new Set(keys).size !== keys.length || new Set(mobiles).size !== mobiles.length) {
+      toast.error('The same person is added more than once');
       return false;
     }
-    if (!/^\d{10}$/.test(newHolder.mobile.trim())) {
-      toast.error('Please enter a 10 digit mobile number');
+    if (isPriced && !paymentMethod) {
+      toast.error('Please select the payment method');
       return false;
     }
-    if (!/^\S+@\S+\.\S+$/.test(newHolder.email.trim())) {
-      toast.error('Please enter a valid email');
+    if (isComplementary && !complementaryReason.trim()) {
+      toast.error('Please enter the reason for the complementary pass');
       return false;
     }
     return true;
@@ -179,17 +274,17 @@ export const AddDayPassPage = () => {
       const siteId = plan.site?.id ?? Number(localStorage.getItem('selectedSiteId'));
       const companyId = Number(localStorage.getItem('selectedCompanyId'));
 
-      // The pass is created through the allocation route: that bills it, and the payment is marked afterwards on the
-      // pass's own page (Mark Payment), like a club membership allocation.
-      const member: Record<string, unknown> =
-        holderMode === 'existing'
-          ? { user_id: Number(selectedHolder), club_member: { club_member_enabled: true } }
+      // The pass is created through the allocation route: that bills it (a Pending invoice for everyone on it), and the
+      // payment is marked afterwards on the pass's own page (Mark Payment), like a club membership allocation.
+      const members = people.map((person): Record<string, unknown> =>
+        person.mode === 'existing'
+          ? { user_id: Number(person.userId), club_member: { club_member_enabled: true } }
           : {
-              firstname: newHolder.firstName.trim(),
-              lastname: newHolder.lastName.trim(),
-              mobile: newHolder.mobile.trim(),
-              email: newHolder.email.trim(),
-              gender: newHolder.gender || undefined,
+              firstname: person.firstName.trim(),
+              lastname: person.lastName.trim(),
+              mobile: person.mobile.trim(),
+              email: person.email.trim(),
+              gender: person.gender || undefined,
               club_member: { club_member_enabled: true },
               ...(companyId
                 ? {
@@ -198,7 +293,8 @@ export const AddDayPassPage = () => {
                     ],
                   }
                 : {}),
-            };
+            }
+      );
 
       const response = await apiClient.post(
         '/club_member_allocations.json',
@@ -209,6 +305,7 @@ export const AddDayPassPage = () => {
             start_date: passDate,
             end_date: passDate,
             name: `Day Pass ${passDate}`,
+            // The server prices the pass from the plan for each person; these are what the form showed.
             allocation_payment_detail_attributes: {
               base_amount: base,
               discount: 0,
@@ -219,9 +316,11 @@ export const AddDayPassPage = () => {
               total_amount: total,
               landed_amount: total,
               payment_mode: 'online',
+              payment_method: isPriced ? paymentMethod : undefined,
+              notes: isComplementary ? complementaryReason.trim() : undefined,
               payment_status: 'pending',
             },
-            members: [member],
+            members,
           },
         },
         { headers: { 'Content-Type': 'application/json' } }
@@ -325,7 +424,151 @@ export const AddDayPassPage = () => {
           </div>
         </section>
 
-        {/* Price and tax come from the plan */}
+        {/* People on the pass */}
+        <section className="bg-white p-6 rounded-lg shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">People on this pass ({peopleCount})</h2>
+            <Button type="button" variant="outline" onClick={() => setPeople((current) => [...current, blankPerson()])}>
+              <Plus className="w-4 h-4 mr-2" /> Add person
+            </Button>
+          </div>
+
+          {people.map((person, index) => {
+            // Someone already on the pass is not offered again.
+            const takenIds = people.filter((other) => other.key !== person.key && other.mode === 'existing').map((other) => other.userId);
+            return (
+              <div key={person.key} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-gray-900">Person {index + 1}</h3>
+                  {peopleCount > 1 && (
+                    <button
+                      type="button"
+                      title="Remove this person"
+                      onClick={() => removePerson(person.key)}
+                      className="text-gray-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <RadioGroup
+                  value={person.mode}
+                  onValueChange={(value) => updatePerson(person.key, { mode: value as 'new' | 'existing' })}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="new" id={`person-${person.key}-new`} />
+                    <Label htmlFor={`person-${person.key}-new`}>New user</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="existing" id={`person-${person.key}-existing`} />
+                    <Label htmlFor={`person-${person.key}-existing`}>Existing user</Label>
+                  </div>
+                </RadioGroup>
+
+                {person.mode === 'existing' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <TextField
+                      select
+                      label="User *"
+                      value={person.userId}
+                      onChange={(event) => updatePerson(person.key, { userId: event.target.value })}
+                      disabled={holdersLoading}
+                      error={Boolean(blocked[person.userId])}
+                      helperText={
+                        blocked[person.userId]
+                          ? `This user ${BLOCK_REASON_LABEL[blocked[person.userId]]}`
+                          : 'People with a club membership or a pass on this date are greyed out'
+                      }
+                      InputLabelProps={{ shrink: true }}
+                      SelectProps={{ displayEmpty: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>
+                        <em>{holdersLoading ? 'Loading users...' : 'Select user'}</em>
+                      </MenuItem>
+                      {holders
+                        .filter((holder) => !takenIds.includes(String(holder.id)))
+                        .map((holder) => {
+                          const reason = blocked[String(holder.id)];
+                          return (
+                            <MenuItem key={holder.id} value={String(holder.id)} disabled={Boolean(reason)}>
+                              {holderName(holder)}
+                              {holder.mobile ? ` (${holder.mobile})` : ''}
+                              {reason ? ` — ${BLOCK_REASON_LABEL[reason]}` : ''}
+                            </MenuItem>
+                          );
+                        })}
+                    </TextField>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <TextField
+                      label="First name *"
+                      value={person.firstName}
+                      onChange={(event) => updatePerson(person.key, { firstName: event.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Last name *"
+                      value={person.lastName}
+                      onChange={(event) => updatePerson(person.key, { lastName: event.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Mobile *"
+                      value={person.mobile}
+                      onChange={(event) => updatePerson(person.key, { mobile: event.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Email *"
+                      type="email"
+                      value={person.email}
+                      onChange={(event) => updatePerson(person.key, { email: event.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      select
+                      label="Gender"
+                      value={person.gender}
+                      onChange={(event) => updatePerson(person.key, { gender: event.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      SelectProps={{ displayEmpty: true }}
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select gender</em>
+                      </MenuItem>
+                      <MenuItem value="Male">Male</MenuItem>
+                      <MenuItem value="Female">Female</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </TextField>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </section>
+
+        {/* Price and tax come from the plan, for each person */}
         {plan && (
           <section className="bg-white p-6 rounded-lg shadow-sm space-y-3">
             <div className="flex items-center justify-between">
@@ -339,11 +582,21 @@ export const AddDayPassPage = () => {
               </Button>
             </div>
             <p className="text-sm text-gray-500">
-              Price and tax are set up on the Day Pass plan. {base === 0 && 'This pass is free until a price is set on the plan.'}
+              Price and tax are set up on the Day Pass plan and charged for each person on the pass.{' '}
+              {pricePerPerson === 0 && 'This pass is free until a price is set on the plan.'}
+              {isComplementary && 'This is a complementary pass: nothing is charged.'}
             </p>
-            <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <dl className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
               <div>
-                <dt className="text-gray-500">Price</dt>
+                <dt className="text-gray-500">Price per person</dt>
+                <dd className="font-medium">₹{pricePerPerson.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">People</dt>
+                <dd className="font-medium">× {peopleCount}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Subtotal</dt>
                 <dd className="font-medium">₹{base.toFixed(2)}</dd>
               </div>
               <div>
@@ -362,113 +615,53 @@ export const AddDayPassPage = () => {
           </section>
         )}
 
-        {/* Pass holder */}
-        <section className="bg-white p-6 rounded-lg shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold">Pass holder</h2>
-          <RadioGroup value={holderMode} onValueChange={(value) => setHolderMode(value as 'new' | 'existing')} className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="new" id="holder-new" />
-              <Label htmlFor="holder-new">New user</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="existing" id="holder-existing" />
-              <Label htmlFor="holder-existing">Existing user</Label>
-            </div>
-          </RadioGroup>
+        {/* How it will be paid (like a facility booking's payment method). Prepaid / Pay at Facility: the invoice is
+            created as Pending and the payment is marked on the pass's page; Complementary: given free, with a reason. */}
+        {plan && isPriced && (
+          <section className="bg-white p-6 rounded-lg shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold">
+              Payment Method<span className="ml-0.5">*</span>
+            </h2>
+            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+              {DAY_PASS_PAYMENT_METHODS.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`pass-payment-${option.value}`} />
+                  <Label htmlFor={`pass-payment-${option.value}`}>{option.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
 
-          {holderMode === 'existing' ? (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <TextField
-                select
-                label="User *"
-                value={selectedHolder}
-                onChange={(event) => setSelectedHolder(event.target.value)}
-                disabled={holdersLoading}
-                helperText="Someone with an active club membership cannot be given a day pass"
-                InputLabelProps={{ shrink: true }}
-                SelectProps={{ displayEmpty: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              >
-                <MenuItem value="" disabled>
-                  <em>{holdersLoading ? 'Loading users...' : 'Select user'}</em>
-                </MenuItem>
-                {holders.map((holder) => (
-                  <MenuItem key={holder.id} value={String(holder.id)}>
-                    {holderName(holder)}
-                    {holder.mobile ? ` (${holder.mobile})` : ''}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <TextField
-                label="First name *"
-                value={newHolder.firstName}
-                onChange={(event) => setNewHolder({ ...newHolder, firstName: event.target.value })}
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              />
-              <TextField
-                label="Last name *"
-                value={newHolder.lastName}
-                onChange={(event) => setNewHolder({ ...newHolder, lastName: event.target.value })}
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              />
-              <TextField
-                label="Mobile *"
-                value={newHolder.mobile}
-                onChange={(event) => setNewHolder({ ...newHolder, mobile: event.target.value.replace(/\D/g, '').slice(0, 10) })}
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              />
-              <TextField
-                label="Email *"
-                type="email"
-                value={newHolder.email}
-                onChange={(event) => setNewHolder({ ...newHolder, email: event.target.value })}
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              />
-              <TextField
-                select
-                label="Gender"
-                value={newHolder.gender}
-                onChange={(event) => setNewHolder({ ...newHolder, gender: event.target.value })}
-                InputLabelProps={{ shrink: true }}
-                SelectProps={{ displayEmpty: true }}
-                variant="outlined"
-                fullWidth
-                sx={fieldStyles}
-              >
-                <MenuItem value="">
-                  <em>Select gender</em>
-                </MenuItem>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
-              </TextField>
-            </div>
-          )}
-        </section>
+            {isComplementary ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextField
+                  label="Reason *"
+                  value={complementaryReason}
+                  onChange={(event) => setComplementaryReason(event.target.value)}
+                  placeholder="Enter reason for the complementary pass"
+                  InputLabelProps={{ shrink: true }}
+                  variant="outlined"
+                  fullWidth
+                  sx={fieldStyles}
+                />
+              </div>
+            ) : (
+              paymentMethod && (
+                <p className="text-sm text-gray-500">
+                  The pass is created with a Pending invoice of ₹{total.toFixed(2)}
+                  {paymentMethod === 'pay_at_facility' ? ', to be paid at the facility' : ''}. Mark the payment on the pass's
+                  page once it is received; the invoice number is issued then.
+                </p>
+              )
+            )}
+          </section>
+        )}
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button type="submit" className="bg-brand hover:bg-brand-hover text-white" disabled={isSubmitting || !plan}>
-            {isSubmitting ? 'Creating...' : 'Create Day Pass'}
+            {isSubmitting ? 'Creating...' : `Create Day Pass${peopleCount > 1 ? ` for ${peopleCount} people` : ''}`}
           </Button>
         </div>
       </form>

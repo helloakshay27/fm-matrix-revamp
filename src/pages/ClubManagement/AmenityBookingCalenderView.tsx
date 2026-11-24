@@ -4,19 +4,35 @@ import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "axios";
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const toApiDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+// ?date=YYYY-MM-DD -> that day, or null when absent / not a real date.
+const parseUrlDate = (value: string | null) => {
+    const match = (value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return toApiDate(date) === value ? date : null;
+};
 
 const AmenityBookingClubCalenderView = () => {
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
 
-    // Initialize today's date
+    // The selected date is kept in the URL (?date=YYYY-MM-DD), so Back from a booking opened from the calendar
+    // returns to the date it was opened from (today when there is none).
+    const [searchParams, setSearchParams] = useSearchParams();
     const today = new Date();
-    const initialDate = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
-    const initialApiDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const initialMonth = today.toLocaleString("default", { month: "long" });
-    const initialYear = today.getFullYear();
+    const todayApiDate = toApiDate(today);
+    const startDate = parseUrlDate(searchParams.get("date")) || today;
+    const initialDate = startDate.toLocaleDateString("en-GB"); // dd/mm/yyyy
+    const initialApiDate = toApiDate(startDate);
+    const initialMonth = startDate.toLocaleString("default", { month: "long" });
+    const initialYear = startDate.getFullYear();
 
     const [bookingType, setBookingType] = useState("bookable");
     const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -32,6 +48,18 @@ const AmenityBookingClubCalenderView = () => {
 
     const datesContainerRef = useRef<HTMLDivElement | null>(null);
     const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    // Keep ?date in step with the selected date (left out for today); replace, so dates are not history entries.
+    useEffect(() => {
+        const wanted = selectedDateForApi && selectedDateForApi !== todayApiDate ? selectedDateForApi : null;
+        if (searchParams.get("date") === wanted) return;
+        setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            if (wanted) params.set("date", wanted);
+            else params.delete("date");
+            return params;
+        }, { replace: true });
+    }, [selectedDateForApi, todayApiDate, searchParams, setSearchParams]);
 
     const getFacilities = async () => {
         try {
@@ -440,6 +468,7 @@ const AmenityBookingClubCalenderView = () => {
                 <div className="my-4"></div>
 
                 {/* Slots Container - Separate Scrolling */}
+                <TooltipProvider delayDuration={150}>
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
                     <div className="min-w-fit">
                         {/* Time Slots Header */}
@@ -510,8 +539,10 @@ const AmenityBookingClubCalenderView = () => {
                                                         });
                                                         const slotBooked = !!bookedSlot;
                                                         const isSlotBlocked = facilityBookings.is_blocked || bookedSlot?.is_blocked || false;
+                                                        // slots_status gives each booked slot who it is booked for: shown on hover.
+                                                        const bookedFor = slotBooked && !isSlotBlocked ? bookedSlot?.booked_by_name?.trim() : '';
 
-                                                        return (
+                                                        const cell = (
                                                             <div
                                                                 key={slot.id}
                                                                 onClick={() => !isSlotBlocked && handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
@@ -533,6 +564,23 @@ const AmenityBookingClubCalenderView = () => {
                                                                 )}
                                                             </div>
                                                         );
+
+                                                        if (!bookedFor) return cell;
+                                                        return (
+                                                            <Tooltip key={slot.id}>
+                                                                <TooltipTrigger asChild>{cell}</TooltipTrigger>
+                                                                <TooltipContent side="top" className="bg-white text-gray-900 border border-gray-200 shadow-md">
+                                                                    <div className="text-xs font-semibold">Booked for: {bookedFor}</div>
+                                                                    <div className="text-[11px] text-gray-600">
+                                                                        {facility.fac_name}
+                                                                        {bookedSlot?.time_text ? ` • ${bookedSlot.time_text}` : ''}
+                                                                    </div>
+                                                                    {bookedSlot?.facility_booking_id && (
+                                                                        <div className="text-[11px] text-gray-500">Click to open booking #{bookedSlot.facility_booking_id}</div>
+                                                                    )}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        );
                                                     })}
                                                 </div>
                                             </div>
@@ -543,6 +591,7 @@ const AmenityBookingClubCalenderView = () => {
                         ))}
                     </div>
                 </div>
+                </TooltipProvider>
             </div>
         </div>
     );

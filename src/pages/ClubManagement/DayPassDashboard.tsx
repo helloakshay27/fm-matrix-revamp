@@ -42,6 +42,7 @@ interface DayPassRow {
   club_member_allocation_id?: number | null;
   allocation_status?: string | null;
   allocation_amount?: number | null;
+  allocation_payment_method?: string | null; // prepaid / pay_at_facility / complementary
   member_payment_detail?: {
     total_amount?: number | string | null;
     payment_mode?: string | null;
@@ -135,7 +136,12 @@ export const DayPassDashboard = () => {
       case 'amount': {
         // From the pass's bill when it has one (see ClubMemberSerializer), else what was recorded when it was created.
         const amount = item.club_member_allocation_id ? item.allocation_amount : item.member_payment_detail?.total_amount;
-        return amount === null || amount === undefined ? '-' : toAmount(amount).toFixed(2);
+        if (amount === null || amount === undefined) return '-';
+        // A pass for several people has one bill: each of them is a row here, so say the amount is the whole pass's.
+        const onPass = item.club_member_allocation_id
+          ? rows.filter((row) => row.club_member_allocation_id === item.club_member_allocation_id).length
+          : 1;
+        return `${toAmount(amount).toFixed(2)}${onPass > 1 ? ` (pass for ${onPass})` : ''}`;
       }
       case 'payment': {
         const payment = passPaymentOf(item);
