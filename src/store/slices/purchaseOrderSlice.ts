@@ -13,6 +13,7 @@ export const getPurchaseOrders = createAsyncThunk(
             external_id,
             supplier_name,
             approval_status,
+            pr_type,
             search = "",
         }: {
             baseUrl: string;
@@ -22,6 +23,7 @@ export const getPurchaseOrders = createAsyncThunk(
             external_id?: string;
             supplier_name?: string;
             approval_status?: string;
+            pr_type?: string;
             search?: string;
         },
         { rejectWithValue }
@@ -33,6 +35,10 @@ export const getPurchaseOrders = createAsyncThunk(
             if (supplier_name) queryParams.append('q[pms_supplier_company_name_cont]', supplier_name);
             if (approval_status) {
                 queryParams.append("q[approve_status_eq]", approval_status);
+            }
+            if (pr_type) {
+                queryParams.append("pr_type", pr_type);
+                queryParams.append("q[pr_type_eq]", pr_type);
             }
 
             const response = await axios.get(

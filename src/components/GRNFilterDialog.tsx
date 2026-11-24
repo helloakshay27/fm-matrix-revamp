@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -22,6 +21,7 @@ interface GRNFilterDialogProps {
     poNumber?: string;
     supplierName?: string;
     status?: string;
+    prType?: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -29,6 +29,7 @@ interface GRNFilterDialogProps {
       poNumber?: string;
       supplierName?: string;
       status?: string;
+      prType?: string;
     }>
   >;
   onApplyFilters: (filters: {
@@ -36,6 +37,7 @@ interface GRNFilterDialogProps {
     poNumber?: string;
     supplierName?: string;
     status?: string;
+    prType?: string;
   }) => void;
 }
 
@@ -81,7 +83,8 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
       grnNumber: '',
       poNumber: '',
       supplierName: '',
-      status: ''
+      status: '',
+      prType: ''
     });
   };
 
@@ -157,6 +160,22 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
               <MenuItem value="pending">Pending</MenuItem>
               <MenuItem value="approved">Approved</MenuItem>
               <MenuItem value="rejected">Rejected</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>PR Type</InputLabel>
+            <MuiSelect
+              label="PR Type"
+              value={filters.prType || ''}
+              onChange={(e) => handleInputChange('prType', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select PR Type</em></MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non-technical">Non-Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>

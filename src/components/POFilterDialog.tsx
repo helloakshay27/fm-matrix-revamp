@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Dialog, DialogContent } from '@mui/material';
@@ -22,17 +21,21 @@ interface POFilterDialogProps {
     poNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   };
   setFilters: React.Dispatch<React.SetStateAction<{
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   }>>;
   onApplyFilters: (filters: {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    approvalStatus: string;
+    prType: string;
   }) => void;
 }
 
@@ -74,7 +77,8 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
       referenceNumber: '',
       poNumber: '',
       supplierName: '',
-      approvalStatus: ''
+      approvalStatus: '',
+      prType: ''
     });
   };
 
@@ -150,6 +154,22 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
               <MenuItem value="pending">Pending</MenuItem>
               <MenuItem value="approved">Approved</MenuItem>
               <MenuItem value="rejected">Rejected</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>PR Type</InputLabel>
+            <MuiSelect
+              label="PR Type"
+              value={filters.prType}
+              onChange={(e) => setFilters({ ...filters, prType: e.target.value })}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select PR Type</em></MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non-technical">Non-Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
             </MuiSelect>
           </FormControl>
 

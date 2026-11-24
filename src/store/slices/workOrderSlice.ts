@@ -12,6 +12,7 @@ export const fetchWorkOrders = createAsyncThunk(
             reference_number,
             external_id,
             supplier_name,
+            pr_type,
             search = "",
         }: {
             baseUrl: string;
@@ -20,6 +21,7 @@ export const fetchWorkOrders = createAsyncThunk(
             reference_number?: string;
             external_id?: string;
             supplier_name?: string;
+            pr_type?: string;
             search?: string;
         },
         { rejectWithValue }
@@ -29,6 +31,10 @@ export const fetchWorkOrders = createAsyncThunk(
             if (reference_number) queryParams.append('q[reference_number_eq]', reference_number);
             if (external_id) queryParams.append('q[external_id_eq]', external_id);
             if (supplier_name) queryParams.append('q[pms_supplier_company_name_cont]', supplier_name);
+            if (pr_type) {
+                queryParams.append('pr_type', pr_type);
+                queryParams.append('q[pr_type_eq]', pr_type);
+            }
 
             const response = await axios.get(
                 `https://${baseUrl}/pms/work_orders.json?page=${page}&q[reference_number_or_external_id_cont]=${search}${queryParams.toString() ? `&${queryParams}` : ''}`,

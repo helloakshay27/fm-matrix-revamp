@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent
+  
+  , DialogTitle } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { TextField } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -15,7 +16,7 @@ const fieldStyles = {
 interface InvoicesFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (filters: { invoiceNumber: string; invoiceDate: string; supplierName: string; woNumber: string; }) => void;
+  onApply: (filters: { invoiceNumber: string; invoiceDate: string; supplierName: string; woNumber: string; prType: string; }) => void;
 }
 
 export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
@@ -28,6 +29,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
     invoiceDate: '',
     supplierName: '',
     woNumber: '',
+    prType: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -40,7 +42,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
   };
 
   const handleReset = () => {
-    const empty = { invoiceNumber: '', invoiceDate: '', supplierName: '', woNumber: '' };
+    const empty = { invoiceNumber: '', invoiceDate: '', supplierName: '', woNumber: '', prType: '' };
     setFilters(empty);
     onApply(empty);
     onOpenChange(false);
@@ -113,6 +115,22 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
               sx={{ mt: 1 }}
             />
           </div>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>PR Type</InputLabel>
+            <MuiSelect
+              label="PR Type"
+              value={filters.prType}
+              onChange={(e) => handleInputChange('prType', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select PR Type</em></MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non-technical">Non-Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="flex gap-3 pt-4 items-center justify-end">
