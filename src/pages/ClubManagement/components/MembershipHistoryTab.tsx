@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,24 @@ interface HistoryInvoice {
   total_amount: number | null;
   bill_date: string | null;
   due_date: string | null;
+}
+
+interface RenewalPeriod {
+  period_number: number;
+  start_date: string | null;
+  end_date: string | null;
+  renewed_at: string | null;
+  plan: { id: number | null; name: string | null };
+  plan_snapshot: Record<string, unknown> | null;
+  payment: {
+    base_amount: number | string | null;
+    discount: number | string | null;
+    adjustment_amount: number | string | null;
+    adjustment_note: string | null;
+    total_amount: number | string | null;
+    payment_status: string | null;
+  } | null;
+  invoices: HistoryInvoice[];
 }
 
 interface HistoryVersion {
@@ -39,6 +57,7 @@ interface HistoryVersion {
     payment_status: string | null;
   } | null;
   invoices: HistoryInvoice[];
+  renewal_periods?: RenewalPeriod[];
 }
 
 interface Props {
@@ -79,6 +98,10 @@ export const MembershipHistoryTab: React.FC<Props> = ({
   const [versions, setVersions] = useState<HistoryVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [expandedPeriods, setExpandedPeriods] = useState<Record<number, boolean>>({});
+
+  const togglePeriods = (allocationId: number) =>
+    setExpandedPeriods((prev) => ({ ...prev, [allocationId]: !prev[allocationId] }));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,6 +231,91 @@ export const MembershipHistoryTab: React.FC<Props> = ({
               </div>
             )}
           </div>
+
+          {/* Renewal period history (in-place renewals) */}
+          {v.renewal_periods && v.renewal_periods.length > 0 && (
+            <div className="border-t border-gray-100 pt-3">
+              <button
+                type="button"
+                className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+                onClick={() => v.allocation_id != null && togglePeriods(v.allocation_id)}
+              >
+                {expandedPeriods[v.allocation_id ?? -1]
+                  ? <ChevronDown className="h-4 w-4" />
+                  : <ChevronRight className="h-4 w-4" />}
+                Renewal History ({v.renewal_periods.length} previous {v.renewal_periods.length === 1 ? 'period' : 'periods'})
+              </button>
+
+              {expandedPeriods[v.allocation_id ?? -1] && (
+                <div className="mt-2 space-y-3 pl-4 border-l-2 border-gray-200">
+                  {[...v.renewal_periods].reverse().map((period) => (
+                    <div key={period.period_number} className="rounded-md border border-gray-200 p-3 space-y-2 bg-gray-50">
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <span className="text-sm font-medium text-gray-700">
+                          Period {period.period_number} · {period.plan?.name ?? '-'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Renewed {fmtDate(period.renewed_at)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <div>
+                          <span className="text-gray-400">Period </span>
+                          {fmtDate(period.start_date)} – {fmtDate(period.end_date)}
+                        </div>
+                        {period.payment && (
+                          <div>
+                            <span className="text-gray-400">Total </span>
+                            <span className="font-medium">{money(period.payment.total_amount)}</span>
+                            {period.payment.payment_status && (
+                              <Badge
+                                className={`ml-1 border-0 text-[10px] px-1 py-0 ${
+                                  period.payment.payment_status.toLowerCase() === 'paid'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}
+                              >
+                                {period.payment.payment_status}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {period.invoices.length > 0 && (
+                        <div className="divide-y rounded border border-gray-200 bg-white">
+                          {period.invoices.map((inv) => (
+                            <div key={inv.id} className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 text-xs">
+                              <div>
+                                <span className="font-medium">{inv.bill_number || 'Pending'}</span>
+                                <span className="text-gray-400"> · {fmtDate(inv.bill_date)}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>{money(inv.total_amount)}</span>
+                                <Badge
+                                  className={`border-0 text-[10px] px-1 ${inv.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
+                                >
+                                  {inv.status ?? '-'}
+                                </Badge>
+                                <Button
+                                  variant="outline" size="sm"
+                                  disabled={downloadingId === inv.id}
+                                  onClick={() => download(v, inv)}
+                                >
+                                  {downloadingId === inv.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       ))}
