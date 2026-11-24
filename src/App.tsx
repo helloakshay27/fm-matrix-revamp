@@ -4766,6 +4766,22 @@ function App() {
                             element={<ViPosthogDashboardPage />}
                           />
                           <Route
+                            path="/calendar-usage-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/accounting-dashboard"
+                            element={<AccountingPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/smartsecure-dashboard"
+                            element={<SmartSecureDashboardPage />}
+                          />
+                          <Route
                             path="/fm-adoption-dashboard"
                             element={<FmAdoptionDashboardPage />}
                           />

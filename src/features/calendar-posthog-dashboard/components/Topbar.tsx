@@ -1,11 +1,43 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Building2, LogOut } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useCalendarDashboard } from '../context/calendarDashboardStore';
+import { clearAuth, logoutUser } from '@/utils/auth';
 
 /** Resolves the currently logged-in user's profile details from localStorage / session. */
-function getLoggedInUserInfo(): { initial: string; displayName: string; email?: string } {
+function getLoggedInUserInfo(): {
+  initial: string;
+  displayName: string;
+  email?: string;
+  organizationName: string;
+} {
   try {
     const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    const storedOrganization =
+      localStorage.getItem('selectedOrg') ||
+      sessionStorage.getItem('selectedOrg') ||
+      localStorage.getItem('organization_name') ||
+      localStorage.getItem('selectedOrganizationName');
+    let organizationName = storedOrganization || '';
+    if (organizationName) {
+      try {
+        const parsedOrganization = JSON.parse(organizationName);
+        if (typeof parsedOrganization === 'object' && parsedOrganization) {
+          organizationName =
+            parsedOrganization.name || parsedOrganization.organization_name || organizationName;
+        }
+      } catch {
+        // The selected organization is commonly stored as its plain name.
+      }
+    }
+
     if (raw) {
       const parsed = JSON.parse(raw);
       const full = `${parsed.firstname || ''} ${parsed.lastname || ''}`.trim();
@@ -22,6 +54,12 @@ function getLoggedInUserInfo(): { initial: string; displayName: string; email?: 
           initial: name.charAt(0).toUpperCase(),
           displayName: full || parsed.name || name,
           email: parsed.email,
+          organizationName:
+            organizationName ||
+            parsed.organization?.name ||
+            parsed.organization_name ||
+            parsed.org_name ||
+            '',
         };
       }
     }
@@ -36,13 +74,13 @@ function getLoggedInUserInfo(): { initial: string; displayName: string; email?: 
         initial: name.charAt(0).toUpperCase(),
         displayName: name,
         email: fallbackEmail,
+        organizationName,
       };
     }
+    return { initial: 'U', displayName: 'Logged-in user', organizationName };
   } catch {
-    // ignore
+    return { initial: 'U', displayName: 'Logged-in user', organizationName: '' };
   }
-
-  return { initial: 'U', displayName: 'Logged-in user' };
 }
 
 export function Topbar() {
@@ -103,6 +141,12 @@ export function Topbar() {
     navigate('/employee/calendar');
   };
 
+  const handleLogout = async () => {
+    await logoutUser();
+    clearAuth();
+    navigate('/login');
+  };
+
   const navLabel = `${navCollapsed ? 'Expand' : 'Collapse'} navigation`;
   const themeLabel = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
 
@@ -148,13 +192,43 @@ export function Topbar() {
       >
         {isLoading ? 'Loading…' : isLive ? 'Live · appid 29' : 'Wireframe · sample data'}
       </span>
-      <div
-        className="avatar"
-        title={`${userInfo.displayName}${userInfo.email ? ` (${userInfo.email})` : ''}`}
-        aria-label={`Logged in as ${userInfo.displayName}`}
-      >
-        {userInfo.initial}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="avatar profile-trigger"
+            title={`${userInfo.displayName}${userInfo.email ? ` (${userInfo.email})` : ''}`}
+            aria-label={`Open profile menu for ${userInfo.displayName}`}
+          >
+            {userInfo.initial}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={8} className="w-64 p-0">
+          <div className="px-4 py-3">
+            <p className="text-sm font-semibold text-gray-900">{userInfo.displayName}</p>
+            {userInfo.email && (
+              <p className="mt-0.5 text-xs text-gray-600">{userInfo.email}</p>
+            )}
+            <div className="mt-3 flex items-start gap-2 text-sm text-gray-700">
+              <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500">Organisation</p>
+                <p className="break-words font-medium">
+                  {userInfo.organizationName || 'Not set'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={handleLogout}
+            className="cursor-pointer px-4 py-2 text-red-600 focus:bg-red-50 focus:text-red-700"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }
