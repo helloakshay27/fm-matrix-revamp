@@ -5017,6 +5017,10 @@ function App() {
                             element={<CalendarPosthogDashboardPage />}
                           />
                           <Route
+                            path="/calendar-posthog-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
                             path="/accounting-dashboard"
                             element={<AccountingPosthogDashboardPage />}
                           />
