@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { AuditOverview } from "../../../components/vi-audit/management-dashboard/AuditOverview";
 import { AuditsPanel } from "../../../components/vi-audit/management-dashboard/AuditsPanel";
@@ -15,6 +15,7 @@ import {
   buildCharts,
   useAuditDashboardData,
   useAuditFilterOptions,
+  useAuditZoneOptions,
   useRecentAudits,
   type AuditDashboardFilters,
   type ClosureRow,
@@ -35,6 +36,7 @@ const defaultFilters = (): AuditDashboardFilters => {
   return {
     clusterIds: [],
     functionIds: [],
+    personalAreaIds: [],
     zoneIds: [],
     workLocationIds: [],
     auditTypeIds: [],
@@ -113,6 +115,16 @@ export function ViAuditManagementDashboardPage() {
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
   const options = useAuditFilterOptions();
+  // Zone options follow the circles picked in the filter bar (before Apply).
+  const zoneOptions = useAuditZoneOptions(filters.clusterIds);
+  // Drop selected zones that are no longer in the list once the circles change.
+  useEffect(() => {
+    if (!zoneOptions.loaded && filters.clusterIds.length > 0) return;
+    setFilters((current) => {
+      const kept = current.zoneIds.filter((id) => zoneOptions.zones.some((zone) => zone.id === id));
+      return kept.length === current.zoneIds.length ? current : { ...current, zoneIds: kept };
+    });
+  }, [zoneOptions.zones, zoneOptions.loaded, filters.clusterIds.length]);
   // Circle Manager only loads after a circle is applied; Pan India loads for all circles.
   const sectionReady = persona === "admin" || applied.clusterIds.length > 0;
   const dashboard = useAuditDashboardData(applied, sectionReady);
@@ -133,7 +145,7 @@ export function ViAuditManagementDashboardPage() {
   const scopeLabel = (list: { id: string; name: string }[], ids: string[], singular: string, plural: string) =>
     ids.length === 0 ? "" : ids.length === 1 ? `${list.find((item) => item.id === ids[0])?.name ?? ""} ${singular}` : `${ids.length} ${plural}`;
   const circleLabel = scopeLabel(options.circles, applied.clusterIds, "Circle", "Circles");
-  const zoneLabel = scopeLabel(options.zones, applied.zoneIds, "Zone", "Zones");
+  const zoneLabel = scopeLabel(zoneOptions.zones, applied.zoneIds, "Zone", "Zones");
   const title =
     persona === "admin"
       ? `Audit · Pan India View${zoneLabel ? ` · ${zoneLabel}` : ""}`
@@ -144,14 +156,15 @@ export function ViAuditManagementDashboardPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (next === "admin") {
       // Pan India section: clear circle filters and reload nationwide.
-      const nextFilters = { ...filters, clusterIds: [] as string[] };
+      // Zone is hidden in Pan India (it depends on Circle), so clear it too.
+      const nextFilters = { ...filters, clusterIds: [] as string[], zoneIds: [] as string[] };
       setFilters(nextFilters);
-      setApplied({ ...applied, clusterIds: [] });
+      setApplied({ ...applied, clusterIds: [], zoneIds: [] });
       return;
     }
     // Circle Manager section: wait for a circle selection + Apply before loading.
-    setFilters((current) => ({ ...current, clusterIds: [] }));
-    setApplied((current) => ({ ...current, clusterIds: [] }));
+    setFilters((current) => ({ ...current, clusterIds: [], zoneIds: [] }));
+    setApplied((current) => ({ ...current, clusterIds: [], zoneIds: [] }));
   };
 
   const jumpTo = (panel: string, group: string) => {
@@ -190,13 +203,17 @@ export function ViAuditManagementDashboardPage() {
         options={options}
         circles={filters.clusterIds}
         functions={filters.functionIds}
+        personalAreas={filters.personalAreaIds}
         zones={filters.zoneIds}
+        zoneOptions={zoneOptions.zones}
+        zonesLoaded={zoneOptions.loaded}
         workLocations={filters.workLocationIds}
         auditTypes={filters.auditTypeIds}
         dateFrom={filters.dateFrom}
         dateTo={filters.dateTo}
         onCircles={update("clusterIds")}
         onFunctions={update("functionIds")}
+        onPersonalAreas={update("personalAreaIds")}
         onZones={update("zoneIds")}
         onWorkLocations={update("workLocationIds")}
         onAuditTypes={update("auditTypeIds")}

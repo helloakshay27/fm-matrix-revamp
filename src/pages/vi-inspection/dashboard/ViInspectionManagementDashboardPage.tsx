@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionPlansPanel } from "../../../components/vi-inspection/management-dashboard/ActionPlansPanel";
 import { FilterBar } from "../../../components/vi-inspection/management-dashboard/FilterBar";
 import { InspectionOverview } from "../../../components/vi-inspection/management-dashboard/InspectionOverview";
@@ -10,6 +10,7 @@ import { fmt, type ModuleKey, type Persona } from "../../../components/vi-inspec
 import {
   useInspectionDashboardData,
   useInspectionFilterOptions,
+  useInspectionZoneOptions,
   type InspectionDashboardFilters,
 } from "../../../components/vi-inspection/management-dashboard/viInspectionDashboardApi";
 
@@ -26,6 +27,7 @@ const defaultFilters = (): InspectionDashboardFilters => {
   return {
     clusterIds: [],
     functionIds: [],
+    personalAreaIds: [],
     zoneIds: [],
     workLocationIds: [],
     inspectionTypeIds: [],
@@ -46,6 +48,16 @@ export function ViInspectionManagementDashboardPage() {
   const toastId = useRef(0);
   const highlightTimer = useRef<number | null>(null);
   const options = useInspectionFilterOptions();
+  // Zone options follow the circles picked in the filter bar (before Apply).
+  const zoneOptions = useInspectionZoneOptions(filters.clusterIds);
+  // Drop selected zones that are no longer in the list once the circles change.
+  useEffect(() => {
+    if (!zoneOptions.loaded && filters.clusterIds.length > 0) return;
+    setFilters((current) => {
+      const kept = current.zoneIds.filter((id) => zoneOptions.zones.some((zone) => zone.id === id));
+      return kept.length === current.zoneIds.length ? current : { ...current, zoneIds: kept };
+    });
+  }, [zoneOptions.zones, zoneOptions.loaded, filters.clusterIds.length]);
   const { kpi, spoc, owners, closure, loading } = useInspectionDashboardData(applied);
 
   const notify = (message: string) => {
@@ -61,15 +73,18 @@ export function ViInspectionManagementDashboardPage() {
   const scopeLabel = (list: { id: string; name: string }[], ids: string[], singular: string, plural: string) =>
     ids.length === 0 ? "" : ids.length === 1 ? `${list.find((item) => item.id === ids[0])?.name ?? ""} ${singular}` : `${ids.length} ${plural}`;
   const circleLabel = scopeLabel(options.circles, applied.clusterIds, "Circle", "Circles");
-  const zoneLabel = scopeLabel(options.zones, applied.zoneIds, "Zone", "Zones");
+  const zoneLabel = scopeLabel(zoneOptions.zones, applied.zoneIds, "Zone", "Zones");
   const title = `Inspection · ${circleLabel || "Pan India View"}${zoneLabel ? ` · ${zoneLabel}` : ""}`;
 
   const switchPersona = (next: Persona) => {
     setPersona(next);
-    // Pan India has no circle filter: drop any circles picked in the Circle Manager view and reload.
+    // Pan India has no circle (or zone, which depends on circle) filter: drop any picked in the
+    // Circle Manager view and reload.
     if (next === "admin") {
-      setFilters((current) => ({ ...current, clusterIds: [] }));
-      setApplied((current) => (current.clusterIds.length ? { ...current, clusterIds: [] } : current));
+      setFilters((current) => ({ ...current, clusterIds: [], zoneIds: [] }));
+      setApplied((current) =>
+        current.clusterIds.length || current.zoneIds.length ? { ...current, clusterIds: [], zoneIds: [] } : current,
+      );
     }
   };
 
@@ -112,13 +127,17 @@ export function ViInspectionManagementDashboardPage() {
         options={options}
         circles={filters.clusterIds}
         functions={filters.functionIds}
+        personalAreas={filters.personalAreaIds}
         zones={filters.zoneIds}
+        zoneOptions={zoneOptions.zones}
+        zonesLoaded={zoneOptions.loaded}
         workLocations={filters.workLocationIds}
         inspectionTypes={filters.inspectionTypeIds}
         dateFrom={filters.dateFrom}
         dateTo={filters.dateTo}
         onCircles={update("clusterIds")}
         onFunctions={update("functionIds")}
+        onPersonalAreas={update("personalAreaIds")}
         onZones={update("zoneIds")}
         onWorkLocations={update("workLocationIds")}
         onInspectionTypes={update("inspectionTypeIds")}
