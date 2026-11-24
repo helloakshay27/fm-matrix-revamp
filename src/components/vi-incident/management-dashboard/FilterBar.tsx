@@ -7,6 +7,9 @@ interface FilterBarProps {
   persona: Persona;
   value: IncidentFilters;
   options: FilterOptions;
+  /** Zone options for the selected circles (empty until a circle is picked). */
+  zoneOptions: FilterOption[];
+  zonesLoading: boolean;
   onChange: (patch: Partial<IncidentFilters>) => void;
   onApply: () => void;
   onReset: () => void;
@@ -57,7 +60,7 @@ function FieldLabel({ text, required }: { text: string; required?: boolean }) {
   );
 }
 
-function SingleSelect({ label, allLabel, value, options, onChange, required, searchable, width = 220 }: { label: string; allLabel: string; value: string; options: FilterOption[]; onChange: (value: string) => void; required?: boolean; searchable?: boolean; width?: number }) {
+function SingleSelect({ label, allLabel, value, options, onChange, required, searchable, emptyText, width = 220 }: { label: string; allLabel: string; value: string; options: FilterOption[]; onChange: (value: string) => void; required?: boolean; searchable?: boolean; emptyText?: string; width?: number }) {
   const [search, setSearch] = useState("");
   const fullLabel = required ? `${label} *` : label;
   const needle = search.trim().toLowerCase();
@@ -97,6 +100,7 @@ function SingleSelect({ label, allLabel, value, options, onChange, required, sea
           </ListSubheader>
         ) : null}
         <MenuItem value={ALL}>{allLabel}</MenuItem>
+        {emptyText && options.length === 0 ? <MenuItem disabled>{emptyText}</MenuItem> : null}
         {visible.map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}
         {searchable && visible.length === 0 ? <MenuItem disabled>No matches</MenuItem> : null}
       </MuiSelect>
@@ -107,7 +111,7 @@ function SingleSelect({ label, allLabel, value, options, onChange, required, sea
 const ALL_VALUE = "__all__";
 
 /** Checkbox multi-select with an "All" toggle, as on the M-Safe dashboard. */
-function MultiSelect({ label, plural, value, options, loading, onChange, required, width = 220 }: { label: string; plural: string; value: string[]; options: FilterOption[]; loading: boolean; onChange: (value: string[]) => void; required?: boolean; width?: number }) {
+function MultiSelect({ label, plural, value, options, loading, onChange, required, emptyText, width = 220 }: { label: string; plural: string; value: string[]; options: FilterOption[]; loading: boolean; onChange: (value: string[]) => void; required?: boolean; emptyText?: string; width?: number }) {
   const [open, setOpen] = useState(false);
   const fullLabel = required ? `${label} *` : label;
   const allIds = options.map((item) => item.id);
@@ -140,10 +144,13 @@ function MultiSelect({ label, plural, value, options, loading, onChange, require
         MenuProps={menuProps}
       >
         {loading ? <MenuItem disabled dense>Loading...</MenuItem> : null}
-        <MenuItem value={ALL_VALUE} dense>
-          <Checkbox checked={allSelected} size="small" sx={checkboxSx} />
-          <ListItemText primary="All" primaryTypographyProps={textProps} />
-        </MenuItem>
+        {!loading && options.length === 0 && emptyText ? <MenuItem disabled dense>{emptyText}</MenuItem> : null}
+        {options.length > 0 ? (
+          <MenuItem value={ALL_VALUE} dense>
+            <Checkbox checked={allSelected} indeterminate={value.length > 0 && !allSelected} size="small" sx={checkboxSx} />
+            <ListItemText primary="Select All" primaryTypographyProps={textProps} />
+          </MenuItem>
+        ) : null}
         {options.map((item) => (
           <MenuItem key={item.id} value={item.id} dense>
             <Checkbox checked={value.includes(item.id)} size="small" sx={checkboxSx} />
@@ -155,7 +162,7 @@ function MultiSelect({ label, plural, value, options, loading, onChange, require
   );
 }
 
-export function FilterBar({ persona, value, options, onChange, onApply, onReset }: FilterBarProps) {
+export function FilterBar({ persona, value, options, zoneOptions, zonesLoading, onChange, onApply, onReset }: FilterBarProps) {
   const required = persona === "circle";
 
   return (
@@ -165,7 +172,19 @@ export function FilterBar({ persona, value, options, onChange, onApply, onReset 
         <MultiSelect label="Circle" plural="Circles" value={value.circleIds} options={options.circles} loading={options.loading} onChange={(circleIds) => onChange({ circleIds })} required={required} width={210} />
       ) : null}
       <MultiSelect label="Function" plural="Functions" value={value.functionIds} options={options.functions} loading={options.loading} onChange={(functionIds) => onChange({ functionIds })} required={required} />
-      <SingleSelect label="Personnel Area / Zone" allLabel="All Zones" value={value.zoneId} options={options.zones} onChange={(zoneId) => onChange({ zoneId })} />
+      {/* Zone depends on Circle, so it is shown only in Circle Manager and lists the selected circles' zones. */}
+      {persona === "circle" ? (
+        <MultiSelect
+          label="Zone"
+          plural="Zones"
+          value={value.zoneIds}
+          options={zoneOptions}
+          loading={zonesLoading}
+          onChange={(zoneIds) => onChange({ zoneIds })}
+          emptyText={value.circleIds.length === 0 ? "Select a circle first" : "No zones for the selected circles"}
+        />
+      ) : null}
+      <MultiSelect label="Personnel Area" plural="Personnel Areas" value={value.personalAreaIds} options={options.personalAreas} loading={options.loading} onChange={(personalAreaIds) => onChange({ personalAreaIds })} emptyText="No options available" />
       <SingleSelect label="Work Location" allLabel="All Work Locations" value={value.workLocationId} options={options.workLocations} onChange={(workLocationId) => onChange({ workLocationId })} searchable />
       <SingleSelect label="Incident Classification" allLabel="All Classifications" value={value.classificationId} options={options.classifications} onChange={(classificationId) => onChange({ classificationId })} />
       <TextField type="date" label="Incident Date From" value={value.dateFrom} onChange={(event) => onChange({ dateFrom: event.target.value })} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
