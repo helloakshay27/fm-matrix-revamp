@@ -74,8 +74,11 @@ export default defineConfig(({ mode }) => ({
   base: "/", // Use absolute paths for proper asset loading
   // Strip license/version banners from the production bundle so a scanner can't
   // fingerprint third-party library versions straight out of the shipped JS.
+  // In production, also strip console.log and debugger statements (console.warn/error are kept).
   esbuild: {
     legalComments: "none",
+    drop: mode === "production" ? ["debugger"] : [],
+    pure: mode === "production" ? ["console.log"] : [],
   },
   build: {
     outDir: "dist",

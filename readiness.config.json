@@ -1,0 +1,39 @@
+{
+  "$comment": "Production readiness config. This is the only file to edit when adopting the kit in another repo. See docs/deployment/ADOPTING.md.",
+  "mode": "report",
+  "productionBranches": ["main", "Pulse-prod-main", "Club-House-Main"],
+  "branding": {
+    "indexHtml": "index.html",
+    "title": "FM Matrix",
+    "themeColor": "#da7756",
+    "icons": ["public/favicon-32x32.png", "public/pwa-192x192.png", "public/favicon.ico"]
+  },
+  "environment": {
+    "requiredEnvVars": [],
+    "$requiredEnvVarsComment": "Empty here: this app resolves its API base URL at runtime per tenant (src/utils/auth.ts)."
+  },
+  "scan": {
+    "sourceGlobs": ["src/", "index.html", "electron/"],
+    "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".html", ".json"],
+    "allowedHostSuffixes": [
+      "lockated.com",
+      "lockated.co",
+      "gophygital.work",
+      "panchshil.com",
+      "amazonaws.com",
+      "googleapis.com",
+      "gstatic.com",
+      "google.com",
+      "youtube.com",
+      "youtu.be",
+      "w3.org",
+      "unsplash.com",
+      "dicebear.com",
+      "cdnjs.cloudflare.com",
+      "unpkg.com",
+      "jsdelivr.net"
+    ],
+    "forbiddenUrlPatterns": ["localhost", "127\\.0\\.0\\.1", "0\\.0\\.0\\.0", "ngrok", "\\.local\\b", "192\\.168\\."],
+    "nonProdHostPatterns": ["dev-api", "-uat", "uat\\.", "staging"]
+  }
+}
