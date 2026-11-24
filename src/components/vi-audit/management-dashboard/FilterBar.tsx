@@ -8,13 +8,18 @@ interface FilterBarProps {
   options: AuditFilterOptions;
   circles: string[];
   functions: string[];
+  personalAreas: string[];
   zones: string[];
+  /** Zone options for the selected circles (empty until a circle is picked). */
+  zoneOptions: FilterOption[];
+  zonesLoaded: boolean;
   workLocations: string[];
   auditTypes: string[];
   dateFrom: string;
   dateTo: string;
   onCircles: (ids: string[]) => void;
   onFunctions: (ids: string[]) => void;
+  onPersonalAreas: (ids: string[]) => void;
   onZones: (ids: string[]) => void;
   onWorkLocations: (ids: string[]) => void;
   onAuditTypes: (ids: string[]) => void;
@@ -74,7 +79,7 @@ const optionTextProps = { fontSize: 13, fontFamily: "'Poppins', sans-serif" };
 
 // Multi-select dropdown (as on the inspection dashboard): an "All" toggle, then one checkbox per
 // API option. Values are option ids; nothing selected means no filter.
-function MultiSelect({ label, plural, required, value, options, loaded, onChange }: { label: string; plural: string; required?: boolean; value: string[]; options: FilterOption[]; loaded?: boolean; onChange: (ids: string[]) => void }) {
+function MultiSelect({ label, plural, required, value, options, loaded, emptyText, onChange }: { label: string; plural: string; required?: boolean; value: string[]; options: FilterOption[]; loaded?: boolean; emptyText?: string; onChange: (ids: string[]) => void }) {
   const [open, setOpen] = useState(false);
   const fieldLabel = required ? `${label} *` : label;
   const allSelected = options.length > 0 && value.length === options.length;
@@ -107,7 +112,7 @@ function MultiSelect({ label, plural, required, value, options, loaded, onChange
         sx={fieldStyles}
         MenuProps={menuProps}
       >
-        {options.length === 0 && <MenuItem disabled dense>{loaded ? "No options available" : "Loading..."}</MenuItem>}
+        {options.length === 0 && <MenuItem disabled dense>{emptyText ?? (loaded ? "No options available" : "Loading...")}</MenuItem>}
         {options.length > 0 && (
           <MenuItem value={ALL_VALUE} dense>
             <Checkbox checked={allSelected} indeterminate={value.length > 0 && !allSelected} size="small" sx={checkboxSx} />
@@ -133,8 +138,20 @@ export function FilterBar(props: FilterBarProps) {
       {required && (
         <MultiSelect label="Circle" plural="Circles" required value={props.circles} options={props.options.circles} loaded={props.options.loaded.circles} onChange={props.onCircles} />
       )}
+      {/* Zone depends on Circle, so it is shown only in Circle Manager and lists the selected circles' zones. */}
+      {required && (
+        <MultiSelect
+          label="Zone"
+          plural="Zones"
+          value={props.zones}
+          options={props.zoneOptions}
+          loaded={props.zonesLoaded}
+          emptyText={props.circles.length === 0 ? "Select a circle first" : undefined}
+          onChange={props.onZones}
+        />
+      )}
       <MultiSelect label="Function" plural="Functions" value={props.functions} options={props.options.functions} loaded={props.options.loaded.functions} onChange={props.onFunctions} />
-      <MultiSelect label="Personnel Area / Zone" plural="Zones" value={props.zones} options={props.options.zones} loaded={props.options.loaded.zones} onChange={props.onZones} />
+      <MultiSelect label="Personnel Area" plural="Personnel Areas" value={props.personalAreas} options={props.options.personalAreas} loaded={props.options.loaded.personalAreas} onChange={props.onPersonalAreas} />
       <MultiSelect label="Work Location" plural="Work Locations" value={props.workLocations} options={props.options.workLocations} loaded={props.options.loaded.workLocations} onChange={props.onWorkLocations} />
       <MultiSelect label="Audit Type" plural="Audit Types" value={props.auditTypes} options={props.options.auditTypes} loaded={props.options.loaded.auditTypes} onChange={props.onAuditTypes} />
       <TextField type="date" label="Audit Date From" value={props.dateFrom} onChange={(event) => props.onDateFrom(event.target.value)} size="small" variant="outlined" InputLabelProps={{ shrink: true }} sx={{ ...dateFieldStyles, minWidth: 150, flex: "0 1 168px" }} />
