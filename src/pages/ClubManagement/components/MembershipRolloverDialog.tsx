@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Check, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { apiClient } from '@/utils/apiClient';
 import { getApiErrorMessage } from '../apiErrorMessage';
 
@@ -52,6 +50,17 @@ const money = (n: number) => `₹ ${Number(n || 0).toLocaleString('en-IN', { min
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('en-GB') : '-');
 const num = (v: string) => (v === '' || Number.isNaN(Number(v)) ? 0 : Number(v));
+
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '0.375rem',
+    backgroundColor: 'white',
+    '& fieldset': { borderColor: '#d1d5db' },
+    '&:hover fieldset': { borderColor: '#9ca3af' },
+    '&.Mui-focused fieldset': { borderColor: 'var(--color-primary)' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': { color: 'var(--color-primary)' },
+};
 
 const basePath = (target: Props['target']) =>
   target.kind === 'member' ? `/club_members/${target.id}` : `/club_member_allocations/${target.id}`;
@@ -128,10 +137,6 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
     }
   }, [planId, startOverride, endOverride, mode, target]);
 
-  useEffect(() => {
-    if (open) loadQuote();
-  }, [open, loadQuote]);
-
   const totals = useMemo(() => {
     const taxable = Math.max(num(base) - num(discount) - (isUpgrade ? num(credit) : 0), 0);
     const cgst = round2((taxable * num(cgstPct)) / 100);
@@ -141,8 +146,25 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
 
   const startDate = startOverride || quote?.start_date || '';
   const endDate = endOverride || quote?.end_date || '';
+  // Dates are YYYY-MM-DD, so a string comparison orders them correctly.
+  const dateError =
+    startDate && endDate && endDate.slice(0, 10) < startDate.slice(0, 10) ? 'End date cannot be before the start date' : null;
+
+  // Re-price whenever the plan or dates change, but not for an invalid date range.
+  useEffect(() => {
+    if (open && !dateError) loadQuote();
+  }, [open, loadQuote, dateError]);
   const selectablePlans = isUpgrade ? plans.filter((p) => p.id !== currentPlanId) : plans;
-  const canSubmit = !!quote && !quoteError && !loadingQuote && !submitting && !!planId;
+  const canSubmit = !!quote && !quoteError && !loadingQuote && !submitting && !!planId && !dateError;
+
+  const amountFieldProps = {
+    type: 'number',
+    size: 'small' as const,
+    fullWidth: true,
+    inputProps: { min: 0, step: 0.01 },
+    InputLabelProps: { shrink: true },
+    sx: fieldStyles,
+  };
 
   const submit = async () => {
     if (!quote || !planId) return;
@@ -181,42 +203,93 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !submitting && onOpenChange(o)}>
-      <DialogContent className="sm:max-w-[720px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isUpgrade ? 'Upgrade membership' : 'Renew membership'}</DialogTitle>
-          <DialogDescription>
-            {isUpgrade
-              ? 'The new plan starts now and keeps the current end date. You are charged the new plan price less a credit for the unused part of the current plan.'
-              : 'Start a new membership period, on the same plan or a different one. A new invoice is created for the plan you choose; the expired period is kept in the history.'}
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog
+      open={open}
+      onClose={() => !submitting && onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <div className="text-lg font-semibold text-[#1a1a1a]">{isUpgrade ? 'Upgrade membership' : 'Renew membership'}</div>
+        <div className="text-sm font-normal text-gray-500 mt-1">
+          {isUpgrade
+            ? 'The new plan starts now and keeps the current end date. You are charged the new plan price less a credit for the unused part of the current plan.'
+            : 'Start a new membership period, on the same plan or a different one. A new invoice is created for the plan you choose; the expired period is kept in the history.'}
+        </div>
+      </DialogTitle>
 
+      <DialogContent dividers>
         <div className="space-y-5">
           <div>
-            <Label className="text-sm font-medium">{isUpgrade ? 'Upgrade to' : 'Plan'}</Label>
-            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {selectablePlans.map((p) => (
-                <button
-                  type="button"
-                  key={p.id}
-                  onClick={() => {
-                    setPlanId(p.id);
-                    setEndOverride('');
-                  }}
-                  className={`text-left rounded-lg border p-3 transition ${
-                    planId === p.id ? 'border-brand bg-brand-selected' : 'border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-[#1a1a1a]">{p.name}</span>
-                    {p.id === currentPlanId && <span className="text-xs text-gray-500">Current plan</span>}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">{p.price != null ? money(Number(p.price)) : ''}</div>
-                  {p.duration_in_months ? <div className="text-xs text-gray-500">{p.duration_in_months} months</div> : null}
-                </button>
-              ))}
-              {selectablePlans.length === 0 && <div className="text-sm text-gray-500">No plans available.</div>}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="text-sm font-semibold text-[#1a1a1a]">{isUpgrade ? 'Upgrade to' : 'Choose a plan'}</div>
+              {selectablePlans.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  {selectablePlans.length} plan{selectablePlans.length === 1 ? '' : 's'} available
+                </div>
+              )}
+            </div>
+            {/* Not role="radio": theme.css paints every span inside [role="radio"] as a filled circle. */}
+            <div aria-label="Membership plan" className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {selectablePlans.map((p) => {
+                const selected = planId === p.id;
+                const isCurrent = p.id === currentPlanId;
+                return (
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    key={p.id}
+                    onClick={() => {
+                      setPlanId(p.id);
+                      setEndOverride('');
+                    }}
+                    className={`group relative flex items-start gap-3 rounded-xl border p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      selected
+                        ? 'border-brand bg-brand-selected ring-1 ring-brand shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                    }`}
+                  >
+                    {/* Radio indicator */}
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                        selected ? 'border-brand bg-brand text-white' : 'border-gray-300 bg-white group-hover:border-gray-400'
+                      }`}
+                    >
+                      {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start justify-between gap-2">
+                        <span className="truncate font-medium text-[#1a1a1a]" title={p.name}>
+                          {p.name}
+                        </span>
+                        {isCurrent && (
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                            Current plan
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className={`text-lg font-semibold ${selected ? 'text-brand' : 'text-[#1a1a1a]'}`}>
+                          {p.price != null ? money(Number(p.price)) : '—'}
+                        </span>
+                        {p.duration_in_months ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                            <CalendarDays className="h-3 w-3" />
+                            {p.duration_in_months} month{p.duration_in_months === 1 ? '' : 's'}
+                          </span>
+                        ) : null}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+              {selectablePlans.length === 0 && (
+                <div className="col-span-full rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                  No plans available.
+                </div>
+              )}
             </div>
           </div>
 
@@ -228,30 +301,32 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="rollover-start">Start date</Label>
-              <Input
-                id="rollover-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartOverride(e.target.value);
-                  setEndOverride('');
-                }}
-                disabled={!planId}
-              />
-            </div>
-            <div>
-              <Label htmlFor="rollover-end">End date</Label>
-              <Input
-                id="rollover-end"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndOverride(e.target.value)}
-                disabled={!planId}
-              />
-              {isUpgrade && <p className="text-xs text-gray-500 mt-1">An upgrade keeps the current end date by default.</p>}
-            </div>
+            <TextField
+              type="date"
+              fullWidth
+              label="Start date"
+              value={startDate}
+              onChange={(e) => {
+                setStartOverride(e.target.value);
+                setEndOverride('');
+              }}
+              disabled={!planId}
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
+            <TextField
+              type="date"
+              fullWidth
+              label="End date"
+              value={endDate}
+              onChange={(e) => setEndOverride(e.target.value)}
+              disabled={!planId}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: startDate || undefined }}
+              sx={fieldStyles}
+              error={!!dateError}
+              helperText={dateError ?? (isUpgrade ? 'An upgrade keeps the current end date by default.' : '')}
+            />
           </div>
 
           {loadingQuote && (
@@ -281,28 +356,18 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
             <div className="rounded-lg border border-gray-200 p-4 space-y-3">
               <div className="font-medium text-[#1a1a1a]">Invoice for {quote.plan.name}</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <Label htmlFor="rollover-base">Plan price</Label>
-                  <Input id="rollover-base" type="number" min="0" step="0.01" value={base} onChange={(e) => setBase(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="rollover-discount">Discount</Label>
-                  <Input id="rollover-discount" type="number" min="0" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
-                </div>
+                <TextField label="Plan price" {...amountFieldProps} value={base} onChange={(e) => setBase(e.target.value)} />
+                <TextField label="Discount" {...amountFieldProps} value={discount} onChange={(e) => setDiscount(e.target.value)} />
                 {isUpgrade && (
-                  <div>
-                    <Label htmlFor="rollover-credit">Credit (unused plan)</Label>
-                    <Input id="rollover-credit" type="number" min="0" step="0.01" value={credit} onChange={(e) => setCredit(e.target.value)} />
-                  </div>
+                  <TextField
+                    label="Credit (unused plan)"
+                    {...amountFieldProps}
+                    value={credit}
+                    onChange={(e) => setCredit(e.target.value)}
+                  />
                 )}
-                <div>
-                  <Label htmlFor="rollover-cgst">CGST %</Label>
-                  <Input id="rollover-cgst" type="number" min="0" step="0.01" value={cgstPct} onChange={(e) => setCgstPct(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="rollover-sgst">SGST %</Label>
-                  <Input id="rollover-sgst" type="number" min="0" step="0.01" value={sgstPct} onChange={(e) => setSgstPct(e.target.value)} />
-                </div>
+                <TextField label="CGST %" {...amountFieldProps} value={cgstPct} onChange={(e) => setCgstPct(e.target.value)} />
+                <TextField label="SGST %" {...amountFieldProps} value={sgstPct} onChange={(e) => setSgstPct(e.target.value)} />
               </div>
               {isUpgrade && quote.payment.adjustment_note && <p className="text-xs text-gray-500">{quote.payment.adjustment_note}</p>}
 
@@ -318,17 +383,17 @@ export const MembershipRolloverDialog: React.FC<Props> = ({ open, onOpenChange, 
             </div>
           )}
         </div>
-
-        <DialogFooter className="fm-action-bar">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button onClick={submit} disabled={!canSubmit} className="bg-brand hover:bg-brand-hover text-white">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {isUpgrade ? 'Upgrade & create invoice' : 'Renew & create invoice'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button onClick={submit} disabled={!canSubmit} className="bg-brand hover:bg-brand-hover text-white">
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          {isUpgrade ? 'Upgrade & create invoice' : 'Renew & create invoice'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

@@ -1,28 +1,58 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { GROUP_MEMBERSHIP_LIST_URL_KEY } from './listState';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Loader, RefreshCw, ArrowUpCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { API_CONFIG } from '@/config/apiConfig';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CloseIcon from '@mui/icons-material/Close';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import ImageIcon from '@mui/icons-material/Image';
-import DescriptionIcon from '@mui/icons-material/Description';
-import AudioFileIcon from '@mui/icons-material/AudioFile';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import axios from 'axios';
-import { useClubManagementEvents } from '@/components/PostHogClubManagementEvents';
-import { MembershipRolloverDialog, RolloverMode, RolloverResult } from './components/MembershipRolloverDialog';
-import { MembershipHistoryTab } from './components/MembershipHistoryTab';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { GROUP_MEMBERSHIP_LIST_URL_KEY } from "./listState";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowLeft,
+  Edit,
+  Download,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  CreditCard,
+  Building2,
+  FileText,
+  Loader,
+  RefreshCw,
+  ArrowUpCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { API_CONFIG } from "@/config/apiConfig";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+} from "@/components/ui/select";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CloseIcon from "@mui/icons-material/Close";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ImageIcon from "@mui/icons-material/Image";
+import DescriptionIcon from "@mui/icons-material/Description";
+import AudioFileIcon from "@mui/icons-material/AudioFile";
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import axios from "axios";
+import { useClubManagementEvents } from "@/components/PostHogClubManagementEvents";
+import {
+  MembershipRolloverDialog,
+  RolloverMode,
+  RolloverResult,
+} from "./components/MembershipRolloverDialog";
+import { MembershipHistoryTab } from "./components/MembershipHistoryTab";
 
 interface Attachment {
   id: number;
@@ -107,7 +137,7 @@ interface GroupMembershipDetail {
   referred_by?: string;
   club_members: ClubMember[];
   status: string;
-  change_type?: 'new' | 'renewal' | 'upgrade';
+  change_type?: "new" | "renewal" | "upgrade";
   superseded_at?: string | null;
   allocation_payment_detail?: {
     id: number;
@@ -127,7 +157,7 @@ interface GroupMembershipDetail {
       id: number;
       name: string;
       duration_in_months: number;
-    }
+    };
   } | null;
 }
 
@@ -144,13 +174,17 @@ interface MembershipPlan {
 
 // Add BillDetail interface after other interfaces
 const billVersionLabel = (changeType?: string) =>
-  changeType === 'renewal' ? 'Renewal' : changeType === 'upgrade' ? 'Upgrade' : 'Original';
+  changeType === "renewal"
+    ? "Renewal"
+    : changeType === "upgrade"
+      ? "Upgrade"
+      : "Original";
 
 interface BillDetail {
   id: number;
   /** With include_history: the membership version (allocation) the bill was raised for, and how it came about. */
   allocation_id?: number;
-  change_type?: 'new' | 'renewal' | 'upgrade' | string;
+  change_type?: "new" | "renewal" | "upgrade" | string;
   lock_account_id: number | null;
   society_id: number;
   society_flat_id: number | null;
@@ -192,41 +226,42 @@ interface BillDetail {
 }
 
 const QUESTION_MAP: { [key: string]: string } = {
-  '1': 'Do you have any existing injuries or medical conditions?',
-  '2': 'Do you have any physical restrictions or movement limitations?',
-  '3': 'Are you currently under medication?',
-  '4': 'Have you practiced Pilates before?',
-  '5': 'Primary Fitness Goals',
-  '6': 'Which sessions are you interested in?',
-  '7': 'How did you first hear about The Recess Club?',
-  '8': 'What motivates you to join a wellness club?',
-  '9': 'What type of updates would you like to receive?',
-  '10': 'Preferred Communication Channel',
-  '11': 'Profession / Industry',
-  '12': 'Company Name',
-  '13': 'Are you interested in corporate/group plans for your workplace?'
+  "1": "Do you have any existing injuries or medical conditions?",
+  "2": "Do you have any physical restrictions or movement limitations?",
+  "3": "Are you currently under medication?",
+  "4": "Have you practiced Pilates before?",
+  "5": "Primary Fitness Goals",
+  "6": "Which sessions are you interested in?",
+  "7": "How did you first hear about The Recess Club?",
+  "8": "What motivates you to join a wellness club?",
+  "9": "What type of updates would you like to receive?",
+  "10": "Preferred Communication Channel",
+  "11": "Profession / Industry",
+  "12": "Company Name",
+  "13": "Are you interested in corporate/group plans for your workplace?",
 };
 
 // Add section categorization
-const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[] } } = {
-  'health': {
-    title: 'Health & Wellness Information',
-    questionIds: ['1', '2', '3']
+const QUESTION_SECTIONS: {
+  [key: string]: { title: string; questionIds: string[] };
+} = {
+  health: {
+    title: "Health & Wellness Information",
+    questionIds: ["1", "2", "3"],
   },
-  'activity': {
-    title: 'Activity Interests',
-    questionIds: ['4', '5', '6']
+  activity: {
+    title: "Activity Interests",
+    questionIds: ["4", "5", "6"],
   },
-  'lifestyle': {
-    title: 'Lifestyle & Communication Insights',
-    questionIds: ['7', '8', '9', '10']
+  lifestyle: {
+    title: "Lifestyle & Communication Insights",
+    questionIds: ["7", "8", "9", "10"],
   },
-  'occupation': {
-    title: 'Occupation & Demographics',
-    questionIds: ['11', '12']
-  }
+  occupation: {
+    title: "Occupation & Demographics",
+    questionIds: ["11", "12"],
+  },
 };
-
 
 export const ClubGroupMembershipDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -234,13 +269,16 @@ export const ClubGroupMembershipDetails = () => {
   const cmEvents = useClubManagementEvents();
   const detailViewLogged = useRef(false);
 
-  const [membershipData, setMembershipData] = useState<GroupMembershipDetail | null>(null);
+  const [membershipData, setMembershipData] =
+    useState<GroupMembershipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0);
-  const [membershipPlanName, setMembershipPlanName] = useState<string>('');
-  const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<number | null>(null);
+  const [membershipPlanName, setMembershipPlanName] = useState<string>("");
+  const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<
+    number | null
+  >(null);
   const [loadingPlanName, setLoadingPlanName] = useState(false);
   const [billDetails, setBillDetails] = useState<BillDetail[]>([]);
   const [selectedBill, setSelectedBill] = useState<BillDetail | null>(null);
@@ -253,9 +291,9 @@ export const ClubGroupMembershipDetails = () => {
 
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
-  const [paymentMode, setPaymentMode] = useState('online');
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [transactionId, setTransactionId] = useState('');
+  const [paymentMode, setPaymentMode] = useState("online");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -266,33 +304,75 @@ export const ClubGroupMembershipDetails = () => {
 
   // Helper function to get file type icon and color
   const getFileTypeInfo = useCallback((fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
 
-    if (['pdf'].includes(ext)) {
-      return { icon: PictureAsPdfIcon, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    if (["pdf"].includes(ext)) {
+      return {
+        icon: PictureAsPdfIcon,
+        color: "#DC2626",
+        bgColor: "#FEE2E2",
+        type: "PDF",
+      };
     }
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
-      return { icon: ImageIcon, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) {
+      return {
+        icon: ImageIcon,
+        color: "#2563EB",
+        bgColor: "#DBEAFE",
+        type: "Image",
+      };
     }
-    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
-      return { icon: AudioFileIcon, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    if (["mp3", "wav", "aac", "flac", "m4a"].includes(ext)) {
+      return {
+        icon: AudioFileIcon,
+        color: "#9333EA",
+        bgColor: "#F3E8FF",
+        type: "Audio",
+      };
     }
-    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
-      return { icon: VideoLibraryIcon, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    if (["mp4", "avi", "mov", "mkv", "webm"].includes(ext)) {
+      return {
+        icon: VideoLibraryIcon,
+        color: "#EA580C",
+        bgColor: "#FFEDD5",
+        type: "Video",
+      };
     }
-    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
-      return { icon: DescriptionIcon, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    if (
+      [
+        "doc",
+        "docx",
+        "txt",
+        "rtf",
+        "xlsx",
+        "xls",
+        "csv",
+        "ppt",
+        "pptx",
+      ].includes(ext)
+    ) {
+      return {
+        icon: DescriptionIcon,
+        color: "#16A34A",
+        bgColor: "#DCFCE7",
+        type: "Document",
+      };
     }
-    return { icon: AttachFileIcon, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+    return {
+      icon: AttachFileIcon,
+      color: "#6B7280",
+      bgColor: "#F3F4F6",
+      type: "File",
+    };
   }, []);
 
   // Helper function to format file size
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   // Validate file sizes - max 10MB per file
@@ -329,9 +409,9 @@ export const ClubGroupMembershipDetails = () => {
   const handleDrag = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setIsDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setIsDragActive(false);
     }
   };
@@ -354,7 +434,7 @@ export const ClubGroupMembershipDetails = () => {
       validateAndAddFiles(files);
     }
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -373,36 +453,40 @@ export const ClubGroupMembershipDetails = () => {
 
       // Create FormData payload
       const formData = new FormData();
-      formData.append('bill_id', selectedBill.id.toString());
-      formData.append('payment[payment_mode]', paymentMode);
-      formData.append('payment[payment_method]', paymentMethod);
-      formData.append('payment[pg_transaction_id]', transactionId);
+      formData.append("bill_id", selectedBill.id.toString());
+      formData.append("payment[payment_mode]", paymentMode);
+      formData.append("payment[payment_method]", paymentMethod);
+      formData.append("payment[pg_transaction_id]", transactionId);
 
       // Append attachments
       attachments.forEach((file) => {
-        formData.append('attachments[]', file);
+        formData.append("attachments[]", file);
       });
 
       const response = await axios.post(
-        `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-      toast.success('Payment request sent successfully!');
-      cmEvents.action("Group Membership Payment Requested", { entity_id: id, bill_id: selectedBill.id, payment_mode: paymentMode });
+      toast.success("Payment request sent successfully!");
+      cmEvents.action("Group Membership Payment Requested", {
+        entity_id: id,
+        bill_id: selectedBill.id,
+        payment_mode: paymentMode,
+      });
       setOpenPaymentModal(false);
       setAttachments([]);
       if (id) {
         fetchBillDetails(Number(id));
       }
     } catch (error) {
-      toast.error('Failed to send payment request');
-      console.error('Payment error:', error);
+      toast.error("Failed to send payment request");
+      console.error("Payment error:", error);
     } finally {
       setPaymentLoading(false);
     }
@@ -433,18 +517,20 @@ export const ClubGroupMembershipDetails = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
-      url.searchParams.append('access_token', token || '');
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/membership_plans.json`
+      );
+      url.searchParams.append("access_token", token || "");
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch membership plans');
+        throw new Error("Failed to fetch membership plans");
       }
 
       const data = await response.json();
@@ -458,7 +544,7 @@ export const ClubGroupMembershipDetails = () => {
         setMembershipPlanUserLimit(null);
       }
     } catch (error) {
-      console.error('Error fetching membership plan name:', error);
+      console.error("Error fetching membership plan name:", error);
       setMembershipPlanName(`Plan #${planId}`);
       setMembershipPlanUserLimit(null);
     } finally {
@@ -473,30 +559,35 @@ export const ClubGroupMembershipDetails = () => {
       const token = API_CONFIG.TOKEN;
 
       // baseUrl already includes protocol (https://)
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}.json`);
-      url.searchParams.append('access_token', token || '');
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}.json`
+      );
+      url.searchParams.append("access_token", token || "");
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch membership details');
+        throw new Error("Failed to fetch membership details");
       }
 
       const data = await response.json();
       setMembershipData(data);
       if (!detailViewLogged.current) {
         detailViewLogged.current = true;
-        cmEvents.detailViewed("Group Membership", id, "group_membership_details");
+        cmEvents.detailViewed(
+          "Group Membership",
+          id,
+          "group_membership_details"
+        );
       }
-
     } catch (error) {
-      console.error('Error fetching membership details:', error);
-      toast.error('Failed to fetch membership details');
+      console.error("Error fetching membership details:", error);
+      toast.error("Failed to fetch membership details");
     } finally {
       setLoading(false);
     }
@@ -508,20 +599,22 @@ export const ClubGroupMembershipDetails = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${allocationId}/get_bill_by_allocation`);
-      url.searchParams.append('access_token', token || '');
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${allocationId}/get_bill_by_allocation`
+      );
+      url.searchParams.append("access_token", token || "");
       // Also the bills of the versions this membership renewed / upgraded: original first, then each renewal / upgrade.
-      url.searchParams.append('include_history', 'true');
+      url.searchParams.append("include_history", "true");
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch bill details');
+        throw new Error("Failed to fetch bill details");
       }
 
       const data = await response.json();
@@ -530,8 +623,8 @@ export const ClubGroupMembershipDetails = () => {
       setBillDetails(billsArray);
       setSelectedBill(null); // Reset selected bill
     } catch (error) {
-      console.error('Error fetching bill details:', error);
-      toast.error('Failed to fetch bill details');
+      console.error("Error fetching bill details:", error);
+      toast.error("Failed to fetch bill details");
     } finally {
       setLoadingBill(false);
     }
@@ -539,7 +632,7 @@ export const ClubGroupMembershipDetails = () => {
 
   // Back to the list as it was left (e.g. ?page=3), not its first page.
   const handleBackToList = () => {
-    let listUrl = '/club-management/membership/groups';
+    let listUrl = "/club-management/membership/groups";
     try {
       const saved = sessionStorage.getItem(GROUP_MEMBERSHIP_LIST_URL_KEY);
       if (saved?.startsWith(listUrl)) listUrl = saved;
@@ -560,16 +653,24 @@ export const ClubGroupMembershipDetails = () => {
   // A group is renewed / upgraded as a whole: every member has to be eligible. A pending (unpaid) group changes plan
   // with "Change Membership Plan" instead.
   const groupMembers = membershipData?.club_members ?? [];
-  const canRenewGroup = groupMembers.length > 0 && !membershipData?.superseded_at && groupMembers.every((m) => m.can_renew);
+  const canRenewGroup =
+    groupMembers.length > 0 &&
+    !membershipData?.superseded_at &&
+    (membershipData?.status === "expired" ||
+      membershipData?.status === "cancelled") &&
+    groupMembers.every((m) => m.can_renew);
   const canUpgradeGroup =
     groupMembers.length > 0 &&
     !membershipData?.superseded_at &&
-    membershipData?.status !== 'pending' &&
+    membershipData?.status === "approved" &&
     groupMembers.every((m) => m.can_upgrade);
 
   // A renewal / upgrade creates a new allocation (a new version of the group): continue on it. The old one stays in the history.
   const handleRolloverDone = (result: RolloverResult) => {
-    cmEvents.action('membership_rollover', { allocation_id: id, change_type: result.change_type });
+    cmEvents.action("membership_rollover", {
+      allocation_id: id,
+      change_type: result.change_type,
+    });
     const newId = result.new_allocation?.id;
     if (newId) navigate(`/club-management/membership/group-details/${newId}`);
   };
@@ -577,16 +678,23 @@ export const ClubGroupMembershipDetails = () => {
   const handleSendInvoice = async () => {
     setSendingInvoice(true);
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
       const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
-      await axios.post(url, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success('Invoice sent successfully');
+      await axios.post(
+        url,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Invoice sent successfully");
       cmEvents.action("Group Membership Invoice Sent", { entity_id: id });
     } catch (error: any) {
-      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      const msg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to send invoice";
       toast.error(msg);
     } finally {
       setSendingInvoice(false);
@@ -596,16 +704,26 @@ export const ClubGroupMembershipDetails = () => {
   const handleSendInvoiceBill = async (billId: number) => {
     setSendingBillId(billId);
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
       const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
-      await axios.post(url, { bill_id: billId }, {
-        headers: { Authorization: `Bearer ${token}` },
+      await axios.post(
+        url,
+        { bill_id: billId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Invoice sent successfully");
+      cmEvents.action("Group Membership Invoice Sent", {
+        entity_id: id,
+        bill_id: billId,
       });
-      toast.success('Invoice sent successfully');
-      cmEvents.action("Group Membership Invoice Sent", { entity_id: id, bill_id: billId });
     } catch (error: any) {
-      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      const msg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to send invoice";
       toast.error(msg);
     } finally {
       setSendingBillId(null);
@@ -613,19 +731,19 @@ export const ClubGroupMembershipDetails = () => {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-GB');
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("en-GB");
   };
 
   const formatDateTime = (dateString: string) => {
-    if (!dateString) return '-';
+    if (!dateString) return "-";
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
     return `${day}/${month}/${year}, ${hours}:${minutes} ${ampm}`;
   };
@@ -651,26 +769,31 @@ export const ClubGroupMembershipDetails = () => {
       );
     }
 
-    const normalizedStatus = (status || '').toLowerCase();
+    const normalizedStatus = (status || "").toLowerCase();
     const statusStyles: Record<string, string> = {
-      approved: 'bg-green-100 text-green-800 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
-      expired: 'bg-red-100 text-red-800 border-red-200',
+      approved: "bg-green-100 text-green-800 border-green-200",
+      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      cancelled: "bg-gray-100 text-gray-800 border-gray-200",
+      expired: "bg-red-100 text-red-800 border-red-200",
     };
 
     return (
-      <Badge className={statusStyles[normalizedStatus] || 'bg-gray-100 text-gray-800 border-gray-200'}>
+      <Badge
+        className={
+          statusStyles[normalizedStatus] ||
+          "bg-gray-100 text-gray-800 border-gray-200"
+        }
+      >
         {normalizedStatus
           ? normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)
-          : '-'}
+          : "-"}
       </Badge>
     );
   };
 
   const getAvatarUrl = (avatar: string) => {
     if (!avatar) return null;
-    if (avatar.startsWith('%2F')) {
+    if (avatar.startsWith("%2F")) {
       return `https://fm-uat-api.lockated.com${decodeURIComponent(avatar)}`;
     }
     return avatar;
@@ -680,7 +803,9 @@ export const ClubGroupMembershipDetails = () => {
   const parseAnswers = (snagAnswers: any[]) => {
     if (!snagAnswers || snagAnswers.length === 0) return null;
 
-    const groupedAnswers: { [key: string]: Array<{ answer: string; comments?: string }> } = {};
+    const groupedAnswers: {
+      [key: string]: Array<{ answer: string; comments?: string }>;
+    } = {};
 
     snagAnswers.forEach((item) => {
       const questionId = String(item.question_id);
@@ -688,8 +813,8 @@ export const ClubGroupMembershipDetails = () => {
         groupedAnswers[questionId] = [];
       }
       groupedAnswers[questionId].push({
-        answer: item.ans_descr || '',
-        comments: item.comments || ''
+        answer: item.ans_descr || "",
+        comments: item.comments || "",
       });
     });
 
@@ -697,18 +822,25 @@ export const ClubGroupMembershipDetails = () => {
   };
 
   // Helper function to render answer value
-  const renderAnswerValue = (questionId: string, answers: Array<{ answer: string; comments?: string }>) => {
-    if (!answers || answers.length === 0) return '-';
+  const renderAnswerValue = (
+    questionId: string,
+    answers: Array<{ answer: string; comments?: string }>
+  ) => {
+    if (!answers || answers.length === 0) return "-";
 
     // For questions with comments (like question 1)
-    if (questionId === '1' && answers.length > 0) {
-      const hasYes = answers.some(a => a.answer?.toLowerCase() === 'yes');
-      const comments = answers.find(a => a.comments)?.comments;
+    if (questionId === "1" && answers.length > 0) {
+      const hasYes = answers.some((a) => a.answer?.toLowerCase() === "yes");
+      const comments = answers.find((a) => a.comments)?.comments;
       return (
         <div>
-          <span className="text-gray-900 font-medium">{hasYes ? 'Yes' : 'No'}</span>
+          <span className="text-gray-900 font-medium">
+            {hasYes ? "Yes" : "No"}
+          </span>
           {comments && (
-            <p className="text-sm text-gray-600 mt-1 italic">Comments: {comments}</p>
+            <p className="text-sm text-gray-600 mt-1 italic">
+              Comments: {comments}
+            </p>
           )}
         </div>
       );
@@ -719,9 +851,14 @@ export const ClubGroupMembershipDetails = () => {
       return (
         <div className="flex flex-wrap gap-2">
           {answers.map((ans, idx) => (
-            <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span
+              key={idx}
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+            >
               {ans.answer}
-              {ans.comments && <span className="ml-1 text-gray-600">({ans.comments})</span>}
+              {ans.comments && (
+                <span className="ml-1 text-gray-600">({ans.comments})</span>
+              )}
             </span>
           ))}
         </div>
@@ -732,14 +869,18 @@ export const ClubGroupMembershipDetails = () => {
     return (
       <span className="text-gray-900 font-medium">
         {answers[0].answer}
-        {answers[0].comments && <span className="text-sm text-gray-600 ml-2">({answers[0].comments})</span>}
+        {answers[0].comments && (
+          <span className="text-sm text-gray-600 ml-2">
+            ({answers[0].comments})
+          </span>
+        )}
       </span>
     );
   };
 
   const handleDownloadPDF = async () => {
     if (!selectedBill?.id) {
-      toast.error('Bill ID not found');
+      toast.error("Bill ID not found");
       return;
     }
 
@@ -748,18 +889,23 @@ export const ClubGroupMembershipDetails = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/show_pdf`);
-      url.searchParams.append('lock_account_bill_id', selectedBill.id.toString());
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/club_member_allocations/show_pdf`
+      );
+      url.searchParams.append(
+        "lock_account_bill_id",
+        selectedBill.id.toString()
+      );
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download PDF');
+        throw new Error("Failed to download PDF");
       }
 
       // Get the blob from response
@@ -767,7 +913,7 @@ export const ClubGroupMembershipDetails = () => {
 
       // Create a download link
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = `Bill_${selectedBill.bill_number || selectedBill.id}.pdf`;
       document.body.appendChild(link);
@@ -775,11 +921,16 @@ export const ClubGroupMembershipDetails = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('PDF downloaded successfully');
-      cmEvents.exported("Group Membership", "PDF", 1, "group_membership_details");
+      toast.success("PDF downloaded successfully");
+      cmEvents.exported(
+        "Group Membership",
+        "PDF",
+        1,
+        "group_membership_details"
+      );
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('Failed to download PDF');
+      console.error("Error downloading PDF:", error);
+      toast.error("Failed to download PDF");
     } finally {
       setDownloadingPDF(false);
     }
@@ -833,37 +984,38 @@ export const ClubGroupMembershipDetails = () => {
               {renderStatusBadge()}
             </div>
             <div className="text-sm text-gray-600">
-              {membershipData.club_members?.length || 0} Members • Start: {formatDate(membershipData.start_date)} - End: {formatDate(membershipData.end_date)}
+              {membershipData.club_members?.length || 0} Members • Start:{" "}
+              {formatDate(membershipData.start_date)} - End:{" "}
+              {formatDate(membershipData.end_date)}
             </div>
           </div>
 
           <div className="flex gap-3">
-            {
-              membershipData.status === 'pending' && (
-                <Button
-                  onClick={handleEditMembershipPlan}
-                  variant="outline"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Change Membership Plan
-                </Button>
-              )
-            }
+            {membershipData.status === "pending" && (
+              <Button onClick={handleEditMembershipPlan} variant="outline">
+                <Edit className="w-4 h-4 mr-2" />
+                Change Membership Plan
+              </Button>
+            )}
             {canRenewGroup && (
-              <Button onClick={() => setRolloverMode('renewal')} className="bg-brand hover:bg-brand-hover text-white">
+              <Button
+                onClick={() => setRolloverMode("renewal")}
+                className="bg-brand hover:bg-brand-hover text-white"
+              >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Renew
               </Button>
             )}
             {canUpgradeGroup && (
-              <Button variant="outline" onClick={() => setRolloverMode('upgrade')}>
+              <Button
+                variant="outline"
+                onClick={() => setRolloverMode("upgrade")}
+              >
                 <ArrowUpCircle className="w-4 h-4 mr-2" />
                 Upgrade
               </Button>
             )}
-            <Button
-              onClick={handleEdit}
-            >
+            <Button onClick={handleEdit}>
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
@@ -873,7 +1025,11 @@ export const ClubGroupMembershipDetails = () => {
 
       {/* Main Content - Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
+        <Tabs
+          defaultValue="overview"
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="overview"
@@ -940,10 +1096,14 @@ export const ClubGroupMembershipDetails = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Group ID</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{membershipData.id}</span>
+                <span className="text-gray-500 font-medium">
+                  {membershipData.id}
+                </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Membership Plan</span>
+                <span className="text-gray-500 min-w-[140px]">
+                  Membership Plan
+                </span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">
                   {loadingPlanName ? (
@@ -952,26 +1112,34 @@ export const ClubGroupMembershipDetails = () => {
                       Loading...
                     </span>
                   ) : (
-                    membershipPlanName || `Plan #${membershipData.membership_plan_id}`
+                    membershipPlanName ||
+                    `Plan #${membershipData.membership_plan_id}`
                   )}
                 </span>
               </div>
               {membershipPlanUserLimit && (
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Plan Member Limit</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Plan Member Limit
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-500 font-medium">
-                    {membershipPlanUserLimit} {membershipPlanUserLimit === 1 ? 'Member' : 'Members'}
+                    {membershipPlanUserLimit}{" "}
+                    {membershipPlanUserLimit === 1 ? "Member" : "Members"}
                   </span>
                 </div>
               )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Site</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{membershipData.site_name}</span>
+                <span className="text-gray-500 font-medium">
+                  {membershipData.site_name}
+                </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Total Members</span>
+                <span className="text-gray-500 min-w-[140px]">
+                  Total Members
+                </span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">
                   {membershipData.club_members?.length || 0}
@@ -981,17 +1149,25 @@ export const ClubGroupMembershipDetails = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Start Date</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{formatDate(membershipData.start_date)}</span>
+                <span className="text-gray-500 font-medium">
+                  {formatDate(membershipData.start_date)}
+                </span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">End Date</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{formatDate(membershipData.end_date)}</span>
+                <span className="text-gray-500 font-medium">
+                  {formatDate(membershipData.end_date)}
+                </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Preferred Start Date</span>
+                <span className="text-gray-500 min-w-[140px]">
+                  Preferred Start Date
+                </span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-500 font-medium">{formatDate(membershipData.preferred_start_date)}</span>
+                <span className="text-gray-500 font-medium">
+                  {formatDate(membershipData.preferred_start_date)}
+                </span>
               </div>
               {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Referred By</span>
@@ -1008,15 +1184,22 @@ export const ClubGroupMembershipDetails = () => {
             </h2>
             <div className="space-y-3">
               {membershipData.club_members?.map((member, index) => (
-                <div key={member.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors">
+                <div
+                  key={member.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-semibold">
                         {index + 1}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{member.user_name}</h3>
-                        <p className="text-sm text-gray-500">{member.membership_number}</p>
+                        <h3 className="font-semibold text-gray-900">
+                          {member.user_name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {member.membership_number}
+                        </p>
                         <div className="mt-2 space-y-1">
                           <p className="text-sm text-gray-600">
                             <Mail className="w-3 h-3 inline mr-1" />
@@ -1031,10 +1214,16 @@ export const ClubGroupMembershipDetails = () => {
                     </div>
                     <div className="flex flex-col gap-2 items-end">
                       <Badge
-                        variant={member.club_member_enabled ? "default" : "secondary"}
-                        className={member.club_member_enabled ? "bg-green-100 text-green-800 hover:bg-green-100/90" : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"}
+                        variant={
+                          member.club_member_enabled ? "default" : "secondary"
+                        }
+                        className={
+                          member.club_member_enabled
+                            ? "bg-green-100 text-green-800 hover:bg-green-100/90"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"
+                        }
                       >
-                        {member.club_member_enabled ? 'Active' : 'Inactive'}
+                        {member.club_member_enabled ? "Active" : "Inactive"}
                       </Badge>
                       {/* <Button
                         size="sm"
@@ -1061,22 +1250,37 @@ export const ClubGroupMembershipDetails = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Payment ID</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Payment ID
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail.id}</span>
+                  <span className="text-gray-900 font-medium">
+                    {membershipData.allocation_payment_detail.id}
+                  </span>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Base Amount</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Base Amount
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.base_amount}</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹ {membershipData.allocation_payment_detail.base_amount}
+                  </span>
                 </div>
-                {membershipData.allocation_payment_detail.discount && membershipData.allocation_payment_detail.discount !== '0' && membershipData.allocation_payment_detail.discount !== '0.0' && (
-                  <div className="flex items-start">
-                    <span className="text-gray-500 min-w-[140px]">Discount</span>
-                    <span className="text-gray-500 mx-2">:</span>
-                    <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.discount}</span>
-                  </div>
-                )}
+                {membershipData.allocation_payment_detail.discount &&
+                  membershipData.allocation_payment_detail.discount !== "0" &&
+                  membershipData.allocation_payment_detail.discount !==
+                    "0.0" && (
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">
+                        Discount
+                      </span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        ₹ {membershipData.allocation_payment_detail.discount}
+                      </span>
+                    </div>
+                  )}
                 {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">CGST</span>
                   <span className="text-gray-500 mx-2">:</span>
@@ -1093,14 +1297,22 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.total_tax}</span>
                 </div> */}
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Total Amount</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Total Amount
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.total_amount}</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹ {membershipData.allocation_payment_detail.total_amount}
+                  </span>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Landed Amount</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Landed Amount
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.landed_amount}</span>
+                  <span className="text-gray-900 font-medium">
+                    ₹ {membershipData.allocation_payment_detail.landed_amount}
+                  </span>
                 </div>
                 {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
@@ -1115,14 +1327,27 @@ export const ClubGroupMembershipDetails = () => {
                   </Badge>
                 </div> */}
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Invoice Created</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Invoice Created
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">{formatDateTime(membershipData.allocation_payment_detail.created_at)}</span>
+                  <span className="text-gray-900 font-medium">
+                    {formatDateTime(
+                      membershipData.allocation_payment_detail.created_at
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Payment Plan</span>
+                  <span className="text-gray-500 min-w-[140px]">
+                    Payment Plan
+                  </span>
                   <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.name}</span>
+                  <span className="text-gray-900 font-medium">
+                    {
+                      membershipData.allocation_payment_detail?.payment_plan
+                        ?.name
+                    }
+                  </span>
                 </div>
                 {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Plan Duration</span>
@@ -1135,7 +1360,7 @@ export const ClubGroupMembershipDetails = () => {
               {(() => {
                 const billing = membershipData.club_members?.[0];
                 if (!billing) return null;
-                const isCompany = billing.bill_to === 'company';
+                const isCompany = billing.bill_to === "company";
                 return (
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <h3 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
@@ -1144,38 +1369,62 @@ export const ClubGroupMembershipDetails = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Bill Raised To User</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Bill Raised To User
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge className={billing.raised_bill_to_user ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-600'}>
-                          {billing.raised_bill_to_user ? 'Yes' : 'No'}
+                        <Badge
+                          className={
+                            billing.raised_bill_to_user
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-gray-100 text-gray-600"
+                          }
+                        >
+                          {billing.raised_bill_to_user ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {billing.bill_to && (
                         <div className="flex items-start">
-                          <span className="text-gray-500 min-w-[140px]">Bill To</span>
+                          <span className="text-gray-500 min-w-[140px]">
+                            Bill To
+                          </span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium capitalize">{billing.bill_to}</span>
+                          <span className="text-gray-900 font-medium capitalize">
+                            {billing.bill_to}
+                          </span>
                         </div>
                       )}
                       {isCompany && billing.billing_company_name && (
                         <div className="flex items-start">
-                          <span className="text-gray-500 min-w-[140px]">Company Name</span>
+                          <span className="text-gray-500 min-w-[140px]">
+                            Company Name
+                          </span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{billing.billing_company_name}</span>
+                          <span className="text-gray-900 font-medium">
+                            {billing.billing_company_name}
+                          </span>
                         </div>
                       )}
                       {isCompany && billing.billing_gstin && (
                         <div className="flex items-start">
-                          <span className="text-gray-500 min-w-[140px]">GSTIN No.</span>
+                          <span className="text-gray-500 min-w-[140px]">
+                            GSTIN No.
+                          </span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{billing.billing_gstin}</span>
+                          <span className="text-gray-900 font-medium">
+                            {billing.billing_gstin}
+                          </span>
                         </div>
                       )}
                       {isCompany && billing.billing_address && (
                         <div className="flex items-start md:col-span-2">
-                          <span className="text-gray-500 min-w-[140px]">Billing Address</span>
+                          <span className="text-gray-500 min-w-[140px]">
+                            Billing Address
+                          </span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{billing.billing_address}</span>
+                          <span className="text-gray-900 font-medium">
+                            {billing.billing_address}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1202,10 +1451,8 @@ export const ClubGroupMembershipDetails = () => {
                     Back to Bill List
                   </button>
                   <div className="flex gap-2 mb-4">
-                    {selectedBill.status?.toLowerCase() !== 'paid' && (
-                      <Button
-                        onClick={() => setOpenPaymentModal(true)}
-                      >
+                    {selectedBill.status?.toLowerCase() !== "paid" && (
+                      <Button onClick={() => setOpenPaymentModal(true)}>
                         <CreditCard className="w-4 h-4 mr-2" />
                         Payment
                       </Button>
@@ -1226,7 +1473,7 @@ export const ClubGroupMembershipDetails = () => {
                         </>
                       )}
                     </Button>
-                    {selectedBill.status?.toLowerCase() === 'paid' && (
+                    {selectedBill.status?.toLowerCase() === "paid" && (
                       <Button
                         onClick={() => handleSendInvoiceBill(selectedBill.id)}
                         disabled={sendingBillId === selectedBill.id}
@@ -1245,7 +1492,6 @@ export const ClubGroupMembershipDetails = () => {
                         )}
                       </Button>
                     )}
-
                   </div>
                 </div>
 
@@ -1253,171 +1499,245 @@ export const ClubGroupMembershipDetails = () => {
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Bill Number</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Bill Number
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedBill.bill_number || '-'}</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedBill.bill_number || "-"}
+                      </span>
                     </div>
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Bill ID</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Bill ID
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedBill.id}</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedBill.id}
+                      </span>
                     </div>
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Status</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Status
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
                       <Badge
                         variant={
-                          selectedBill.status?.toLowerCase() === 'paid'
-                            ? 'default'
-                            : selectedBill.status === 'generated'
-                              ? 'outline'
-                              : 'secondary'
+                          selectedBill.status?.toLowerCase() === "paid"
+                            ? "default"
+                            : selectedBill.status === "generated"
+                              ? "outline"
+                              : "secondary"
                         }
-                        className={`capitalize ${selectedBill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                        className={`capitalize ${selectedBill.status?.toLowerCase() === "paid" ? "bg-green-100 text-green-800 border-green-200" : ""}`}
                       >
                         {selectedBill.status}
                       </Badge>
                     </div>
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Due Date</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Due Date
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{formatDate(selectedBill.due_date)}</span>
+                      <span className="text-gray-900 font-medium">
+                        {formatDate(selectedBill.due_date)}
+                      </span>
                     </div>
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Billed To Type</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Billed To Type
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedBill.billed_to_type || '-'}</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedBill.billed_to_type || "-"}
+                      </span>
                     </div>
                     <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Billed To ID</span>
+                      <span className="text-gray-500 min-w-[140px]">
+                        Billed To ID
+                      </span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedBill.billed_to || '-'}</span>
+                      <span className="text-gray-900 font-medium">
+                        {selectedBill.billed_to || "-"}
+                      </span>
                     </div>
                     {selectedBill.billing_date && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Billing Date</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Billing Date
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDate(selectedBill.billing_date)}</span>
+                        <span className="text-gray-900 font-medium">
+                          {formatDate(selectedBill.billing_date)}
+                        </span>
                       </div>
                     )}
                     {selectedBill.mail_sent !== null && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Mail Sent</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Mail Sent
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedBill.mail_sent ? "default" : "secondary"}>
-                          {selectedBill.mail_sent ? 'Yes' : 'No'}
+                        <Badge
+                          variant={
+                            selectedBill.mail_sent ? "default" : "secondary"
+                          }
+                        >
+                          {selectedBill.mail_sent ? "Yes" : "No"}
                         </Badge>
                       </div>
                     )}
                     {selectedBill.irn_no && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">IRN Number</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          IRN Number
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedBill.irn_no}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedBill.irn_no}
+                        </span>
                       </div>
                     )}
                     {selectedBill.ack_no && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">ACK Number</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          ACK Number
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedBill.ack_no}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedBill.ack_no}
+                        </span>
                       </div>
                     )}
                     {selectedBill.ack_date && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">ACK Date</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          ACK Date
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDate(selectedBill.ack_date)}</span>
+                        <span className="text-gray-900 font-medium">
+                          {formatDate(selectedBill.ack_date)}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Bill Charges */}
-                {selectedBill.lock_account_bill_charges && selectedBill.lock_account_bill_charges.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Charges</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border border-gray-200 rounded-lg">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Item Name
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Amount
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Discount
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Total
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {selectedBill.lock_account_bill_charges.map((charge) => (
-                            <tr key={charge.id}>
-                              <td className="px-4 py-3 text-sm text-gray-900">{charge.name}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                ₹ {charge.amount?.toFixed(2)}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.discount ? `₹ ${Number(charge.discount).toFixed(2)}` : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
-                                ₹ {charge.total_amount.toFixed(2)}
-                              </td>
+                {selectedBill.lock_account_bill_charges &&
+                  selectedBill.lock_account_bill_charges.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-md font-semibold text-gray-900 mb-3">
+                        Bill Charges
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border border-gray-200 rounded-lg">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Item Name
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Amount
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Discount
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Total
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {selectedBill.lock_account_bill_charges.map(
+                              (charge) => (
+                                <tr key={charge.id}>
+                                  <td className="px-4 py-3 text-sm text-gray-900">
+                                    {charge.name}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                    ₹ {charge.amount?.toFixed(2)}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                    {charge.discount
+                                      ? `₹ ${Number(charge.discount).toFixed(2)}`
+                                      : "-"}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
+                                    ₹ {charge.total_amount.toFixed(2)}
+                                  </td>
+                                </tr>
+                              )
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Bill Summary */}
                 <div className="mt-6">
-                  <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Summary</h3>
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">
+                    Bill Summary
+                  </h3>
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">Subtotal (Before Tax)</span>
+                        <span className="text-gray-600">
+                          Subtotal (Before Tax)
+                        </span>
                         <span className="text-gray-900 font-medium">
-                          ₹ {selectedBill.lock_account_bill_charges.reduce((sum, c) => sum + c.amount, 0).toFixed(2)}
+                          ₹{" "}
+                          {selectedBill.lock_account_bill_charges
+                            .reduce((sum, c) => sum + c.amount, 0)
+                            .toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-600">Total GST</span>
                         <span className="text-gray-900 font-medium">
-                          ₹ {selectedBill.lock_account_bill_charges.reduce((sum, c) => sum + c.gst_amount, 0).toFixed(2)}
+                          ₹{" "}
+                          {selectedBill.lock_account_bill_charges
+                            .reduce((sum, c) => sum + c.gst_amount, 0)
+                            .toFixed(2)}
                         </span>
                       </div>
-                      {selectedBill.roundoff_diff !== null && selectedBill.roundoff_diff !== 0 && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Round Off</span>
-                          <span className="text-gray-900 font-medium">
-                            ₹ {selectedBill.roundoff_diff.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                      {selectedBill.roundoff_diff !== null &&
+                        selectedBill.roundoff_diff !== 0 && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Round Off</span>
+                            <span className="text-gray-900 font-medium">
+                              ₹ {selectedBill.roundoff_diff.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                       {selectedBill.charged_amount !== null && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">Charged Amount</span>
-                          <span className="text-gray-900 font-medium">₹ {selectedBill.charged_amount.toFixed(2)}</span>
+                          <span className="text-gray-900 font-medium">
+                            ₹ {selectedBill.charged_amount.toFixed(2)}
+                          </span>
                         </div>
                       )}
                       {selectedBill.balance_amount !== null && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">Balance Amount</span>
-                          <span className="text-gray-900 font-medium">₹ {selectedBill.balance_amount.toFixed(2)}</span>
+                          <span className="text-gray-900 font-medium">
+                            ₹ {selectedBill.balance_amount.toFixed(2)}
+                          </span>
                         </div>
                       )}
                       <div className="pt-3 border-t border-gray-300">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-900 font-semibold">Total Amount</span>
+                          <span className="text-gray-900 font-semibold">
+                            Total Amount
+                          </span>
                           <span className="text-gray-900 font-bold text-lg">
-                            ₹ {(selectedBill.after_roundoff_amount || selectedBill.total_amount).toFixed(2)}
+                            ₹{" "}
+                            {(
+                              selectedBill.after_roundoff_amount ||
+                              selectedBill.total_amount
+                            ).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -1439,31 +1759,40 @@ export const ClubGroupMembershipDetails = () => {
                       className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors"
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <div className="cursor-pointer flex-1" onClick={() => setSelectedBill(bill)}>
+                        <div
+                          className="cursor-pointer flex-1"
+                          onClick={() => setSelectedBill(bill)}
+                        >
                           <h3 className="font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
                             Bill #{bill.bill_number || bill.id}
                             {/* Only worth labelling once the membership has been renewed / upgraded */}
-                            {new Set(billDetails.map((b) => b.allocation_id)).size > 1 && (
+                            {new Set(billDetails.map((b) => b.allocation_id))
+                              .size > 1 && (
                               <Badge variant="outline" className="font-normal">
                                 {billVersionLabel(bill.change_type)}
                               </Badge>
                             )}
                           </h3>
-                          <p className="text-sm text-gray-500">Due: {formatDate(bill.due_date)}</p>
+                          <p className="text-sm text-gray-500">
+                            Due: {formatDate(bill.due_date)}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            ₹ {(bill.after_roundoff_amount || bill.total_amount).toFixed(2)}
+                            ₹{" "}
+                            {(
+                              bill.after_roundoff_amount || bill.total_amount
+                            ).toFixed(2)}
                           </p>
                           <Badge
                             variant={
-                              bill.status?.toLowerCase() === 'paid'
-                                ? 'default'
-                                : bill.status === 'generated'
-                                  ? 'outline'
-                                  : 'secondary'
+                              bill.status?.toLowerCase() === "paid"
+                                ? "default"
+                                : bill.status === "generated"
+                                  ? "outline"
+                                  : "secondary"
                             }
-                            className={`capitalize mt-1 ${bill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                            className={`capitalize mt-1 ${bill.status?.toLowerCase() === "paid" ? "bg-green-100 text-green-800 border-green-200" : ""}`}
                           >
                             {bill.status}
                           </Badge>
@@ -1474,7 +1803,9 @@ export const ClubGroupMembershipDetails = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No bill details available</p>
+              <p className="text-gray-500 text-center py-8">
+                No bill details available
+              </p>
             )}
           </TabsContent>
 
@@ -1483,15 +1814,20 @@ export const ClubGroupMembershipDetails = () => {
               <>
                 {/* Member Selector */}
                 <div className="mb-6">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Select Member</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Select Member
+                  </label>
                   <select
                     value={selectedMemberIndex}
-                    onChange={(e) => setSelectedMemberIndex(Number(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedMemberIndex(Number(e.target.value))
+                    }
                     className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                   >
                     {membershipData.club_members?.map((member, index) => (
                       <option key={member.id} value={index}>
-                        {index + 1}. {member.user_name} - {member.membership_number}
+                        {index + 1}. {member.user_name} -{" "}
+                        {member.membership_number}
                       </option>
                     ))}
                   </select>
@@ -1518,14 +1854,15 @@ export const ClubGroupMembershipDetails = () => {
                     >
                       Address
                     </TabsTrigger>
-                    {selectedMember.snag_answers && selectedMember.snag_answers.length > 0 && (
-                      <TabsTrigger
-                        value="questionnaires"
-                        className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
-                      >
-                        Questionnaires
-                      </TabsTrigger>
-                    )}
+                    {selectedMember.snag_answers &&
+                      selectedMember.snag_answers.length > 0 && (
+                        <TabsTrigger
+                          value="questionnaires"
+                          className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                        >
+                          Questionnaires
+                        </TabsTrigger>
+                      )}
                     <TabsTrigger
                       value="system"
                       className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
@@ -1548,38 +1885,66 @@ export const ClubGroupMembershipDetails = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Full Name</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Full Name
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user_name}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.user_name}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Email</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Email
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user_email}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.user_email}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Mobile</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Mobile
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user_mobile}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.user_mobile}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Gender</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Gender
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user?.gender || '-'}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.user?.gender || "-"}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Date of Birth</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Date of Birth
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDate(selectedMember.user?.birth_date)}</span>
+                        <span className="text-gray-900 font-medium">
+                          {formatDate(selectedMember.user?.birth_date)}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Face Added</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Face Added
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <Badge
-                          variant={selectedMember.face_added ? "default" : "secondary"}
-                          className={selectedMember.face_added ? "bg-green-100 text-green-800 " : "bg-red-100 text-red-800"}
+                          variant={
+                            selectedMember.face_added ? "default" : "secondary"
+                          }
+                          className={
+                            selectedMember.face_added
+                              ? "bg-green-100 text-green-800 "
+                              : "bg-red-100 text-red-800"
+                          }
                         >
-                          {selectedMember.face_added ? 'Yes' : 'No'}
+                          {selectedMember.face_added ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {/* <div className="flex items-start">
@@ -1598,39 +1963,75 @@ export const ClubGroupMembershipDetails = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Membership Number</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Membership Number
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.membership_number}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.membership_number}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Club Member</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Club Member
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <Badge
-                          variant={selectedMember.club_member_enabled ? "default" : "secondary"}
-                          className={selectedMember.club_member_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                          variant={
+                            selectedMember.club_member_enabled
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            selectedMember.club_member_enabled
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }
                         >
-                          {selectedMember.club_member_enabled ? 'Enabled' : 'Disabled'}
+                          {selectedMember.club_member_enabled
+                            ? "Enabled"
+                            : "Disabled"}
                         </Badge>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Access Card</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Access Card
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <Badge
-                          variant={selectedMember.access_card_enabled ? "default" : "secondary"}
-                          className={selectedMember.access_card_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                          variant={
+                            selectedMember.access_card_enabled
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            selectedMember.access_card_enabled
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }
                         >
-                          {selectedMember.access_card_enabled ? 'Enabled' : 'Disabled'}
+                          {selectedMember.access_card_enabled
+                            ? "Enabled"
+                            : "Disabled"}
                         </Badge>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Access Card ID</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Access Card ID
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.access_card_id || '-'}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.access_card_id || "-"}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Emergency Contact</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Emergency Contact
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.emergency_contact_name || '-'}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.emergency_contact_name || "-"}
+                        </span>
                       </div>
                       {/* <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Referred By</span>
@@ -1638,9 +2039,13 @@ export const ClubGroupMembershipDetails = () => {
                         <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
                       </div> */}
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">House</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          House
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember?.house?.name || '-'}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember?.house?.name || "-"}
+                        </span>
                       </div>
                     </div>
                   </TabsContent>
@@ -1651,92 +2056,139 @@ export const ClubGroupMembershipDetails = () => {
                       <Building2 className="w-5 h-5 text-[#C72030]" />
                       Address Information
                     </h3>
-                    {selectedMember.user?.addresses && selectedMember.user.addresses.length > 0 ? (
+                    {selectedMember.user?.addresses &&
+                    selectedMember.user.addresses.length > 0 ? (
                       selectedMember.user.addresses.map((addr, index) => (
-                        <div key={addr.id} className={`${index > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
+                        <div
+                          key={addr.id}
+                          className={`${index > 0 ? "mt-6 pt-6 border-t border-gray-200" : ""}`}
+                        >
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Address</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                Address
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.address || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.address || "-"}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                Address Line 2
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.address_line_two || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.address_line_two || "-"}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">City</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                City
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.city || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.city || "-"}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">State</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                State
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.state || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.state || "-"}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">Country</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                Country
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.country || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.country || "-"}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="text-gray-500 min-w-[140px]">PIN Code</span>
+                              <span className="text-gray-500 min-w-[140px]">
+                                PIN Code
+                              </span>
                               <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-medium">{addr.pin_code || '-'}</span>
+                              <span className="text-gray-900 font-medium">
+                                {addr.pin_code || "-"}
+                              </span>
                             </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-center py-8">No address information available</p>
+                      <p className="text-gray-500 text-center py-8">
+                        No address information available
+                      </p>
                     )}
                   </TabsContent>
 
                   {/* Questionnaires Tab */}
-                  {selectedMember.snag_answers && selectedMember.snag_answers.length > 0 && (
-                    <TabsContent value="questionnaires" className="mt-0">
-                      <h3 className="text-lg font-semibold text-[#1a1a1a] mb-6 flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-[#C72030]" />
-                        Member Questionnaires
-                      </h3>
-                      <div className="space-y-8">
-                        {(() => {
-                          const parsedAnswers = parseAnswers(selectedMember.snag_answers);
-                          if (!parsedAnswers) return null;
-
-                          return Object.entries(QUESTION_SECTIONS).map(([sectionKey, section]) => {
-                            // Filter questions that exist in answers
-                            const sectionQuestions = section.questionIds.filter(qId => parsedAnswers[qId]);
-
-                            if (sectionQuestions.length === 0) return null;
-
-                            return (
-                              <div key={sectionKey} className="border border-gray-200 rounded-lg p-6 bg-white">
-                                <h4 className="text-md font-semibold text-[#C72030] mb-4 pb-3 border-b border-gray-200 flex items-center gap-2">
-                                  {section.title}
-                                </h4>
-                                <div className="space-y-4">
-                                  {sectionQuestions.map((questionId) => (
-                                    <div key={questionId} className="bg-gray-50 rounded-lg p-4">
-                                      <div className="mb-2">
-                                        <span className="text-sm font-medium text-gray-700">
-                                          {QUESTION_MAP[questionId]}
-                                        </span>
-                                      </div>
-                                      <div className="pl-4 border-l-2 border-[#C72030]">
-                                        {renderAnswerValue(questionId, parsedAnswers[questionId])}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                  {selectedMember.snag_answers &&
+                    selectedMember.snag_answers.length > 0 && (
+                      <TabsContent value="questionnaires" className="mt-0">
+                        <h3 className="text-lg font-semibold text-[#1a1a1a] mb-6 flex items-center gap-3">
+                          <FileText className="w-5 h-5 text-[#C72030]" />
+                          Member Questionnaires
+                        </h3>
+                        <div className="space-y-8">
+                          {(() => {
+                            const parsedAnswers = parseAnswers(
+                              selectedMember.snag_answers
                             );
-                          });
-                        })()}
-                      </div>
-                    </TabsContent>
-                  )}
+                            if (!parsedAnswers) return null;
+
+                            return Object.entries(QUESTION_SECTIONS).map(
+                              ([sectionKey, section]) => {
+                                // Filter questions that exist in answers
+                                const sectionQuestions =
+                                  section.questionIds.filter(
+                                    (qId) => parsedAnswers[qId]
+                                  );
+
+                                if (sectionQuestions.length === 0) return null;
+
+                                return (
+                                  <div
+                                    key={sectionKey}
+                                    className="border border-gray-200 rounded-lg p-6 bg-white"
+                                  >
+                                    <h4 className="text-md font-semibold text-[#C72030] mb-4 pb-3 border-b border-gray-200 flex items-center gap-2">
+                                      {section.title}
+                                    </h4>
+                                    <div className="space-y-4">
+                                      {sectionQuestions.map((questionId) => (
+                                        <div
+                                          key={questionId}
+                                          className="bg-gray-50 rounded-lg p-4"
+                                        >
+                                          <div className="mb-2">
+                                            <span className="text-sm font-medium text-gray-700">
+                                              {QUESTION_MAP[questionId]}
+                                            </span>
+                                          </div>
+                                          <div className="pl-4 border-l-2 border-[#C72030]">
+                                            {renderAnswerValue(
+                                              questionId,
+                                              parsedAnswers[questionId]
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            );
+                          })()}
+                        </div>
+                      </TabsContent>
+                    )}
 
                   {/* System Information Tab */}
                   <TabsContent value="system" className="mt-0">
@@ -1751,33 +2203,57 @@ export const ClubGroupMembershipDetails = () => {
                         <span className="text-gray-900 font-medium">{selectedMember.name}</span>
                       </div> */}
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">User </span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          User{" "}
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.user_name}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.user_name}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Created By</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Created By
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.created_by || '-'}</span>
+                        <span className="text-gray-900 font-medium">
+                          {selectedMember.created_by || "-"}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Created At</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Created At
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.created_at)}</span>
+                        <span className="text-gray-900 font-medium">
+                          {formatDateTime(selectedMember.created_at)}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Updated At</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Updated At
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.updated_at)}</span>
+                        <span className="text-gray-900 font-medium">
+                          {formatDateTime(selectedMember.updated_at)}
+                        </span>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Active</span>
+                        <span className="text-gray-500 min-w-[140px]">
+                          Active
+                        </span>
                         <span className="text-gray-500 mx-2">:</span>
                         <Badge
-                          variant={selectedMember.active ? "default" : "secondary"}
-                          className={selectedMember.active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                          variant={
+                            selectedMember.active ? "default" : "secondary"
+                          }
+                          className={
+                            selectedMember.active
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }
                         >
-                          {selectedMember.active ? 'Yes' : 'No'}
+                          {selectedMember.active ? "Yes" : "No"}
                         </Badge>
                       </div>
                     </div>
@@ -1801,10 +2277,16 @@ export const ClubGroupMembershipDetails = () => {
                               src={selectedMember.identification_image}
                               alt="Identification"
                               className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
-                              onClick={() => setSelectedImage(selectedMember.identification_image)}
+                              onClick={() =>
+                                setSelectedImage(
+                                  selectedMember.identification_image
+                                )
+                              }
                             />
                             <div className="flex-1">
-                              <p className="text-sm text-gray-600">Identification Document</p>
+                              <p className="text-sm text-gray-600">
+                                Identification Document
+                              </p>
                               <a
                                 href={selectedMember.identification_image}
                                 target="_blank"
@@ -1816,7 +2298,9 @@ export const ClubGroupMembershipDetails = () => {
                             </div>
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">No identification image available</p>
+                          <p className="text-gray-500 text-sm">
+                            No identification image available
+                          </p>
                         )}
                       </div>
 
@@ -1829,15 +2313,28 @@ export const ClubGroupMembershipDetails = () => {
                         {selectedMember.avatar ? (
                           <div className="flex items-center gap-4">
                             <img
-                              src={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                              src={
+                                getAvatarUrl(selectedMember.avatar) ||
+                                selectedMember.avatar
+                              }
                               alt="Avatar"
                               className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
-                              onClick={() => setSelectedImage(getAvatarUrl(selectedMember.avatar) || selectedMember.avatar)}
+                              onClick={() =>
+                                setSelectedImage(
+                                  getAvatarUrl(selectedMember.avatar) ||
+                                    selectedMember.avatar
+                                )
+                              }
                             />
                             <div className="flex-1">
-                              <p className="text-sm text-gray-600">Profile Avatar</p>
+                              <p className="text-sm text-gray-600">
+                                Profile Avatar
+                              </p>
                               <a
-                                href={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                                href={
+                                  getAvatarUrl(selectedMember.avatar) ||
+                                  selectedMember.avatar
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#C72030] hover:text-[#A01828] text-sm font-medium mt-1 inline-block"
@@ -1847,7 +2344,9 @@ export const ClubGroupMembershipDetails = () => {
                             </div>
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">No avatar available</p>
+                          <p className="text-gray-500 text-sm">
+                            No avatar available
+                          </p>
                         )}
                       </div>
 
@@ -1857,46 +2356,65 @@ export const ClubGroupMembershipDetails = () => {
                           <FileText className="w-4 h-4 text-[#C72030]" />
                           General Attachments
                         </h4>
-                        {selectedMember.attachments && selectedMember.attachments.length > 0 ? (
+                        {selectedMember.attachments &&
+                        selectedMember.attachments.length > 0 ? (
                           <div className="space-y-4">
-                            {selectedMember.attachments.map((attachment, idx) => {
-                              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.document);
-                              return (
-                                <div key={attachment.id || idx} className="border border-gray-200 rounded-lg p-3 bg-white">
-                                  <div className="flex items-start gap-3">
-                                    {isImage ? (
-                                      <img
-                                        src={attachment.document}
-                                        alt={attachment.relation || 'Attachment'}
-                                        className="h-20 w-20 object-cover rounded border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors flex-shrink-0"
-                                        onClick={() => setSelectedImage(attachment.document)}
-                                      />
-                                    ) : (
-                                      <div className="h-20 w-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <FileText className="w-8 h-8 text-gray-400" />
+                            {selectedMember.attachments.map(
+                              (attachment, idx) => {
+                                const isImage =
+                                  /\.(jpg|jpeg|png|gif|webp)$/i.test(
+                                    attachment.document
+                                  );
+                                return (
+                                  <div
+                                    key={attachment.id || idx}
+                                    className="border border-gray-200 rounded-lg p-3 bg-white"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      {isImage ? (
+                                        <img
+                                          src={attachment.document}
+                                          alt={
+                                            attachment.relation || "Attachment"
+                                          }
+                                          className="h-20 w-20 object-cover rounded border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors flex-shrink-0"
+                                          onClick={() =>
+                                            setSelectedImage(
+                                              attachment.document
+                                            )
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="h-20 w-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                          <FileText className="w-8 h-8 text-gray-400" />
+                                        </div>
+                                      )}
+                                      <div className="flex-1">
+                                        <p className="text-sm text-gray-900 font-medium">
+                                          {attachment.relation || "Document"}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate">
+                                          {attachment.document}
+                                        </p>
+                                        <a
+                                          href={attachment.document}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-[#C72030] hover:text-[#A01828] text-xs font-medium mt-2 inline-block"
+                                        >
+                                          View Full Size →
+                                        </a>
                                       </div>
-                                    )}
-                                    <div className="flex-1">
-                                      <p className="text-sm text-gray-900 font-medium">
-                                        {attachment.relation || 'Document'}
-                                      </p>
-                                      <p className="text-xs text-gray-500 truncate">{attachment.document}</p>
-                                      <a
-                                        href={attachment.document}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[#C72030] hover:text-[#A01828] text-xs font-medium mt-2 inline-block"
-                                      >
-                                        View Full Size →
-                                      </a>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              }
+                            )}
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">No attachments available</p>
+                          <p className="text-gray-500 text-sm">
+                            No attachments available
+                          </p>
                         )}
                       </div>
                     </div>
@@ -1913,7 +2431,7 @@ export const ClubGroupMembershipDetails = () => {
           open
           onOpenChange={(o) => !o && setRolloverMode(null)}
           mode={rolloverMode}
-          target={{ kind: 'allocation', id: membershipData.id }}
+          target={{ kind: "allocation", id: membershipData.id }}
           currentPlanId={membershipData.membership_plan_id}
           onDone={handleRolloverDone}
         />
@@ -1942,14 +2460,17 @@ export const ClubGroupMembershipDetails = () => {
       )}
 
       {/* Payment Modal */}
-      <Dialog open={openPaymentModal} onOpenChange={(open) => {
-        setOpenPaymentModal(open);
-        if (!open) {
-          setPaymentMethod('upi');
-          setTransactionId('');
-          setAttachments([]);
-        }
-      }}>
+      <Dialog
+        open={openPaymentModal}
+        onOpenChange={(open) => {
+          setOpenPaymentModal(open);
+          if (!open) {
+            setPaymentMethod("upi");
+            setTransactionId("");
+            setAttachments([]);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
@@ -1982,20 +2503,18 @@ export const ClubGroupMembershipDetails = () => {
                   <SelectValue placeholder="Select Payment Method" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
-                  {
-                    paymentMode === "online" ? (
-                      <>
-                        <SelectItem value="upi">UPI</SelectItem>
-                        <SelectItem value="card">Card</SelectItem>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="netbanking">Net Banking</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="offline">Offline</SelectItem>
-                      </>
-                    )
-                  }
+                  {paymentMode === "online" ? (
+                    <>
+                      <SelectItem value="upi">UPI</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="netbanking">Net Banking</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="offline">Offline</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -2038,25 +2557,29 @@ export const ClubGroupMembershipDetails = () => {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => !paymentLoading && fileInputRef.current?.click()}
-                className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
-                  } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${
+                  isDragActive
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100"
+                } ${paymentLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <div className="flex flex-col items-center justify-center space-y-2">
                   <CloudUploadIcon
                     sx={{
                       fontSize: 40,
-                      color: isDragActive ? '#3B82F6' : '#9CA3AF',
-                      transition: 'all 0.3s ease',
+                      color: isDragActive ? "#3B82F6" : "#9CA3AF",
+                      transition: "all 0.3s ease",
                     }}
                   />
                   <div className="text-center">
                     <p className="text-sm font-semibold text-gray-700">
-                      {isDragActive ? 'Drop files here' : 'Drag files here or click to browse'}
+                      {isDragActive
+                        ? "Drop files here"
+                        : "Drag files here or click to browse"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Support: PDF, Images, Videos, Audio, Documents (Max size per file: 10MB)
+                      Support: PDF, Images, Videos, Audio, Documents (Max size
+                      per file: 10MB)
                     </p>
                   </div>
                 </div>
@@ -2096,7 +2619,9 @@ export const ClubGroupMembershipDetails = () => {
                               className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
                               style={{ backgroundColor: fileInfo.bgColor }}
                             >
-                              <IconComponent sx={{ fontSize: 20, color: fileInfo.color }} />
+                              <IconComponent
+                                sx={{ fontSize: 20, color: fileInfo.color }}
+                              />
                             </div>
 
                             <div className="flex-1 min-w-0">
@@ -2120,7 +2645,9 @@ export const ClubGroupMembershipDetails = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              setAttachments(attachments.filter((_, i) => i !== idx));
+                              setAttachments(
+                                attachments.filter((_, i) => i !== idx)
+                              );
                             }}
                             disabled={paymentLoading}
                             className="ml-3 flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
@@ -2136,10 +2663,16 @@ export const ClubGroupMembershipDetails = () => {
                   {/* Summary */}
                   <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
                     <p className="text-sm text-blue-800">
-                      <span className="font-semibold">{attachments.length}</span> file(s) ready to upload
-                      {' '}
+                      <span className="font-semibold">
+                        {attachments.length}
+                      </span>{" "}
+                      file(s) ready to upload{" "}
                       <span className="text-blue-600">
-                        ({formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))})
+                        (
+                        {formatFileSize(
+                          attachments.reduce((sum, f) => sum + f.size, 0)
+                        )}
+                        )
                       </span>
                     </p>
                   </div>
@@ -2148,8 +2681,13 @@ export const ClubGroupMembershipDetails = () => {
             </div>
           </div>
           <DialogFooter className="fm-action-bar">
-            <button type="button" onClick={handlePayment} disabled={paymentLoading} className="fm-action-primary">
-              {paymentLoading ? 'Processing...' : 'Submit Payment'}
+            <button
+              type="button"
+              onClick={handlePayment}
+              disabled={paymentLoading}
+              className="fm-action-primary"
+            >
+              {paymentLoading ? "Processing..." : "Submit Payment"}
             </button>
           </DialogFooter>
         </DialogContent>
