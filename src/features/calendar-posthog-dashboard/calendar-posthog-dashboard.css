@@ -159,6 +159,9 @@
   display:grid;place-items:center;font-size:12px;font-weight:600;letter-spacing:.02em;flex:none;
   cursor:default;user-select:none;
 }
+.cal-ph .profile-trigger{border:0;padding:0;cursor:pointer}
+.cal-ph .profile-trigger:hover{filter:brightness(.9)}
+.cal-ph .profile-trigger:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .cal-ph .topbar .rule{width:1px;height:22px;background:var(--border);flex:none}
 
 .cal-ph .iconbtn{
