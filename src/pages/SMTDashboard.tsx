@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Eye, Users, UserCheck, ClipboardList, Building2, Download, Plus, UploadIcon } from 'lucide-react';
@@ -84,8 +84,12 @@ const SMTDashboard = () => {
   const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
   const canSeeActionButton = currentUserId ? allowedActionIds.has(String(currentUserId)) : false;
 
+  // Each fetch gets an id; only the latest one may update the table (a slower older search can't overwrite it).
+  const latestRequest = useRef(0);
+
   // Fetch data from API
   const fetchSMTs = useCallback(async (page: number, searchValue?: string) => {
+    const requestId = ++latestRequest.current;
     try {
       setLoading(true);
       setError(null);
@@ -99,6 +103,7 @@ const SMTDashboard = () => {
       }
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const resp = await axios.get(url, { headers });
+      if (requestId !== latestRequest.current) return;
       const payload = resp.data || {};
       const rows: SMTRecord[] = Array.isArray(payload.data) ? payload.data : Array.isArray(payload) ? payload : [];
       const pagination: PaginationData = payload.pagination || { current_page: page, total_count: rows.length, total_pages: Math.max(1, Math.ceil((payload.total_count || rows.length) / pageSize)) };
@@ -106,11 +111,12 @@ const SMTDashboard = () => {
       setPaginationData(pagination);
       msafeEvents.onMSafeSubmoduleViewed('smt', pagination.total_count);
     } catch (e: any) {
+      if (requestId !== latestRequest.current) return;
       console.error('Failed to fetch SMTs:', e);
       setError(e?.message || 'Failed to fetch SMTs');
       toast.error('Failed to fetch SMTs');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, []);
 
@@ -649,7 +655,9 @@ const SMTDashboard = () => {
         enableExport={false}
         showBulkActions={false}
         pagination={false}
-        loading={loading}
+        // Loader also while typing (search not sent yet); the API does the search, not the table.
+        loading={loading || searchTerm.trim() !== debouncedSearch.trim()}
+        disableClientSearch
       />
       {/* Pagination (same as MSafeDashboard) */}
       {totalPages > 1 && (

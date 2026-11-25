@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -74,6 +74,12 @@ const LMCDashboard = () => {
     // funnel (msafe_lmc_request_created) is an employee action in the Vi mobile app, not here.
     const viEvents = useViWorkflowEvents();
     const [searchTerm, setSearchTerm] = useState('');
+    // The API is searched 500 ms after typing stops, not on every keystroke.
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 500);
+        return () => clearTimeout(id);
+    }, [searchTerm]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [rows, setRows] = useState<LMCTableRow[]>([]);
@@ -100,8 +106,12 @@ const LMCDashboard = () => {
         } catch { return '—'; }
     };
 
+    // Each fetch gets an id; only the latest one may update the table (a slower older search can't overwrite it).
+    const latestRequest = useRef(0);
+
     // Fetch LMC list
     const fetchLMCs = useCallback(async (page: number) => {
+        const requestId = ++latestRequest.current;
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) {
@@ -115,13 +125,14 @@ const LMCDashboard = () => {
             const params: string[] = [`page=${page}`];
             // If a modal-applied user email filter exists, it overrides the search bar for that param
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
-            else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
+            else if (debouncedSearch) params.push(`q[user_email_cont]=${encodeURIComponent(debouncedSearch)}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
         const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
             const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
             const json: LMCApiResponse = await res.json();
+            if (requestId !== latestRequest.current) return;
             const apiRows = (json.lmcs || []).map(l => ({
                 id: l.id,
                 name: l.lmc_user?.name || '—',
@@ -148,9 +159,12 @@ const LMCDashboard = () => {
                 viEvents.onLmcRequestsOpened();
             }
         } catch (e: any) {
+            if (requestId !== latestRequest.current) return;
             setError(e.message || 'Failed to load LMCs');
-        } finally { setLoading(false); }
-    }, [appliedUserEmail, appliedCreatedByEmail, searchTerm]);
+        } finally {
+            if (requestId === latestRequest.current) setLoading(false);
+        }
+    }, [appliedUserEmail, appliedCreatedByEmail, debouncedSearch]);
 
     useEffect(() => { fetchLMCs(currentPage); }, [fetchLMCs, currentPage]);
 
@@ -516,7 +530,9 @@ const LMCDashboard = () => {
                     columns={columns}
                     renderCell={renderCell}
                     pagination={false}
-                    loading={loading}
+                    // Loader also while typing (search not sent yet); the API does the search, not the table.
+                    loading={loading || searchTerm.trim() !== debouncedSearch}
+                    disableClientSearch
                     enableSearch={true}
                     searchTerm={searchTerm}
                     onSearchChange={(val: string) => { setCurrentPage(1); setSearchTerm(val); }}
