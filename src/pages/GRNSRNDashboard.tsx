@@ -155,6 +155,7 @@ export const GRNSRNDashboard = () => {
     poNumber: urlParams.get("poNumber") || "",
     supplierName: urlParams.get("supplierName") || "",
     status: urlParams.get("status") || "",
+    prType: urlParams.get("prType") || urlParams.get("pr_type") || "",
   };
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -187,6 +188,7 @@ export const GRNSRNDashboard = () => {
       po_number: initialFilters.poNumber,
       supplier_name: initialFilters.supplierName,
       approval_status: initialFilters.status,
+      pr_type: initialFilters.prType,
       search: initialSearch,
     });
   }, []);
@@ -199,15 +201,17 @@ export const GRNSRNDashboard = () => {
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.status) params.set("status", filters.status);
+    if (filters.prType) params.set("prType", filters.prType);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
 
   const handleApplyFilters = (newFilters: {
-    grnNumber?: string;
-    poNumber?: string;
-    supplierName?: string;
-    status?: string;
+    grnNumber: string;
+    poNumber: string;
+    supplierName: string;
+    status: string;
+    prType: string;
   }) => {
     setFilters(newFilters);
     fetchData(1, {
@@ -215,6 +219,7 @@ export const GRNSRNDashboard = () => {
       po_number: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
       approval_status: newFilters.status,
+      pr_type: newFilters.prType,
     });
   };
 
@@ -233,6 +238,7 @@ export const GRNSRNDashboard = () => {
       po_number: filters.poNumber,
       supplier_name: filters.supplierName,
       approval_status: filters.status,
+      pr_type: filters.prType,
     });
   };
 

@@ -213,7 +213,7 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
             {/* Legend */}
             <div className="flex items-center justify-end gap-4 mb-4 text-sm flex-wrap">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: COLOR_LAST }} />
+                <div className="w-4 h-4 rounded" style={{ backgroundImage: `linear-gradient(${COLOR_LAST}, ${COLOR_LAST})` }} />
                 <span className="text-xs" title={lastLabel}>
                   {lastLabel.length > 50 ? "Previous Period" : lastLabel}
                 </span>

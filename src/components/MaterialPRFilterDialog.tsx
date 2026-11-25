@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -22,6 +21,7 @@ interface MaterialPRFilterDialogProps {
     prNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
@@ -29,6 +29,7 @@ interface MaterialPRFilterDialogProps {
       prNumber: string;
       supplierName: string;
       approvalStatus: string;
+      prType: string;
     }>
   >;
   onApplyFilters: (filters: {
@@ -36,6 +37,7 @@ interface MaterialPRFilterDialogProps {
     prNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   }) => void;
 }
 
@@ -81,7 +83,8 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
       referenceNumber: '',
       prNumber: '',
       supplierName: '',
-      approvalStatus: ''
+      approvalStatus: '',
+      prType: ''
     });
   };
 
@@ -105,7 +108,7 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Reference Number"
-              placeholder="PR Number"
+              placeholder="Enter Reference Number"
               value={filters.referenceNumber}
               onChange={(e) => handleInputChange('referenceNumber', e.target.value)}
               fullWidth
@@ -117,7 +120,7 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
 
             <TextField
               label="PR Number"
-              placeholder="Reference Number"
+              placeholder="Enter PR Number"
               value={filters.prNumber}
               onChange={(e) => handleInputChange('prNumber', e.target.value)}
               fullWidth
@@ -157,6 +160,22 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
               <MenuItem value="pending">Pending</MenuItem>
               <MenuItem value="approved">Approved</MenuItem>
               <MenuItem value="rejected">Rejected</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>PR Type</InputLabel>
+            <MuiSelect
+              label="PR Type"
+              value={filters.prType}
+              onChange={(e) => handleInputChange('prType', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select PR Type</em></MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non-technical">Non-Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>

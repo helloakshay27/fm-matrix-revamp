@@ -13,6 +13,7 @@ export const getGRN = createAsyncThunk(
             po_number,
             supplier_name,
             approval_status,
+            pr_type,
             search = ""
         }: {
             baseUrl: string;
@@ -22,6 +23,7 @@ export const getGRN = createAsyncThunk(
             po_number?: string;
             supplier_name?: string;
             approval_status?: string;
+            pr_type?: string;
             search?: string
         },
         { rejectWithValue }
@@ -44,6 +46,10 @@ export const getGRN = createAsyncThunk(
             }
             if (search) {
                 queryParams.append("q[pms_purchase_order_external_id_cont]", search);
+            }
+            if (pr_type) {
+                queryParams.append("pr_type", pr_type);
+                queryParams.append("q[pr_type_eq]", pr_type);
             }
             const response = await axios.get(
                 `https://${baseUrl}/pms/grns.json?page=${page}${queryParams.toString() ? `&${queryParams}` : ""}`,

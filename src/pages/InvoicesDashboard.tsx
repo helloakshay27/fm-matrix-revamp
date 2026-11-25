@@ -211,6 +211,7 @@ export const InvoicesDashboard = () => {
     invoiceDate: urlParams.get("invoiceDate") || "",
     supplierName: urlParams.get("supplierName") || "",
     woNumber: urlParams.get("woNumber") || "",
+    prType: urlParams.get("prType") || urlParams.get("pr_type") || "",
   };
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -234,6 +235,7 @@ export const InvoicesDashboard = () => {
         invoice_date: filters.invoiceDate,
         supplier_name: filters.supplierName,
         wo_number: filters.woNumber,
+        pr_type: filters.prType,
       })).unwrap();
       setInvoicesData(response.work_order_invoices);
       setPagination((prev) => ({
@@ -261,6 +263,7 @@ export const InvoicesDashboard = () => {
     if (appliedFilters.invoiceDate) params.set("invoiceDate", appliedFilters.invoiceDate);
     if (appliedFilters.supplierName) params.set("supplierName", appliedFilters.supplierName);
     if (appliedFilters.woNumber) params.set("woNumber", appliedFilters.woNumber);
+    if (appliedFilters.prType) params.set("prType", appliedFilters.prType);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchTerm, appliedFilters, navigate]);

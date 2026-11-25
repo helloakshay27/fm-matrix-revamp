@@ -16,8 +16,8 @@ const STALE_TTL = 30 * 60 * 1000;
 const CACHE_PREFIX = "wo";
 
 const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
-  const { reference_number = "", external_id = "", supplier_name = "", search = "" } = params;
-  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_q${search}`;
+  const { reference_number = "", external_id = "", supplier_name = "", pr_type = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_type${pr_type}_q${search}`;
 };
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
@@ -245,6 +245,7 @@ export const WODashboard = () => {
     referenceNumber: urlParams.get("referenceNumber") || "",
     poNumber: urlParams.get("poNumber") || "",
     supplierName: urlParams.get("supplierName") || "",
+    prType: urlParams.get("prType") || urlParams.get("pr_type") || "",
   };
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -342,6 +343,7 @@ export const WODashboard = () => {
       reference_number: initialFilters.referenceNumber,
       external_id: initialFilters.poNumber,
       supplier_name: initialFilters.supplierName,
+      pr_type: initialFilters.prType,
     });
   }, []);
 
@@ -353,6 +355,7 @@ export const WODashboard = () => {
     if (filters.referenceNumber) params.set("referenceNumber", filters.referenceNumber);
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.prType) params.set("prType", filters.prType);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
@@ -373,15 +376,17 @@ export const WODashboard = () => {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    prType: string;
   }) => {
-    setFilters(newFilters); // Update filter state
+    setFilters(newFilters);
     setPagination((prev) => ({ ...prev, current_page: 1 }));
     fetchData({
       page: 1,
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
-    }); // Fetch data with filters
+      pr_type: newFilters.prType,
+    });
   };
 
   const debouncedFetchData = useCallback(
@@ -391,7 +396,8 @@ export const WODashboard = () => {
         search: query,
         reference_number: currentFilters.reference_number,
         external_id: currentFilters.external_id,
-        supplier_name: currentFilters.supplier_name
+        supplier_name: currentFilters.supplier_name,
+        pr_type: currentFilters.pr_type,
       });
     }, 500),
     []
@@ -404,6 +410,7 @@ export const WODashboard = () => {
       reference_number: filters.referenceNumber,
       external_id: filters.poNumber,
       supplier_name: filters.supplierName,
+      pr_type: filters.prType,
     });
   };
 
@@ -621,6 +628,7 @@ export const WODashboard = () => {
         reference_number: filters.referenceNumber,
         external_id: filters.poNumber,
         supplier_name: filters.supplierName,
+        pr_type: filters.prType,
         search: searchQuery,
       });
     } catch (error) {

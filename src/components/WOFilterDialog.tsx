@@ -20,16 +20,19 @@ interface POFilterDialogProps {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    prType: string;
   };
   setFilters: React.Dispatch<React.SetStateAction<{
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    prType: string;
   }>>;
   onApplyFilters: (filters: {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    prType: string;
   }) => void;
 }
 
@@ -70,7 +73,8 @@ export const WOFilterDialog: React.FC<POFilterDialogProps> = ({
     setFilters({
       referenceNumber: '',
       poNumber: '',
-      supplierName: ''
+      supplierName: '',
+      prType: ''
     });
   };
 
@@ -130,6 +134,22 @@ export const WOFilterDialog: React.FC<POFilterDialogProps> = ({
               {suppliers.map((supplier: any) => (
                 <MenuItem key={supplier.id} value={supplier.name.split('-')[0]}>{supplier.name.split('-')[0]}</MenuItem>
               ))}
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>PR Type</InputLabel>
+            <MuiSelect
+              label="PR Type"
+              value={filters.prType}
+              onChange={(e) => setFilters({ ...filters, prType: e.target.value })}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select PR Type</em></MenuItem>
+              <MenuItem value="technical">Technical</MenuItem>
+              <MenuItem value="non-technical">Non-Technical</MenuItem>
+              <MenuItem value="security">Security</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>

@@ -20,8 +20,8 @@ const STALE_TTL = 30 * 60 * 1000;  // 30 minutes — show stale while revalidati
 const CACHE_PREFIX = "material_pr";
 
 const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
-  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", search = "" } = params;
-  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_q${search}`;
+  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", pr_type = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_type${pr_type}_q${search}`;
 };
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
@@ -141,6 +141,7 @@ export const MaterialPRDashboard = () => {
     prNumber: urlParams.get("prNumber") || "",
     supplierName: urlParams.get("supplierName") || "",
     approvalStatus: urlParams.get("approvalStatus") || "",
+    prType: urlParams.get("prType") || urlParams.get("pr_type") || "",
   };
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -237,6 +238,7 @@ export const MaterialPRDashboard = () => {
       external_id: initialFilters.prNumber,
       supplier_name: initialFilters.supplierName,
       approval_status: initialFilters.approvalStatus,
+      pr_type: initialFilters.prType,
     });
   }, []);
 
@@ -249,6 +251,7 @@ export const MaterialPRDashboard = () => {
     if (filters.prNumber) params.set("prNumber", filters.prNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+    if (filters.prType) params.set("prType", filters.prType);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
@@ -271,6 +274,7 @@ export const MaterialPRDashboard = () => {
     prNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   }) => {
     setFilters(newFilters);
     fetchData({
@@ -278,6 +282,7 @@ export const MaterialPRDashboard = () => {
       external_id: newFilters.prNumber,
       supplier_name: newFilters.supplierName,
       approval_status: newFilters.approvalStatus,
+      pr_type: newFilters.prType,
     });
   };
 
@@ -296,6 +301,7 @@ export const MaterialPRDashboard = () => {
       external_id: filters.prNumber,
       supplier_name: filters.supplierName,
       approval_status: filters.approvalStatus,
+      pr_type: filters.prType,
     });
   };
 
@@ -515,6 +521,7 @@ export const MaterialPRDashboard = () => {
         external_id: filters.prNumber,
         supplier_name: filters.supplierName,
         approval_status: filters.approvalStatus,
+        pr_type: filters.prType,
         search: searchQuery,
       });
     } catch (error) {

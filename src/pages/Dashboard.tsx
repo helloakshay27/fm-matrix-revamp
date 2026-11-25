@@ -1344,6 +1344,9 @@ export const Dashboard = () => {
       // type so changing it refetches just these cards, not every other module on the dashboard.
       const TYPE_FILTERED_ENDPOINTS = new Set([
         "tickets:ticket_status",
+        "tickets:tickets_categorywise",
+        "tickets:unit_categorywise",
+        "tickets:tickets_unit_categorywise",
         "tickets:tickets_proactive_reactive",
         "tickets:ticket_aging_matrix",
         "tickets:response_tat",
@@ -1407,7 +1410,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getTicketsCategorywiseData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;
@@ -1447,7 +1451,8 @@ export const Dashboard = () => {
                     ticketAnalyticsAPI.getUnitCategorywiseData(
                       dateRange.from,
                       dateRange.to,
-                      activeSiteIds
+                      activeSiteIds,
+                      ticketTypeFilterValue
                     )
                   );
                   break;

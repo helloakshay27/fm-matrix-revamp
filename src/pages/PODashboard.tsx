@@ -16,8 +16,8 @@ const STALE_TTL = 30 * 60 * 1000;
 const CACHE_PREFIX = "po";
 
 const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
-  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", search = "" } = params;
-  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_q${search}`;
+  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", pr_type = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_type${pr_type}_q${search}`;
 };
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
@@ -176,6 +176,7 @@ export const PODashboard = () => {
     poNumber: urlParams.get("poNumber") || "",
     supplierName: urlParams.get("supplierName") || "",
     approvalStatus: urlParams.get("approvalStatus") || "",
+    prType: urlParams.get("prType") || urlParams.get("pr_type") || "",
   };
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -307,6 +308,7 @@ export const PODashboard = () => {
       external_id: initialFilters.poNumber,
       supplier_name: initialFilters.supplierName,
       approval_status: initialFilters.approvalStatus,
+      pr_type: initialFilters.prType,
     });
   }, []);
 
@@ -318,6 +320,7 @@ export const PODashboard = () => {
     if (filters.poNumber) params.set("poNumber", filters.poNumber);
     if (filters.supplierName) params.set("supplierName", filters.supplierName);
     if (filters.approvalStatus) params.set("approvalStatus", filters.approvalStatus);
+    if (filters.prType) params.set("prType", filters.prType);
 
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, filters, navigate]);
@@ -339,6 +342,7 @@ export const PODashboard = () => {
     poNumber: string;
     supplierName: string;
     approvalStatus: string;
+    prType: string;
   }) => {
     setFilters(newFilters);
     setPagination((prev) => ({ ...prev, current_page: 1 }));
@@ -347,7 +351,8 @@ export const PODashboard = () => {
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
-      approval_status: newFilters.approvalStatus
+      approval_status: newFilters.approvalStatus,
+      pr_type: newFilters.prType,
     });
   };
 
@@ -365,6 +370,7 @@ export const PODashboard = () => {
       reference_number: filters.referenceNumber,
       external_id: filters.poNumber,
       supplier_name: filters.supplierName,
+      pr_type: filters.prType,
     });
   };
 
@@ -521,6 +527,7 @@ export const PODashboard = () => {
         external_id: filters.poNumber,
         supplier_name: filters.supplierName,
         approval_status: filters.approvalStatus,
+        pr_type: filters.prType,
         search: searchQuery,
       });
     } catch (error) {

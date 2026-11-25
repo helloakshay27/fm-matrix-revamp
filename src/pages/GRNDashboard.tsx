@@ -24,8 +24,8 @@ const STALE_TTL = 30 * 60 * 1000;
 const CACHE_PREFIX = 'grn';
 
 const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
-  const { grn_number = '', po_number = '', supplier_name = '', approval_status = '', search = '' } = params;
-  return `${CACHE_PREFIX}_site${siteId}_p${page}_grn${grn_number}_po${po_number}_sup${supplier_name}_status${approval_status}_q${search}`;
+  const { grn_number = '', po_number = '', supplier_name = '', approval_status = '', pr_type = '', search = '' } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_grn${grn_number}_po${po_number}_sup${supplier_name}_status${approval_status}_type${pr_type}_q${search}`;
 };
 
 export const GRNDashboard = () => {
@@ -44,6 +44,7 @@ export const GRNDashboard = () => {
     poNumber: urlParams.get('po_number') || '',
     supplierName: urlParams.get('supplier_name') || '',
     status: urlParams.get('approval_status') || '',
+    prType: urlParams.get('prType') || urlParams.get('pr_type') || '',
   };
 
   const [loading, setLoading] = useState(false);
@@ -76,6 +77,7 @@ export const GRNDashboard = () => {
     po_number: f.poNumber,
     supplier_name: f.supplierName,
     approval_status: f.status,
+    pr_type: f.prType,
   });
 
   const fetchData = async (page: number = 1, filterOverrides: Record<string, any> = {}) => {
@@ -143,6 +145,7 @@ export const GRNDashboard = () => {
     if (appliedFilters.poNumber) params.set('po_number', appliedFilters.poNumber);
     if (appliedFilters.supplierName) params.set('supplier_name', appliedFilters.supplierName);
     if (appliedFilters.status) params.set('approval_status', appliedFilters.status);
+    if (appliedFilters.prType) params.set('prType', appliedFilters.prType);
     navigate({ search: params.toString() }, { replace: true });
   }, [pagination.current_page, searchQuery, appliedFilters, navigate]);
 
@@ -162,7 +165,7 @@ export const GRNDashboard = () => {
 
   const handleReset = () => {
     cache.invalidatePattern(`${CACHE_PREFIX}*`);
-    const empty = { grnNumber: '', poNumber: '', supplierName: '', status: '' };
+    const empty = { grnNumber: '', poNumber: '', supplierName: '', status: '', prType: '' };
     setSearchQuery('');
     setAppliedFilters(empty);
     setPagination(prev => ({ ...prev, current_page: 1 }));
