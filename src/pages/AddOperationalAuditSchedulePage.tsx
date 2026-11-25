@@ -1844,44 +1844,44 @@ export const AddOperationalAuditSchedulePage = () => {
 
         {/* Step 2: Task */}
         {activeStep === 1 && (
-          <SectionCard>
-            <SectionHeader>
-              <RedIcon />
-              <Box>
-                <Typography variant="caption" sx={{ color: '#666', display: 'block', fontSize: '12px' }}>
-                  Step 2 of 3
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Work Sans, sans-serif' }}>
-                  TASK
-                </Typography>
-              </Box>
-            </SectionHeader>
+          <div>
+            {/* Header outside the box (same as Add Schedule → Question Setup) */}
+            <div className="flex justify-between items-center p-6">
+              <div className="flex items-center gap-2 text-[var(--color-primary)] text-lg font-semibold uppercase">
+                <span className="bg-[var(--color-primary)] text-white rounded-full w-8 h-8 flex items-center justify-center text-xs sm:text-sm">
+                  <Cog className="w-6 h-6" />
+                </span>
+                TASK
+              </div>
+            </div>
 
             {taskSections.map((section, sectionIndex) => (
-              <Box key={section.id} sx={{ mb: 3, p: 3, border: '1px solid #e0e0e0', backgroundColor: '#fafafa' }}>
+              <div key={section.id} className="overflow-hidden">
+              <div className="p-4 sm:p-6 bg-white">
                 {/* Section Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                <div className="flex justify-between items-center mb-4">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                     Section {sectionIndex + 1}
                   </Typography>
                   {taskSections.length > 1 && (
                     <IconButton
                       onClick={() => removeTaskSection(section.id)}
-                      sx={{ color: '#da7756' }}
-                      size="small"
+                      sx={{ color: 'var(--color-primary)' }}
                     >
                       <Close />
                     </IconButton>
                   )}
-                </Box>
+                </div>
 
                 {/* Group and SubGroup Selection */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                  <FormControl fullWidth sx={fieldStyles}>
-                    <InputLabel>Group</InputLabel>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Group</InputLabel>
                     <MuiSelect
                       value={section.tasks[0]?.group || ''}
                       label="Group"
+                      notched
+                      displayEmpty
                       onChange={(e) => {
                         const selectedValue = e.target.value;
                         section.tasks.forEach(task => {
@@ -1896,11 +1896,14 @@ export const AddOperationalAuditSchedulePage = () => {
                     </MuiSelect>
                   </FormControl>
 
-                  <FormControl fullWidth sx={fieldStyles}>
-                    <InputLabel>SubGroup</InputLabel>
+                  <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Sub-Group</InputLabel>
                     <MuiSelect
                       value={section.tasks[0]?.subGroup || ''}
-                      label="SubGroup"
+                      label="Sub-Group"
+                      notched
+                      displayEmpty
                       onChange={(e) => {
                         const selectedValue = e.target.value;
                         section.tasks.forEach(task => {
@@ -1909,21 +1912,37 @@ export const AddOperationalAuditSchedulePage = () => {
                       }}
                       disabled={!section.tasks[0]?.group}
                     >
-                      <MenuItem value="">Select Sub Group</MenuItem>
+                      <MenuItem value="">Select Sub-Group</MenuItem>
                       {section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] && taskSubGroups[section.tasks[0].group].map((sg: any) => (
                         <MenuItem key={sg.id} value={sg.id.toString()}>{sg.name}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
+                  {!section.tasks[0]?.group && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Please select a group first
+                    </Typography>
+                  )}
+                  </Box>
                 </Box>
 
                 {/* Tasks */}
                 {section.tasks.map((task, taskIndex) => (
-                  <Box key={task.id} sx={{ mb: 2, p: 2, backgroundColor: 'white', border: '2px dashed #E0E0E0', position: 'relative' }}>
-                    {section.tasks.length > 1 && (
+                  <Box key={task.id} sx={{ mb: 3 }}>
+                  <Box sx={{ border: '2px dashed #E0E0E0', padding: 2, borderRadius: 0, backgroundColor: '#FAFAFA', position: 'relative' }}>
+                    {/* Close button: every task except the first task of the first section */}
+                    {!(sectionIndex === 0 && taskIndex === 0) && (
                       <IconButton
                         onClick={() => removeTaskFromSection(section.id, task.id)}
-                        sx={{ position: 'absolute', top: 8, right: 8, color: '#da7756' }}
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          color: '#666',
+                          padding: '4px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 1)', color: 'var(--color-primary)' }
+                        }}
                         size="small"
                       >
                         <Close fontSize="small" />
@@ -1931,7 +1950,7 @@ export const AddOperationalAuditSchedulePage = () => {
                     )}
 
                     {/* Checkboxes */}
-                    <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 4, mb: 2 }}>
                       <FormControlLabel
                         control={
                           <MuiCheckbox
@@ -1965,21 +1984,22 @@ export const AddOperationalAuditSchedulePage = () => {
                     </Box>
 
                     {/* Task and Input Type */}
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2, mb: 2 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
                       <TextField
                         fullWidth
                         label={<span>Task{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                         value={task.task}
                         onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
                         placeholder="Enter Task"
-                        sx={fieldStyles}
                       />
 
-                      <FormControl fullWidth sx={fieldStyles}>
-                        <InputLabel>Input Type{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</InputLabel>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                        <InputLabel shrink>Input Type{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</InputLabel>
                         <MuiSelect
-                          value={task.inputType}
+                          value={task.inputType || ''}
                           label="Input Type"
+                          notched
+                          displayEmpty
                           onChange={(e) => {
                             const value = e.target.value;
                             updateTaskInSection(section.id, task.id, 'inputType', value);
@@ -2356,39 +2376,34 @@ export const AddOperationalAuditSchedulePage = () => {
                       </Box>
                     )}
                   </Box>
+                  </Box>
                 ))}
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <MuiButton
-                    variant="outlined"
+                <div className="flex justify-end mt-4 gap-4">
+                  <button
+                    type="button"
                     onClick={() => addTaskToSection(section.id)}
-                    startIcon={<Add />}
-                    sx={{ borderColor: '#da7756', color: '#da7756', '&:hover': { borderColor: '#C4623C', backgroundColor: 'rgba(199, 32, 48, 0.04)' } }}
+                    className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
                   >
+                    <Add className="w-4 h-4" />
                     Add Question
-                  </MuiButton>
-                </Box>
-              </Box>
+                  </button>
+                  {sectionIndex === taskSections.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={addTaskSection}
+                      className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                    >
+                      <Add className="w-4 h-4" />
+                      Add Section
+                    </button>
+                  )}
+                </div>
+                {sectionIndex < taskSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
+              </div>
+              </div>
             ))}
-
-            {/* Add Section Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-              <MuiButton
-                variant="contained"
-                startIcon={<Add />}
-                onClick={addTaskSection}
-                sx={{
-                  backgroundColor: '#da7756',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: '#C4623C'
-                  }
-                }}
-              >
-                Add Section
-              </MuiButton>
-            </Box>
-          </SectionCard>
+          </div>
         )}
 
         {/* Step 3: Schedule Setup */}
