@@ -292,7 +292,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
           <div className="flex items-center gap-1.5">
             <div 
               className="w-3 h-3 rounded-sm flex-shrink-0"
-              style={{ backgroundColor: CHART_COLORS.openBreached }}
+              style={{ backgroundImage: `linear-gradient(${CHART_COLORS.openBreached}, ${CHART_COLORS.openBreached})` }}
             />
             <span className="text-xs font-medium text-gray-700 whitespace-nowrap">Breached</span>
           </div>

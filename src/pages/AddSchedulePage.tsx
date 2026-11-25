@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
 import { capturePostHogEvent } from '@/utils/posthogHelpers';
 import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep'
+import { IndividualAssetTable } from '@/components/schedule/IndividualAssetTable';
 import { format } from 'date-fns';
 import {
   TextField,
@@ -370,6 +371,12 @@ export const AddSchedulePage = () => {
   const [indivSubGroupFilter, setIndivSubGroupFilter] = useState<string>('');
   const [indivSubGroups, setIndivSubGroups] = useState<AssetSubGroup[]>([]);
   const [indivFilteredAssets, setIndivFilteredAssets] = useState<any[]>([]);
+  // Stable updater for the virtualized asset table's selection (keeps row memoization effective).
+  const updateSelectedAssetIds = useCallback(
+    (updater: (prev: string[]) => string[]) =>
+      setFormData(prev => ({ ...prev, asset: updater(prev.asset) })),
+    []
+  );
   const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
@@ -4055,110 +4062,15 @@ export const AddSchedulePage = () => {
                             </FormControl>
                           </Box>
 
-                          {/* Assets list table with checkboxes */}
-                          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'auto', maxHeight: 400 }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Work Sans, sans-serif', fontSize: '13px', minWidth: '900px' }}>
-                              <thead>
-                                <tr style={{ backgroundColor: '#EDEAE3', position: 'sticky', top: 0, zIndex: 1 }}>
-                                  {!isLocked && (
-                                    <th style={{ padding: '9px 12px', textAlign: 'center', borderBottom: '1px solid #e0e0e0', width: '48px', backgroundColor: '#EDEAE3' }}>
-                                      <input
-                                        type="checkbox"
-                                        title="Select all visible"
-                                        checked={displayAssets.length > 0 && displayAssets.every(a => formData.asset.includes(a.id.toString()))}
-                                        onChange={e => {
-                                          if (e.target.checked) {
-                                            const merged = Array.from(new Set([...formData.asset, ...displayAssets.map(a => a.id.toString())]));
-                                            setFormData(prev => ({ ...prev, asset: merged }));
-                                          } else {
-                                            const removeSet = new Set(displayAssets.map(a => a.id.toString()));
-                                            setFormData(prev => ({ ...prev, asset: prev.asset.filter(id => !removeSet.has(id)) }));
-                                          }
-                                        }}
-                                        style={{ cursor: 'pointer', width: '15px', height: '15px' }}
-                                      />
-                                    </th>
-                                  )}
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', width: '52px', backgroundColor: '#EDEAE3' }}>S.No.</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Asset Name</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Ext. Ref. ID</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Group</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Sub Group</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Site</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Building</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Wing</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Floor</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Room</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                          {loading.assets ? (
-                            <tr>
-                              <td colSpan={11} style={{ padding: '16px', textAlign: 'center', color: '#888' }}>Loading assets...</td>
-                            </tr>
-                          ) : displayAssets.length === 0 ? (
-                            <tr>
-                              <td colSpan={11} style={{ padding: '16px', textAlign: 'center', color: '#aaa' }}>
-                                {indivFilteredAssets.length === 0 ? 'No assets found' : 'No assets match the selected filters'}
-                              </td>
-                            </tr>
-                          ) : (
-                            displayAssets.map((asset, idx) => {
-                              const isChecked = formData.asset.includes(asset.id.toString());
-                              const loc = asset.location || {};
-                              return (
-                                <tr
-                                  key={asset.id}
-                                  style={{
-                                    backgroundColor: isChecked ? '#fff8f6' : idx % 2 === 0 ? '#fff' : '#fafafa',
-                                    cursor: isLocked ? 'default' : 'pointer',
-                                    transition: 'background-color 0.1s'
-                                  }}
-                                  onClick={() => {
-                                    if (isLocked) return;
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      asset: isChecked
-                                        ? prev.asset.filter(id => id !== asset.id.toString())
-                                        : Array.from(new Set([...prev.asset, asset.id.toString()]))
-                                    }));
-                                  }}
-                                >
-                                  {!isLocked && (
-                                    <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => {
-                                          setFormData(prev => ({
-                                            ...prev,
-                                            asset: isChecked
-                                              ? prev.asset.filter(id => id !== asset.id.toString())
-                                              : Array.from(new Set([...prev.asset, asset.id.toString()]))
-                                          }));
-                                        }}
-                                        onClick={e => e.stopPropagation()}
-                                        style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#da7756' }}
-                                      />
-                                    </td>
-                                  )}
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#666' }}>{idx + 1}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#1a1a1a', fontWeight: isChecked ? 600 : 400 }}>{asset.name || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.ext_reference_id || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.asset_group || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.asset_sub_group || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.site || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.building || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.wing || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.floor || '—'}</td>
-                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.room || '—'}</td>
-                                </tr>
-                              );
-                            })
-                          )}
-                              </tbody>
-                            </table>
-                          </Box>
+                          {/* Assets list table with checkboxes — virtualized (only visible rows render) */}
+                          <IndividualAssetTable
+                            assets={displayAssets}
+                            totalCount={indivFilteredAssets.length}
+                            loading={loading.assets}
+                            isLocked={isLocked}
+                            selectedIds={formData.asset}
+                            onSelectedIdsChange={updateSelectedAssetIds}
+                          />
                           {formData.asset.length > 0 && (
                             <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#da7756', fontWeight: 500 }}>
                               {formData.asset.length} asset{formData.asset.length > 1 ? 's' : ''} selected

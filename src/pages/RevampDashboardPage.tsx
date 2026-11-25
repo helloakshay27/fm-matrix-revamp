@@ -797,7 +797,12 @@ const WASTE_RECORD_TABLE_COLUMNS: DataTableColumn<DashboardApiTableRow>[] = [
  * the ones the user has saved to My Dashboard, without touching (or duplicating) that JSX —
  * this is the single point where the "My Dashboard" preview and the real Maintenance tab diverge.
  */
-function filterGridChildren(children: ReactNode, enabled: boolean, visibleKeys: Set<string>): ReactNode {
+function filterGridChildren(
+  children: ReactNode,
+  enabled: boolean,
+  visibleKeys: Set<string>,
+  activeSubTab?: string
+): ReactNode {
   // `children` is a single <>...</> Fragment wrapping ~130 sibling <div> grid items.
   // react-grid-layout requires each of those divs as a direct child of the grid (matched to
   // its layout entry by `key`), so unwrap the Fragment's own children back into a flat array
@@ -809,7 +814,36 @@ function filterGridChildren(children: ReactNode, enabled: boolean, visibleKeys: 
       ? ((children.props as { children: ReactNode[] }).children)
       : [];
 
-  if (!enabled) return items;
+  if (!enabled) {
+    // Real Maintenance tab: show only the cards of the selected sub-tab (Tickets / Assets / ...).
+    // Each card carries an <AddToDashboardButton subTab="..."/>; a card without one inherits the
+    // previous card's sub-tab, since sections are authored back-to-back.
+    if (!activeSubTab) return items;
+    const subTabOf = (node: ReactNode): string | undefined => {
+      if (!isValidElement(node)) return undefined;
+      const props = node.props as { subTab?: string; chartId?: string; children?: ReactNode };
+      if (props.chartId && typeof props.subTab === "string") return props.subTab;
+      const kids = props.children;
+      if (Array.isArray(kids)) {
+        for (const k of kids) {
+          const found = subTabOf(k as ReactNode);
+          if (found) return found;
+        }
+      } else if (kids) {
+        return subTabOf(kids);
+      }
+      return undefined;
+    };
+    let currentSubTab: string | undefined;
+    const tagged = items.map((child) => {
+      const own = subTabOf(child);
+      if (own) currentSubTab = own;
+      return { child, subTab: currentSubTab };
+    });
+    // If the sub-tab can't be matched at all, fall back to showing everything rather than blank.
+    if (!tagged.some((t) => t.subTab === activeSubTab)) return items;
+    return tagged.filter((t) => t.subTab === activeSubTab).map((t) => t.child);
+  }
 
   return items.filter((child) => {
     if (!isValidElement(child)) return false;
@@ -3495,6 +3529,9 @@ export default function RevampDashboardPage() {
             )}
 
             <ResponsiveGridLayout
+              // Rebuild the grid per sub-tab: the visible cards change, and a reused grid keeps the
+              // previous card set's internal layout, which collapses the new cards to 1x1.
+              key={isMyDashboardModule ? "my-dashboard" : `maintenance-${activeSubTab}`}
               className="layout"
               layouts={{ lg: isMyDashboardModule ? myDashboardMaintenanceLayout : sizeSurveyTimingCard(reconcileLayout(ticketsLayout), surveyTimingHasData) }}
               onDragStop={isMyDashboardModule ? handleMyDashboardMaintenanceLayoutChange : (layout) => persistTicketsLayout(layout)}
@@ -6277,7 +6314,8 @@ export default function RevampDashboardPage() {
 
                 </>,
                 isMyDashboardModule,
-                savedMaintenanceKeys
+                savedMaintenanceKeys,
+                activeSubTab
               )}
             </ResponsiveGridLayout>
           </div>

@@ -827,6 +827,40 @@ export const PatrollingDetailPage: React.FC = () => {
     setSelectedCheckpointObjects([]);
   };
 
+  const [isExportingCheckpoints, setIsExportingCheckpoints] = useState(false);
+
+  const handleExportCheckpoints = async () => {
+    if (!id) return;
+    setIsExportingCheckpoints(true);
+    try {
+      const apiUrl = getFullUrl(
+        `/patrolling/export_checkpoints?format=xlsx&route_id=${id}`
+      );
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: { Authorization: getAuthHeader() },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `patrolling_${id}_checkpoints.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Checkpoints exported successfully!");
+    } catch (error) {
+      console.error("Error exporting checkpoints:", error);
+      toast.error("Failed to export checkpoints. Please try again.");
+    } finally {
+      setIsExportingCheckpoints(false);
+    }
+  };
+
   const handlePrintCheckpointQR = () => {
     if (selectedCheckpointIds.length === 0) return;
     const ids = selectedCheckpointIds.join(",");
@@ -1930,23 +1964,32 @@ export const PatrollingDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="relative w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <div className="relative w-[300px] max-w-full">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           placeholder="Search checkpoints..."
                           value={checkpointSearch}
                           onChange={(e) => setCheckpointSearch(e.target.value)}
-                          className="pl-9 h-9 text-sm"
+                          className="h-9 pl-10 pr-10"
                         />
+                        {checkpointSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setCheckpointSearch("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => setIsCpFilterOpen(true)}
-                        className={`flex items-center gap-1.5 h-9 text-sm ${activeCpFilterCount > 0
-                            ? "border-[#C72030] text-[#C72030] bg-red-50 hover:bg-red-100"
-                            : ""
-                          }`}
+                        className={`!rounded-lg border border-brand text-brand ${
+                          activeCpFilterCount > 0 ? "bg-brand-selected hover:bg-brand-light" : ""
+                        }`}
+                        title="Filter"
                       >
                         <Filter className="w-4 h-4" />
                         {/* Filter */}
@@ -1955,6 +1998,20 @@ export const PatrollingDetailPage: React.FC = () => {
                           {activeCpFilterCount}
                         </Badge>
                       )} */}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleExportCheckpoints}
+                        disabled={isExportingCheckpoints}
+                        title={isExportingCheckpoints ? "Exporting..." : "Export"}
+                        className="!rounded-lg border border-brand text-brand"
+                      >
+                        {isExportingCheckpoints ? (
+                          <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>

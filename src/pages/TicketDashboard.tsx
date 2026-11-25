@@ -276,6 +276,9 @@ export const TicketDashboard = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Optimized debounce timing
   const isSearchingRef = useRef(false);
+  // Latest ticket-type filter (q[category_type_type_eq]) so the summary cards can follow it from any call site
+  const ticketTypeFilterRef = useRef<string | undefined>(undefined);
+  const cmListViewedRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -407,7 +410,11 @@ export const TicketDashboard = () => {
       // Summary cards should show overall counts by default
       // Only pass filters when explicitly provided
       // Status filters should NEVER be passed to ticket_summary API
-      const summaryFilters: TicketFilters = filters || {};
+      const summaryFilters: TicketFilters = { ...(filters || {}) };
+      // Ticket-type filter also applies to the summary cards
+      if (ticketTypeFilterRef.current && !summaryFilters.category_type_type_eq) {
+        summaryFilters.category_type_type_eq = ticketTypeFilterRef.current;
+      }
 
       const summary = await ticketManagementAPI.getTicketSummary(summaryFilters);
       setTicketSummary(summary);
@@ -418,7 +425,7 @@ export const TicketDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
-      sonnerToast.error("Failed to fetch ticket summary. Please try again.");
+      sonnerToast.error("Failed to fetch ticket summary. Please try again.", { id: "ticket-filters-apply" });
     }
   }, [initialTotalTickets]);
 
@@ -533,7 +540,7 @@ export const TicketDashboard = () => {
         setInitialTotalTickets(summary.total_tickets);
       } catch (error) {
         console.error('Error fetching initial ticket summary:', error);
-        sonnerToast.error("Failed to fetch ticket summary. Please try again.");
+        sonnerToast.error("Failed to fetch ticket summary. Please try again.", { id: "ticket-filters-apply" });
       }
     };
 
@@ -952,6 +959,7 @@ export const TicketDashboard = () => {
     }
   };
   const handleFilterApply = (newFilters: TicketFilters) => {
+    ticketTypeFilterRef.current = newFilters.category_type_type_eq || undefined;
     setFilters(newFilters);
     goToPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
@@ -1343,6 +1351,12 @@ export const TicketDashboard = () => {
   };
 
   // Helper function to format escalation level
+  const normalizeTicketDisplayValue = (value: unknown): string => {
+    if (value === null || value === undefined) return '--';
+    const text = String(value).trim();
+    return text === '' ? '--' : text;
+  };
+
   const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
     if (!escalation) return '--';
     const formatted = formatEscalationData(escalation);
@@ -1466,8 +1480,8 @@ export const TicketDashboard = () => {
       return formatEscalationLevel(item.next_resolution_escalation);
     }
     if (columnKey === 'ticket_type') {
-      const t = item.ticket_type;
-      return t ? String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
+      const formattedTicketType = normalizeTicketDisplayValue(item.ticket_type);
+      return formattedTicketType === '--' ? '--' : formattedTicketType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';

@@ -15,6 +15,7 @@ import "../../../components/vi-incident/management-dashboard/incidentDashboard.c
 import {
   useIncidentDashboard,
   useIncidentFilterOptions,
+  useIncidentZoneOptions,
   type IncidentFilters,
   type RecentIncident,
 } from "../../../components/vi-incident/management-dashboard/api";
@@ -43,7 +44,8 @@ function defaultFilters(): IncidentFilters {
   return {
     circleIds: [],
     functionIds: [],
-    zoneId: "",
+    personalAreaIds: [],
+    zoneIds: [],
     workLocationId: "",
     classificationId: "",
     dateFrom: isoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
@@ -78,6 +80,17 @@ export function ViIncidentManagementDashboardPage() {
   const [draft, setDraft] = useState<IncidentFilters>(defaultFilters);
   const [applied, setApplied] = useState<IncidentFilters>(draft);
   const options = useIncidentFilterOptions();
+  // Zone options follow the circles picked in the filter bar (before Apply).
+  const zoneOptions = useIncidentZoneOptions(draft.circleIds);
+  // Clear the selected zone once it is no longer one of the selected circles' zones.
+  useEffect(() => {
+    if (zoneOptions.loading) return;
+    setDraft((current) =>
+      current.zoneIds.every((id) => zoneOptions.zones.some((zone) => zone.id === id))
+        ? current
+        : { ...current, zoneIds: current.zoneIds.filter((id) => zoneOptions.zones.some((zone) => zone.id === id)) },
+    );
+  }, [zoneOptions.zones, zoneOptions.loading]);
   const live = useIncidentDashboard(applied);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
@@ -99,8 +112,10 @@ export function ViIncidentManagementDashboardPage() {
   };
 
   const optionName = (list: { id: string; name: string }[], id: string) => list.find((item) => item.id === id)?.name ?? "";
+  // One zone by name, several as a count.
+  const zoneTitle = (ids: string[]) => (ids.length === 1 ? optionName(zoneOptions.zones, ids[0]) : ids.length > 1 ? `${ids.length} Zones` : "");
   const circleNames = (ids: string[]) => ids.map((id) => optionName(options.circles, id)).filter(Boolean);
-  const title = titleForFilters(persona, circleNames(applied.circleIds), optionName(options.zones, applied.zoneId));
+  const title = titleForFilters(persona, circleNames(applied.circleIds), zoneTitle(applied.zoneIds));
 
   useEffect(() => {
     if (live.error) notify(`Some dashboard data could not be loaded (${live.error})`);
@@ -160,6 +175,8 @@ export function ViIncidentManagementDashboardPage() {
         persona={persona}
         value={draft}
         options={options}
+        zoneOptions={zoneOptions.zones}
+        zonesLoading={zoneOptions.loading}
         onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
         onApply={applyFilters}
         onReset={() => {

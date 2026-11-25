@@ -17,6 +17,7 @@ import {
   Briefcase,
   Ticket,
   RefreshCw,
+  BarChart3,
 } from "lucide-react";
 import {
   FormControl,
@@ -33,6 +34,11 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getToken, getBaseUrl } from "@/utils/auth";
+import {
+  useCalendarEvents,
+  type CreateEventSource,
+  type EventCreateField,
+} from "@/components/PostHogCalendarEvents";
 
 const selectMenuProps = {
   PaperProps: {
@@ -98,6 +104,14 @@ export const EmployeeUnifiedCalendar: React.FC<
   const [hasAppliedCustomFilters, setHasAppliedCustomFilters] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
   const navigate = useNavigate();
+  const calendarAnalytics = useCalendarEvents();
+  const tappedFields = useRef<Set<EventCreateField>>(new Set());
+
+  const trackFieldTap = (field: EventCreateField) => {
+    if (tappedFields.current.has(field)) return;
+    tappedFields.current.add(field);
+    calendarAnalytics.onCreateFieldTapped(field);
+  };
 
   // Default date range = current month
   const getDefaultDateRange = () => {
@@ -471,7 +485,13 @@ export const EmployeeUnifiedCalendar: React.FC<
     setAvailabilityLoading(false);
   };
 
-  const openCreateEventModal = (start: string, end?: string) => {
+  const openCreateEventModal = (
+    start: string,
+    end?: string,
+    source: CreateEventSource = "date_click"
+  ) => {
+    calendarAnalytics.onCreateEventOpened(source);
+    tappedFields.current.clear();
     setCreateEventForm({
       title: "",
       description: "",
@@ -490,6 +510,7 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const handleCreateEvent = async () => {
     if (!createEventForm.title.trim()) {
+      calendarAnalytics.onEventCreateFailed("title_required");
       toast.error("Title is required");
       return;
     }
@@ -498,6 +519,7 @@ export const EmployeeUnifiedCalendar: React.FC<
       const token = getToken();
       const baseUrl = getBaseUrl();
       if (!token || !baseUrl) {
+        calendarAnalytics.onEventCreateFailed("not_authenticated");
         toast.error("Not authenticated");
         return;
       }
@@ -532,6 +554,14 @@ export const EmployeeUnifiedCalendar: React.FC<
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Failed to create event");
+      const inviteeCount = createEventForm.attendees.length;
+      if (inviteeCount > 0) {
+        calendarAnalytics.onAddPeopleConfirmed(inviteeCount);
+      }
+      calendarAnalytics.onEventCreated({
+        all_day: createEventForm.all_day,
+        invitee_count: inviteeCount,
+      });
       toast.success("Event created on Google Calendar");
       if (data?.google_calendar_link) {
         window.open(data.google_calendar_link, "_blank");
@@ -539,6 +569,9 @@ export const EmployeeUnifiedCalendar: React.FC<
       setCreateEventModal(false);
       fetchCalendarData();
     } catch (err) {
+      calendarAnalytics.onEventCreateFailed(
+        err instanceof Error ? err.message : "unknown_error"
+      );
       toast.error(
         err instanceof Error ? err.message : "Failed to create event"
       );
@@ -646,6 +679,7 @@ export const EmployeeUnifiedCalendar: React.FC<
   };
 
   const handleViewChange = (newView: any) => {
+    calendarAnalytics.onCalendarViewChanged(newView);
     // When switching to 52 Week view, automatically set date range to full year
     if (newView === "year") {
       setIsYearLoading(true);
@@ -689,10 +723,18 @@ export const EmployeeUnifiedCalendar: React.FC<
     }
   };
 
-  const handleSelectEvent = (info: any) => {
+  const handleSelectEvent = (info: any, trackDetailView = true) => {
     const eventType = info.event.extendedProps?.type;
     const eventId = info.event.id;
     const redirectUrl = info.event.extendedProps?.resource?.redirectUrl;
+
+    if (trackDetailView) {
+      calendarAnalytics.onEventDetailViewed({
+        event_id: eventId,
+        event_type: eventType,
+        source: view === "year" ? "year" : "calendar",
+      });
+    }
 
     // First priority: use redirect_url from API if available
     if (redirectUrl) {
@@ -760,6 +802,11 @@ export const EmployeeUnifiedCalendar: React.FC<
   const handleEventClick = (info: any) => {
     if (view === "timeGridWeek" || view === "timeGridDay") {
       info.jsEvent.preventDefault();
+      calendarAnalytics.onEventDetailViewed({
+        event_id: info.event.id,
+        event_type: info.event.extendedProps?.type,
+        source: "detail_modal",
+      });
       setSelectedEvent(info.event);
     } else {
       handleSelectEvent(info);
@@ -1054,15 +1101,24 @@ export const EmployeeUnifiedCalendar: React.FC<
                 if (!statusRes.ok) throw new Error("Failed to check status");
                 const statusData = await statusRes.json();
                 if (statusData.connected === true) {
+                  calendarAnalytics.onAccountConnected("google");
                   toast.info("Syncing Google Calendar events...");
                   const syncRes = await fetch(
                     `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
                   );
                   if (syncRes.ok) {
+                    calendarAnalytics.onCalendarSyncSucceeded("google");
                     toast.success("Google Calendar synced!");
                     fetchCalendarData();
-                  } else toast.error("Failed to sync");
+                  } else {
+                    calendarAnalytics.onCalendarSyncFailed(
+                      "sync_request_failed",
+                      "google"
+                    );
+                    toast.error("Failed to sync");
+                  }
                 } else {
+                  calendarAnalytics.onConnectPromptAccepted("google");
                   toast.info("Opening Google Calendar connection...");
                   window.open(
                     `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
@@ -1070,6 +1126,10 @@ export const EmployeeUnifiedCalendar: React.FC<
                   );
                 }
               } catch {
+                calendarAnalytics.onCalendarSyncFailed(
+                  "connection_check_failed",
+                  "google"
+                );
                 toast.error("Failed to process Google Calendar request");
               }
             }}
@@ -1078,6 +1138,14 @@ export const EmployeeUnifiedCalendar: React.FC<
           >
             <RefreshCw className="h-4 w-4" />
             Sync Google Calendar
+          </Button>
+          <Button
+            onClick={() => navigate("/calendar-usage-dashboard")}
+            variant="outline"
+            className="flex items-center gap-2 px-4 py-2 h-10"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Usage Analytics
           </Button>
           <Button
             onClick={() => setIsFilterModalOpen(true)}
@@ -1150,7 +1218,12 @@ export const EmployeeUnifiedCalendar: React.FC<
           <GoogleScheduleView
             events={filteredEvents}
             date={date}
-            onEventClick={(ev) =>
+            onEventClick={(ev) => {
+              calendarAnalytics.onEventDetailViewed({
+                event_id: ev.id,
+                event_type: ev.type,
+                source: "schedule",
+              });
               setSelectedEvent({
                 ...ev,
                 backgroundColor: ev.color,
@@ -1161,8 +1234,8 @@ export const EmployeeUnifiedCalendar: React.FC<
                   location: ev.location,
                   resource: ev,
                 },
-              })
-            }
+              });
+            }}
             getColorForType={getColorForType}
             getEventTypeIcon={getEventTypeIcon}
             getEventTypeLabel={getEventTypeLabel}
@@ -1209,12 +1282,12 @@ export const EmployeeUnifiedCalendar: React.FC<
                 const end = moment(info.dateStr)
                   .add(1, "hour")
                   .format("YYYY-MM-DDTHH:mm");
-                openCreateEventModal(start, end);
+                openCreateEventModal(start, end, "date_click");
               }}
               select={(info) => {
                 const start = moment(info.startStr).format("YYYY-MM-DDTHH:mm");
                 const end = moment(info.endStr).format("YYYY-MM-DDTHH:mm");
-                openCreateEventModal(start, end);
+                openCreateEventModal(start, end, "range_select");
               }}
               dayHeaderFormat={{ weekday: "short", day: "numeric" }}
               eventContent={(eventInfo) => {
@@ -1482,6 +1555,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                 <input
                   type="text"
                   placeholder="Add title"
+                  onFocus={() => trackFieldTap("title")}
                   value={createEventForm.title}
                   onChange={(e) =>
                     setCreateEventForm((f) => ({ ...f, title: e.target.value }))
@@ -1495,12 +1569,15 @@ export const EmployeeUnifiedCalendar: React.FC<
                   <input
                     type="checkbox"
                     checked={createEventForm.all_day}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      calendarAnalytics.onCreateDurationSelected({
+                        all_day: e.target.checked,
+                      });
                       setCreateEventForm((f) => ({
                         ...f,
                         all_day: e.target.checked,
-                      }))
-                    }
+                      }));
+                    }}
                     className="rounded border-gray-300 text-blue-600"
                   />
                   All day
@@ -1514,6 +1591,9 @@ export const EmployeeUnifiedCalendar: React.FC<
                     </label>
                     <input
                       type={createEventForm.all_day ? "date" : "datetime-local"}
+                      onFocus={() =>
+                        trackFieldTap(createEventForm.all_day ? "date" : "time")
+                      }
                       value={
                         createEventForm.all_day
                           ? createEventForm.start_time.slice(0, 10)
@@ -1535,13 +1615,21 @@ export const EmployeeUnifiedCalendar: React.FC<
                       </label>
                       <input
                         type="datetime-local"
+                        onFocus={() => trackFieldTap("time")}
                         value={createEventForm.end_time}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          calendarAnalytics.onCreateDurationSelected({
+                            all_day: false,
+                            duration_minutes: moment(e.target.value).diff(
+                              moment(createEventForm.start_time),
+                              "minutes"
+                            ),
+                          });
                           setCreateEventForm((f) => ({
                             ...f,
                             end_time: e.target.value,
-                          }))
-                        }
+                          }));
+                        }}
                         className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
@@ -1572,6 +1660,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                   <input
                     type="text"
                     placeholder="Add location"
+                    onFocus={() => trackFieldTap("location")}
                     value={createEventForm.location}
                     onChange={(e) =>
                       setCreateEventForm((f) => ({
@@ -1600,6 +1689,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                   </svg>
                   <textarea
                     placeholder="Add description"
+                    onFocus={() => trackFieldTap("description")}
                     value={createEventForm.description}
                     onChange={(e) =>
                       setCreateEventForm((f) => ({
@@ -1640,6 +1730,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                     value=""
                     label="Add Guest"
                     displayEmpty
+                    onFocus={() => trackFieldTap("people")}
                     MenuProps={selectMenuProps}
                     sx={selectFieldSx}
                     onChange={(e) => {
@@ -2302,6 +2393,7 @@ export const EmployeeUnifiedCalendar: React.FC<
                     showTodos: true,
                   });
                   setHasAppliedCustomFilters(false);
+                  calendarAnalytics.onCalendarFilterReset();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
@@ -2311,6 +2403,13 @@ export const EmployeeUnifiedCalendar: React.FC<
                 onClick={() => {
                   setIsFilterModalOpen(false);
                   setHasAppliedCustomFilters(true);
+                  calendarAnalytics.onCalendarFilterApplied({
+                    date_from: activeFilters.dateFrom,
+                    date_to: activeFilters.dateTo,
+                    types: Object.entries(activeFilters)
+                      .filter(([key, value]) => key.startsWith("show") && value)
+                      .map(([key]) => key.replace(/^show/, "")),
+                  });
                 }}
                 className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#a01828] transition-colors text-sm font-medium"
               >

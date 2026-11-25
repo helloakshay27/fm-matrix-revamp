@@ -15,6 +15,9 @@ export interface FilterOption {
 export interface InspectionDashboardFilters {
   clusterIds: string[];
   functionIds: string[];
+  /** Personnel areas (personal_area_filter). */
+  personalAreaIds: string[];
+  /** Zones of the selected circles (zone_filter?cluster_id=…); Circle Manager only. */
   zoneIds: string[];
   workLocationIds: string[];
   inspectionTypeIds: string[];
@@ -85,7 +88,8 @@ const filterParams = (f: InspectionDashboardFilters): Record<string, string> => 
   // Multiple selections go as comma-separated ids, e.g. cluster_id=35,29.
   if (f.clusterIds.length) params.cluster_id = f.clusterIds.join(",");
   if (f.functionIds.length) params.function_id = f.functionIds.join(",");
-  if (f.zoneIds.length) params.zone_id = f.zoneIds.join(",");
+  if (f.personalAreaIds.length) params.personal_area_ids = f.personalAreaIds.join(",");
+  if (f.zoneIds.length) params.zone_ids = f.zoneIds.join(",");
   if (f.workLocationIds.length) params.work_location_id = f.workLocationIds.join(",");
   if (f.inspectionTypeIds.length) params.inspection_type_id = f.inspectionTypeIds.join(",");
   if (f.dateFrom) params.from_date = toApiDate(f.dateFrom);
@@ -113,16 +117,23 @@ const toOptions = (items: unknown, idKey: string, label: (item: Record<string, u
 export interface InspectionFilterOptions {
   circles: FilterOption[];
   functions: FilterOption[];
-  zones: FilterOption[];
+  personalAreas: FilterOption[];
   workLocations: FilterOption[];
   inspectionTypes: FilterOption[];
   /** Option lists whose request has finished (successfully or not). */
   loaded: Partial<Record<FilterOptionKey, boolean>>;
 }
 
-export type FilterOptionKey = "circles" | "functions" | "zones" | "workLocations" | "inspectionTypes";
+export type FilterOptionKey = "circles" | "functions" | "personalAreas" | "workLocations" | "inspectionTypes";
 
-const EMPTY_OPTIONS: InspectionFilterOptions = { circles: [], functions: [], zones: [], workLocations: [], inspectionTypes: [], loaded: {} };
+const EMPTY_OPTIONS: InspectionFilterOptions = { circles: [], functions: [], personalAreas: [], workLocations: [], inspectionTypes: [], loaded: {} };
+
+// The list from a filter response: the named key when present, else the first array in it.
+const firstList = (json: Record<string, unknown>, ...keys: string[]): unknown =>
+  keys.map((key) => json[key]).find(Array.isArray) ?? Object.values(json).find(Array.isArray) ?? [];
+
+const personalAreaName = (item: Record<string, unknown>) =>
+  String(item.personal_area_name ?? item.personnel_area_name ?? item.name ?? "");
 
 /** Dropdown options for the filter bar (loaded once). */
 export const useInspectionFilterOptions = () => {
@@ -142,7 +153,7 @@ export const useInspectionFilterOptions = () => {
     };
     load("circles", "cluster_filter", (json) => toOptions(json.clusters, "id", (item) => String(item.cluster_name ?? "")));
     load("functions", "function_filter", (json) => toOptions(json.functions, "id", (item) => String(item.function_name ?? "")));
-    load("zones", "zone_filter", (json) => toOptions(json.zones, "id", (item) => String(item.zone_name ?? "")));
+    load("personalAreas", "personal_area_filter", (json) => toOptions(firstList(json, "personal_areas", "personnel_areas"), "id", personalAreaName));
     // Several work locations share a name, so the code is shown with it.
     load("workLocations", "work_location_filter", (json) =>
       toOptions(json.work_locations, "id", (item) =>
@@ -162,6 +173,37 @@ export interface InspectionDashboardData {
   owners: ActionOwnerOpenPlans | null;
   closure: ClosureProgress | null;
 }
+
+/**
+ * Zone options for the selected circles: GET zone_filter?cluster_id=<ids>. Nothing is loaded
+ * (and the dropdown asks for a circle) until at least one circle is selected.
+ */
+export const useInspectionZoneOptions = (clusterIds: string[]) => {
+  const [zones, setZones] = useState<FilterOption[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const key = clusterIds.join(",");
+
+  useEffect(() => {
+    setZones([]);
+    setLoaded(false);
+    if (!key) return;
+    const controller = new AbortController();
+    fetchDashboard<Record<string, unknown>>("zone_filter", { cluster_id: key }, controller.signal)
+      .then((json) => toOptions(firstList(json, "zones"), "id", (item) => String(item.zone_name ?? item.name ?? "")))
+      .catch((error) => {
+        if (!controller.signal.aborted) console.error("Failed to load zone_filter:", error);
+        return [] as FilterOption[];
+      })
+      .then((list) => {
+        if (controller.signal.aborted) return;
+        setZones(list);
+        setLoaded(true);
+      });
+    return () => controller.abort();
+  }, [key]);
+
+  return { zones, loaded };
+};
 
 /** KPI, leaderboard and closure-progress data for the applied filters. */
 export const useInspectionDashboardData = (filters: InspectionDashboardFilters) => {

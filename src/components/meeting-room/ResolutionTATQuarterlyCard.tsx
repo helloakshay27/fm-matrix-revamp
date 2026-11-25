@@ -151,7 +151,7 @@ export const ResolutionTATQuarterlyCard: React.FC<
               <div className="flex items-center gap-2">
                 <div
                   className="w-4 h-4 rounded"
-                  style={{ backgroundColor: COLOR_LAST }}
+                  style={{ backgroundImage: `linear-gradient(${COLOR_LAST}, ${COLOR_LAST})` }}
                 />
                 <span className="text-xs" title={lastLabel}>
                   {lastLabel.length > 50 ? "Previous Period" : lastLabel}

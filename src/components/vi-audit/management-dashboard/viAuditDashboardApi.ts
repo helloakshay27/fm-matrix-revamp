@@ -16,6 +16,9 @@ export interface FilterOption {
 export interface AuditDashboardFilters {
   clusterIds: string[];
   functionIds: string[];
+  /** Personnel areas (personal_area_level_filter). */
+  personalAreaIds: string[];
+  /** Zones of the selected circles (zone_level_filter?cluster_id=…); Circle Manager only. */
   zoneIds: string[];
   workLocationIds: string[];
   /** "corporate" | "circle". Empty or both means no audit_type filter. */
@@ -158,7 +161,8 @@ const filterParams = (f: AuditDashboardFilters): Record<string, string> => {
   const params: Record<string, string> = {};
   if (f.clusterIds.length) params.cluster_id = f.clusterIds.join(",");
   if (f.functionIds.length) params.function_id = f.functionIds.join(",");
-  if (f.zoneIds.length) params.zone_id = f.zoneIds.join(",");
+  if (f.personalAreaIds.length) params.personal_area_ids = f.personalAreaIds.join(",");
+  if (f.zoneIds.length) params.zone_ids = f.zoneIds.join(",");
   if (f.workLocationIds.length) params.work_location_id = f.workLocationIds.join(",");
   // The audit type filter is a single value. Both selected is the same as no filter.
   if (f.auditTypeIds.length === 1) params.audit_type = f.auditTypeIds[0];
@@ -187,22 +191,29 @@ const toOptions = (items: unknown, idKey: string, label: (item: Record<string, u
 export interface AuditFilterOptions {
   circles: FilterOption[];
   functions: FilterOption[];
-  zones: FilterOption[];
+  personalAreas: FilterOption[];
   workLocations: FilterOption[];
   auditTypes: FilterOption[];
   loaded: Partial<Record<FilterOptionKey, boolean>>;
 }
 
-export type FilterOptionKey = "circles" | "functions" | "zones" | "workLocations" | "auditTypes";
+export type FilterOptionKey = "circles" | "functions" | "personalAreas" | "workLocations" | "auditTypes";
 
 const EMPTY_OPTIONS: AuditFilterOptions = {
   circles: [],
   functions: [],
-  zones: [],
+  personalAreas: [],
   workLocations: [],
   auditTypes: [],
   loaded: {},
 };
+
+// The list from a filter response: the named key when present, else the first array in it.
+const firstList = (json: Record<string, unknown>, ...keys: string[]): unknown =>
+  keys.map((key) => json[key]).find(Array.isArray) ?? Object.values(json).find(Array.isArray) ?? [];
+
+const personalAreaName = (item: Record<string, unknown>) =>
+  String(item.personal_area_name ?? item.personnel_area_name ?? item.name ?? "");
 
 /** Dropdown options for the filter bar (loaded once). */
 export const useAuditFilterOptions = () => {
@@ -222,7 +233,7 @@ export const useAuditFilterOptions = () => {
     };
     load("circles", "cluster_level_filter", (json) => toOptions(json.clusters, "id", (item) => String(item.cluster_name ?? "")));
     load("functions", "function_level_filter", (json) => toOptions(json.functions, "id", (item) => String(item.function_name ?? "")));
-    load("zones", "zone_level_filter", (json) => toOptions(json.zones, "id", (item) => String(item.zone_name ?? "")));
+    load("personalAreas", "personal_area_level_filter", (json) => toOptions(firstList(json, "personal_areas", "personnel_areas"), "id", personalAreaName));
     load("workLocations", "work_location_level_filter", (json) =>
       toOptions(json.work_locations, "id", (item) => String(item.work_location_name ?? "")),
     );
@@ -231,6 +242,37 @@ export const useAuditFilterOptions = () => {
   }, []);
 
   return options;
+};
+
+/**
+ * Zone options for the selected circles: GET zone_level_filter?cluster_id=<ids>. Nothing is
+ * loaded (and the dropdown asks for a circle) until at least one circle is selected.
+ */
+export const useAuditZoneOptions = (clusterIds: string[]) => {
+  const [zones, setZones] = useState<FilterOption[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const key = clusterIds.join(",");
+
+  useEffect(() => {
+    setZones([]);
+    setLoaded(false);
+    if (!key) return;
+    const controller = new AbortController();
+    fetchDashboard<Record<string, unknown>>("zone_level_filter", { cluster_id: key }, controller.signal)
+      .then((json) => toOptions(firstList(json, "zones"), "id", (item) => String(item.zone_name ?? item.name ?? "")))
+      .catch((error) => {
+        if (!controller.signal.aborted) console.error("Failed to load zone_level_filter:", error);
+        return [] as FilterOption[];
+      })
+      .then((list) => {
+        if (controller.signal.aborted) return;
+        setZones(list);
+        setLoaded(true);
+      });
+    return () => controller.abort();
+  }, [key]);
+
+  return { zones, loaded };
 };
 
 const metrics = (rows: unknown, nameKey: string, withAudits: boolean): NamedMetrics[] =>

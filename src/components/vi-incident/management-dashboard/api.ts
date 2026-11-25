@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { CHARTS, PALETTE, BRAND, type ChartSpec } from "./data";
 
 /** Live data for the Vi Incident dashboard — `/vi_incident_dashboard/*` endpoints. */
@@ -11,7 +12,7 @@ export interface FilterOption {
 export interface FilterOptions {
   circles: FilterOption[];
   functions: FilterOption[];
-  zones: FilterOption[];
+  personalAreas: FilterOption[];
   classifications: FilterOption[];
   workLocations: FilterOption[];
   loading: boolean;
@@ -21,7 +22,10 @@ export interface FilterOptions {
 export interface IncidentFilters {
   circleIds: string[];
   functionIds: string[];
-  zoneId: string;
+  /** Personnel area (personal_area_filter). */
+  personalAreaIds: string[];
+  /** Zone of the selected circles (zone_filter?cluster_id=…); Circle Manager only. */
+  zoneIds: string[];
   workLocationId: string;
   classificationId: string;
   dateFrom: string;
@@ -74,25 +78,22 @@ interface CountResponse {
   data: CountItem[];
 }
 
-function getBaseUrl(): string {
-  const fromLS = localStorage.getItem("baseUrl") || "";
-  const host = fromLS.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  return host ? `https://${host}` : "https://live-api.gophygital.work";
-}
-
+// Base URL and token come from the logged-in session — no hardcoded server or company fallback.
 function getCompanyId(): string {
-  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
+  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
 }
 
 async function fetchJson<T>(endpoint: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
-  const query = new URLSearchParams({ company_id: getCompanyId() });
+  const query = new URLSearchParams();
+  const companyId = getCompanyId();
+  if (companyId) query.set("company_id", companyId);
   Object.entries(params).forEach(([key, value]) => {
     if (value) query.set(key, value);
   });
-  const token = localStorage.getItem("token") || "";
-  const headers: Record<string, string> = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${getBaseUrl()}/vi_incident_dashboard/${endpoint}?${query.toString()}`, { signal, headers });
+  const res = await fetch(getFullUrl(`/vi_incident_dashboard/${endpoint}?${query.toString()}`), {
+    signal,
+    headers: { Authorization: getAuthHeader() },
+  });
   if (!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -101,7 +102,8 @@ function filterParams(filters: IncidentFilters): Record<string, string> {
   return {
     cluster_id: filters.circleIds.join(","),
     function_id: filters.functionIds.join(","),
-    zone_id: filters.zoneId,
+    personal_area_ids: filters.personalAreaIds.join(","),
+    zone_ids: filters.zoneIds.join(","),
     work_location_id: filters.workLocationId,
     classification_id: filters.classificationId,
     from_date: filters.dateFrom,
@@ -149,10 +151,50 @@ interface HeatmapResponse {
 
 /* ── Hooks ─────────────────────────────────────────────────────── */
 
-const EMPTY_OPTIONS: FilterOptions = { circles: [], functions: [], zones: [], classifications: [], workLocations: [], loading: true };
+const EMPTY_OPTIONS: FilterOptions = { circles: [], functions: [], personalAreas: [], classifications: [], workLocations: [], loading: true };
 
 function toOptions<T>(rows: T[] | undefined, name: (row: T) => string, id: (row: T) => number): FilterOption[] {
   return (rows ?? []).map((row) => ({ id: String(id(row)), name: name(row) }));
+}
+
+// Options from a filter response whose exact shape isn't fixed: the list under one of `keys`
+// (else the first array in the response), named by the first of `nameKeys` that is set.
+function listOptions(json: Record<string, unknown> | null, keys: string[], nameKeys: string[]): FilterOption[] {
+  if (!json) return [];
+  const rows = (keys.map((key) => json[key]).find(Array.isArray) ?? Object.values(json).find(Array.isArray) ?? []) as Record<string, unknown>[];
+  return rows
+    .map((row) => ({ id: String(row.id ?? ""), name: String(nameKeys.map((key) => row[key]).find((value) => value) ?? "") }))
+    .filter((option) => option.id && option.name);
+}
+
+/**
+ * Zone options for the selected circles: GET zone_filter?cluster_id=<ids>. Nothing is loaded
+ * (and the dropdown asks for a circle) until at least one circle is selected.
+ */
+export function useIncidentZoneOptions(circleIds: string[]) {
+  const [zones, setZones] = useState<FilterOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const key = circleIds.join(",");
+
+  useEffect(() => {
+    setZones([]);
+    if (!key) {
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setLoading(true);
+    fetchJson<Record<string, unknown>>("zone_filter", { cluster_id: key }, controller.signal)
+      .catch(() => null)
+      .then((json) => {
+        if (controller.signal.aborted) return;
+        setZones(listOptions(json, ["zones"], ["zone_name", "name"]));
+        setLoading(false);
+      });
+    return () => controller.abort();
+  }, [key]);
+
+  return { zones, loading };
 }
 
 export function useIncidentFilterOptions(): FilterOptions {
@@ -165,15 +207,15 @@ export function useIncidentFilterOptions(): FilterOptions {
     Promise.all([
       load<{ clusters: { id: number; cluster_name: string }[] }>("cluster_filter"),
       load<{ functions: { id: number; function_name: string }[] }>("function_filter"),
-      load<{ zones: { id: number; zone_name: string }[] }>("zone_filter"),
+      load<Record<string, unknown>>("personal_area_filter"),
       load<{ incident_classifications: { id: number; classification_name: string }[] }>("incident_classification_filter"),
       load<{ work_locations: { id: number; work_location_code: string; work_location_name: string }[] }>("work_location_filter"),
-    ]).then(([clusters, functions, zones, classifications, workLocations]) => {
+    ]).then(([clusters, functions, personalAreas, classifications, workLocations]) => {
       if (signal.aborted) return;
       setOptions({
         circles: toOptions(clusters?.clusters, (row) => row.cluster_name, (row) => row.id),
         functions: toOptions(functions?.functions, (row) => row.function_name, (row) => row.id),
-        zones: toOptions(zones?.zones, (row) => row.zone_name, (row) => row.id),
+        personalAreas: listOptions(personalAreas, ["personal_areas", "personnel_areas"], ["personal_area_name", "personnel_area_name", "name"]),
         classifications: toOptions(classifications?.incident_classifications, (row) => row.classification_name, (row) => row.id),
         // Several locations share a name, so the code keeps each option distinguishable.
         workLocations: toOptions(workLocations?.work_locations, (row) => `${row.work_location_name} (${row.work_location_code})`, (row) => row.id),

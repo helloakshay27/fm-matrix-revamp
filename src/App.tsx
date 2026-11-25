@@ -3915,6 +3915,9 @@ import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoice
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
+const PATMAnalyticsDashboard = lazy(
+  () => import("./pages/PATMAnalyticsDashboard")
+);
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
 import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
@@ -4387,6 +4390,11 @@ const ViPosthogDashboardPage = lazy(() =>
     (m) => ({ default: m.ViPosthogDashboardPage })
   )
 );
+const CalendarPosthogDashboardPage = lazy(() =>
+  import(
+    "./features/calendar-posthog-dashboard/CalendarPosthogDashboardPage"
+  ).then((m) => ({ default: m.CalendarPosthogDashboardPage }))
+);
 const FmAdoptionDashboardPage = lazy(() =>
   import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(
     (m) => ({ default: m.FmAdoptionDashboardPage })
@@ -4757,6 +4765,22 @@ function App() {
                             path="/vi-posthog-dashboard"
                             element={<ViPosthogDashboardPage />}
                           />
+                          <Route
+                            path="/calendar-usage-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={<CalendarPosthogDashboardPage />}
+                          />
+                          {/* <Route
+                            path="/accounting-dashboard"
+                            element={<AccountingPosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/smartsecure-dashboard"
+                            element={<SmartSecureDashboardPage />}
+                          /> */}
                           <Route
                             path="/fm-adoption-dashboard"
                             element={<FmAdoptionDashboardPage />}
@@ -5216,6 +5240,41 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <CostApprovalStandalonePage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/PATM-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <PATMAnalyticsDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/PATM-posthog"
+                            element={
+                              <ProtectedRoute>
+                                <PATMAnalyticsDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/calendar-usage-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <CalendarPosthogDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/calendar-posthog-dashboard"
+                            element={
+                              <ProtectedRoute>
+                                <CalendarPosthogDashboardPage />
                               </ProtectedRoute>
                             }
                           />

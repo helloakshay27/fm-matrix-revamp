@@ -225,12 +225,12 @@ const typeParam = (name: 'category_type_type_eq' | 'type_eq', categoryType?: str
 
 export const ticketAnalyticsAPI = {
   // Get tickets categorywise proactive/reactive data
-  async getTicketsCategorywiseData(fromDate: Date, toDate: Date, siteId?: string): Promise<TicketCategoryData[]> {
+  async getTicketsCategorywiseData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<TicketCategoryData[]> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
     
     const response = await apiClient.get(url);
     return response.data.tickets || [];
@@ -269,12 +269,12 @@ export const ticketAnalyticsAPI = {
   },
 
   // Get unit categorywise data
-  async getUnitCategorywiseData(fromDate: Date, toDate: Date, siteId?: string): Promise<UnitCategorywiseData> {
+  async getUnitCategorywiseData(fromDate: Date, toDate: Date, siteId?: string, categoryType?: string): Promise<UnitCategorywiseData> {
     const resolvedSiteId = siteId ?? getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${resolvedSiteId}&from_date=${fromDateStr}&to_date=${toDateStr}${typeParam('category_type_type_eq', categoryType)}`;
 
     const response = await apiClient.get(url);
     return response.data;

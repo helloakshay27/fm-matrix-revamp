@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetStats } from "@/components/AssetStats";
@@ -22,7 +22,24 @@ import {
   PaginationLink,
   PaginationPrevious,
   PaginationNext,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
+
+// Page list for the pager: first, last, and current ±1, with ellipses for gaps.
+const getPageNumbers = (
+  current: number,
+  total: number
+): (number | "ellipsis")[] => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "ellipsis")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push("ellipsis");
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push("ellipsis");
+  pages.push(total);
+  return pages;
+};
 import { AssetDataTable } from "@/components/AssetDataTable";
 import type { Asset } from "@/hooks/useAssets";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -194,7 +211,25 @@ export const EnergyDashboard = () => {
   const [energyAssets, setEnergyAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  // Current page lives in the URL (?page=N) so refresh / Back / shared links keep it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parsedPage = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const setCurrentPage = useCallback(
+    (page: number, replace = false) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (page > 1) next.set("page", String(page));
+          else next.delete("page");
+          return next;
+        },
+        { replace }
+      );
+    },
+    [setSearchParams]
+  );
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -293,7 +328,10 @@ export const EnergyDashboard = () => {
         const data = await response.json();
         setEnergyAssets(data.assets || []);
         setTotalCount(data.pagination?.total_count || 0);
-        setTotalPages(data.pagination?.total_pages || 1);
+        const pages = data.pagination?.total_pages || 1;
+        setTotalPages(pages);
+        // Page from the URL is past the end (e.g. ?page=99) — snap to the last page.
+        if (currentPage > pages) setCurrentPage(pages, true);
       } catch (err: any) {
         setError(err.message || "Error fetching energy assets");
         setEnergyAssets([]);
@@ -475,7 +513,7 @@ export const EnergyDashboard = () => {
       : setSelectedAssets((p) => p.filter((id) => id !== assetId));
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1);
+    setCurrentPage(1, true);
   };
 
   // Only render charts that are both selected and in order
@@ -548,23 +586,22 @@ export const EnergyDashboard = () => {
                     }
                   />
                 </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(1)}
-                    isActive={currentPage === 1}
-                  >
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                {totalPages > 1 && (
-                  <PaginationItem>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(totalPages)}
-                      isActive={currentPage === totalPages}
-                    >
-                      {totalPages}
-                    </PaginationLink>
-                  </PaginationItem>
+                {getPageNumbers(currentPage, totalPages).map((page, idx) =>
+                  page === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${idx}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        className="cursor-pointer"
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
                 )}
                 <PaginationItem>
                   <PaginationNext
