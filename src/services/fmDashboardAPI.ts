@@ -1085,11 +1085,6 @@ export const fetchInventoryOperations = (params: FmDashboardParams) =>
     (res) => res.inventory_operations
   );
 
-export const fetchInventoryKpisTable = (params: FmDashboardParams) =>
-  fetchFmDashboardJson<{ inventory_kpis_table: unknown }>(INVENTORY_ENDPOINTS.KPIS_TABLE, params).then(
-    (res) => res.inventory_kpis_table
-  );
-
 // ============================================================================
 // Waste
 // ============================================================================

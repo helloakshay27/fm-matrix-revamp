@@ -75,7 +75,6 @@ import {
   fetchInventoryStockHealth,
   fetchInventoryConsumption,
   fetchInventoryOperations,
-  fetchInventoryKpisTable,
   type InventoryOverviewData,
   type InventoryStockHealthData,
   type InventoryConsumptionData,
@@ -515,7 +514,6 @@ export interface InventoryDashboardData {
   stockHealth: InventoryStockHealthData | null;
   consumption: InventoryConsumptionData | null;
   operations: InventoryOperationsData | null;
-  kpisTable: unknown;
 }
 
 const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
@@ -523,7 +521,6 @@ const EMPTY_INVENTORY_DATA: InventoryDashboardData = {
   stockHealth: null,
   consumption: null,
   operations: null,
-  kpisTable: null,
 };
 
 export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
@@ -546,16 +543,14 @@ export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
       fetchInventoryStockHealth(params),
       fetchInventoryConsumption(params),
       fetchInventoryOperations(params),
-      fetchInventoryKpisTable(params),
     ])
-      .then(([overviewResult, stockHealthResult, consumptionResult, operationsResult, kpisTableResult]) => {
+      .then(([overviewResult, stockHealthResult, consumptionResult, operationsResult]) => {
         if (cancelled) return;
         setData({
           overview: overviewResult.status === "fulfilled" ? overviewResult.value : null,
           stockHealth: stockHealthResult.status === "fulfilled" ? stockHealthResult.value : null,
           consumption: consumptionResult.status === "fulfilled" ? consumptionResult.value : null,
           operations: operationsResult.status === "fulfilled" ? operationsResult.value : null,
-          kpisTable: kpisTableResult.status === "fulfilled" ? kpisTableResult.value : null,
         });
 
         const getFailure = (name: string, result: PromiseSettledResult<unknown>) => {
@@ -568,7 +563,6 @@ export function useInventoryDashboardData(rawArgs: UseFmDashboardModuleArgs) {
           getFailure("stock health", stockHealthResult),
           getFailure("consumption", consumptionResult),
           getFailure("operations", operationsResult),
-          getFailure("KPIs table", kpisTableResult),
         ].filter((failure): failure is string => failure !== null);
         setError(failures.length ? `Some inventory data failed to load: ${failures.join("; ")}` : null);
       })
