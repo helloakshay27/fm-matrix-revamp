@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { toast as sonnerToast } from "sonner";
 import {
   ticketManagementAPI,
   TicketFilters,
@@ -74,7 +74,6 @@ export const TicketsFilterDialog = ({
   onClose,
   onApplyFilters,
 }: TicketsFilterDialogProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [dateFrom, setDateFrom] = useState("");
@@ -161,11 +160,7 @@ export const TicketsFilterDialog = ({
           );
         } catch (error) {
           console.error("Error loading subcategories:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load subcategories.",
-            variant: "destructive",
-          });
+          sonnerToast.error("Failed to load subcategories.");
         }
       } else {
         setSubcategories([]);
@@ -201,22 +196,15 @@ export const TicketsFilterDialog = ({
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading filter data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load filter options.",
-        variant: "destructive",
-      });
+      sonnerToast.error("Failed to load filter options.");
     }
   };
 
   const handleSubmit = () => {
     if ((dateFrom && !dateTo) || (!dateFrom && dateTo)) {
-      toast({
-        title: "Validation Error",
-        description:
-          "Please select both 'Date From' and 'Date To' for the date range.",
-        variant: "destructive",
-      });
+      sonnerToast.error(
+        "Please select both 'Date From' and 'Date To' for the date range."
+      );
       return;
     }
 
@@ -249,19 +237,14 @@ export const TicketsFilterDialog = ({
     if (customerName) filters.entity_name_con = customerName;
 
     onApplyFilters(filters);
-    toast({
-      title: "Success",
-      description: "Filters applied successfully!",
-    });
+    // Same id as the dashboard's summary-failure toast, so only one toast shows (top-right).
+    sonnerToast.success("Filters applied successfully!", { id: "ticket-filters-apply" });
     onClose();
   };
 
   const handleReset = () => {
     if (filtersCleared) {
-      toast({
-        title: "Redirecting",
-        description: "Navigating to tickets list page...",
-      });
+      sonnerToast.info("Navigating to tickets list page...");
       onClose();
       navigate("/maintenance/ticket");
       return;
@@ -284,10 +267,7 @@ export const TicketsFilterDialog = ({
     setCustomerName("");
     onApplyFilters({});
 
-    toast({
-      title: "Filters Cleared",
-      description: "All filters have been cleared.",
-    });
+    sonnerToast.success("All filters have been cleared.", { id: "ticket-filters-apply" });
   };
 
   return (
