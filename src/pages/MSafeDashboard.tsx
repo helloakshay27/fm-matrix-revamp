@@ -74,6 +74,8 @@ export const MSafeDashboard = () => {
 
 
   useEffect(() => {
+    // Set when a newer search / page / filter starts, so a slower older response can't overwrite it.
+    let stale = false;
     const fetchUsers = async () => {
       setLoading(true);
       try {
@@ -115,6 +117,7 @@ export const MSafeDashboard = () => {
           }
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (stale) return;
         const data = response.data;
         let users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
         // Derive a stable full name field used for sorting
@@ -147,13 +150,17 @@ export const MSafeDashboard = () => {
           msafeEvents.onMSafeUserSearchPerformed('fte', debouncedSearch.trim().length, users.length);
         }
       } catch (err) {
+        if (stale) return;
         console.error('Error fetching users:', err);
         setFmUsers([]);
       } finally {
-        setLoading(false);
+        if (!stale) setLoading(false);
       }
     };
     fetchUsers();
+    return () => {
+      stale = true;
+    };
   }, [page, debouncedSearch, filters]);
 
   useEffect(() => {
@@ -516,7 +523,7 @@ export const MSafeDashboard = () => {
 
         <div className="rounded-lg">
           <EnhancedTable data={fmUsers || []} columns={columns} onFilterClick={handleFiltersClick}
-            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} analyticsDownloadHandled exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} analyticsDownloadHandled exportFileName="fm-users" pagination={false} pageSize={10} loading={loading || searchTerm.trim() !== debouncedSearch.trim()} disableClientSearch enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
               <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>              <Pagination>

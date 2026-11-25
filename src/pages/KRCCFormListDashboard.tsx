@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, Eye, Trash2, Plus, Filter, Download, RefreshCw } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
@@ -95,8 +95,12 @@ export const KRCCFormListDashboard = () => {
       icon: Shield
     }
   ];
+  // Each fetch gets an id; only the latest one may update the table (a slower older search can't overwrite it).
+  const latestRequest = useRef(0);
+
   // Fetch data from API
   const fetchKRCCForms = useCallback(async (page: number, searchValue?: string) => {
+    const requestId = ++latestRequest.current;
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     if (!baseUrl || !token) {
@@ -148,6 +152,7 @@ export const KRCCFormListDashboard = () => {
         throw new Error(`Request failed: ${res.status}`);
       }
       const data: KRCCApiResponse = await res.json();
+      if (requestId !== latestRequest.current) return;
       const mapped: KRCCForm[] = (data.krcc_forms || []).map(item => ({
         id: item.id,
         status: item.status,
@@ -171,11 +176,12 @@ export const KRCCFormListDashboard = () => {
         toast.info('No results found');
       }
     } catch (e: any) {
+      if (requestId !== latestRequest.current) return;
       console.error('KRCC fetch error', e);
       setError(e.message || 'Failed to load KRCC forms');
       toast.error('Failed to load KRCC forms');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, [statusFilter, filterEmail, filterCircle]);
 
@@ -1110,7 +1116,9 @@ export const KRCCFormListDashboard = () => {
             handleExport={handleExport}
             exportFileName="krcc-forms"
             pagination={false} // using server-side pagination below
-            loading={loading}
+            // Loader also while typing (search not sent yet); the API does the search, not the table.
+            loading={loading || searchTerm.trim() !== debouncedSearch.trim()}
+            disableClientSearch
             enableSearch={true}
             onRowClick={form => console.log('Row clicked:', form)}
           />

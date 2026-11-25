@@ -168,7 +168,8 @@ export const ExternalUsersDashboard = () => {
           console.error('Error fetching external users:', err);
         }
       } finally {
-        setLoading(false);
+        // A cancelled request was replaced by a newer one that is still loading.
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchExternalUsers();
@@ -699,7 +700,10 @@ export const ExternalUsersDashboard = () => {
             exportFileName="external-users"
             pagination={false}
             pageSize={pageSize}
-            loading={loading}
+            // While the user is still typing (debounce pending) the results are about to change.
+            loading={loading || searchTerm.trim() !== debouncedSearch.trim()}
+            // Search is done by the API; filtering the current page as you type showed "no data".
+            disableClientSearch
             enableSearch={true}
             onRowClick={user => console.log('Row clicked:', user)}
           />
