@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -132,7 +132,11 @@ const TrainingDashboard = () => {
     if (debouncedSearch) setCurrentPage(1);
   }, [debouncedSearch]);
 
+  // Each fetch gets an id; only the latest one may update the table (a slower older search can't overwrite it).
+  const latestRequest = useRef(0);
+
   const fetchTrainings = useCallback(async (page: number, emailSearch?: string) => {
+    const requestId = ++latestRequest.current;
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     if (!baseUrl || !token) {
@@ -168,6 +172,7 @@ const TrainingDashboard = () => {
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const json: TrainingApiResponse = await res.json();
+      if (requestId !== latestRequest.current) return;
       const records = json.data || [];
       const mapped: TrainingRow[] = records.map(r => ({
         id: r.id,
@@ -194,11 +199,12 @@ const TrainingDashboard = () => {
         msafeEvents.onMSafeSubmoduleViewed('training', mapped.length);
       }
     } catch (e: any) {
+      if (requestId !== latestRequest.current) return;
       console.error('Training fetch error', e);
       setError(e.message || 'Failed to load trainings');
       toast.error('Failed to load trainings');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, [filterEmail, filterTrainingName]);
 
@@ -766,7 +772,9 @@ const TrainingDashboard = () => {
         enableExport={false}
         showBulkActions={false}
         pagination={false}
-        loading={loading}
+        // Loader also while typing (search not sent yet); the API does the search, not the table.
+        loading={loading || searchTerm.trim() !== debouncedSearch}
+        disableClientSearch
         onFilterClick={handleFilterClick}
       />
       {/* Pagination (same as MSafeDashboard) */}
