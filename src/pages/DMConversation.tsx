@@ -121,12 +121,6 @@ const DMConversation = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        if (bottomRef.current && !isUserInitiatedScroll.current) {
-            bottomRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages]);
-
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         setAttachments((prevFiles) => [...prevFiles, ...selectedFiles]);
