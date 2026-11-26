@@ -203,6 +203,33 @@ export const createGroup = createAsyncThunk(
     }
 );
 
+export const updateGroup = createAsyncThunk(
+    "updateGroup",
+    async (
+        { baseUrl, token, id, data }: { baseUrl: string; token: string; id: string; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.patch(
+                `https://${baseUrl}/project_spaces/${id}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to update group";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const fetchGroupConversation = createAsyncThunk(
     "fetchGroupConversation",
     async (

@@ -80,6 +80,28 @@ const ChannelSidebar = () => {
         getGroups();
     }, []);
 
+    // Reflect a group rename (from GroupConversation's info modal) in the list
+    useEffect(() => {
+        const handleGroupRenamed = (e: Event) => {
+            const { id, name } = (e as CustomEvent).detail || {};
+            if (!id || !name) return;
+            setGroups((prev) =>
+                prev.map((g) => (String(g.id) === String(id) ? { ...g, name } : g))
+            );
+        };
+        const handleGroupLeft = (e: Event) => {
+            const { id } = (e as CustomEvent).detail || {};
+            if (!id) return;
+            setGroups((prev) => prev.filter((g) => String(g.id) !== String(id)));
+        };
+        window.addEventListener("channel-group-renamed", handleGroupRenamed);
+        window.addEventListener("channel-group-left", handleGroupLeft);
+        return () => {
+            window.removeEventListener("channel-group-renamed", handleGroupRenamed);
+            window.removeEventListener("channel-group-left", handleGroupLeft);
+        };
+    }, []);
+
     // Move conversation to top when a notification arrives
     useEffect(() => {
         if (notifications.length === 0) return;
