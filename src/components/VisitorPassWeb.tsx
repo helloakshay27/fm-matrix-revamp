@@ -183,14 +183,13 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const otp = data?.otp_string ?? "-";
   const host =
     data?.person_to_meet_name ?? data?.visited_to_host_name ?? data?.visitor_host_name ?? "-";
-  const passId = data?.pass_number ? String(data.id) : "-";
+  const passNumber = data?.pass_number || "-";
   const visitDate = data?.expected_at
     ? formatDate(data.expected_at)
     : (data?.pass_start_date ?? "-");
   const timeSlot = data?.expected_at
     ? formatTime(data.expected_at)
     : "-";
-  const email = data?.guest_email ?? "-"; // guest_number often contains mobile; keep as a fallback
   const purpose = data?.visit_purpose ?? "-";
   const assets = joinAssets(data?.assets) ?? "-";
   const additionalVisitors = data?.plus_person ?? 0;
@@ -204,6 +203,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
   const validTo = data?.pass_end_date ?? "-";
   const daysPermitted = data?.pass_details ?? "-";
   const locationTo = data?.visit_to ?? "-";
+  const notes = data?.notes || "-";
   // Force black QR on white background when the API returns a qrserver URL
   const normalizeQrColors = (url?: string | null) =>
     url && url.includes("api.qrserver.com")
@@ -211,7 +211,7 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
       : url;
   const qrCodeUrl =
     normalizeQrColors(data?.qr_code_url) ??
-    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passId}|${otp}`)}&color=000000&bgcolor=ffffff`;
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${passNumber}|${otp}`)}&color=000000&bgcolor=ffffff`;
 
   // Prefer consent HTML from API; no local fallback
   const apiConsentHtml = data?.visitor_consent_form?.description ?? null;
@@ -362,13 +362,8 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
             </div>
 
             <div>
-              <div className="text-xs text-gray-500">Visitor Email ID:</div>
-              <div className="font-medium text-[12px]">{email}</div>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Visitor Pass ID:</div>
-              <div className="font-medium text-[12px]">{passId}</div>
+              <div className="text-xs text-gray-500">Pass Number:</div>
+              <div className="font-medium text-[12px]">{passNumber}</div>
             </div>
 
             <div>
@@ -414,6 +409,11 @@ const VisitorPassWeb: React.FC<VisitorPassProps> = ({
             <div>
               <div className="text-xs text-gray-500">Location To:</div>
               <div className="font-medium text-[12px]">{locationTo}</div>
+            </div>
+
+            <div className="col-span-2">
+              <div className="text-xs text-gray-500">Notes:</div>
+              <div className="font-medium text-[12px] break-words">{notes}</div>
             </div>
           </div>
 
