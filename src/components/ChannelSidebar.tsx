@@ -118,12 +118,12 @@ const ChannelSidebar = () => {
                 if (conversationIndex !== -1) {
                     // Move conversation to top and mark as unread
                     const reorderedConversations = [...prevConversations];
-                    const conversation = reorderedConversations[conversationIndex];
 
-                    // Mark as unread if not already
-                    if (conversation.last_message_read !== false) {
-                        conversation.last_message_read = false;
-                    }
+                    // Mark as unread (copy - items from the Redux thunk are frozen)
+                    reorderedConversations[conversationIndex] = {
+                        ...reorderedConversations[conversationIndex],
+                        last_message_read: false,
+                    };
 
                     // Only move if not already at top
                     if (conversationIndex !== 0) {
@@ -148,12 +148,12 @@ const ChannelSidebar = () => {
                 if (groupIndex !== -1) {
                     // Move group to top and mark as unread
                     const reorderedGroups = [...prevGroups];
-                    const group = reorderedGroups[groupIndex];
 
-                    // Mark as unread if not already
-                    if (group.last_message_read !== false) {
-                        group.last_message_read = false;
-                    }
+                    // Mark as unread (copy - items from the Redux thunk are frozen)
+                    reorderedGroups[groupIndex] = {
+                        ...reorderedGroups[groupIndex],
+                        last_message_read: false,
+                    };
 
                     // Only move if not already at top
                     if (groupIndex !== 0) {
