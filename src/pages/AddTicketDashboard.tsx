@@ -921,38 +921,6 @@ export const AddTicketDashboard = () => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Handle area change with API call to fetch floors (Third level)
-  const handleAreaChange = async (areaId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      area: areaId,
-      floor: '',
-      room: ''
-    }));
-
-    // Clear dependent dropdowns
-    setFilteredFloors([]);
-    setFilteredRooms([]);
-
-    if (areaId) {
-      // Call floors API with area_id parameter
-      try {
-        setLoadingFloors(true);
-        const url = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
-        const options = getAuthenticatedFetchOptions('GET');
-        const response = await fetch(url, options);
-        if (response.ok) {
-          const data = await response.json();
-          setFilteredFloors(data.floors || []);
-        }
-      } catch (error) {
-        console.error('Error loading floors for area:', error);
-      } finally {
-        setLoadingFloors(false);
-      }
-    }
-  };
-
   // Handle building change with API call to fetch wings (First level)
   const handleBuildingChange = async (buildingId: string) => {
     setFormData(prev => ({
@@ -989,7 +957,7 @@ export const AddTicketDashboard = () => {
     }
   };
 
-  // Handle wing change with API call to fetch areas (Second level)
+  // Handle wing change with API call to fetch floors (Second level)
   const handleWingChange = async (wingId: string) => {
     setFormData(prev => ({
       ...prev,
@@ -1005,40 +973,68 @@ export const AddTicketDashboard = () => {
     setFilteredRooms([]);
 
     if (wingId) {
-      // Call areas API with wing_id parameter
       try {
-        setLoadingAreas(true);
-        const url = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+        setLoadingFloors(true);
+        const url = getFullUrl(`/pms/floors.json?wing_id=${wingId}`);
         const options = getAuthenticatedFetchOptions('GET');
         const response = await fetch(url, options);
         if (response.ok) {
           const data = await response.json();
-          setFilteredAreas(data.areas || []);
+          setFilteredFloors(Array.isArray(data) ? data : (data.floors || []));
         }
       } catch (error) {
-        console.error('Error loading areas for wing:', error);
+        console.error('Error loading floors for wing:', error);
+      } finally {
+        setLoadingFloors(false);
+      }
+    }
+  };
+
+  // Handle floor change with API call to fetch areas mapped to the floor
+  const handleFloorChange = async (floorId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      floor: floorId,
+      area: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredAreas([]);
+    setFilteredRooms([]);
+
+    if (floorId) {
+      try {
+        setLoadingAreas(true);
+        const url = getFullUrl(`/pms/areas.json?floor_id=${floorId}`);
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredAreas(Array.isArray(data) ? data : (data.areas || []));
+        }
+      } catch (error) {
+        console.error('Error loading areas for floor:', error);
       } finally {
         setLoadingAreas(false);
       }
     }
   };
 
-  // Handle floor change with API call to fetch rooms
-  const handleFloorChange = async (floorId: string) => {
+  // Handle area change with API call to fetch rooms mapped to the area
+  const handleAreaChange = async (areaId: string) => {
     setFormData(prev => ({
       ...prev,
-      floor: floorId,
+      area: areaId,
       room: ''
     }));
 
-    // Clear dependent dropdown
     setFilteredRooms([]);
 
-    if (floorId) {
-      // Call rooms API with floor_id parameter
+    if (areaId) {
       try {
         setLoadingRooms(true);
-        const url = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+        const url = getFullUrl(`/pms/rooms.json?area_id=${areaId}`);
         const options = getAuthenticatedFetchOptions('GET');
         const response = await fetch(url, options);
         if (response.ok) {
@@ -1046,7 +1042,7 @@ export const AddTicketDashboard = () => {
           setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
         }
       } catch (error) {
-        console.error('Error loading rooms for floor:', error);
+        console.error('Error loading rooms for area:', error);
       } finally {
         setLoadingRooms(false);
       }
@@ -1823,33 +1819,6 @@ export const AddTicketDashboard = () => {
                 </MuiSelect>
               </FormControl>
 
-              {/* Area */}
-              <FormControl
-                fullWidth
-                variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Area</InputLabel>
-                <MuiSelect
-                  value={formData.area}
-                  onChange={(e) => handleAreaChange(e.target.value)}
-                  label="Area"
-                  notched
-                  displayEmpty
-                  disabled={loadingAreas || !formData.wing}
-                >
-                  <MenuItem value="">
-                    {loadingAreas ? "Loading..." :
-                      !formData.wing ? "Select Wing First" : "Select Area"}
-                  </MenuItem>
-                  {filteredAreas.map((area) => (
-                    <MenuItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
               {/* Floor */}
               <FormControl
                 fullWidth
@@ -1863,15 +1832,42 @@ export const AddTicketDashboard = () => {
                   label="Floor"
                   notched
                   displayEmpty
-                  disabled={loadingFloors || !formData.area}
+                  disabled={loadingFloors || !formData.wing}
                 >
                   <MenuItem value="">
                     {loadingFloors ? "Loading..." :
-                      !formData.area ? "Select Area First" : "Select Floor"}
+                      !formData.wing ? "Select Wing First" : "Select Floor"}
                   </MenuItem>
                   {filteredFloors.map((floor) => (
                     <MenuItem key={floor.id} value={floor.id.toString()}>
                       {floor.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Area */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Area</InputLabel>
+                <MuiSelect
+                  value={formData.area}
+                  onChange={(e) => handleAreaChange(e.target.value)}
+                  label="Area"
+                  notched
+                  displayEmpty
+                  disabled={loadingAreas || !formData.floor}
+                >
+                  <MenuItem value="">
+                    {loadingAreas ? "Loading..." :
+                      !formData.floor ? "Select Floor First" : "Select Area"}
+                  </MenuItem>
+                  {filteredAreas.map((area) => (
+                    <MenuItem key={area.id} value={area.id.toString()}>
+                      {area.name}
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -1890,11 +1886,11 @@ export const AddTicketDashboard = () => {
                   label="Room"
                   notched
                   displayEmpty
-                  disabled={loadingRooms || !formData.floor}
+                  disabled={loadingRooms || !formData.area}
                 >
                   <MenuItem value="">
                     {loadingRooms ? "Loading..." :
-                      !formData.floor ? "Select Floor First" : "Select Room"}
+                      !formData.area ? "Select Area First" : "Select Room"}
                   </MenuItem>
                   {filteredRooms.map((room) => (
                     <MenuItem key={room.id} value={room.id.toString()}>
