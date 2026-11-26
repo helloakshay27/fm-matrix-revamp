@@ -736,7 +736,7 @@ const GroupConversation = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowGroupDetails(false)}
-                  className="absolute top-3 right-3 z-10 h-auto w-auto p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 [&_svg]:text-current"
+                  className="absolute top-3 right-3 z-10 h-auto w-auto sm:h-auto sm:w-auto p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 [&_svg]:text-current"
                   title="Close"
                 >
                   <X size={20} />
@@ -786,7 +786,7 @@ const GroupConversation = () => {
                               size="sm"
                               onClick={cancelRename}
                               disabled={savingName}
-                              className="h-8 px-3.5"
+                              className="h-8 sm:h-8 px-3.5"
                             >
                               Cancel
                             </Button>
@@ -798,7 +798,7 @@ const GroupConversation = () => {
                                 !renameValue.trim() ||
                                 renameValue.trim() === conversation?.name
                               }
-                              className="h-8 px-3.5"
+                              className="h-8 sm:h-8 px-3.5"
                             >
                               {savingName && (
                                 <Loader2 size={14} className="animate-spin" />
@@ -819,7 +819,7 @@ const GroupConversation = () => {
                               variant="ghost"
                               size="icon"
                               onClick={startRename}
-                              className="h-auto w-auto p-1.5 rounded-md text-gray-400 hover:text-brand hover:bg-brand-light flex-shrink-0 [&_svg]:text-current"
+                              className="h-auto w-auto sm:h-auto sm:w-auto p-1.5 rounded-md text-gray-400 hover:text-brand hover:bg-brand-light flex-shrink-0 [&_svg]:text-current"
                               title="Rename group"
                             >
                               <Pencil size={15} />
@@ -872,7 +872,7 @@ const GroupConversation = () => {
                           <Button
                             variant="ghost"
                             onClick={openAddMembers}
-                            className="w-full h-auto justify-start gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-gray-50 tracking-normal [&_svg]:text-current"
+                            className="w-full h-auto sm:h-auto justify-start gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-gray-50 tracking-normal [&_svg]:text-current"
                           >
                             <span className="w-10 h-10 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0">
                               <UserPlus size={18} />
@@ -947,7 +947,7 @@ const GroupConversation = () => {
                                     size="sm"
                                     onClick={() => setConfirmRemoveId(null)}
                                     disabled={isRemoving}
-                                    className="h-7 px-2.5 text-xs"
+                                    className="h-7 sm:h-7 px-2.5 text-xs"
                                   >
                                     Cancel
                                   </Button>
@@ -956,7 +956,7 @@ const GroupConversation = () => {
                                     size="sm"
                                     onClick={() => handleRemoveMember(user.id)}
                                     disabled={isRemoving}
-                                    className="h-7 px-2.5 gap-1 text-xs"
+                                    className="h-7 sm:h-7 px-2.5 gap-1 text-xs"
                                   >
                                     {isRemoving && (
                                       <Loader2
@@ -973,7 +973,7 @@ const GroupConversation = () => {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => setConfirmRemoveId(user.id)}
-                                    className="h-auto w-auto p-2 rounded-lg text-gray-300 group-hover:text-gray-500 hover:!text-brand-error hover:bg-brand-error-bg focus:text-brand-error flex-shrink-0 [&_svg]:text-current"
+                                    className="h-auto w-auto sm:h-auto sm:w-auto p-2 rounded-lg text-gray-300 group-hover:text-gray-500 hover:!text-brand-error hover:bg-brand-error-bg focus:text-brand-error flex-shrink-0 [&_svg]:text-current"
                                     title="Remove member"
                                   >
                                     <UserMinus size={16} />
@@ -1002,7 +1002,7 @@ const GroupConversation = () => {
                             size="sm"
                             onClick={() => setConfirmLeave(false)}
                             disabled={leavingGroup}
-                            className="h-8 px-3"
+                            className="h-9 sm:h-9 min-w-[84px] px-4 rounded-lg text-sm"
                           >
                             Cancel
                           </Button>
@@ -1010,7 +1010,7 @@ const GroupConversation = () => {
                             size="sm"
                             onClick={handleLeaveGroup}
                             disabled={leavingGroup}
-                            className="h-8 px-3"
+                            className="h-9 sm:h-9 min-w-[84px] px-4 rounded-lg text-sm"
                           >
                             {leavingGroup && (
                               <Loader2 size={14} className="animate-spin" />
@@ -1040,7 +1040,7 @@ const GroupConversation = () => {
                     variant="ghost"
                     size="icon"
                     onClick={closeAddMembers}
-                    className="h-auto w-auto p-1.5 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-100 [&_svg]:text-current"
+                    className="h-auto w-auto sm:h-auto sm:w-auto p-1.5 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-100 [&_svg]:text-current"
                     title="Back"
                   >
                     <ArrowLeft size={20} />
@@ -1057,7 +1057,7 @@ const GroupConversation = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowGroupDetails(false)}
-                    className="h-auto w-auto p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 [&_svg]:text-current"
+                    className="h-auto w-auto sm:h-auto sm:w-auto p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 [&_svg]:text-current"
                     title="Close"
                   >
                     <X size={20} />
@@ -1088,7 +1088,7 @@ const GroupConversation = () => {
                         return (
                           <span
                             key={uid}
-                            className="flex items-center gap-1 pl-1 pr-1 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800"
+                            className="inline-flex items-center gap-1.5 pl-1 pr-1.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800"
                           >
                             <span
                               className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold ${getAvatarStyle(u?.full_name)}`}
@@ -1102,7 +1102,7 @@ const GroupConversation = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => toggleNewMember(uid)}
-                              className="h-auto w-auto p-0.5 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-200 [&_svg]:text-current"
+                              className="h-auto w-auto sm:h-auto sm:w-auto p-0.5 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-200 [&_svg]:text-current"
                               title="Remove"
                             >
                               <X size={12} />
@@ -1156,7 +1156,7 @@ const GroupConversation = () => {
                               variant="ghost"
                               type="button"
                               onClick={() => toggleNewMember(Number(u.id))}
-                              className={`w-full h-auto justify-start gap-3 px-3 py-2.5 rounded-xl text-left whitespace-normal tracking-normal [&_svg]:text-current ${checked ? "bg-brand-selected" : "hover:bg-gray-50"}`}
+                              className={`w-full h-auto sm:h-auto justify-start gap-3 px-3 py-2.5 rounded-xl text-left whitespace-normal tracking-normal [&_svg]:text-current ${checked ? "bg-brand-selected" : "hover:bg-gray-50"}`}
                             >
                               <div
                                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${getAvatarStyle(u.full_name)}`}
@@ -1199,6 +1199,7 @@ const GroupConversation = () => {
                       size="sm"
                       onClick={closeAddMembers}
                       disabled={addingMembers}
+                      className="h-9 sm:h-9 min-w-[84px] px-4 rounded-lg text-sm"
                     >
                       Cancel
                     </Button>
@@ -1208,6 +1209,7 @@ const GroupConversation = () => {
                       disabled={
                         addingMembers || selectedNewMembers.length === 0
                       }
+                      className="h-9 sm:h-9 min-w-[84px] px-4 rounded-lg text-sm"
                     >
                       {addingMembers && (
                         <Loader2 size={14} className="animate-spin" />
@@ -1292,7 +1294,7 @@ const GroupConversation = () => {
                     variant="ghost"
                     size="icon"
                     onClick={cancelReply}
-                    className="ml-2 h-auto w-auto p-0 text-gray-400 hover:text-gray-600 [&_svg]:text-current"
+                    className="ml-2 h-auto w-auto sm:h-auto sm:w-auto p-0 text-gray-400 hover:text-gray-600 [&_svg]:text-current"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -1326,7 +1328,7 @@ const GroupConversation = () => {
                           variant="ghost"
                           size="icon"
                           type="button"
-                          className="absolute top-1 right-1 h-auto w-auto bg-white rounded-full shadow p-[2px] text-gray-600 [&_svg]:text-current"
+                          className="absolute top-1 right-1 h-auto w-auto sm:h-auto sm:w-auto bg-white rounded-full shadow p-[2px] text-gray-600 [&_svg]:text-current"
                           onClick={() => removeAttachment(index)}
                         >
                           <X className="w-3 h-3" />
@@ -1367,7 +1369,7 @@ const GroupConversation = () => {
                             key={index}
                             variant="ghost"
                             type="button"
-                            className="h-auto w-auto p-1 text-xl font-normal rounded hover:bg-gray-100"
+                            className="h-auto w-auto sm:h-auto sm:w-auto p-1 text-xl font-normal rounded hover:bg-gray-100"
                             onClick={() => handleEmojiClick(emoji)}
                           >
                             {emoji}
@@ -1393,7 +1395,7 @@ const GroupConversation = () => {
             type="button"
             onClick={sendMessages}
             disabled={input.trim() === "" && attachments.length === 0}
-            className="h-auto w-auto p-0 text-xl text-[#C72030] disabled:text-gray-300 disabled:opacity-100 [&_svg]:text-current"
+            className="h-auto w-auto sm:h-auto sm:w-auto p-0 text-xl text-[#C72030] disabled:text-gray-300 disabled:opacity-100 [&_svg]:text-current"
           >
             <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
               <path

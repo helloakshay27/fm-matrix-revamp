@@ -399,10 +399,8 @@ const ChannelSidebar = () => {
                   <ContextMenu key={conversation.id}>
                     <ContextMenuTrigger asChild>
                       <div
-                        className={`text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded flex items-center justify-between gap-2 ${
-                          isActive
-                            ? "text-red-600 font-semibold"
-                            : "hover:text-red-600"
+                        className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded flex items-center justify-between gap-2 ${
+                          isActive ? "text-red-600 font-semibold" : ""
                         }`}
                         onClick={() => {
                           setConversations((prev) =>
@@ -451,7 +449,7 @@ const ChannelSidebar = () => {
                 );
               })
             ) : (
-              <div className="text-sm text-gray-700 cursor-pointer hover:text-[#c72030] py-1 px-2 rounded">
+              <div className="text-sm text-gray-700 py-1 px-2 rounded">
                 No conversations found
               </div>
             )}
