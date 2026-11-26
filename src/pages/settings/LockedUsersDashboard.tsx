@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -23,8 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/StatsCard";
-import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
-import { useDebounce } from "@/hooks/useDebounce";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 interface LockedUser {
   id: number;
@@ -64,7 +63,9 @@ export const LockedUsersDashboard = () => {
   const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 500);
+  const [totalLockedUsers, setTotalLockedUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   // Tracks the latest request so out-of-order responses (fast typing) are ignored
   const latestRequestRef = useRef(0);
   const [selectedUser, setSelectedUser] = useState<LockedUser | null>(null);
@@ -73,49 +74,84 @@ export const LockedUsersDashboard = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkUnlocking, setBulkUnlocking] = useState(false);
   const [bulkUnlockDialogOpen, setBulkUnlockDialogOpen] = useState(false);
-  const [pagination, setPagination] = useState<PaginationData>({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
-  });
+
+  const filteredLockedUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return lockedUsers;
+
+    const queryDigits = query.replace(/\D/g, "");
+    return lockedUsers.filter((user) => {
+      const phoneDigits = `${user.country_code || ""}${user.mobile || ""}`.replace(/\D/g, "");
+      const searchableValues = [
+        user.id,
+        user.firstname,
+        user.lastname,
+        `${user.firstname} ${user.lastname}`,
+        user.email,
+        user.mobile,
+        user.country_code,
+        phoneDigits,
+      ];
+
+      return searchableValues.some((value) =>
+        String(value ?? "").toLowerCase().includes(query)
+      ) || (queryDigits.length > 0 && phoneDigits.includes(queryDigits));
+    });
+  }, [lockedUsers, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLockedUsers.length / pageSize));
+  const paginatedLockedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredLockedUsers.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredLockedUsers]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Fetch locked users
-  const fetchLockedUsers = async (page: number = 1, search: string = debouncedSearchTerm) => {
+  const fetchLockedUsers = useCallback(async () => {
     const requestId = ++latestRequestRef.current;
     setLoading(true);
     try {
       const baseUrl = location.pathname.startsWith("/master")
         ? "/pms/users/locked_users.json?selected_site_wise=true"
         : "/pms/users/locked_users.json";
-      let url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
-      if (search) {
-        url += `&q[email_or_mobile_cont]=${encodeURIComponent(search)}`;
-      }
 
-      const response = await fetch(
-        getFullUrl(url),
-        {
+      const fetchPage = async (page: number): Promise<LockedUsersResponse> => {
+        const url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}page=${page}`;
+        const response = await fetch(getFullUrl(url), {
           method: "GET",
           headers: {
             Authorization: getAuthHeader(),
             "Content-Type": "application/json",
           },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+      };
+
+      const firstPage = await fetchPage(1);
+      const allLockedUsers = firstPage.locked_users || [];
+      const totalPages = firstPage.pagination?.total_pages || 1;
+
+      for (let page = 2; page <= totalPages; page++) {
+        if (requestId !== latestRequestRef.current) return;
+        const data = await fetchPage(page);
+        allLockedUsers.push(...(data.locked_users || []));
       }
 
-      const data: LockedUsersResponse = await response.json();
       if (requestId !== latestRequestRef.current) return;
-      setLockedUsers(data.locked_users || []);
+      setLockedUsers(allLockedUsers);
+      setTotalLockedUsers(firstPage.pagination?.total_count ?? allLockedUsers.length);
 
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
-
-      if (data.locked_users?.length === 0 && !search) {
+      if (allLockedUsers.length === 0) {
         toast.info("No locked users found");
       }
     } catch (error: any) {
@@ -124,21 +160,19 @@ export const LockedUsersDashboard = () => {
       toast.error(
         error.message || "Failed to load locked users"
       );
-      // Set empty arrays on error
       setLockedUsers([]);
+      setTotalLockedUsers(0);
     } finally {
       if (requestId === latestRequestRef.current) {
         setLoading(false);
       }
     }
-  };
+  }, []);
 
-  // Load data on mount and re-fetch (from page 1) whenever the debounced search changes
+  // Load every page so the client-side search can match the full locked-user list.
   useEffect(() => {
-    setSelectedIds(new Set());
-    setPagination((prev) => ({ ...prev, current_page: 1 }));
-    fetchLockedUsers(1, debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    fetchLockedUsers();
+  }, [fetchLockedUsers]);
 
   // Handle unlock user
   const handleUnlockUser = async () => {
@@ -168,6 +202,7 @@ export const LockedUsersDashboard = () => {
 
       // Remove unlocked user from the list
       setLockedUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      setTotalLockedUsers((prev) => Math.max(0, prev - 1));
 
       setUnlockDialogOpen(false);
       setSelectedUser(null);
@@ -216,8 +251,22 @@ export const LockedUsersDashboard = () => {
     if (!checked) {
       setSelectedIds(new Set());
     } else {
-      const allIds = new Set(lockedUsers.map((user) => user.id));
-      setSelectedIds(allIds);
+      setSelectedIds((previous) => new Set([
+        ...previous,
+        ...paginatedLockedUsers.map((user) => user.id),
+      ]));
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
@@ -256,6 +305,7 @@ export const LockedUsersDashboard = () => {
       setLockedUsers((prev) =>
         prev.filter((u) => !selectedIdsArray.includes(u.id))
       );
+      setTotalLockedUsers((prev) => Math.max(0, prev - selectedIdsArray.length));
 
       // Clear selections
       setSelectedIds(new Set());
@@ -265,20 +315,6 @@ export const LockedUsersDashboard = () => {
       toast.error(error.message || "Failed to unlock user accounts");
     } finally {
       setBulkUnlocking(false);
-    }
-  };
-
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchLockedUsers(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
     }
   };
 
@@ -367,13 +403,13 @@ export const LockedUsersDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Locked Users"
-          value={pagination.total_count}
+          value={totalLockedUsers}
           icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
         />
 
         <StatsCard
           title="Filtered Results"
-          value={lockedUsers.length}
+          value={filteredLockedUsers.length}
           icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
         />
 
@@ -384,9 +420,9 @@ export const LockedUsersDashboard = () => {
         />
       </div>
 
-      {/* Table — search and paging are both server-side */}
+      {/* All pages are loaded so search covers every locked user. */}
       <EnhancedTable
-        data={lockedUsers}
+        data={paginatedLockedUsers}
         columns={lockedUserColumns}
         renderCell={renderCell}
         getItemId={(user) => String(user.id)}
@@ -397,14 +433,15 @@ export const LockedUsersDashboard = () => {
         onSelectItem={handleCheckboxChange}
         enableSearch={true}
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         disableClientSearch={true}
-        searchPlaceholder="Search by email or mobile..."
+        searchPlaceholder="Search by name, email or phone..."
         emptyMessage={searchTerm ? "No matching users found" : "No locked users"}
         loading={loading}
         pagination={true}
-        currentPage={pagination.current_page}
-        totalPages={pagination.total_pages}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        totalPages={totalPages}
         onPageChange={handlePageChange}
         leftActions={
           selectedIds.size > 0 ? (
@@ -421,8 +458,9 @@ export const LockedUsersDashboard = () => {
         rightActions={
           <Button
             onClick={() => {
-              setPagination((prev) => ({ ...prev, current_page: 1 }));
-              fetchLockedUsers(1);
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+              fetchLockedUsers();
             }}
             disabled={loading}
             variant="ghost"
