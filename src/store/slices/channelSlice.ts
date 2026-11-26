@@ -358,6 +358,29 @@ export const removeUserFromGroup = createAsyncThunk(
     }
 );
 
+export const deleteConversation = createAsyncThunk(
+    "deleteConversation",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: string | number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/conversations/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to delete chat";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const fetchChannelTaskDetails = createAsyncThunk(
     "fetchChannelTaskDetails",
     async (
