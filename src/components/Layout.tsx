@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchAllowedSites } from "@/store/slices/siteSlice";
 import { Sidebar } from "./Sidebar";
 import { DynamicHeader } from "./DynamicHeader";
 import { Header } from "./Header";
@@ -142,6 +143,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     userEmail === "besis69240@azeriom.com" ||
     userEmail === "megipow156@aixind.com" ||
     userEmail === "jevosak839@cimario.com";
+
+  // On this branch the employee shell (EmployeeHeader/TopNavigationStatic) renders
+  // whenever `isEmployeeUser && isLocalhost` (see the header/sidebar branches below).
+  const isEmployeeLayout = isEmployeeUser && isLocalhost;
+
+  // Employee view renders EmployeeHeader/TopNavigationStatic instead of Header, so the
+  // admin Header's allowed_sites call never runs. Fetch it here so `selectedSiteId`
+  // (written by the siteSlice fulfilled reducer) and `selectedSiteName` are stored
+  // in localStorage with the same keys as the admin view.
+  const dispatch = useDispatch<AppDispatch>();
+  const employeeUserId = currentUser?.id;
+
+  useEffect(() => {
+    if (isEmployeeLayout && !isEmbedded && employeeUserId) {
+      dispatch(fetchAllowedSites(employeeUserId));
+    }
+  }, [isEmployeeLayout, isEmbedded, employeeUserId, dispatch]);
+
+  useEffect(() => {
+    if (isEmployeeLayout && selectedSite) {
+      localStorage.setItem("selectedSiteName", selectedSite.name);
+      if (selectedSite.id) {
+        localStorage.setItem("selectedSiteId", selectedSite.id.toString());
+      }
+    }
+  }, [isEmployeeLayout, selectedSite]);
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
