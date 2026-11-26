@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -35,8 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/StatsCard";
-import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
-import { useDebounce } from "@/hooks/useDebounce";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 interface LockedUser {
   id: number;
@@ -67,8 +66,10 @@ export const LockedUsersDashboard = () => {
   const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 500);
-  // Tracks the latest request so out-of-order responses (fast typing) are ignored
+  const [totalLockedUsers, setTotalLockedUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  // Ignore stale responses if a refresh starts before the previous request finishes.
   const latestRequestRef = useRef(0);
   const [selectedUser, setSelectedUser] = useState<LockedUser | null>(null);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
@@ -76,49 +77,87 @@ export const LockedUsersDashboard = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkUnlocking, setBulkUnlocking] = useState(false);
   const [bulkUnlockDialogOpen, setBulkUnlockDialogOpen] = useState(false);
-  const [pagination, setPagination] = useState<PaginationData>({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
-  });
+
+  const filteredLockedUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return lockedUsers;
+
+    const queryDigits = query.replace(/\D/g, "");
+    return lockedUsers.filter((user) => {
+      const phoneDigits = `${user.country_code || ""}${user.mobile || ""}`.replace(/\D/g, "");
+      const searchableValues = [
+        user.id,
+        user.firstname,
+        user.lastname,
+        `${user.firstname} ${user.lastname}`,
+        user.email,
+        user.mobile,
+        user.country_code,
+        phoneDigits,
+      ];
+
+      return searchableValues.some((value) =>
+        String(value ?? "").toLowerCase().includes(query)
+      ) || (queryDigits.length > 0 && phoneDigits.includes(queryDigits));
+    });
+  }, [lockedUsers, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLockedUsers.length / pageSize));
+  const paginatedLockedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredLockedUsers.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredLockedUsers]);
+  const currentPageAllSelected =
+    paginatedLockedUsers.length > 0 &&
+    paginatedLockedUsers.every((user) => selectedIds.has(user.id));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Fetch locked users
-  const fetchLockedUsers = async (page: number = 1, search: string = debouncedSearchTerm) => {
+  const fetchLockedUsers = useCallback(async () => {
     const requestId = ++latestRequestRef.current;
     setLoading(true);
     try {
       const baseUrl = location.pathname.startsWith("/master")
         ? "/pms/users/locked_users.json?selected_site_wise=true"
         : "/pms/users/locked_users.json";
-      let url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
-      if (search) {
-        url += `&q[email_or_mobile_cont]=${encodeURIComponent(search)}`;
-      }
 
-      const response = await fetch(
-        getFullUrl(url),
-        {
+      const fetchPage = async (page: number): Promise<LockedUsersResponse> => {
+        const url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}page=${page}`;
+        const response = await fetch(getFullUrl(url), {
           method: "GET",
           headers: {
             Authorization: getAuthHeader(),
             "Content-Type": "application/json",
           },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+      };
+
+      const firstPage = await fetchPage(1);
+      const allLockedUsers = firstPage.locked_users || [];
+      const totalPages = firstPage.pagination?.total_pages || 1;
+
+      for (let page = 2; page <= totalPages; page++) {
+        if (requestId !== latestRequestRef.current) return;
+        const data = await fetchPage(page);
+        allLockedUsers.push(...(data.locked_users || []));
       }
 
-      const data: LockedUsersResponse = await response.json();
       if (requestId !== latestRequestRef.current) return;
-      setLockedUsers(data.locked_users || []);
+      setLockedUsers(allLockedUsers);
+      setTotalLockedUsers(firstPage.pagination?.total_count ?? allLockedUsers.length);
 
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
-
-      if (data.locked_users?.length === 0 && !search) {
+      if (allLockedUsers.length === 0) {
         toast.info("No locked users found");
       }
     } catch (error: any) {
@@ -127,21 +166,19 @@ export const LockedUsersDashboard = () => {
       toast.error(
         error.message || "Failed to load locked users"
       );
-      // Set empty arrays on error
       setLockedUsers([]);
+      setTotalLockedUsers(0);
     } finally {
       if (requestId === latestRequestRef.current) {
         setLoading(false);
       }
     }
-  };
+  }, []);
 
-  // Load data on mount and re-fetch (from page 1) whenever the debounced search changes
+  // Load every page so the client-side search can match the full locked-user list.
   useEffect(() => {
-    setSelectedIds(new Set());
-    setPagination((prev) => ({ ...prev, current_page: 1 }));
-    fetchLockedUsers(1, debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    fetchLockedUsers();
+  }, [fetchLockedUsers]);
 
   // Handle unlock user
   const handleUnlockUser = async () => {
@@ -171,6 +208,7 @@ export const LockedUsersDashboard = () => {
 
       // Remove unlocked user from the list
       setLockedUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      setTotalLockedUsers((prev) => Math.max(0, prev - 1));
 
       setUnlockDialogOpen(false);
       setSelectedUser(null);
@@ -214,11 +252,28 @@ export const LockedUsersDashboard = () => {
 
   // Handle select all checkbox
   const handleSelectAll = () => {
-    if (selectedIds.size === lockedUsers.length) {
-      setSelectedIds(new Set());
+    const pageIds = paginatedLockedUsers.map((user) => user.id);
+    if (currentPageAllSelected) {
+      setSelectedIds((previous) => new Set(
+        [...previous].filter((id) => !pageIds.includes(id))
+      ));
     } else {
-      const allIds = new Set(lockedUsers.map((user) => user.id));
-      setSelectedIds(allIds);
+      setSelectedIds((previous) => new Set([
+        ...previous,
+        ...pageIds,
+      ]));
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
@@ -257,6 +312,7 @@ export const LockedUsersDashboard = () => {
       setLockedUsers((prev) =>
         prev.filter((u) => !selectedIdsArray.includes(u.id))
       );
+      setTotalLockedUsers((prev) => Math.max(0, prev - selectedIdsArray.length));
 
       // Clear selections
       setSelectedIds(new Set());
@@ -269,27 +325,11 @@ export const LockedUsersDashboard = () => {
     }
   };
 
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchLockedUsers(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
-  };
-
   const renderPaginationItems = () => {
-    if (!pagination.total_pages || pagination.total_pages <= 0) {
+    if (totalPages <= 0) {
       return null;
     }
     const items = [];
-    const totalPages = pagination.total_pages;
-    const currentPage = pagination.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
@@ -428,8 +468,9 @@ export const LockedUsersDashboard = () => {
           )}
           <Button
             onClick={() => {
-              setPagination((prev) => ({ ...prev, current_page: 1 }));
-              fetchLockedUsers(1);
+              setCurrentPage(1);
+              setSelectedIds(new Set());
+              fetchLockedUsers();
             }}
             disabled={loading}
             variant="ghost"
@@ -445,13 +486,13 @@ export const LockedUsersDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Locked Users"
-          value={pagination.total_count}
+          value={totalLockedUsers}
           icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
         />
 
         <StatsCard
           title="Filtered Results"
-          value={lockedUsers.length}
+          value={filteredLockedUsers.length}
           icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
         />
 
@@ -468,9 +509,9 @@ export const LockedUsersDashboard = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
-              placeholder="Search by email or mobile..."
+              placeholder="Search by name, email or phone..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 h-11"
             />
           </div>
@@ -485,7 +526,7 @@ export const LockedUsersDashboard = () => {
               <Loader2 className="w-5 h-5 animate-spin" />
               <span className="ml-2">Loading ...</span>
             </div>
-          ) : lockedUsers.length === 0 ? (
+          ) : filteredLockedUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <UnlockIcon className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -504,13 +545,14 @@ export const LockedUsersDashboard = () => {
                   <TableRow>
                     <TableHead className="w-12">
                       <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === lockedUsers.length && lockedUsers.length > 0
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                          currentPageAllSelected
                           ? "bg-[#DA7756] border-[#DA7756]"
                           : "border-gray-300 hover:border-gray-400"
-                          }`}
+                        }`}
                         onClick={handleSelectAll}
                       >
-                        {selectedIds.size > 0 && selectedIds.size === lockedUsers.length && (
+                        {currentPageAllSelected && (
                           <Check className="w-4 h-4 text-white" />
                         )}
                       </div>
@@ -524,7 +566,7 @@ export const LockedUsersDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {lockedUsers.map((user) => (
+                  {paginatedLockedUsers.map((user) => (
                     <TableRow key={user.id} className={selectedIds.has(user.id) ? "bg-blue-50" : ""}>
                       <TableCell>
                         <div
@@ -604,25 +646,25 @@ export const LockedUsersDashboard = () => {
         </CardContent>
       </Card>
 
-      <div className="flex justify-center mt-6">
+      {totalPages > 1 && <div className="flex justify-center mt-6">
         <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
             {renderPaginationItems()}
             <PaginationItem>
               <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-      </div>
+      </div>}
 
       {/* Unlock Confirmation Dialog */}
       <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
