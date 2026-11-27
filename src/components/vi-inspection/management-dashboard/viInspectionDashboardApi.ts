@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { getMsafeAuthHeader, getViApiUrl, getViCompanyId, msafeFetch } from "@/features/msafe-dashboard/freeLink/msafeApi";
 
-// Inspection management dashboard APIs (GET /vi_inspection_dashboard/*). Base URL and token come from
-// the logged-in session (getFullUrl / getAuthHeader), company id from localStorage — as on the
-// M-Safe dashboard.
+// Inspection management dashboard APIs (GET /vi_inspection_dashboard/*). Base URL, token and company come from
+// the logged-in session, or from external login on an `?org_id=` link (see msafeApi).
 
 export interface FilterOption {
   id: string;
@@ -76,7 +75,7 @@ export interface ClosureProgress {
   }[];
 }
 
-const companyId = () => localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
+const companyId = getViCompanyId;
 
 const toApiDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
@@ -101,8 +100,8 @@ async function fetchDashboard<T>(endpoint: string, extra: Record<string, string>
   const params = new URLSearchParams(extra);
   const company = companyId();
   if (company) params.set("company_id", company);
-  const response = await fetch(getFullUrl(`/vi_inspection_dashboard/${endpoint}?${params.toString()}`), {
-    headers: { Authorization: getAuthHeader() },
+  const response = await msafeFetch(getViApiUrl(`/vi_inspection_dashboard/${endpoint}?${params.toString()}`), {
+    headers: { Authorization: getMsafeAuthHeader() },
     signal,
   });
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);

@@ -17,6 +17,7 @@ import { ProgressRows } from '../components/ProgressRows';
 import { C } from '../data/constants';
 import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
+import { getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from '../freeLink/msafeApi';
 
 type ClusterRow = { name: string; n: number };
 type Slice = { name: string; value: number; color: string };
@@ -24,12 +25,6 @@ type RecentVisit = { name: string; func: string; cluster: string; area: string; 
 type ProgressRow = { label: string; pct: number; val: string; color: string };
 
 const SLICE_PALETTE = [C.sage, C.terra, C.blue, C.teal, C.warn, C.lav, C.err, C.ok, '#B4A38A'];
-
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
@@ -50,15 +45,14 @@ async function fetchMsafeSmtJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_smt_visit_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

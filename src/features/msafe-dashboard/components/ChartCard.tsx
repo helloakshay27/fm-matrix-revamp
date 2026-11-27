@@ -7,6 +7,7 @@ import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { ChartCardLabelContext } from '../context/ChartCardLabelContext';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import type { Persona } from '../data/constants';
+import { getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from '../freeLink/msafeApi';
 
 type Props = {
   title: string;
@@ -48,12 +49,6 @@ function downloadExcel(label: string, rows: Record<string, unknown>[]) {
   XLSX.writeFile(workbook, filename);
 }
 
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
-
 function buildFilterParams(persona: Persona, f: AppliedFilters): Record<string, string> {
   const params: Record<string, string> = {};
   if (f.clusterIds.length > 0) params.cluster_id = f.clusterIds.join(',');
@@ -73,9 +68,8 @@ async function downloadReport(
   appliedFilters: AppliedFilters,
   excludeDateRange?: boolean,
 ): Promise<void> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const filterParams = buildFilterParams(persona, appliedFilters);
   if (excludeDateRange) {
     delete filterParams.from_date;
@@ -90,7 +84,7 @@ async function downloadReport(
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { headers });
+  const res = await msafeFetch(url, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
 

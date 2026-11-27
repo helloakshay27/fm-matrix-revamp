@@ -17,7 +17,16 @@ import { LmcSection } from './sections/LmcSection';
 import { SmtSection } from './sections/SmtSection';
 import { HeatmapSection } from './sections/HeatmapSection';
 import { MyDashboardSection } from './sections/MyDashboardSection';
-import { Shield } from 'lucide-react';
+import { AlertTriangle, ClipboardCheck, ClipboardList, Shield } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+// Other Vi safety dashboards opened from the M-Safe module bar. They use the same session (login
+// or the external sign-in of an `?org_id=` link), so no separate sign-in is needed.
+const VI_DASHBOARD_LINKS = [
+  { label: 'Audit', path: '/vi-audit/management-dashboard', Icon: ClipboardCheck },
+  { label: 'Incident', path: '/vi-incident/management-dashboard', Icon: AlertTriangle },
+  { label: 'Inspection', path: '/vi-inspection/management-dashboard', Icon: ClipboardList },
+];
 
 const SECTION_OPTIONS: { key: Exclude<AccordionKey, null>; label: string }[] = [
   { key: 'users', label: 'Employee Data' },
@@ -29,6 +38,10 @@ const SECTION_OPTIONS: { key: Exclude<AccordionKey, null>; label: string }[] = [
 
 function MsafeMain() {
   const { module, openAcc, setModule, visibleSections, setSectionVisible } = useMsafeDashboard();
+  const navigate = useNavigate();
+  // org_id travels with the user, so the other dashboards use the same external sign-in.
+  const orgId = new URLSearchParams(useLocation().search).get('org_id');
+  const viSearch = orgId === null ? '' : `?${new URLSearchParams({ org_id: orgId })}`;
 
   const goModule = (key: 'msafe' | 'mydashboard') => {
     setModule(key);
@@ -51,6 +64,12 @@ function MsafeMain() {
           <Shield size={14} />
           M-Safe
         </button>
+        {VI_DASHBOARD_LINKS.map(({ label, path, Icon }) => (
+          <button key={path} type="button" className="mtab" onClick={() => navigate(`${path}${viSearch}`)}>
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
 
         <div className="msafe-section-toggles">
           {SECTION_OPTIONS.map((opt) => (

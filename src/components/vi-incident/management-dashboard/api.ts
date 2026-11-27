@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from "@/features/msafe-dashboard/freeLink/msafeApi";
 import { CHARTS, PALETTE, BRAND, type ChartSpec } from "./data";
 
 /** Live data for the Vi Incident dashboard — `/vi_incident_dashboard/*` endpoints. */
@@ -87,25 +88,17 @@ interface CountResponse {
   data: CountItem[];
 }
 
-function getBaseUrl(): string {
-  const fromLS = localStorage.getItem("baseUrl") || "";
-  const host = fromLS.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  return host ? `https://${host}` : "https://live-api.gophygital.work";
-}
-
-function getCompanyId(): string {
-  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "145";
-}
-
+// Base URL, token and company come from the logged-in session, or from external login on an
+// `?org_id=` link (see msafeApi).
 async function fetchJson<T>(endpoint: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
-  const query = new URLSearchParams({ company_id: getCompanyId() });
+  const query = new URLSearchParams({ company_id: getMsafeCompanyId() });
   Object.entries(params).forEach(([key, value]) => {
     if (value) query.set(key, value);
   });
-  const token = localStorage.getItem("token") || "";
+  const token = getMsafeToken();
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${getBaseUrl()}/vi_incident_dashboard/${endpoint}?${query.toString()}`, { signal, headers });
+  const res = await msafeFetch(`${getMsafeBaseUrl()}/vi_incident_dashboard/${endpoint}?${query.toString()}`, { signal, headers });
   if (!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }
