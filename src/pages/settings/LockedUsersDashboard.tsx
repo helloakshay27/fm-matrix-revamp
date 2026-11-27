@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -23,8 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/StatsCard";
-import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
-import { useDebounce } from "@/hooks/useDebounce";
+import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 interface LockedUser {
   id: number;
@@ -52,18 +53,83 @@ interface LockedUsersResponse {
 }
 
 const lockedUserColumns: ColumnConfig[] = [
-  { key: "user", label: "User", sortable: false, hideable: true, defaultVisible: true, draggable: true },
-  { key: "contact", label: "Contact", sortable: false, hideable: true, defaultVisible: true, draggable: true },
-  { key: "department", label: "Department", sortable: true, hideable: true, defaultVisible: true, draggable: true },
-  { key: "locked_at", label: "Locked At", sortable: true, hideable: true, defaultVisible: true, draggable: true },
-  { key: "failed_attempts", label: "Failed Attempts", sortable: true, hideable: true, defaultVisible: true, draggable: true },
-  { key: "lock_reason", label: "Reason", sortable: true, hideable: true, defaultVisible: true, draggable: true },
+  {
+    key: "user",
+    label: "User",
+    sortable: false,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: "contact",
+    label: "Contact",
+    sortable: false,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: "department",
+    label: "Department",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: "locked_at",
+    label: "Locked At",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: "failed_attempts",
+    label: "Failed Attempts",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
+    key: "lock_reason",
+    label: "Reason",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
 ];
 
 export const LockedUsersDashboard = () => {
   const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [totalLockedUsers, setTotalLockedUsers] = useState(0);
+  // Page lives in the URL (?page=N) so reload / back / shared links keep it
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = Math.max(
+    1,
+    Math.floor(Number(searchParams.get("page"))) || 1
+  );
+  const setCurrentPage = useCallback(
+    (page: number, replace = false) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (page <= 1) next.delete("page");
+          else next.set("page", String(page));
+          return next;
+        },
+        { replace }
+      );
+    },
+    [setSearchParams]
+  );
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   const debouncedSearchTerm = useDebounce(searchTerm.trim(), 500);
   // Tracks the latest request so out-of-order responses (fast typing) are ignored
   const latestRequestRef = useRef(0);
@@ -73,35 +139,28 @@ export const LockedUsersDashboard = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkUnlocking, setBulkUnlocking] = useState(false);
   const [bulkUnlockDialogOpen, setBulkUnlockDialogOpen] = useState(false);
-  const [pagination, setPagination] = useState<PaginationData>({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
-  });
 
-  // Fetch locked users
-  const fetchLockedUsers = async (page: number = 1, search: string = debouncedSearchTerm) => {
+  // Fetch a single page of locked users (search + paging are server-side)
+  const fetchLockedUsers = useCallback(async (page: number, search: string) => {
     const requestId = ++latestRequestRef.current;
     setLoading(true);
     try {
       const baseUrl = location.pathname.startsWith("/master")
         ? "/pms/users/locked_users.json?selected_site_wise=true"
         : "/pms/users/locked_users.json";
-      let url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+
+      let url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}page=${page}`;
       if (search) {
         url += `&q[email_or_mobile_cont]=${encodeURIComponent(search)}`;
       }
 
-      const response = await fetch(
-        getFullUrl(url),
-        {
-          method: "GET",
-          headers: {
-            Authorization: getAuthHeader(),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(getFullUrl(url), {
+        method: "GET",
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -109,36 +168,59 @@ export const LockedUsersDashboard = () => {
 
       const data: LockedUsersResponse = await response.json();
       if (requestId !== latestRequestRef.current) return;
-      setLockedUsers(data.locked_users || []);
 
-      if (data.pagination) {
-        setPagination(data.pagination);
-      }
+      const users = data.locked_users || [];
+      const serverTotalPages = Math.max(1, data.pagination?.total_pages || 1);
+      setLockedUsers(users);
+      setTotalPages(serverTotalPages);
+      setTotalLockedUsers(data.pagination?.total_count ?? users.length);
 
-      if (data.locked_users?.length === 0 && !search) {
+      if (users.length === 0 && !search && page === 1) {
         toast.info("No locked users found");
       }
+      return serverTotalPages;
     } catch (error: any) {
       if (requestId !== latestRequestRef.current) return;
       console.error("Error fetching locked users:", error);
-      toast.error(
-        error.message || "Failed to load locked users"
-      );
-      // Set empty arrays on error
+      toast.error(error.message || "Failed to load locked users");
       setLockedUsers([]);
+      setTotalPages(1);
+      setTotalLockedUsers(0);
     } finally {
       if (requestId === latestRequestRef.current) {
         setLoading(false);
       }
     }
-  };
+  }, []);
 
-  // Load data on mount and re-fetch (from page 1) whenever the debounced search changes
+  // One API call per page; re-fetch when the page or debounced search changes
+  const lastSearchRef = useRef(debouncedSearchTerm);
+  // setSearchParams changes identity on every navigation — keep it out of effect deps
+  const setCurrentPageRef = useRef(setCurrentPage);
+  setCurrentPageRef.current = setCurrentPage;
+
+  const loadPage = useCallback(
+    async (page: number, search: string) => {
+      const serverTotalPages = await fetchLockedUsers(page, search);
+      // ?page= beyond the last page (stale link, or last page emptied by unlock) → snap to last page
+      if (serverTotalPages && page > serverTotalPages) {
+        setCurrentPageRef.current(serverTotalPages, true);
+      }
+    },
+    [fetchLockedUsers]
+  );
+
   useEffect(() => {
-    setSelectedIds(new Set());
-    setPagination((prev) => ({ ...prev, current_page: 1 }));
-    fetchLockedUsers(1, debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    // New search term → jump to page 1 first (that re-runs this effect once)
+    if (lastSearchRef.current !== debouncedSearchTerm) {
+      lastSearchRef.current = debouncedSearchTerm;
+      if (currentPage !== 1) {
+        setCurrentPageRef.current(1, true);
+        return;
+      }
+    }
+    loadPage(currentPage, debouncedSearchTerm);
+  }, [currentPage, debouncedSearchTerm, loadPage]);
 
   // Handle unlock user
   const handleUnlockUser = async () => {
@@ -166,8 +248,8 @@ export const LockedUsersDashboard = () => {
         `Account unlocked successfully for ${selectedUser.firstname} ${selectedUser.lastname}`
       );
 
-      // Remove unlocked user from the list
-      setLockedUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      // Reload the current page so it stays full after the removal
+      loadPage(currentPage, debouncedSearchTerm);
 
       setUnlockDialogOpen(false);
       setSelectedUser(null);
@@ -216,8 +298,21 @@ export const LockedUsersDashboard = () => {
     if (!checked) {
       setSelectedIds(new Set());
     } else {
-      const allIds = new Set(lockedUsers.map((user) => user.id));
-      setSelectedIds(allIds);
+      setSelectedIds(
+        (previous) =>
+          new Set([...previous, ...lockedUsers.map((user) => user.id)])
+      );
+    }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setSelectedIds(new Set());
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
@@ -251,11 +346,8 @@ export const LockedUsersDashboard = () => {
         `Successfully unlocked ${selectedIds.size} user account${selectedIds.size > 1 ? "s" : ""}`
       );
 
-      // Remove unlocked users from the list
-      const selectedIdsArray = Array.from(selectedIds);
-      setLockedUsers((prev) =>
-        prev.filter((u) => !selectedIdsArray.includes(u.id))
-      );
+      // Reload the current page after the bulk removal
+      loadPage(currentPage, debouncedSearchTerm);
 
       // Clear selections
       setSelectedIds(new Set());
@@ -265,20 +357,6 @@ export const LockedUsersDashboard = () => {
       toast.error(error.message || "Failed to unlock user accounts");
     } finally {
       setBulkUnlocking(false);
-    }
-  };
-
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchLockedUsers(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
     }
   };
 
@@ -294,9 +372,7 @@ export const LockedUsersDashboard = () => {
               <div className="font-medium text-gray-900">
                 {user.firstname} {user.lastname}
               </div>
-              <div className="text-sm text-gray-500">
-                ID: {user.id}
-              </div>
+              <div className="text-sm text-gray-500">ID: {user.id}</div>
             </div>
           </div>
         );
@@ -367,24 +443,39 @@ export const LockedUsersDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Locked Users"
-          value={pagination.total_count}
-          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          value={totalLockedUsers}
+          icon={
+            <Settings
+              className="w-6 h-6 sm:w-8 sm:h-8"
+              style={{ color: "#C72030" }}
+            />
+          }
         />
 
         <StatsCard
           title="Filtered Results"
           value={lockedUsers.length}
-          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          icon={
+            <Settings
+              className="w-6 h-6 sm:w-8 sm:h-8"
+              style={{ color: "#C72030" }}
+            />
+          }
         />
 
         <StatsCard
           title="Status"
           value={loading ? "Loading..." : "Active"}
-          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          icon={
+            <Settings
+              className="w-6 h-6 sm:w-8 sm:h-8"
+              style={{ color: "#C72030" }}
+            />
+          }
         />
       </div>
 
-      {/* Table — search and paging are both server-side */}
+      {/* Search and paging are both server-side — one API call per page */}
       <EnhancedTable
         data={lockedUsers}
         columns={lockedUserColumns}
@@ -397,14 +488,17 @@ export const LockedUsersDashboard = () => {
         onSelectItem={handleCheckboxChange}
         enableSearch={true}
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         disableClientSearch={true}
         searchPlaceholder="Search by email or mobile..."
-        emptyMessage={searchTerm ? "No matching users found" : "No locked users"}
+        emptyMessage={
+          searchTerm ? "No matching users found" : "No locked users"
+        }
         loading={loading}
         pagination={true}
-        currentPage={pagination.current_page}
-        totalPages={pagination.total_pages}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        totalPages={totalPages}
         onPageChange={handlePageChange}
         leftActions={
           selectedIds.size > 0 ? (
@@ -421,14 +515,20 @@ export const LockedUsersDashboard = () => {
         rightActions={
           <Button
             onClick={() => {
-              setPagination((prev) => ({ ...prev, current_page: 1 }));
-              fetchLockedUsers(1);
+              setSelectedIds(new Set());
+              if (currentPage === 1) {
+                loadPage(1, debouncedSearchTerm);
+              } else {
+                setCurrentPage(1); // effect fetches page 1
+              }
             }}
             disabled={loading}
             variant="ghost"
             className="fm-button-fix fm-button-brand"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         }
@@ -454,7 +554,9 @@ export const LockedUsersDashboard = () => {
                 <Mail className="w-5 h-5 text-gray-500 mt-0.5" />
                 <div>
                   <div className="text-sm font-medium text-gray-700">Email</div>
-                  <div className="text-sm text-gray-600">{selectedUser.email}</div>
+                  <div className="text-sm text-gray-600">
+                    {selectedUser.email}
+                  </div>
                 </div>
               </div>
 
@@ -462,9 +564,12 @@ export const LockedUsersDashboard = () => {
                 <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                   <Phone className="w-5 h-5 text-gray-500 mt-0.5" />
                   <div>
-                    <div className="text-sm font-medium text-gray-700">Mobile</div>
+                    <div className="text-sm font-medium text-gray-700">
+                      Mobile
+                    </div>
                     <div className="text-sm text-gray-600">
-                      {selectedUser.country_code && `+${selectedUser.country_code} `}
+                      {selectedUser.country_code &&
+                        `+${selectedUser.country_code} `}
                       {selectedUser.mobile}
                     </div>
                   </div>
@@ -474,7 +579,9 @@ export const LockedUsersDashboard = () => {
               <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 <Calendar className="w-5 h-5 text-gray-500 mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-gray-700">Locked At</div>
+                  <div className="text-sm font-medium text-gray-700">
+                    Locked At
+                  </div>
                   <div className="text-sm text-gray-600">
                     {formatDate(selectedUser.locked_at)}
                   </div>
@@ -484,9 +591,12 @@ export const LockedUsersDashboard = () => {
               <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-red-700">Lock Reason</div>
+                  <div className="text-sm font-medium text-red-700">
+                    Lock Reason
+                  </div>
                   <div className="text-sm text-red-600">
-                    {selectedUser.lock_reason || "Multiple failed login attempts"}
+                    {selectedUser.lock_reason ||
+                      "Multiple failed login attempts"}
                   </div>
                   <div className="text-sm text-red-600 mt-1">
                     Failed Attempts: {selectedUser.failed_attempts || 0}
@@ -526,12 +636,19 @@ export const LockedUsersDashboard = () => {
       </Dialog>
 
       {/* Bulk Unlock Confirmation Dialog */}
-      <Dialog open={bulkUnlockDialogOpen} onOpenChange={setBulkUnlockDialogOpen}>
+      <Dialog
+        open={bulkUnlockDialogOpen}
+        onOpenChange={setBulkUnlockDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Unlock Multiple User Accounts</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unlock <strong>{selectedIds.size} user account{selectedIds.size > 1 ? "s" : ""}</strong>?
+              Are you sure you want to unlock{" "}
+              <strong>
+                {selectedIds.size} user account{selectedIds.size > 1 ? "s" : ""}
+              </strong>
+              ?
             </DialogDescription>
           </DialogHeader>
 
@@ -539,9 +656,12 @@ export const LockedUsersDashboard = () => {
             <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
               <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
               <div>
-                <div className="text-sm font-medium text-blue-700">Selected Users</div>
+                <div className="text-sm font-medium text-blue-700">
+                  Selected Users
+                </div>
                 <div className="text-sm text-blue-600 mt-2">
-                  {selectedIds.size} user account{selectedIds.size > 1 ? "s" : ""} will be unlocked
+                  {selectedIds.size} user account
+                  {selectedIds.size > 1 ? "s" : ""} will be unlocked
                 </div>
               </div>
             </div>

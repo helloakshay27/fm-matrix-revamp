@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
     ContextMenu,
     ContextMenuContent,
@@ -20,16 +20,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { ClipboardPlus, FileText, X, Reply, Forward, Search, Users, MessageCircle, CornerDownRight, Pin, PinOff } from "lucide-react";
+import { ClipboardPlus, FileText, X, Reply, Forward, Search, Users, MessageCircle, CornerDownRight, Pin, PinOff, ChevronDown } from "lucide-react";
 import CreateChatTask from "./CreateChatTask";
 import PinnedMessagesHeader from "./PinnedMessagesHeader";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createChatTask, sendMessage, updateMessage } from "@/store/slices/channelSlice";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
-const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
+// initialUnreadCount (optional): how many of the newest messages were unread when the
+// chat was opened (e.g. from the API). When not given, the last-read position this
+// browser remembered for the chat is used instead.
+const Chats = ({ messages, onReply, bottomRef, fetchMessages, initialUnreadCount = 0 }: any) => {
     const { id } = useParams();
+    const location = useLocation();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -49,11 +53,160 @@ const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
     const [selectedForwardTargets, setSelectedForwardTargets] = useState([]);
     const hoverTimeoutRef = useRef(null);
 
-    useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    // ---- Scroll position, unread divider and "scroll to bottom" button ----
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const unreadDividerRef = useRef<HTMLDivElement | null>(null);
+    // Ids of the messages from the previous render, used to tell a freshly
+    // opened chat apart from new messages arriving in the same chat.
+    const prevMessageIdsRef = useRef<Set<any>>(new Set());
+    const isAtBottomRef = useRef(true);
+    const [isAtBottom, setIsAtBottom] = useState(true);
+    // Id of the first unread message (the divider is drawn above it)
+    const [unreadBoundaryId, setUnreadBoundaryId] = useState<any>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const AT_BOTTOM_THRESHOLD = 80;
+
+    const updateIsAtBottom = () => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_THRESHOLD;
+        isAtBottomRef.current = atBottom;
+        setIsAtBottom(atBottom);
+    };
+
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior });
+    };
+
+    // ---- Last-read position, remembered per user + chat in this browser ----
+    const chatType = /\/groups\//.test(location.pathname) ? "group" : "dm";
+    const lastReadKey = `chat-last-read:${currentUserId}:${chatType}:${id}`;
+    const readLastRead = (): string | null => {
+        try {
+            return localStorage.getItem(lastReadKey);
+        } catch {
+            return null;
         }
+    };
+    const saveLastRead = (messageId: any) => {
+        try {
+            localStorage.setItem(lastReadKey, String(messageId));
+        } catch {
+            /* storage unavailable - nothing to remember */
+        }
+    };
+    // Guards against saving another chat's messages while the new chat is still loading
+    const belongsToThisChat = (m: any) => {
+        const chatId = chatType === "group" ? m?.project_space_id : m?.conversation_id;
+        return chatId === undefined || chatId === null || String(chatId) === String(id);
+    };
+    // Set while a freshly opened chat still has to scroll to its last-read message
+    const pendingLandingRef = useRef<{ messageId: any } | null>(null);
+
+    useLayoutEffect(() => {
+        const list = messages || [];
+        if (list.length === 0) return;
+        const prevIds = prevMessageIdsRef.current;
+        const isFreshChat = prevIds.size === 0 || !list.some((m) => prevIds.has(m.id));
+        prevMessageIdsRef.current = new Set(list.map((m) => m.id));
+
+        if (isFreshChat) {
+            // list is newest-first
+            let boundary = null; // first unread message (divider goes above it)
+            let count = 0;
+            let landOnId = null; // last read message to scroll to
+
+            if (initialUnreadCount > 0) {
+                count = Math.min(initialUnreadCount, list.length);
+                boundary = list[count - 1]?.id;
+                landOnId = list[count]?.id ?? null;
+            } else {
+                const lastReadId = readLastRead();
+                if (lastReadId) {
+                    const idx = list.findIndex((m) => String(m.id) === lastReadId);
+                    // Not in the loaded page => it is older than everything loaded, so all of it is new
+                    const newer = idx === -1 ? list : list.slice(0, idx);
+                    const unreadFromOthers = newer.filter((m) => m?.user_id?.toString() !== currentUserId);
+                    if (unreadFromOthers.length > 0) {
+                        boundary = newer[newer.length - 1].id;
+                        count = unreadFromOthers.length;
+                        landOnId = idx === -1 ? null : list[idx].id;
+                    }
+                }
+            }
+
+            setUnreadBoundaryId(boundary);
+            setUnreadCount(count);
+            // Reset scroll state left over from a previously open chat
+            isAtBottomRef.current = true;
+            setIsAtBottom(true);
+            if (boundary) {
+                pendingLandingRef.current = { messageId: landOnId };
+            } else {
+                pendingLandingRef.current = null;
+                scrollToBottom("auto");
+            }
+            return;
+        }
+
+        const newMessages = list.filter((m) => !prevIds.has(m.id)); // newest-first
+        if (newMessages.length === 0) return; // edits, pins, refetches - don't move
+
+        const sentByMe = newMessages.some((m) => m?.user_id?.toString() === currentUserId);
+        if (sentByMe) {
+            // Sending a message always takes you to the bottom and clears unread state
+            setUnreadBoundaryId(null);
+            setUnreadCount(0);
+            scrollToBottom("smooth");
+            return;
+        }
+
+        if (isAtBottomRef.current) {
+            scrollToBottom("smooth");
+            return;
+        }
+
+        // Scrolled up reading older messages: don't yank the user, count them as unread
+        setUnreadCount((c) => c + newMessages.length);
+        setUnreadBoundaryId((b) => b ?? newMessages[newMessages.length - 1].id);
     }, [messages]);
+
+    // Freshly opened chat with unread messages: land on the last read message
+    // (just above the divider), or on the divider if the last read one isn't loaded.
+    useLayoutEffect(() => {
+        const pending = pendingLandingRef.current;
+        if (!pending || !unreadBoundaryId) return;
+        pendingLandingRef.current = null;
+        const container = scrollContainerRef.current;
+        const target = (pending.messageId != null && messageRefs.current[pending.messageId]) || unreadDividerRef.current;
+        if (!container || !target) return;
+        container.scrollTop = target.offsetTop - container.offsetTop - 16;
+        updateIsAtBottom();
+        // Everything fits on screen - the unread messages are already visible
+        if (isAtBottomRef.current && messages?.[0]) saveLastRead(messages[0].id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unreadBoundaryId]);
+
+    // While the user is at the bottom, the newest message counts as read
+    useEffect(() => {
+        if (pendingLandingRef.current || !isAtBottom) return;
+        const newest = messages?.[0];
+        if (newest && belongsToThisChat(newest)) saveLastRead(newest.id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAtBottom, messages, lastReadKey]);
+
+    // Once the user has reached the bottom, the unread messages are read:
+    // clear the count right away and remove the divider shortly after.
+    useEffect(() => {
+        if (!isAtBottom) return;
+        if (unreadCount) setUnreadCount(0);
+        if (!unreadBoundaryId) return;
+        const t = setTimeout(() => setUnreadBoundaryId(null), 2000);
+        return () => clearTimeout(t);
+    }, [isAtBottom, unreadBoundaryId]);
 
     useEffect(() => {
         return () => {
@@ -464,15 +617,29 @@ const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
                     onMessageClick={(message) => scrollToMessage(message.id)}
                 />
 
-                <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5">
+                <div className="relative flex-1 min-h-0 flex flex-col">
+                <div
+                    ref={scrollContainerRef}
+                    onScroll={updateIsAtBottom}
+                    className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5"
+                >
                     {[...messages].reverse().map((message, index) => {
                         const isMe = message?.user_id?.toString() === currentUserId;
                         const shouldShowActions = hoveredMessageIndex === index && showActions;
                         const parentMessage = message.parent_id ? findParentMessage(message.parent_id) : null;
 
                         return (
+                            <Fragment key={index}>
+                            {message.id === unreadBoundaryId && (
+                                <div ref={unreadDividerRef} className="flex items-center gap-3 my-4">
+                                    <div className="flex-1 h-px bg-gray-300" />
+                                    <span className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full shadow-sm">
+                                        Unread messages
+                                    </span>
+                                    <div className="flex-1 h-px bg-gray-300" />
+                                </div>
+                            )}
                             <div
-                                key={index}
                                 ref={(el) => messageRefs.current[message.id] = el}
                                 className={`mb-6 flex flex-col transition-colors duration-300 ${isMe ? "items-end" : "items-start"
                                     }`}
@@ -616,6 +783,7 @@ const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
                                     </ContextMenuContent>
                                 </ContextMenu>
                             </div>
+                            </Fragment>
                         );
                     })}
 
@@ -791,6 +959,26 @@ const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
                     />
 
                     <div ref={bottomRef} className="h-0" />
+                </div>
+
+                {!isAtBottom && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => scrollToBottom("smooth")}
+                        className="absolute bottom-4 right-6 h-10 w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 [&_svg]:text-current"
+                        title="Scroll to latest message"
+                        aria-label="Scroll to latest message"
+                    >
+                        <ChevronDown size={20} />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-2 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-brand text-white text-[11px] font-semibold flex items-center justify-center">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                            </span>
+                        )}
+                    </Button>
+                )}
                 </div>
             </div>
         </TooltipProvider>

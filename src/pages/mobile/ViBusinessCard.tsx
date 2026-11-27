@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Phone,
   Mail,
@@ -7,11 +7,15 @@ import {
   User as UserIcon,
   ArrowLeft,
   Share2,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/vi new (1).jpeg";
 import baseClient from "@/utils/withoutTokenBase";
+import { SaveContactButton } from "@/components/vi-business-card/SaveContactButton";
+import type { VCardContact } from "@/utils/vCard";
 
 interface SocialLink {
   title: string;
@@ -67,6 +71,9 @@ export const ViBusinessCard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const source = searchParams.get("source") || "";
   const scannedById = searchParams.get("scanned_by_id") || "";
+  // The card element captured for the PDF download.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // Add meta tags for cache control
   useEffect(() => {
@@ -151,7 +158,8 @@ export const ViBusinessCard: React.FC = () => {
           id: data.id,
           name: data.fullname,
           email: data.email,
-          phone: `+${data.country_code} ${data.mobile}`,
+          // Country code is optional; without it the number is shown as sent (no "+undefined").
+          phone: data.mobile ? (data.country_code ? `+${String(data.country_code).replace(/^\+/, "")} ${data.mobile}` : data.mobile) : "",
           designation: data.lock_user_permission?.designation || "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
@@ -183,28 +191,62 @@ export const ViBusinessCard: React.FC = () => {
   //   ...(userData.extraLinks || []),
   // ];
 
-  const handleDownloadVCard = () => {
-    if (!userData) return;
+  // Contact for "Save Contact" (.vcf), built from this card's API data.
+  const contact = useMemo<VCardContact | null>(() => {
+    if (!userData) return null;
+    return {
+      fullName: userData.name || "",
+      company: userData.company,
+      designation: userData.designation,
+      department: userData.department,
+      mobile: userData.phone,
+      email: userData.email,
+      website: userData.website,
+      address: userData.address,
+      links: [...(userData.socialLinks ?? []), ...(userData.extraLinks ?? [])]
+        .filter((item) => item.link)
+        .map((item) => ({ title: item.title, url: item.link })),
+    };
+  }, [userData]);
 
-    const vCard = `BEGIN:VCARD
-VERSION:3.0
-FN:${userData.name}
-EMAIL:${userData.email}
-TEL:${userData.phone}
-ORG:${userData.company || ""}
-TITLE:${userData.designation || ""}
-ADR:;;${userData.address || ""};;;;
-URL:${userData.website || ""}
-END:VCARD`;
-
-    const blob = new Blob([vCard], { type: "text/vcard" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${userData.name.replace(/\s+/g, "_")}_contact.vcf`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Contact saved to device!");
+  // Download the card exactly as shown (banner, photo and details) as a one-page PDF.
+  const handleDownloadPdf = async () => {
+    if (!userData || !cardRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      // Loaded on demand so the card page itself stays light.
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      // Render at a fixed phone width so the PDF looks the same from any screen size.
+      const CARD_WIDTH = 420;
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        windowWidth: CARD_WIDTH,
+        onclone: (doc) => {
+          const clone = doc.getElementById("vi-business-card");
+          if (clone) clone.style.width = `${CARD_WIDTH}px`;
+        },
+      });
+      // One page sized to the card, so nothing is cut or padded.
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [canvas.width / 3, canvas.height / 3],
+        hotfixes: ["px_scaling"],
+      });
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, canvas.width / 3, canvas.height / 3);
+      pdf.save(`${userData.name.replace(/\s+/g, "_")}_business_card.pdf`);
+      toast.success("Business card downloaded");
+    } catch (err) {
+      console.error("Business card PDF failed:", err);
+      toast.error("Could not download the business card");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleShare = async () => {
@@ -259,8 +301,8 @@ END:VCARD`;
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      {/* Business Card */}
-      <div className="relative bg-white w-full border border-gray-200">
+      {/* Business Card (captured by Download PDF) */}
+      <div id="vi-business-card" ref={cardRef} className="relative bg-white w-full border border-gray-200">
         {/* Banner: sized to the source image's own aspect ratio (1551x1014) so the full
             logo and ribbon art always show uncropped, and scales fluidly with card width
             at any screen size instead of being clipped by a fixed pixel height. */}
@@ -526,6 +568,26 @@ END:VCARD`;
               ))}
           </div>
         </div>
+      </div>
+
+      {/* Save Contact (.vcf) and Download PDF — outside the card, so they aren't in the PDF */}
+      <div className="flex flex-wrap justify-center gap-3 px-6 pb-8">
+        <SaveContactButton
+          contact={contact}
+          photoUrl={userData.profileImage}
+          className="inline-flex items-center justify-center gap-2 text-white font-semibold text-[13px] py-2 px-5 rounded-full transition-all active:scale-[0.98] disabled:opacity-70"
+          style={{ backgroundColor: "#E31E24", boxShadow: "0 3px 10px rgba(227, 30, 36, 0.3)" }}
+        />
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={downloading}
+          className="inline-flex items-center justify-center gap-2 text-white font-semibold text-[13px] py-2 px-5 rounded-full transition-all active:scale-[0.98] disabled:opacity-70"
+          style={{ backgroundColor: "#E31E24", boxShadow: "0 3px 10px rgba(227, 30, 36, 0.3)" }}
+        >
+          {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {downloading ? "Preparing PDF..." : "Download PDF"}
+        </button>
       </div>
 
       {/* Save Contact Button */}
