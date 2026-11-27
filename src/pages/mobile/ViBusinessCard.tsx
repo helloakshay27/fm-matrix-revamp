@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Phone,
   Mail,
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/vi new (1).jpeg";
 import baseClient from "@/utils/withoutTokenBase";
+import { SaveContactButton } from "@/components/vi-business-card/SaveContactButton";
+import type { VCardContact } from "@/utils/vCard";
 
 interface SocialLink {
   title: string;
@@ -156,7 +158,8 @@ export const ViBusinessCard: React.FC = () => {
           id: data.id,
           name: data.fullname,
           email: data.email,
-          phone: `+${data.country_code} ${data.mobile}`,
+          // Country code is optional; without it the number is shown as sent (no "+undefined").
+          phone: data.mobile ? (data.country_code ? `+${String(data.country_code).replace(/^\+/, "")} ${data.mobile}` : data.mobile) : "",
           designation: data.lock_user_permission?.designation || "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
@@ -188,29 +191,23 @@ export const ViBusinessCard: React.FC = () => {
   //   ...(userData.extraLinks || []),
   // ];
 
-  const handleDownloadVCard = () => {
-    if (!userData) return;
-
-    const vCard = `BEGIN:VCARD
-VERSION:3.0
-FN:${userData.name}
-EMAIL:${userData.email}
-TEL:${userData.phone}
-ORG:${userData.company || ""}
-TITLE:${userData.designation || ""}
-ADR:;;${userData.address || ""};;;;
-URL:${userData.website || ""}
-END:VCARD`;
-
-    const blob = new Blob([vCard], { type: "text/vcard" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${userData.name.replace(/\s+/g, "_")}_contact.vcf`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Contact saved to device!");
-  };
+  // Contact for "Save Contact" (.vcf), built from this card's API data.
+  const contact = useMemo<VCardContact | null>(() => {
+    if (!userData) return null;
+    return {
+      fullName: userData.name || "",
+      company: userData.company,
+      designation: userData.designation,
+      department: userData.department,
+      mobile: userData.phone,
+      email: userData.email,
+      website: userData.website,
+      address: userData.address,
+      links: [...(userData.socialLinks ?? []), ...(userData.extraLinks ?? [])]
+        .filter((item) => item.link)
+        .map((item) => ({ title: item.title, url: item.link })),
+    };
+  }, [userData]);
 
   // Download the card exactly as shown (banner, photo and details) as a one-page PDF.
   const handleDownloadPdf = async () => {
@@ -573,8 +570,14 @@ END:VCARD`;
         </div>
       </div>
 
-      {/* Download the card as a PDF (outside the card, so it isn't in the file) */}
-      <div className="flex justify-center px-6 pb-8">
+      {/* Save Contact (.vcf) and Download PDF — outside the card, so they aren't in the PDF */}
+      <div className="flex flex-wrap justify-center gap-3 px-6 pb-8">
+        <SaveContactButton
+          contact={contact}
+          photoUrl={userData.profileImage}
+          className="inline-flex items-center justify-center gap-2 text-white font-semibold text-[13px] py-2 px-5 rounded-full transition-all active:scale-[0.98] disabled:opacity-70"
+          style={{ backgroundColor: "#E31E24", boxShadow: "0 3px 10px rgba(227, 30, 36, 0.3)" }}
+        />
         <button
           type="button"
           onClick={handleDownloadPdf}
