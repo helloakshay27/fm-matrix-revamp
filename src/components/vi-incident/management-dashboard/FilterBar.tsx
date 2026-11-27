@@ -171,7 +171,7 @@ export function FilterBar({ persona, value, options, zoneOptions, zonesLoading, 
       {persona === "circle" ? (
         <MultiSelect label="Circle" plural="Circles" value={value.circleIds} options={options.circles} loading={options.loading} onChange={(circleIds) => onChange({ circleIds })} required={required} width={210} />
       ) : null}
-      <MultiSelect label="Function" plural="Functions" value={value.functionIds} options={options.functions} loading={options.loading} onChange={(functionIds) => onChange({ functionIds })} required={required} />
+      <MultiSelect label="Function" plural="Functions" value={value.functionIds} options={options.functions} loading={options.loading} onChange={(functionIds) => onChange({ functionIds })} />
       {/* Zone depends on Circle, so it is shown only in Circle Manager and lists the selected circles' zones. */}
       {persona === "circle" ? (
         <MultiSelect

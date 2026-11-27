@@ -147,8 +147,9 @@ export function ViIncidentManagementDashboardPage() {
   // const openRow = (index: number) => setDrill(ROWS[index].detail);
 
   const applyFilters = () => {
-    if (persona === "circle" && (draft.circleIds.length === 0 || draft.functionIds.length === 0)) {
-      notify("Select at least one Circle and one Function to apply");
+    // Circle Manager needs a circle; Function is optional.
+    if (persona === "circle" && draft.circleIds.length === 0) {
+      notify("Select at least one Circle to apply");
       return;
     }
     // Dates are optional (Reset clears them), but a partial or reversed range is not allowed.
@@ -202,7 +203,7 @@ export function ViIncidentManagementDashboardPage() {
             */}
           </div>
         </div>
-        <IncidentOverview values={live.kpis} heatmap={live.heatmap} activeGroup={activeGroup} onJump={jumpTo} onDrill={openDrill} />
+        <IncidentOverview values={live.kpis} heatmap={live.heatmap} heatmapStages={live.heatmapStages} activeGroup={activeGroup} onJump={jumpTo} onDrill={openDrill} />
         <IncidentsPanel values={live.kpis} charts={live.charts} recent={live.recent} highlighted={highlight === "acc-inc"} onDrill={openDrill} onRecent={(row) => setDrill(recentDrill(row))} />
         <InvestigationPanel charts={live.charts} highlighted={highlight === "acc-inv"} onDrill={openDrill} />
         {/* API pending — Action Plans (CAPA) panel and Incident Directory.
