@@ -1006,12 +1006,21 @@ export const AddTicketDashboard = () => {
     if (floorId) {
       try {
         setLoadingAreas(true);
+        const selectedFloor = filteredFloors.find(
+          (floor) => String(floor.id) === floorId
+        );
+        const mappedAreaId = selectedFloor?.area_id ?? selectedFloor?.area?.id;
         const url = getFullUrl(`/pms/areas.json?floor_id=${floorId}`);
         const options = getAuthenticatedFetchOptions('GET');
         const response = await fetch(url, options);
         if (response.ok) {
           const data = await response.json();
-          setFilteredAreas(Array.isArray(data) ? data : (data.areas || []));
+          const areasForFloor = Array.isArray(data) ? data : (data.areas || []);
+          setFilteredAreas(
+            mappedAreaId == null
+              ? []
+              : areasForFloor.filter((area: AreaResponse) => String(area.id) === String(mappedAreaId))
+          );
         }
       } catch (error) {
         console.error('Error loading areas for floor:', error);
@@ -1039,7 +1048,10 @@ export const AddTicketDashboard = () => {
         const response = await fetch(url, options);
         if (response.ok) {
           const data = await response.json();
-          setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
+          const roomsForArea = Array.isArray(data) ? data : (data.rooms || []);
+          setFilteredRooms(
+            roomsForArea.filter((room: RoomResponse) => String(room.area_id) === areaId)
+          );
         }
       } catch (error) {
         console.error('Error loading rooms for area:', error);
