@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { getMsafeAuthHeader, getViApiUrl, getViCompanyId, msafeFetch } from "@/features/msafe-dashboard/freeLink/msafeApi";
 import { CHARTS, PALETTE, BRAND, type ChartSpec } from "./data";
 
 /** Live data for the Vi Incident dashboard — `/vi_incident_dashboard/*` endpoints. */
@@ -89,20 +89,16 @@ interface CountResponse {
 }
 
 // Base URL and token come from the logged-in session — no hardcoded server or company fallback.
-function getCompanyId(): string {
-  return localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
-}
-
 async function fetchJson<T>(endpoint: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {
   const query = new URLSearchParams();
-  const companyId = getCompanyId();
+  const companyId = getViCompanyId();
   if (companyId) query.set("company_id", companyId);
   Object.entries(params).forEach(([key, value]) => {
     if (value) query.set(key, value);
   });
-  const res = await fetch(getFullUrl(`/vi_incident_dashboard/${endpoint}?${query.toString()}`), {
+  const res = await msafeFetch(getViApiUrl(`/vi_incident_dashboard/${endpoint}?${query.toString()}`), {
     signal,
-    headers: { Authorization: getAuthHeader() },
+    headers: { Authorization: getMsafeAuthHeader() },
   });
   if (!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}`);
   return res.json() as Promise<T>;

@@ -4,7 +4,7 @@ import { Leaderboard } from '../components/Leaderboard';
 import { heatmapClass } from '../data/mockData';
 import type { Persona } from '../data/constants';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
-import { getAuthHeader } from '@/config/apiConfig';
+import { getMsafeAuthHeader, getMsafeBaseUrl, getMsafeCompanyId, msafeFetch } from '../freeLink/msafeApi';
 
 type HeatmapRow = { circle: string; values: number[] };
 
@@ -17,12 +17,6 @@ const MODULE_FIELD_CANDIDATES: string[][] = [
   ['krcc', 'krcc_percentage', 'krcc_compliance', 'krcc_pct'],
   ['lmc', 'lmc_percentage', 'lmc_compliance', 'lmc_pct'],
 ];
-
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Only sent for the 'circle' persona — the admin (pan-India) view stays unfiltered.
@@ -45,20 +39,18 @@ async function fetchMsafeUserDashboardJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const companyId = Number(
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145',
-  );
+  const companyId = Number(getMsafeCompanyId());
   const params = new URLSearchParams({ company_id: String(companyId), type: 'compliance', ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_user_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
 
   try {
-    headers.Authorization = getAuthHeader();
+    headers.Authorization = getMsafeAuthHeader();
   } catch {
     // Fall back to unauthenticated request if no token is available.
   }
 
-  const response = await fetch(url, { signal, headers });
+  const response = await msafeFetch(url, { signal, headers });
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return response.json();
 }

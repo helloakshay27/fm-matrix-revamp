@@ -1,25 +1,19 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccordionKey, ModuleView, Persona } from '../data/constants';
 import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
+import { getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from '../freeLink/msafeApi';
 
 export type FilterOption = { id: string; name: string };
 
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
-
 async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId });
   const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

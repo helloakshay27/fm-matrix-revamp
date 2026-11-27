@@ -18,7 +18,7 @@ import type { Persona } from '../data/constants';
 import { ANALYTICS_CATALOG } from '../data/mockData';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { DonutChart, type Slice } from '../components/DonutChart';
-import { getAuthHeader } from '@/config/apiConfig';
+import { getMsafeAuthHeader, getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from '../freeLink/msafeApi';
 
 // ---------------------------------------------------------------------------
 // Shared fetch/normalize helpers, duplicated (not imported) from the live
@@ -27,12 +27,6 @@ import { getAuthHeader } from '@/config/apiConfig';
 // sharing a common module. See KpiOverview.tsx, UsersSection.tsx,
 // KrccSection.tsx, LmcSection.tsx, TrainingSection.tsx, SmtSection.tsx.
 // ---------------------------------------------------------------------------
-
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
 
 /** Hides the first and last point's label — with only ~180px of widget width, the
  *  first value collides with the Y-axis tick labels and the last gets clipped by
@@ -120,15 +114,14 @@ async function fetchMsafeTrainingJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -306,20 +299,18 @@ async function fetchMsafeUserDashboardJson(
   endpoint: string,
   extraParams?: Record<string, string>,
 ): Promise<unknown> {
-  const companyId = Number(
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145',
-  );
+  const companyId = Number(getMsafeCompanyId());
   const params = new URLSearchParams({ company_id: String(companyId), ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_user_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
 
   try {
-    headers.Authorization = getAuthHeader();
+    headers.Authorization = getMsafeAuthHeader();
   } catch {
     // Fall back to unauthenticated request if no token is available.
   }
 
-  const response = await fetch(url, { headers });
+  const response = await msafeFetch(url, { headers });
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return response.json();
 }
@@ -339,15 +330,14 @@ async function fetchMsafeKrccJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_krcc_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -402,15 +392,14 @@ async function fetchMsafeLmcJson(
   extraQuery?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraQuery });
   const url = `${getMsafeBaseUrl()}/msafe_lmc_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -558,15 +547,14 @@ async function fetchMsafeSmtJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_smt_visit_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

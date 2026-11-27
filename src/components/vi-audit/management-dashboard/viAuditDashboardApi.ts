@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
+import { getMsafeAuthHeader, getViApiUrl, getViCompanyId, msafeFetch } from "@/features/msafe-dashboard/freeLink/msafeApi";
 import { OBS_JOURNEY_COLORS, type ChartSpec } from "./data";
 
-// Audit management dashboard APIs (GET /audit_dashboard/*). Base URL and token come from the
-// logged-in session (getFullUrl / getAuthHeader), company id from localStorage — same pattern as
-// the VI inspection management dashboard.
+// Audit management dashboard APIs (GET /audit_dashboard/*). Base URL, token and company come from the
+// logged-in session, or from external login on an `?org_id=` link (see msafeApi).
 
 export interface FilterOption {
   id: string;
@@ -148,7 +147,7 @@ export interface JourneyGroup extends JourneyCounts {
   nodes: JourneyNode[];
 }
 
-const companyId = () => localStorage.getItem("selectedCompanyId") || localStorage.getItem("company_id") || "";
+const companyId = getViCompanyId;
 
 const toApiDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
@@ -181,8 +180,8 @@ async function fetchDashboard<T>(endpoint: string, extra: Record<string, string>
   const params = new URLSearchParams(extra);
   const company = companyId();
   if (company) params.set("company_id", company);
-  const response = await fetch(getFullUrl(`/audit_dashboard/${endpoint}.json?${params.toString()}`), {
-    headers: { Authorization: getAuthHeader(), Accept: "application/json" },
+  const response = await msafeFetch(getViApiUrl(`/audit_dashboard/${endpoint}.json?${params.toString()}`), {
+    headers: { Authorization: getMsafeAuthHeader(), Accept: "application/json" },
     signal,
   });
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
