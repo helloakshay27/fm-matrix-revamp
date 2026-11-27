@@ -11,7 +11,8 @@ interface IncidentOverviewProps {
   heatmap: HeatmapRow[];
   heatmapStages: HeatmapStage[];
   activeGroup: string | null;
-  onJump: (panel: string, group: string) => void;
+  /** Leave out when the detail sections are hidden: the KPI cards then are not clickable. */
+  onJump?: (panel: string, group: string) => void;
   onDrill: (key: string) => void;
 }
 
@@ -30,7 +31,7 @@ export function IncidentOverview({ values, heatmap, heatmapStages, activeGroup, 
       </div> */}
       <div className="sec" id="sec-overview">
         <div className="sec-hd"><div className="sec-lbl">Overview — Incident Snapshot</div><div className="sec-line" /></div>
-        <div className="flow-hint">Click any KPI to jump to its full section below · numbers follow the incident journey: Report → SPOC review → Action plan → Action taken</div>
+        <div className="flow-hint">{onJump ? "Click any KPI to jump to its full section below · numbers" : "Numbers"} follow the incident journey: Report → SPOC review → Action plan → Action taken</div>
         <div className="kpi-grid flow-kpi-grid">
           {VISIBLE_KPI_IDS.map((id) => {
             // Only these cards are shown; each value is read by its position in KPI_INFO.
@@ -38,13 +39,13 @@ export function IncidentOverview({ values, heatmap, heatmapStages, activeGroup, 
             const kpi = KPI_INFO[index];
             if (!kpi) return null;
             return (
-            <div key={kpi.id} className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`} style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint }} onClick={() => onJump(kpi.panel, kpi.group)}>
+            <div key={kpi.id} className={`kpi flow-kpi${activeGroup === kpi.group ? " kpi-active" : ""}`} style={{ ["--kpi-c" as string]: kpi.color, ["--kpi-tint" as string]: kpi.tint, ...(onJump ? null : { cursor: "default" }) }} onClick={onJump ? () => onJump(kpi.panel, kpi.group) : undefined}>
               <div className="kpi-top">
                 <div className="kpi-lbl">{kpi.label}<InfoButton text={kpi.info} /></div>
                 <div className="kpi-ico"><PathIcon d={kpi.icon} size={14} /></div>
               </div>
               <div className="kpi-val">{loading ? <Skeleton className="h-6 w-20" /> : fmtKpi(values[index])}</div>
-              <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div>
+              {onJump ? <div className="kpi-flow-arrow">↓ tap to view {kpi.section}</div> : null}
             </div>
             );
           })}

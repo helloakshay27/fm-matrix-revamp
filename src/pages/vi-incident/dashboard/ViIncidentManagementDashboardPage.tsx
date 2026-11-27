@@ -31,6 +31,9 @@ import {
 } from "../../../components/vi-incident/management-dashboard/data";
 import { DashboardLoadingContext } from "../../../components/vi-incident/management-dashboard/loading";
 
+/** The Incidents and Investigation (SPOC) sections are hidden for now — set to true to restore. */
+const SHOW_DETAIL_PANELS: boolean = false;
+
 interface ToastItem {
   id: number;
   message: string;
@@ -203,9 +206,13 @@ export function ViIncidentManagementDashboardPage() {
             */}
           </div>
         </div>
-        <IncidentOverview values={live.kpis} heatmap={live.heatmap} heatmapStages={live.heatmapStages} activeGroup={activeGroup} onJump={jumpTo} onDrill={openDrill} />
-        <IncidentsPanel values={live.kpis} charts={live.charts} recent={live.recent} highlighted={highlight === "acc-inc"} onDrill={openDrill} onRecent={(row) => setDrill(recentDrill(row))} />
-        <InvestigationPanel charts={live.charts} highlighted={highlight === "acc-inv"} onDrill={openDrill} />
+        <IncidentOverview values={live.kpis} heatmap={live.heatmap} heatmapStages={live.heatmapStages} activeGroup={activeGroup} onJump={SHOW_DETAIL_PANELS ? jumpTo : undefined} onDrill={openDrill} />
+        {SHOW_DETAIL_PANELS ? (
+          <>
+            <IncidentsPanel values={live.kpis} charts={live.charts} recent={live.recent} highlighted={highlight === "acc-inc"} onDrill={openDrill} onRecent={(row) => setDrill(recentDrill(row))} />
+            <InvestigationPanel charts={live.charts} highlighted={highlight === "acc-inv"} onDrill={openDrill} />
+          </>
+        ) : null}
         {/* API pending — Action Plans (CAPA) panel and Incident Directory.
         <CapaPanel charts={live.charts} highlighted={highlight === "acc-capa"} onDrill={openDrill} />
         <IncidentDirectory filter={dirFilter} query={dirQuery} onFilter={setDirFilter} onQuery={setDirQuery} onRow={openRow} />
