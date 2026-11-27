@@ -21,14 +21,9 @@ import { InfoButton } from './InfoButton';
 import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { useMsafeDashboard, type AppliedFilters } from '../context/MsafeDashboardContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getMsafeBaseUrl, getMsafeCompanyId, getMsafeToken, msafeFetch } from '../freeLink/msafeApi';
 
 type KpiValueType = 'count' | 'percent';
-
-function getMsafeBaseUrl(): string {
-  const fromLS = localStorage.getItem('baseUrl') || '';
-  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return host ? `https://${host}` : 'https://live-api.gophygital.work';
-}
 
 /** Circle Manager filter bar values, applied as query params once the user clicks Apply.
  *  Pan India now uses the exact same filter bar as Circle Manager, so every field applies
@@ -49,15 +44,14 @@ async function fetchMsafeTrainingJson(
   extraParams?: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({ company_id: companyId, ...extraParams });
   const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { signal, headers });
+  const res = await msafeFetch(url, { signal, headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -173,9 +167,8 @@ async function downloadKpiReportTemplate(
   persona: Persona,
   appliedFilters: AppliedFilters,
 ): Promise<void> {
-  const token = localStorage.getItem('token') || '';
-  const companyId =
-    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '145';
+  const token = getMsafeToken();
+  const companyId = getMsafeCompanyId();
   const params = new URLSearchParams({
     company_id: companyId,
     export_for: exportFor,
@@ -185,7 +178,7 @@ async function downloadKpiReportTemplate(
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, { headers });
+  const res = await msafeFetch(url, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
 

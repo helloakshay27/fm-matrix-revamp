@@ -26,6 +26,7 @@ import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminLayout } from "./components/AdminLayout";
 import { PWALayoutWrapper } from "./components/PWALayoutWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { MsafeAccessGate } from "./features/msafe-dashboard/freeLink/MsafeAccessGate";
 
 //import club vendor pages
 
@@ -4791,16 +4792,28 @@ function App() {
                           />
                           <Route
                             path="/vi-audit/management-dashboard"
-                            element={<ViAuditManagementDashboardPage />}
+                            element={
+                              <MsafeAccessGate requireLogin={false}>
+                                <ViAuditManagementDashboardPage />
+                              </MsafeAccessGate>
+                            }
                           />
 
                           <Route
                             path="/vi-incident/management-dashboard"
-                            element={<ViIncidentManagementDashboardPage />}
+                            element={
+                              <MsafeAccessGate requireLogin={false}>
+                                <ViIncidentManagementDashboardPage />
+                              </MsafeAccessGate>
+                            }
                           />
                           <Route
                             path="/vi-inspection/management-dashboard"
-                            element={<ViInspectionManagementDashboardPage />}
+                            element={
+                              <MsafeAccessGate requireLogin={false}>
+                                <ViInspectionManagementDashboardPage />
+                              </MsafeAccessGate>
+                            }
                           />
 
                           {/* Backend Routes */}
@@ -5124,9 +5137,9 @@ function App() {
                           <Route
                             path="/msafedashboard"
                             element={
-                              <ProtectedRoute>
+                              <MsafeAccessGate>
                                 <MsafeDashboardPage />
-                              </ProtectedRoute>
+                              </MsafeAccessGate>
                             }
                           />
 
