@@ -261,6 +261,17 @@ export const AddOperationalAuditSchedulePage = () => {
   const [submissionTime, setSubmissionTime] = useState('');
   const [submissionTimeValue, setSubmissionTimeValue] = useState('');
 
+  // Task step toggles (same as Add Schedule → Question Setup)
+  const [createNew, setCreateNew] = useState(false);
+  const [weightage, setWeightage] = useState(false);
+  const [autoTicket, setAutoTicket] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [ticketLevel, setTicketLevel] = useState('checklist');
+  const [ticketAssignedTo, setTicketAssignedTo] = useState('');
+  const [ticketCategory, setTicketCategory] = useState('');
+
   // Track wizard step views (fires on mount for step 0, then on every step change)
   useEffect(() => {
     captureAuditEvent("Audit Wizard Step Viewed", { step_index: activeStep });
@@ -583,6 +594,202 @@ export const AddOperationalAuditSchedulePage = () => {
     } catch (error) {
       console.error('Error fetching helpdesk categories:', error);
     }
+  };
+
+  const loadTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/get_templates.json`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setTemplates(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+      toast.error('Failed to load templates.', {
+        position: 'top-right',
+        duration: 4000,
+        style: { background: '#fff', color: 'black', border: 'none' }
+      });
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  // Map template API question types to this page's input types
+  const mapTemplateInputType = (apiType: string): string => {
+    const typeMapping: { [key: string]: string } = {
+      'radio-group': 'radio',
+      'select': 'dropdown',
+      'text': 'text',
+      'number': 'number',
+      'checkbox-group': 'checkbox',
+      'textarea': 'text',
+      'date': 'date'
+    };
+    return typeMapping[apiType] || 'text';
+  };
+
+  const createEmptyTaskSection = (): TaskSection => ({
+    id: Date.now().toString(),
+    title: 'Questions',
+    autoTicket: false,
+    ticketLevel: 'checklist',
+    ticketAssignedTo: '',
+    ticketCategory: '',
+    tasks: [{
+      id: (Date.now() + 1).toString(),
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      helpText: false,
+      helpTextValue: '',
+      helpTextAttachments: [],
+      autoTicket: false,
+      weightage: '',
+      rating: false,
+      reading: false,
+      dropdownValues: [{ label: '', type: 'positive' }],
+      radioValues: [{ label: '', type: 'positive' }],
+      checkboxValues: [''],
+      checkboxSelectedStates: [false],
+      optionsInputsValues: ['']
+    }]
+  });
+
+  // Load a template's questions into the task sections (same as Add Schedule)
+  const loadTemplateData = async (templateId: string) => {
+    if (!templateId) {
+      setTaskSections([createEmptyTaskSection()]);
+      return;
+    }
+
+    setTemplatesLoading(true);
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/exisiting_checklist.json?id=${templateId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const templateData = await response.json();
+      if (!templateData?.content) {
+        toast.error('Template data is empty or invalid.', {
+          position: 'top-right',
+          duration: 4000,
+          style: { background: '#fff', color: 'black', border: 'none' }
+        });
+        return;
+      }
+
+      const templateTasks: TaskQuestion[] = templateData.content.map((question: any, index: number) => {
+        const inputType = mapTemplateInputType(question.type);
+        let dropdownValues = [{ label: '', type: 'positive' }];
+        let radioValues = [{ label: '', type: 'positive' }];
+        let checkboxValues = [''];
+        let checkboxSelectedStates = [false];
+        let optionsInputsValues = [''];
+
+        if (Array.isArray(question.values) && question.values.length > 0) {
+          if (inputType === 'dropdown') {
+            dropdownValues = question.values.map((val: any) => ({ label: val.label || val.value || '', type: val.type || 'positive' }));
+          } else if (inputType === 'radio') {
+            radioValues = question.values.map((val: any) => ({ label: val.label || val.value || '', type: val.type || 'positive' }));
+          } else if (inputType === 'checkbox') {
+            checkboxValues = question.values.map((val: any) => val.label || val.value || '');
+            checkboxSelectedStates = question.values.map(() => false);
+          } else if (inputType === 'options-inputs') {
+            optionsInputsValues = question.values.map((val: any) => val.label || val.value || '');
+          }
+        }
+
+        return {
+          id: (Date.now() + index).toString(),
+          group: question.group_id ? String(question.group_id) : '',
+          subGroup: question.sub_group_id ? String(question.sub_group_id) : '',
+          task: question.label || '',
+          inputType,
+          mandatory: question.required === 'true',
+          helpText: !!question.hint,
+          helpTextValue: question.hint || '',
+          helpTextAttachments: [],
+          autoTicket: false,
+          weightage: question.weightage || '',
+          rating: question.rating_enabled === 'true',
+          reading: question.is_reading === 'true',
+          dropdownValues,
+          radioValues,
+          checkboxValues,
+          checkboxSelectedStates,
+          optionsInputsValues
+        };
+      });
+
+      // One section per unique group + sub-group pair
+      const sectionOrder: string[] = [];
+      const sectionTaskMap: Record<string, TaskQuestion[]> = {};
+      templateTasks.forEach(task => {
+        const key = `${task.group}__${task.subGroup}`;
+        if (!sectionTaskMap[key]) {
+          sectionOrder.push(key);
+          sectionTaskMap[key] = [];
+        }
+        sectionTaskMap[key].push(task);
+      });
+
+      const newSections: TaskSection[] = sectionOrder.map((key, i) => ({
+        id: (Date.now() + i).toString(),
+        title: 'Questions',
+        autoTicket: false,
+        ticketLevel: 'checklist',
+        ticketAssignedTo: '',
+        ticketCategory: '',
+        tasks: sectionTaskMap[key],
+      }));
+      setTaskSections(newSections.length > 0 ? newSections : [createEmptyTaskSection()]);
+
+      // Populate sub-group options for every group in the template
+      const uniqueGroupIds = [...new Set(templateTasks.map(t => t.group).filter(Boolean))];
+      uniqueGroupIds.forEach(gid => loadTaskSubGroups(gid));
+
+      // Don't overwrite what the user already typed
+      setActivityName(prev => prev || templateData.form_name || '');
+      setDescription(prev => prev || templateData.description || '');
+
+      toast.success(`Template "${templateData.form_name}" loaded successfully!`, {
+        position: 'top-right',
+        duration: 4000,
+        style: { background: '#fff', color: 'black', border: 'none' }
+      });
+    } catch (error) {
+      console.error('Failed to load template data:', error);
+      toast.error('Failed to load template data.', {
+        position: 'top-right',
+        duration: 4000,
+        style: { background: '#fff', color: 'black', border: 'none' }
+      });
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    loadTemplateData(templateId);
   };
 
   const loadTaskSubGroups = async (groupId: string) => {
@@ -1007,11 +1214,11 @@ export const AddOperationalAuditSchedulePage = () => {
         schedule_type: 'ppm',
         pms_custom_form: {
           created_source: 'audit',
-          create_ticket: '0',
-          ticket_level: 'checklist',
-          task_assigner_id: '',
-          helpdesk_category_id: '',
-          weightage_enabled: '0',
+          create_ticket: autoTicket ? '1' : '0',
+          ticket_level: ticketLevel,
+          task_assigner_id: ticketAssignedTo || '',
+          helpdesk_category_id: ticketCategory || '',
+          weightage_enabled: weightage ? '1' : '0',
           schedule_type: 'PPM',
           form_name: activityName,
           description: description,
@@ -1867,7 +2074,146 @@ export const AddOperationalAuditSchedulePage = () => {
                 </span>
                 TASK
               </div>
+
+              {/* Toggles (same as Add Schedule → Question Setup) */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={createNew}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setCreateNew(isChecked);
+                        if (isChecked && templates.length === 0) {
+                          loadTemplates();
+                        }
+                        // Turning it off clears the selected template
+                        if (!isChecked) {
+                          setSelectedTemplate('');
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={weightage}
+                      onChange={(e) => setWeightage(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${weightage ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[var(--color-primary)]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={autoTicket}
+                      onChange={(e) => setAutoTicket(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${autoTicket ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
+                </div>
+              </div>
             </div>
+
+            {/* Create Template → Select Template */}
+            {createNew && (
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                  Select Template
+                </Typography>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Template <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <MuiSelect
+                    label="Template"
+                    notched
+                    displayEmpty
+                    value={selectedTemplate}
+                    onChange={(e) => handleTemplateChange(e.target.value as string)}
+                    disabled={templatesLoading}
+                  >
+                    <MenuItem value="">None</MenuItem>
+                    {templates.map((template: any) => (
+                      <MenuItem key={template.id} value={String(template.id)}>{template.form_name}</MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+                {templatesLoading && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading templates...
+                  </Typography>
+                )}
+              </SectionCard>
+            )}
+
+            {/* Auto Ticket Configuration */}
+            {autoTicket && (
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                  Auto Ticket Configuration
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>Ticket Level</Typography>
+                    <MuiRadioGroup row value={ticketLevel} onChange={(e) => setTicketLevel(e.target.value)}>
+                      <FormControlLabel
+                        value="checklist"
+                        control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
+                        label="Checklist Level"
+                      />
+                      <FormControlLabel
+                        value="question"
+                        control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
+                        label="Question Level"
+                      />
+                    </MuiRadioGroup>
+                  </Box>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Assigned To <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <MuiSelect
+                      label="Assigned To"
+                      notched
+                      displayEmpty
+                      value={ticketAssignedTo}
+                      onChange={(e) => setTicketAssignedTo(e.target.value as string)}
+                      disabled={loading.users}
+                    >
+                      <MenuItem value="">Select Assigned To</MenuItem>
+                      {users.map((user: any) => (
+                        <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <MuiSelect
+                      label="Category"
+                      notched
+                      displayEmpty
+                      value={ticketCategory}
+                      onChange={(e) => setTicketCategory(e.target.value as string)}
+                    >
+                      <MenuItem value="">Select Category</MenuItem>
+                      {helpdeskCategories.map((cat: any) => (
+                        <MenuItem key={cat.id} value={cat.id.toString()}>{cat.name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </Box>
+              </SectionCard>
+            )}
 
             {taskSections.map((section, sectionIndex) => (
               <div key={section.id} className="overflow-hidden">
@@ -1995,10 +2341,22 @@ export const AddOperationalAuditSchedulePage = () => {
                         }
                         label="Reading"
                       />
+                      {weightage && (
+                        <FormControlLabel
+                          control={
+                            <MuiCheckbox
+                              checked={task.rating}
+                              onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
+                            />
+                          }
+                          label="Rating"
+                        />
+                      )}
                     </Box>
 
-                    {/* Task and Input Type */}
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
+                    {/* Task and Input Type (+ Weightage when enabled) */}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: weightage ? '2fr 1fr 1fr' : '2fr 1fr' }, gap: 2 }}>
                       <TextField
                         fullWidth
                         label={<span>Task{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
@@ -2059,6 +2417,25 @@ export const AddOperationalAuditSchedulePage = () => {
                           <MenuItem value="options-inputs">Options & Inputs</MenuItem>
                         </MuiSelect>
                       </FormControl>
+
+                      {weightage && (
+                        <TextField
+                          label={<span>Weightage{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                          type="number"
+                          fullWidth
+                          value={task.weightage}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (Number(value) < 0) return;
+                            updateTaskInSection(section.id, task.id, 'weightage', value);
+                          }}
+                          inputProps={{
+                            min: 0,
+                            onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                          }}
+                          placeholder="Enter weightage"
+                        />
+                      )}
                     </Box>
 
                     {/* Help Text */}
