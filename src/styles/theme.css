@@ -7143,7 +7143,7 @@ html body main .stat-card {
 }
 
 /* Text fields in page content match the 44px wireframe control */
-html body main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput):not(.seat-count-input),
+html body main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.MuiInputBase-input):not(.MuiSelect-nativeInput):not(.seat-count-input):not(.compact-input),
 html body main button[role="combobox"] {
   min-height: 44px !important;
   border-radius: var(--radius-input) !important;
