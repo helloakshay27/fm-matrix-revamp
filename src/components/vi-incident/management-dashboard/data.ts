@@ -7,12 +7,67 @@ import {
   GENERATED_DRILLS,
   GENERATED_ROWS,
   HEATMAP,
-  KPI_INFO,
+  KPI_INFO as WIREFRAME_KPI_INFO,
   RECENT,
   SCOPES,
 } from "./generated";
 
-export { BOARDS, CARD_INFO, DIR_CHIPS, FOLLOW_UP, HEATMAP, KPI_INFO, RECENT, SCOPES };
+export { BOARDS, CARD_INFO, DIR_CHIPS, FOLLOW_UP, HEATMAP, RECENT, SCOPES };
+
+/**
+ * KPI cards: the wireframe's, then the CAPA / investigation counts from GET kpi (capa_planned,
+ * capa_open, closed_investigation, awaiting_investigation). Values come in this same order.
+ */
+export const KPI_INFO = [
+  ...WIREFRAME_KPI_INFO,
+  {
+    id: "capa-planned",
+    label: "CAPA Planned",
+    group: "capa",
+    panel: "acc-capa",
+    section: "CAPA",
+    color: "var(--slate)",
+    tint: "rgba(202,222,248,.8)",
+    icon: "M9 11l3 3L22 4|M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11",
+    info: "Corrective and preventive action plans created for incidents.",
+  },
+  {
+    id: "capa-open",
+    label: "CAPA Open",
+    group: "capa",
+    panel: "acc-capa",
+    section: "CAPA",
+    color: "var(--warn)",
+    tint: "rgba(255,196,0,.22)",
+    icon: "M12 8v4l3 3|M12 22a10 10 0 100-20 10 10 0 000 20z",
+    info: "Action plans not yet closed by the Action Owner.",
+  },
+  {
+    id: "inv-closed",
+    label: "Closed Investigation",
+    group: "inv",
+    panel: "acc-inv",
+    section: "Investigation",
+    color: "var(--blue)",
+    tint: "rgba(90,8,75,.16)",
+    icon: "M22 11.08V12a10 10 0 11-5.93-9.14|M22 4L12 14.01l-3-3",
+    info: "Incidents whose investigation has been completed.",
+  },
+  {
+    id: "inv-awaiting",
+    label: "Awaiting Investigation",
+    group: "inv",
+    panel: "acc-inv",
+    section: "Investigation",
+    color: "var(--aubergine)",
+    tint: "rgba(243,232,209,.9)",
+    icon: "M11 19a8 8 0 100-16 8 8 0 000 16z|M21 21l-4.35-4.35",
+    info: "Incidents still waiting for an investigation.",
+  },
+] as const;
+
+/** Cards shown in the overview, in display order (the others are hidden but keep their values). */
+export const VISIBLE_KPI_IDS = ["inc-total", "capa-planned", "capa-open", "capa-closed", "inv-closed", "inv-awaiting"] as const;
 
 export type Persona = "admin" | "circle";
 export type ModuleKey = "incident" | "mydashboard";
@@ -104,6 +159,9 @@ export const CHARTS: Record<string, ChartSpec> = Object.fromEntries(
 
 export const fmt = (n: number) => Number(n).toLocaleString("en-IN");
 
+/** KPI value from the API, or "—" when it was not sent. */
+export const fmtKpi = (n: number | null | undefined) => (typeof n === "number" ? fmt(n) : "—");
+
 export const CHART_LABELS: Record<string, string> = {
   incStatus: "Incident Status",
   incStage: "Open Incident Stage",
@@ -130,7 +188,7 @@ export const CHART_LABELS: Record<string, string> = {
 };
 
 export const ANALYTICS_CATALOG = [
-  ...KPI_INFO.map((item) => ({ id: item.id, label: item.label, kind: "kpi" as const })),
+  ...KPI_INFO.filter((item) => (VISIBLE_KPI_IDS as readonly string[]).includes(item.id)).map((item) => ({ id: item.id, label: item.label, kind: "kpi" as const })),
   ...Object.entries(CHART_LABELS).map(([id, label]) => ({ id, label, kind: "chart" as const })),
 ];
 

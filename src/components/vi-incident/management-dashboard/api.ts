@@ -33,7 +33,14 @@ export interface IncidentFilters {
 
 export interface HeatmapRow {
   circle: string;
+  /** One cell per heatmap stage (same order as the stage columns). */
   cells: { cls: string; value: string; title: string }[];
+}
+
+/** A heatmap column, from the API's `stages` list. */
+export interface HeatmapStage {
+  key: string;
+  label: string;
 }
 
 export interface RecentIncident {
@@ -52,7 +59,8 @@ export interface RecentIncident {
 }
 
 /** Same order as KPI_INFO; Draft is not returned by the API and its card is hidden. */
-export type KpiValues = readonly number[];
+/** null = the API did not send that count (shown as "—", never a made-up number). */
+export type KpiValues = readonly (number | null)[];
 
 export interface IncidentDashboardData {
   loading: boolean;
@@ -61,6 +69,8 @@ export interface IncidentDashboardData {
   kpis: KpiValues;
   charts: Record<string, ChartSpec>;
   heatmap: HeatmapRow[];
+  /** Column headings for the heatmap, from the API. */
+  heatmapStages: HeatmapStage[];
   recent: RecentIncident[];
 }
 
@@ -148,9 +158,10 @@ function openClosedSpec(base: ChartSpec, items: CountItem[]): ChartSpec {
 const BAND_CLASS: Record<string, string> = { red: "c1", amber: "c2", teal: "c3", green: "c4" };
 
 interface HeatmapResponse {
+  stages?: HeatmapStage[];
   data: {
     circle_name: string;
-    stages: { label?: string; percentage: number | null; band: string; numerator?: number; denominator?: number }[];
+    stages: { key?: string; label?: string; count?: number | null; percentage: number | null; band: string | null; numerator?: number | null; denominator?: number | null }[];
   }[];
 }
 
@@ -233,7 +244,7 @@ export function useIncidentFilterOptions(): FilterOptions {
   return options;
 }
 
-const EMPTY_KPIS: KpiValues = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+const EMPTY_KPIS: KpiValues = Array.from({ length: 13 }, () => null);
 
 const API_CHART_KEYS = ["incStatus", "incStage", "incInjury", "incClass", "incCircle", "incFunc", "incCategory", "incFacility", "incPerson", "incInjType", "incTrend", "incTime", "incLost", "invReq", "invConc", "invFactors"];
 
@@ -254,6 +265,7 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
     kpis: EMPTY_KPIS,
     overrides: EMPTY_API_CHARTS,
     heatmap: [],
+    heatmapStages: [],
     recent: [],
   });
 
@@ -290,7 +302,11 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
 
       const kpi = value<{ kpi: Record<string, number> }>(0)?.kpi;
       const kpis: KpiValues = kpi
-        ? [kpi.total_incidents, 0, kpi.open_incidents, kpi.closed_incidents, kpi.incidents_with_injury, kpi.pending_spoc_review, kpi.pending_by_action_owner, kpi.pending_capa, kpi.capa_closed].map((n) => n ?? 0)
+        ? [
+            kpi.total_incidents, 0, kpi.open_incidents, kpi.closed_incidents, kpi.incidents_with_injury, kpi.pending_spoc_review, kpi.pending_by_action_owner, kpi.pending_capa, kpi.capa_closed,
+            // CAPA / investigation cards (same order as the extra KPI_INFO entries).
+            kpi.capa_planned, kpi.capa_open, kpi.closed_investigation, kpi.awaiting_investigation,
+          ].map((n) => (typeof n === "number" ? n : null))
         : EMPTY_KPIS;
 
       const overrides: Record<string, ChartSpec> = { ...EMPTY_API_CHARTS };
@@ -301,8 +317,8 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
       };
 
       if (kpi) {
-        overrides.incStatus = { ...CHARTS.incStatus, datasets: [{ ...CHARTS.incStatus.datasets[0], data: [0, kpis[2], kpis[3]] }] };
-        overrides.incStage = { ...CHARTS.incStage, datasets: [{ ...CHARTS.incStage.datasets[0], data: [kpis[5], kpis[6]] }] };
+        overrides.incStatus = { ...CHARTS.incStatus, datasets: [{ ...CHARTS.incStatus.datasets[0], data: [0, kpis[2] ?? 0, kpis[3] ?? 0] }] };
+        overrides.incStage = { ...CHARTS.incStage, datasets: [{ ...CHARTS.incStage.datasets[0], data: [kpis[5] ?? 0, kpis[6] ?? 0] }] };
       }
       setCount("incInjury", 1);
       setCount("incClass", 2);
@@ -348,17 +364,28 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
 
       setCount("invFactors", 14);
 
-      const heatmap = (value<HeatmapResponse>(15)?.data ?? []).map((row) => ({
+      const heatmapResponse = value<HeatmapResponse>(15);
+      const heatmapRows = heatmapResponse?.data ?? [];
+      // Columns come from the API's stage list (key + label); older responses without it fall back
+      // to the first circle's stages.
+      const heatmapStages: HeatmapStage[] = (heatmapResponse?.stages?.length ? heatmapResponse.stages : heatmapRows[0]?.stages ?? [])
+        .map((stage, index) => ({ key: stage.key ?? String(index), label: stage.label ?? "" }));
+      const heatmap = heatmapRows.map((row) => ({
         circle: row.circle_name,
-        // Show the numerator (count); colour still follows the API's % band.
-        cells: row.stages.map((stage) => {
-          const numerator = stage.numerator ?? 0;
-          const denominator = stage.denominator ?? 0;
-          const pct = stage.percentage == null ? "no data" : `${Math.round(stage.percentage)}%`;
+        // Each column's cell is matched by stage key; it shows the count, coloured by the API's band.
+        cells: heatmapStages.map((column, index) => {
+          const stage = row.stages.find((item) => item.key === column.key) ?? (row.stages[index]?.key ? undefined : row.stages[index]);
+          if (!stage) return { cls: "", value: "—", title: `${column.label}: no data` };
+          const count = stage.count ?? stage.numerator ?? 0;
+          const share =
+            stage.denominator != null && stage.percentage != null
+              ? ` · ${stage.numerator ?? count} of ${stage.denominator} (${Math.round(stage.percentage)}%)`
+              : "";
           return {
-            cls: BAND_CLASS[stage.band] ?? "c1",
-            value: String(numerator),
-            title: `${stage.label ? `${stage.label}: ` : ""}${numerator} of ${denominator} (${pct})`,
+            // No band (plain counts) or "no_data" gets no colour.
+            cls: (stage.band && BAND_CLASS[stage.band]) || "",
+            value: String(count),
+            title: `${column.label}: ${count}${share}`,
           };
         }),
       }));
@@ -371,6 +398,7 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
         kpis,
         overrides,
         heatmap,
+        heatmapStages,
         recent,
       });
     });
@@ -379,5 +407,5 @@ export function useIncidentDashboard(filters: IncidentFilters): IncidentDashboar
   }, [filters]);
 
   const charts = useMemo(() => ({ ...CHARTS, ...state.overrides }), [state.overrides]);
-  return { loading: state.loading, error: state.error, syncedAt: state.syncedAt, kpis: state.kpis, charts, heatmap: state.heatmap, recent: state.recent };
+  return { loading: state.loading, error: state.error, syncedAt: state.syncedAt, kpis: state.kpis, charts, heatmap: state.heatmap, heatmapStages: state.heatmapStages, recent: state.recent };
 }
